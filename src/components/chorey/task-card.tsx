@@ -41,7 +41,7 @@ import { useTasks } from '@/contexts/task-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
-import EditTaskDialog from './edit-task-dialog';
+import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 
 
 type TaskCardProps = {

@@ -4,7 +4,7 @@ import { useTasks } from '@/contexts/task-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
-import { SortableTaskCard } from './sortable-task-card';
+import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 
 const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; users: User[] }) => {
   return (
@@ -28,6 +28,10 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
       </SortableContext>
     </div>
   );
+};
+
+type TaskColumnsProps = {
+  users: User[];
 };
 
 const TaskColumns = ({ users }: TaskColumnsProps) => {

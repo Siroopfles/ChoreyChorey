@@ -1,7 +1,7 @@
 'use client';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import TaskCard from './task-card';
+import TaskCard from '@/components/chorey/task-card';
 import type { Task, User } from '@/lib/types';
 
 type SortableTaskCardProps = {
