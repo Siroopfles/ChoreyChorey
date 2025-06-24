@@ -9,12 +9,13 @@ import {
 import Leaderboard from '@/components/chorey/leaderboard';
 import AppHeader from '@/components/chorey/app-header';
 import TaskColumns from '@/components/chorey/task-columns';
-import { LayoutGrid, CalendarDays } from 'lucide-react';
+import { LayoutGrid, CalendarDays, LayoutDashboard } from 'lucide-react';
 import CommandBar from '@/components/chorey/command-bar';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CalendarView from '@/components/chorey/calendar-view';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
+import DashboardView from '@/components/chorey/dashboard-view';
 
 
 function MainContent() {
@@ -22,7 +23,7 @@ function MainContent() {
 
   return (
     <Tabs defaultValue="board" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4 md:w-fit">
+      <TabsList className="grid w-full grid-cols-3 mb-4 md:w-fit">
         <TabsTrigger value="board">
           <LayoutGrid className="mr-2 h-4 w-4" />
           Bord
@@ -30,6 +31,10 @@ function MainContent() {
         <TabsTrigger value="calendar">
           <CalendarDays className="mr-2 h-4 w-4" />
           Kalender
+        </TabsTrigger>
+        <TabsTrigger value="dashboard">
+          <LayoutDashboard className="mr-2 h-4 w-4" />
+          Dashboard
         </TabsTrigger>
       </TabsList>
       <TabsContent value="board">
@@ -39,6 +44,9 @@ function MainContent() {
         <div className="p-4 bg-card rounded-lg border max-w-fit mx-auto">
           <CalendarView tasks={tasks} />
         </div>
+      </TabsContent>
+      <TabsContent value="dashboard">
+        <DashboardView tasks={tasks} users={users} />
       </TabsContent>
     </Tabs>
   );
