@@ -1,4 +1,4 @@
-import { USERS, TASKS } from '@/lib/data';
+import { USERS } from '@/lib/data';
 import {
   SidebarProvider,
   Sidebar,
@@ -11,10 +11,10 @@ import AppHeader from '@/components/chorey/app-header';
 import TaskColumns from '@/components/chorey/task-columns';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { TaskProvider } from '@/contexts/task-context';
 
 export default function Home() {
   const users = USERS;
-  const tasks = TASKS;
 
   return (
     <SidebarProvider>
@@ -36,12 +36,14 @@ export default function Home() {
           </div>
         </SidebarContent>
       </Sidebar>
-      <SidebarInset className="flex flex-col">
-        <AppHeader users={users} />
-        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
-          <TaskColumns tasks={tasks} users={users} />
-        </main>
-      </SidebarInset>
+      <TaskProvider>
+        <SidebarInset className="flex flex-col">
+          <AppHeader users={users} />
+          <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+            <TaskColumns users={users} />
+          </main>
+        </SidebarInset>
+      </TaskProvider>
     </SidebarProvider>
   );
 }

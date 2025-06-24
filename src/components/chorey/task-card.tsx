@@ -1,5 +1,6 @@
 'use client';
-import type { Task, User } from '@/lib/types';
+import type { Task, User, Status } from '@/lib/types';
+import { ALL_STATUSES } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -26,9 +31,11 @@ import {
   Lock,
   XCircle,
   Paperclip,
+  Replace,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { useTasks } from '@/contexts/task-context';
 
 type TaskCardProps = {
   task: Task;
@@ -55,6 +62,7 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
+  const { updateTask } = useTasks();
   
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
   const totalSubtasks = task.subtasks.length;
@@ -76,7 +84,22 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
                 <Edit className="mr-2 h-4 w-4" />
                 Bewerken
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+              <DropdownMenuSub>
+                 <DropdownMenuSubTrigger>
+                    <Replace className="mr-2 h-4 w-4" />
+                    <span>Status wijzigen</span>
+                 </DropdownMenuSubTrigger>
+                 <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                        {ALL_STATUSES.map(status => (
+                            <DropdownMenuItem key={status} onClick={() => updateTask(task.id, { status })}>
+                                {status}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuSubContent>
+                 </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => updateTask(task.id, { status: 'Geannuleerd' })}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Verwijderen
               </DropdownMenuItem>
@@ -116,10 +139,12 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
               <UserIcon className="h-4 w-4 text-gray-400" />
             </div>
           )}
-          <div className="flex items-center gap-1">
-            <CalendarIcon className="h-3 w-3" />
-            <span>{format(task.dueDate, 'd MMM')}</span>
-          </div>
+          {task.dueDate && (
+            <div className="flex items-center gap-1">
+              <CalendarIcon className="h-3 w-3" />
+              <span>{format(task.dueDate, 'd MMM')}</span>
+            </div>
+          )}
           <div className={cn('flex items-center gap-1 font-medium', priorityConfig[task.priority].color)}>
             <PriorityIcon className="h-3 w-3" />
             <span>{task.priority}</span>

@@ -1,10 +1,10 @@
 'use client';
-import type { Task, User, Status } from '@/lib/types';
+import type { User, Status } from '@/lib/types';
+import { useTasks } from '@/contexts/task-context';
 import TaskCard from './task-card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 type TaskColumnsProps = {
-  tasks: Task[];
   users: User[];
 };
 
@@ -30,10 +30,11 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
   );
 };
 
-const TaskColumns = ({ tasks, users }: TaskColumnsProps) => {
+const TaskColumns = ({ users }: TaskColumnsProps) => {
+  const { tasks } = useTasks();
   const columns: Status[] = ["Te Doen", "In Uitvoering", "Voltooid", "Geannuleerd", "Gearchiveerd"];
 
-  const tasksByStatus = (status: Status) => tasks.filter((task) => task.status === status).sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime());
+  const tasksByStatus = (status: Status) => tasks.filter((task) => task.status === status).sort((a,b) => (a.dueDate?.getTime() || 0) - (b.dueDate?.getTime() || 0));
 
   return (
     <ScrollArea className="w-full">

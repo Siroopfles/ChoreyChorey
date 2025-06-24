@@ -32,6 +32,7 @@ import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { handleSuggestSubtasks } from '@/app/actions';
+import { useTasks } from '@/contexts/task-context';
 
 
 const taskFormSchema = z.object({
@@ -46,7 +47,7 @@ const taskFormSchema = z.object({
   isPrivate: z.boolean().default(false),
 });
 
-type TaskFormValues = z.infer<typeof taskFormSchema>;
+export type TaskFormValues = z.infer<typeof taskFormSchema>;
 
 type AddTaskDialogProps = {
   users: User[];
@@ -57,6 +58,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const { toast } = useToast();
+  const { addTask } = useTasks();
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -82,7 +84,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
   });
 
   function onSubmit(data: TaskFormValues) {
-    console.log(data);
+    addTask(data);
     toast({
       title: 'Taak Aangemaakt!',
       description: `De taak "${data.title}" is succesvol aangemaakt.`,

@@ -9,6 +9,8 @@ export type Priority = "Laag" | "Midden" | "Hoog" | "Urgent";
 
 export type Status = "Te Doen" | "In Uitvoering" | "Voltooid" | "Gearchiveerd" | "Geannuleerd";
 
+export const ALL_STATUSES: Status[] = ["Te Doen", "In Uitvoering", "Voltooid", "Gearchiveerd", "Geannuleerd"];
+
 export type Label = "Keuken" | "Woonkamer" | "Badkamer" | "Slaapkamer" | "Algemeen" | "Kantoor";
 
 export const ALL_LABELS: Label[] = ["Keuken", "Woonkamer", "Badkamer", "Slaapkamer", "Algemeen", "Kantoor"];
@@ -29,10 +31,10 @@ export type Attachment = {
 export type Task = {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   status: Status;
   priority: Priority;
-  dueDate: Date;
+  dueDate?: Date;
   assigneeId: string | null;
   labels: Label[];
   subtasks: Subtask[];
