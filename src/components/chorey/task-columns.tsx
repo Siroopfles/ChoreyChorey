@@ -17,11 +17,11 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
           {tasks.length}
         </span>
       </div>
-      <div className="flex-grow space-y-3 p-1 overflow-y-auto rounded-md bg-muted/80 min-h-[200px]">
+      <div className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
         {tasks.length > 0 ? (
           tasks.map((task) => <TaskCard key={task.id} task={task} users={users} />)
         ) : (
-          <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80">
             Geen taken hier.
           </div>
         )}
@@ -33,7 +33,7 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
 const TaskColumns = ({ tasks, users }: TaskColumnsProps) => {
   const columns: Status[] = ["Te Doen", "In Uitvoering", "Voltooid", "Geannuleerd", "Gearchiveerd"];
 
-  const tasksByStatus = (status: Status) => tasks.filter((task) => task.status === status);
+  const tasksByStatus = (status: Status) => tasks.filter((task) => task.status === status).sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime());
 
   return (
     <ScrollArea className="w-full">

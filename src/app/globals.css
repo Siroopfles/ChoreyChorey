@@ -8,16 +8,16 @@ body {
 
 @layer base {
   :root {
-    --background: 240 10% 99%; /* Almost white */
+    --background: 240 5% 96.1%;
     --foreground: 240 10% 3.9%;
 
-    --card: 240 10% 100%;
+    --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
 
-    --popover: 240 10% 100%;
+    --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 262.1 83.3% 57.8%; /* A nice purple */
+    --primary: 262.1 83.3% 57.8%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 4.8% 95.9%;
@@ -50,13 +50,13 @@ body {
     --status-inprogress: 210 89% 64%; /* Blue */
     --status-completed: 142 71% 45%;   /* Green */
     --status-cancelled: 0 84.2% 60.2%; /* Red */
-    --status-archived: 262 83% 58%;   /* Purple */
+    --status-archived: 240 5% 65%;   /* Muted Gray */
 
     /* Sidebar specific dark theme */
-    --sidebar-background: 240 10% 10%;
+    --sidebar-background: 240 10% 11.1%;
     --sidebar-foreground: 240 5% 95%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 240 10% 10%;
+    --sidebar-primary-foreground: 240 10% 11.1%;
     --sidebar-accent: 240 10% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 240 10% 20%;
@@ -64,35 +64,34 @@ body {
   }
 
   .dark {
-    /* Define a proper dark theme for later */
-    --background: 240 10% 10%;
-    --foreground: 240 5% 95%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 240 10% 15%;
-    --card-foreground: 240 5% 95%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 10%;
-    --popover-foreground: 240 5% 95%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
     --primary: 262.1 83.3% 57.8%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 10% 25%;
-    --secondary-foreground: 240 5% 95%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 10% 25%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    --accent: 240 10% 25%;
-    --accent-foreground: 240 5% 95%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 240 10% 25%;
-    --input: 240 10% 25%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
     --ring: 262.1 83.3% 57.8%;
-
+    
     /* Priority Colors */
     --chart-1: 350 90% 55%;
     --chart-2: 35 95% 55%;
@@ -101,17 +100,17 @@ body {
     --chart-5: 240 5% 65%;
     
     /* Status Colors */
-    --status-todo: 220 13% 69%;      /* Gray */
-    --status-inprogress: 210 89% 64%; /* Blue */
-    --status-completed: 142 71% 45%;   /* Green */
-    --status-cancelled: 0 84.2% 60.2%; /* Red */
-    --status-archived: 262 83% 58%;   /* Purple */
+    --status-todo: 220 13% 69%;
+    --status-inprogress: 210 89% 64%;
+    --status-completed: 142 71% 45%;
+    --status-cancelled: 0 84.2% 60.2%;
+    --status-archived: 240 5% 65%;
 
     /* Sidebar is always dark, so these are the same as :root */
-    --sidebar-background: 240 10% 10%;
+    --sidebar-background: 240 10% 11.1%;
     --sidebar-foreground: 240 5% 95%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 240 10% 10%;
+    --sidebar-primary-foreground: 240 10% 11.1%;
     --sidebar-accent: 240 10% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 240 10% 20%;

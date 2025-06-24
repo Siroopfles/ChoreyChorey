@@ -44,7 +44,7 @@ const statusConfig = {
     'Te Doen': { color: 'border-l-[hsl(var(--status-todo))]' },
     'In Uitvoering': { color: 'border-l-[hsl(var(--status-inprogress))]' },
     Voltooid: { icon: <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-completed))]" />, color: 'border-l-[hsl(var(--status-completed))]' },
-    Gearchiveerd: { icon: <Archive className="h-5 w-5 text-muted-foreground" />, color: 'border-l-[hsl(var(--status-archived))]' },
+    Gearchiveerd: { icon: <Archive className="h-5 w-5 text-[hsl(var(--status-archived))]" />, color: 'border-l-[hsl(var(--status-archived))]' },
     Geannuleerd: { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-[hsl(var(--status-cancelled))]' },
 };
 
@@ -56,10 +56,10 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
 
 
   return (
-    <Card className={cn('hover:shadow-md transition-shadow duration-200 bg-card border-l-4', statusInfo.color)}>
+    <Card className={cn('hover:shadow-lg transition-shadow duration-200 bg-card border-l-4', statusInfo.color)}>
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-sm font-semibold font-body leading-snug">{task.title}</CardTitle>
+          <CardTitle className="text-sm font-semibold font-body leading-snug pt-1">{task.title}</CardTitle>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
@@ -95,17 +95,19 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
         <div className="flex items-center gap-3">
           {assignee ? (
             <Avatar className="h-5 w-5">
-              <AvatarImage src={assignee.avatar} alt={assignee.name} />
+              <AvatarImage src={assignee.avatar} alt={assignee.name} data-ai-hint="person face" />
               <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
             </Avatar>
           ) : (
-            <UserIcon className="h-5 w-5 text-gray-400" />
+            <div className="h-5 w-5 flex items-center justify-center">
+              <UserIcon className="h-4 w-4 text-gray-400" />
+            </div>
           )}
           <div className="flex items-center gap-1">
             <CalendarIcon className="h-3 w-3" />
             <span>{format(task.dueDate, 'd MMM')}</span>
           </div>
-          <div className={cn('flex items-center gap-1', priorityConfig[task.priority].color)}>
+          <div className={cn('flex items-center gap-1 font-medium', priorityConfig[task.priority].color)}>
             <PriorityIcon className="h-3 w-3" />
             <span>{task.priority}</span>
           </div>

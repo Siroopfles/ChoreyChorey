@@ -8,10 +8,7 @@ import {
 } from '@/components/ui/sidebar';
 import Leaderboard from '@/components/chorey/leaderboard';
 import AppHeader from '@/components/chorey/app-header';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TaskColumns from '@/components/chorey/task-columns';
-import CalendarView from '@/components/chorey/calendar-view';
-import { Card, CardContent } from '@/components/ui/card';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -40,23 +37,8 @@ export default function Home() {
         </Sidebar>
         <SidebarInset>
           <AppHeader users={users} />
-          <main className="p-4 sm:p-6 lg:p-8 bg-muted/40 flex-1">
-            <Tabs defaultValue="board" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="board">Bord</TabsTrigger>
-                <TabsTrigger value="calendar">Kalender</TabsTrigger>
-              </TabsList>
-              <TabsContent value="board">
-                <TaskColumns tasks={tasks} users={users} />
-              </TabsContent>
-              <TabsContent value="calendar">
-                <Card>
-                  <CardContent className="p-2 sm:p-4">
-                    <CalendarView tasks={tasks} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+          <main className="p-4 sm:p-6 lg:p-8">
+            <TaskColumns tasks={tasks} users={users} />
           </main>
         </SidebarInset>
       </div>
