@@ -14,8 +14,6 @@ import CalendarView from '@/components/chorey/calendar-view';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function Home() {
-  // In a real app, users and tasks would be fetched from an API
-  // and managed with state. For this prototype, we use static data.
   const users = USERS;
   const tasks = TASKS;
 
@@ -24,7 +22,7 @@ export default function Home() {
       <div className="min-h-screen">
         <Sidebar>
           <SidebarHeader className="p-4">
-            <h1 className="text-2xl font-bold font-headline text-primary">Schoonmaak Rooster</h1>
+            <h1 className="text-2xl font-bold font-headline text-sidebar-primary">Chorey</h1>
           </SidebarHeader>
           <SidebarContent className="p-2">
             <Leaderboard users={users} />

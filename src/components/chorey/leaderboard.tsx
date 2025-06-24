@@ -14,21 +14,21 @@ const Leaderboard = ({ users }: LeaderboardProps) => {
   const getRankIcon = (index: number) => {
     switch (index) {
       case 0:
-        return <Crown className="h-5 w-5 text-yellow-500" />;
+        return <Crown className="h-5 w-5 text-chart-3" />;
       case 1:
-        return <Trophy className="h-5 w-5 text-gray-400" />;
+        return <Trophy className="h-5 w-5 text-muted-foreground" />;
       case 2:
-        return <Sparkles className="h-5 w-5 text-yellow-700" />;
+        return <Sparkles className="h-5 w-5 text-chart-2" />;
       default:
         return <div className="w-5 text-center font-bold">{index + 1}</div>;
     }
   };
 
   return (
-    <Card>
+    <Card className="bg-sidebar-accent border-sidebar-border text-sidebar-accent-foreground">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
-          <Trophy className="text-accent" />
+          <Trophy />
           Scorebord
         </CardTitle>
       </CardHeader>
@@ -43,7 +43,7 @@ const Leaderboard = ({ users }: LeaderboardProps) => {
               </Avatar>
               <div className="flex-1">
                 <p className="font-semibold">{user.name}</p>
-                <p className="text-sm text-muted-foreground">{user.points.toLocaleString()} pts</p>
+                <p className="text-sm text-sidebar-foreground/80">{user.points.toLocaleString()} pts</p>
               </div>
             </li>
           ))}

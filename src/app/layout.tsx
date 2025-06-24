@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Schoonmaak Rooster',
-  description: 'Beheer je schoonmaaktaken met gemak.',
+  title: 'Chorey',
+  description: 'Het Gecentraliseerde Leefomgeving & Taakbeheer Intelligentie Systeem',
 };
 
 export default function RootLayout({
