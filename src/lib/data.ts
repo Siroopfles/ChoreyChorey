@@ -1,4 +1,4 @@
-import type { User, Task } from './types';
+import type { User, Task } from '@/lib/types';
 
 // This file is no longer used for providing initial data to the application.
 // The data is now sourced from Firebase Firestore.
