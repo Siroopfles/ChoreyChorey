@@ -2,7 +2,7 @@
 import type { User, Status, Task } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, closestCenter } from '@dnd-kit/core';
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 
@@ -83,7 +83,7 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
      <DndContext 
       sensors={sensors} 
       onDragEnd={handleDragEnd} 
-      collisionDetection={closestCenter}
+      collisionDetection={rectIntersection}
     >
         <ScrollArea className="w-full">
         <div className="flex gap-6 pb-4">
