@@ -15,6 +15,11 @@ import { z } from 'genkit';
 
 const ProcessCommandInputSchema = z.string().describe('The natural language command from the user.');
 
+const ProcessCommandPromptSchema = z.object({
+  command: z.string(),
+  currentDate: z.string(),
+});
+
 const ProcessCommandOutputSchema = z.object({
     action: z.enum(['create', 'search', 'none']).describe('The detected action: create a task, search for tasks, or no specific action.'),
     task: z.object({
@@ -39,11 +44,11 @@ export async function processCommand(input: ProcessCommandInput): Promise<Proces
 
 const prompt = ai.definePrompt({
   name: 'processCommandPrompt',
-  input: { schema: ProcessCommandInputSchema },
+  input: { schema: ProcessCommandPromptSchema },
   output: { schema: ProcessCommandOutputSchema },
   prompt: `Je bent een intelligente assistent in een taakbeheer-app genaamd Chorey. Je analyseert een commando van de gebruiker en zet dit om in een gestructureerde actie.
 
-Analyseer het volgende commando: "{{{prompt}}}"
+Analyseer het volgende commando: "{{{command}}}"
 
 Bepaal eerst de intentie van de gebruiker. Is het doel om een nieuwe taak aan te maken, of om te zoeken naar bestaande taken?
 
@@ -51,8 +56,8 @@ Bepaal eerst de intentie van de gebruiker. Is het doel om een nieuwe taak aan te
     *   Zet 'action' op 'create'.
     *   Extraheer de 'title' (verplicht).
     *   Extraheer een 'description' als er extra details zijn.
-    *   Extraheer een 'dueDate' in YYYY-MM-DD formaat als er een datum wordt genoemd. Vandaag is ${new Date().toISOString().split('T')[0]}.
-    *   Extraheer 'priority' als deze wordt genoemd ('laag', 'midden', 'hoog', 'urgent').
+    *   Extraheer een 'dueDate' in YYYY-MM-DD formaat als er een datum wordt genoemd. Vandaag is {{{currentDate}}}.
+    *   Extraheer 'priority' als deze wordt genoemd. Mogelijke waarden zijn 'Laag', 'Midden', 'Hoog', 'Urgent'. Zorg dat de waarde exact overeenkomt.
     *   Extraheer 'labels' als er categorieën worden genoemd.
     *   Extraheer de naam van een 'assignee' als die wordt genoemd.
     *   Geef een korte 'reasoning'.
@@ -81,7 +86,10 @@ const processCommandFlow = ai.defineFlow(
     outputSchema: ProcessCommandOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
+    const { output } = await prompt({
+      command: input,
+      currentDate: new Date().toISOString().split('T')[0],
+    });
     return output!;
   }
 );
