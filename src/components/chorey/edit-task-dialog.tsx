@@ -30,6 +30,7 @@ import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Lo
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useTasks } from '@/contexts/task-context';
+import { handleSuggestSubtasks } from '@/app/actions';
 
 type EditTaskDialogProps = {
   users: User[];
@@ -41,6 +42,8 @@ type EditTaskDialogProps = {
 export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
   const { updateTask } = useTasks();
+  const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
+
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -108,6 +111,38 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     });
     setIsOpen(false);
   }
+  
+  const onSuggestSubtasks = async () => {
+    const title = form.getValues('title');
+    const description = form.getValues('description');
+    if (!title) {
+        toast({
+            title: 'Titel vereist',
+            description: 'Voer een titel in om subtaken te kunnen genereren.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
+    setIsSuggestingSubtasks(true);
+    const result = await handleSuggestSubtasks(title, description);
+
+    if (result.error) {
+        toast({
+            title: 'Fout bij suggereren',
+            description: result.error,
+            variant: 'destructive'
+        });
+    } else if (result.subtasks) {
+        result.subtasks.forEach(subtask => appendSubtask({ text: subtask }));
+        toast({
+            title: 'Subtaken toegevoegd!',
+            description: `${result.subtasks.length} subtaken zijn door AI gegenereerd.`,
+        });
+    }
+    setIsSuggestingSubtasks(false);
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -337,6 +372,20 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                     <Button type="button" variant="outline" size="sm" onClick={() => appendSubtask({ text: '' })}>
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Subtaak toevoegen
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onSuggestSubtasks}
+                        disabled={isSuggestingSubtasks}
+                    >
+                        {isSuggestingSubtasks ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Bot className="mr-2 h-4 w-4" />
+                        )}
+                        Genereer (AI)
                     </Button>
                   </div>
                 </div>

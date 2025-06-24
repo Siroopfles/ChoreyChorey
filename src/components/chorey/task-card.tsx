@@ -47,6 +47,7 @@ import EditTaskDialog from './edit-task-dialog';
 type TaskCardProps = {
   task: Task;
   users: User[];
+  isDragging?: boolean;
 };
 
 const priorityConfig = {
@@ -65,7 +66,7 @@ const statusConfig: Record<Task['status'], { icon?: JSX.Element; color: string }
 };
 
 
-const TaskCard = ({ task, users }: TaskCardProps) => {
+const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
@@ -92,7 +93,8 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
         className={cn(
             'hover:shadow-lg transition-shadow duration-200 bg-card border-l-4', 
             statusInfo.color,
-            isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+            isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
+            isDragging && 'opacity-50'
         )}
       >
         <CardHeader className="p-3 pb-2 pl-9">
@@ -145,6 +147,24 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
               </Badge>
             ))}
           </div>
+
+          {task.attachments.length > 0 && (
+            <div className="mb-2 space-y-1 pt-2 mt-2 border-t">
+                 {task.attachments.map((attachment) => (
+                    <a
+                      key={attachment.id}
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:underline mt-1"
+                    >
+                      <Paperclip className="h-3 w-3" />
+                      <span className="truncate">{attachment.name}</span>
+                    </a>
+                  ))}
+            </div>
+          )}
+
           {totalSubtasks > 0 && (
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="subtasks" className="border-b-0">

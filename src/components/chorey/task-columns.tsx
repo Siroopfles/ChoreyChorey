@@ -1,12 +1,10 @@
 'use client';
 import type { User, Status, Task } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
-import TaskCard from '@/components/chorey/task-card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-
-type TaskColumnsProps = {
-  users: User[];
-};
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, closestCenter } from '@dnd-kit/core';
+import { SortableContext } from '@dnd-kit/sortable';
+import { SortableTaskCard } from './sortable-task-card';
 
 const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; users: User[] }) => {
   return (
@@ -17,21 +15,31 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
           {tasks.length}
         </span>
       </div>
-      <div className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
-        {tasks.length > 0 ? (
-          tasks.map((task) => <TaskCard key={task.id} task={task} users={users} />)
-        ) : (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80">
-            Geen taken hier.
-          </div>
-        )}
-      </div>
+       <SortableContext id={title} items={tasks.map(t => t.id)}>
+        <div className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
+            {tasks.length > 0 ? (
+            tasks.map((task) => <SortableTaskCard key={task.id} task={task} users={users} />)
+            ) : (
+            <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80">
+                Geen taken hier.
+            </div>
+            )}
+        </div>
+      </SortableContext>
     </div>
   );
 };
 
 const TaskColumns = ({ users }: TaskColumnsProps) => {
-  const { tasks, searchTerm } = useTasks();
+  const { tasks, searchTerm, updateTask } = useTasks();
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require pointer to move 8px before dragging starts
+      },
+    })
+  );
+
   const columns: Status[] = ["Te Doen", "In Uitvoering", "Voltooid", "Geannuleerd", "Gearchiveerd"];
 
   const tasksByStatus = (status: Status) => {
@@ -49,15 +57,39 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
         .sort((a,b) => (a.dueDate?.getTime() || Infinity) - (b.dueDate?.getTime() || Infinity));
   }
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over) return;
+    
+    const activeContainer = active.data.current?.sortable.containerId;
+    const overContainer = over.data.current?.sortable.containerId || over.id;
+
+    if (!activeContainer || !overContainer || activeContainer === overContainer) {
+      // Logic for reordering within the same column could be added here
+      // but is skipped for now as it requires an `order` field on tasks.
+      return;
+    }
+
+    // Task is dropped in a different column, update its status
+    updateTask(active.id as string, { status: overContainer as Status });
+  }
+
   return (
-    <ScrollArea className="w-full">
-      <div className="flex gap-6 pb-4">
-        {columns.map((status) => (
-          <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} />
-        ))}
-      </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+     <DndContext 
+      sensors={sensors} 
+      onDragEnd={handleDragEnd} 
+      collisionDetection={closestCenter}
+    >
+        <ScrollArea className="w-full">
+        <div className="flex gap-6 pb-4">
+            {columns.map((status) => (
+            <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} />
+            ))}
+        </div>
+        <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+    </DndContext>
   );
 };
 
