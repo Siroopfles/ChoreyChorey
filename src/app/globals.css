@@ -8,99 +8,114 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 240 10% 99%; /* Almost white */
+    --foreground: 240 10% 3.9%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 240 10% 100%;
+    --card-foreground: 240 10% 3.9%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 240 10% 100%;
+    --popover-foreground: 240 10% 3.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 262.1 83.3% 57.8%; /* A nice purple */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 262.1 83.3% 57.8%;
 
     --radius: 0.5rem;
 
-    /* Custom colors */
-    --chart-1: 0 84.2% 60.2%; /* Red for Urgent */
-    --chart-2: 25 95% 53%;   /* Orange for High */
-    --chart-3: 48 96% 50%;   /* Yellow for Medium */
-    --chart-4: 142 71% 45%;  /* Green for Low */
-    --chart-5: 215.4 16.3% 46.9%; /* Muted for others */
+    /* Priority Colors */
+    --chart-1: 350 90% 55%;   /* Urgent - Red */
+    --chart-2: 35 95% 55%;   /* Hoog - Orange */
+    --chart-3: 50 95% 55%;   /* Midden - Yellow */
+    --chart-4: 160 80% 40%;  /* Laag - Green */
+    --chart-5: 240 5% 65%; /* Muted for others */
+
+    /* Status Colors */
+    --status-todo: 220 13% 69%;      /* Gray */
+    --status-inprogress: 210 89% 64%; /* Blue */
+    --status-completed: 142 71% 45%;   /* Green */
+    --status-cancelled: 0 84.2% 60.2%; /* Red */
+    --status-archived: 262 83% 58%;   /* Purple */
 
     /* Sidebar specific dark theme */
-    --sidebar-background: 222.2 47.4% 11.2%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 210 40% 98%;
+    --sidebar-background: 240 10% 10%;
+    --sidebar-foreground: 240 5% 95%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 240 10% 10%;
+    --sidebar-accent: 240 10% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 10% 20%;
+    --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Define a proper dark theme for later */
+    --background: 240 10% 10%;
+    --foreground: 240 5% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 15%;
+    --card-foreground: 240 5% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 10%;
+    --popover-foreground: 240 5% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 10% 25%;
+    --secondary-foreground: 240 5% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 10% 25%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 10% 25%;
+    --accent-foreground: 240 5% 95%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 240 10% 25%;
+    --input: 240 10% 25%;
+    --ring: 262.1 83.3% 57.8%;
 
-    /* Custom colors */
-    --chart-1: 0 72% 51%; /* Red for Urgent */
-    --chart-2: 25 95% 53%;   /* Orange for High */
-    --chart-3: 48 96% 50%;   /* Yellow for Medium */
-    --chart-4: 142 71% 45%;  /* Green for Low */
-    --chart-5: 215 27.9% 46.9%; /* Muted for others */
+    /* Priority Colors */
+    --chart-1: 350 90% 55%;
+    --chart-2: 35 95% 55%;
+    --chart-3: 50 95% 55%;
+    --chart-4: 160 80% 40%;
+    --chart-5: 240 5% 65%;
+    
+    /* Status Colors */
+    --status-todo: 220 13% 69%;      /* Gray */
+    --status-inprogress: 210 89% 64%; /* Blue */
+    --status-completed: 142 71% 45%;   /* Green */
+    --status-cancelled: 0 84.2% 60.2%; /* Red */
+    --status-archived: 262 83% 58%;   /* Purple */
 
     /* Sidebar is always dark, so these are the same as :root */
-    --sidebar-background: 222.2 47.4% 11.2%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 210 40% 98%;
+    --sidebar-background: 240 10% 10%;
+    --sidebar-foreground: 240 5% 95%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 240 10% 10%;
+    --sidebar-accent: 240 10% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 10% 20%;
+    --sidebar-ring: 0 0% 100%;
   }
 }
 

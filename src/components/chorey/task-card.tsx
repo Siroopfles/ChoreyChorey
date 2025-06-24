@@ -40,31 +40,29 @@ const priorityConfig = {
   Laag: { icon: ChevronDown, color: 'text-chart-4' },
 };
 
-const priorityBorderConfig = {
-  Urgent: 'border-l-4 border-chart-1',
-  Hoog: 'border-l-4 border-chart-2',
-  Midden: 'border-l-4 border-chart-3',
-  Laag: 'border-l-4 border-chart-4',
+const statusConfig = {
+    'Te Doen': { color: 'border-l-[hsl(var(--status-todo))]' },
+    'In Uitvoering': { color: 'border-l-[hsl(var(--status-inprogress))]' },
+    Voltooid: { icon: <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-completed))]" />, color: 'border-l-[hsl(var(--status-completed))]' },
+    Gearchiveerd: { icon: <Archive className="h-5 w-5 text-muted-foreground" />, color: 'border-l-[hsl(var(--status-archived))]' },
+    Geannuleerd: { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-[hsl(var(--status-cancelled))]' },
 };
 
-const statusIcons = {
-  Voltooid: <CheckCircle2 className="h-5 w-5 text-chart-4" />,
-  Gearchiveerd: <Archive className="h-5 w-5 text-muted-foreground" />,
-  Geannuleerd: <XCircle className="h-5 w-5 text-destructive" />,
-};
 
 const TaskCard = ({ task, users }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
+  const statusInfo = statusConfig[task.status];
+
 
   return (
-    <Card className={cn('hover:shadow-lg transition-shadow duration-200', priorityBorderConfig[task.priority])}>
-      <CardHeader className="p-4 pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-base font-semibold font-body leading-snug">{task.title}</CardTitle>
+    <Card className={cn('hover:shadow-md transition-shadow duration-200 bg-card border-l-4', statusInfo.color)}>
+      <CardHeader className="p-3 pb-2">
+        <div className="flex justify-between items-start gap-2">
+          <CardTitle className="text-sm font-semibold font-body leading-snug">{task.title}</CardTitle>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6">
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -73,7 +71,7 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
                 <Edit className="mr-2 h-4 w-4" />
                 Bewerken
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
+              <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Verwijderen
               </DropdownMenuItem>
@@ -81,22 +79,22 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
           </DropdownMenu>
         </div>
         {task.description && (
-          <CardDescription className="text-sm line-clamp-2">{task.description}</CardDescription>
+          <CardDescription className="text-xs line-clamp-2 mt-1">{task.description}</CardDescription>
         )}
       </CardHeader>
-      <CardContent className="p-4 pt-2">
-        <div className="flex flex-wrap gap-2">
+      <CardContent className="p-3 pt-1">
+        <div className="flex flex-wrap gap-1">
           {task.labels.map((label) => (
-            <Badge key={label} variant="secondary" className="font-normal">
+            <Badge key={label} variant="secondary" className="font-normal text-xs">
               {label}
             </Badge>
           ))}
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
+      <CardFooter className="p-3 pt-0 flex justify-between items-center text-xs text-muted-foreground">
+        <div className="flex items-center gap-3">
           {assignee ? (
-            <Avatar className="h-6 w-6">
+            <Avatar className="h-5 w-5">
               <AvatarImage src={assignee.avatar} alt={assignee.name} />
               <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
             </Avatar>
@@ -104,16 +102,16 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
             <UserIcon className="h-5 w-5 text-gray-400" />
           )}
           <div className="flex items-center gap-1">
-            <CalendarIcon className="h-4 w-4" />
-            <span>{format(task.dueDate, 'MMM d')}</span>
+            <CalendarIcon className="h-3 w-3" />
+            <span>{format(task.dueDate, 'd MMM')}</span>
           </div>
           <div className={cn('flex items-center gap-1', priorityConfig[task.priority].color)}>
-            <PriorityIcon className="h-4 w-4" />
+            <PriorityIcon className="h-3 w-3" />
             <span>{task.priority}</span>
           </div>
-          {task.isPrivate && <Lock className="h-4 w-4" />}
+          {task.isPrivate && <Lock className="h-3 w-3" />}
         </div>
-        {statusIcons[task.status as keyof typeof statusIcons]}
+        {statusInfo.icon}
       </CardFooter>
     </Card>
   );
