@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, Home, LogOut, PlusCircle, Settings, Moon, Sun } from 'lucide-react';
-import AddTaskDialog from './add-task-dialog';
+import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import { useTheme } from 'next-themes';
 
 type AppHeaderProps = {

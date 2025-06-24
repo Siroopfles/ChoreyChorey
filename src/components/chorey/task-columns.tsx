@@ -1,7 +1,7 @@
 'use client';
-import type { User, Status } from '@/lib/types';
+import type { User, Status, Task } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
-import TaskCard from './task-card';
+import TaskCard from '@/components/chorey/task-card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 type TaskColumnsProps = {
