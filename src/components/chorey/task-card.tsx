@@ -1,6 +1,6 @@
 'use client';
 import type { Task, User } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,8 +25,10 @@ import {
   Calendar as CalendarIcon,
   Lock,
   XCircle,
+  Paperclip,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Progress } from '../ui/progress';
 
 type TaskCardProps = {
   task: Task;
@@ -53,7 +55,10 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-
+  
+  const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
+  const totalSubtasks = task.subtasks.length;
+  const subtaskProgress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
 
   return (
     <Card className={cn('hover:shadow-lg transition-shadow duration-200 bg-card border-l-4', statusInfo.color)}>
@@ -78,9 +83,6 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {task.description && (
-          <CardDescription className="text-xs line-clamp-2 mt-1">{task.description}</CardDescription>
-        )}
       </CardHeader>
       <CardContent className="p-3 pt-1">
         <div className="flex flex-wrap gap-1">
@@ -90,6 +92,17 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
             </Badge>
           ))}
         </div>
+        {totalSubtasks > 0 && (
+          <div className="mt-2 space-y-1">
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span>Subtaken</span>
+              <span>
+                {completedSubtasks}/{totalSubtasks}
+              </span>
+            </div>
+            <Progress value={subtaskProgress} className="h-1" />
+          </div>
+        )}
       </CardContent>
       <CardFooter className="p-3 pt-0 flex justify-between items-center text-xs text-muted-foreground">
         <div className="flex items-center gap-3">
@@ -111,6 +124,12 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
             <PriorityIcon className="h-3 w-3" />
             <span>{task.priority}</span>
           </div>
+           {task.attachments.length > 0 && (
+            <div className="flex items-center gap-1">
+              <Paperclip className="h-3 w-3" />
+              <span>{task.attachments.length}</span>
+            </div>
+          )}
           {task.isPrivate && <Lock className="h-3 w-3" />}
         </div>
         {statusInfo.icon}

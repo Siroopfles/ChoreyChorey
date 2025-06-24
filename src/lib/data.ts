@@ -18,7 +18,10 @@ export const TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 3)),
     assigneeId: 'user-1',
     labels: ['Woonkamer'],
-    subtasks: [],
+    subtasks: [
+      { id: 'sub-3', text: 'Onder de bank stofzuigen', completed: false },
+      { id: 'sub-4', text: 'De plinten afnemen', completed: false },
+    ],
     attachments: [],
     isPrivate: false,
     createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
@@ -50,7 +53,9 @@ export const TASKS: Task[] = [
     assigneeId: 'user-3',
     labels: ['Keuken'],
     subtasks: [],
-    attachments: [],
+    attachments: [
+        {id: 'att-1', name: 'Instructievideo', url: 'https://youtube.com', type: 'file'}
+    ],
     isPrivate: false,
     createdAt: new Date(new Date().setDate(new Date().getDate() - 1)),
   },
