@@ -11,7 +11,7 @@ type CalendarViewProps = {
 export default function CalendarView({ tasks }: CalendarViewProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  const dueDates = tasks.map((task) => task.dueDate);
+  const dueDates = tasks.map((task) => task.dueDate).filter((d): d is Date => !!d);
 
   const modifiers = {
     due: dueDates,

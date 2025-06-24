@@ -1,5 +1,5 @@
 'use client';
-import type { Task, User, Status } from '@/lib/types';
+import type { Task, User } from '@/lib/types';
 import { ALL_STATUSES } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,10 +32,14 @@ import {
   XCircle,
   Paperclip,
   Replace,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useTasks } from '@/contexts/task-context';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Checkbox } from '../ui/checkbox';
+
 
 type TaskCardProps = {
   task: Task;
@@ -49,12 +53,12 @@ const priorityConfig = {
   Laag: { icon: ChevronDown, color: 'text-chart-4' },
 };
 
-const statusConfig = {
-    'Te Doen': { color: 'border-l-[hsl(var(--status-todo))]' },
-    'In Uitvoering': { color: 'border-l-[hsl(var(--status-inprogress))]' },
-    Voltooid: { icon: <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-completed))]" />, color: 'border-l-[hsl(var(--status-completed))]' },
-    Gearchiveerd: { icon: <Archive className="h-5 w-5 text-[hsl(var(--status-archived))]" />, color: 'border-l-[hsl(var(--status-archived))]' },
-    Geannuleerd: { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-[hsl(var(--status-cancelled))]' },
+const statusConfig: Record<Task['status'], { icon?: JSX.Element; color: string }> = {
+    'Te Doen': { color: 'border-l-gray-400' },
+    'In Uitvoering': { color: 'border-l-blue-500' },
+    Voltooid: { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, color: 'border-l-green-500' },
+    Gearchiveerd: { icon: <Archive className="h-5 w-5 text-gray-500" />, color: 'border-l-gray-500' },
+    Geannuleerd: { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-destructive' },
 };
 
 
@@ -62,7 +66,7 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask } = useTasks();
+  const { updateTask, toggleSubtaskCompletion } = useTasks();
   
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
   const totalSubtasks = task.subtasks.length;
@@ -108,7 +112,7 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
         </div>
       </CardHeader>
       <CardContent className="p-3 pt-1">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1 mb-2">
           {task.labels.map((label) => (
             <Badge key={label} variant="secondary" className="font-normal text-xs">
               {label}
@@ -116,18 +120,43 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
           ))}
         </div>
         {totalSubtasks > 0 && (
-          <div className="mt-2 space-y-1">
-            <div className="flex justify-between items-center text-xs text-muted-foreground">
-              <span>Subtaken</span>
-              <span>
-                {completedSubtasks}/{totalSubtasks}
-              </span>
-            </div>
-            <Progress value={subtaskProgress} className="h-1" />
-          </div>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="subtasks" className="border-b-0">
+              <AccordionTrigger className="p-0 hover:no-underline [&_svg]:h-4 [&_svg]:w-4">
+                <div className="w-full space-y-1">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>Subtaken</span>
+                    <span>
+                      {completedSubtasks}/{totalSubtasks}
+                    </span>
+                  </div>
+                  <Progress value={subtaskProgress} className="h-1" />
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-0">
+                <div className="space-y-2">
+                  {task.subtasks.map(subtask => (
+                    <div key={subtask.id} className="flex items-center gap-3">
+                      <Checkbox
+                        id={`subtask-${subtask.id}`}
+                        checked={subtask.completed}
+                        onCheckedChange={() => toggleSubtaskCompletion(task.id, subtask.id)}
+                      />
+                      <label
+                        htmlFor={`subtask-${subtask.id}`}
+                        className={cn("text-sm leading-none cursor-pointer", subtask.completed && "line-through text-muted-foreground")}
+                      >
+                        {subtask.text}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         )}
       </CardContent>
-      <CardFooter className="p-3 pt-0 flex justify-between items-center text-xs text-muted-foreground">
+      <CardFooter className="p-3 pt-2 flex justify-between items-center text-xs text-muted-foreground">
         <div className="flex items-center gap-3">
           {assignee ? (
             <Avatar className="h-5 w-5">

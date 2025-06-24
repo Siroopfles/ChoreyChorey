@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
-import type { Task, Status } from '@/lib/types';
+import type { Task } from '@/lib/types';
 import type { TaskFormValues } from '@/components/chorey/add-task-dialog';
 import { TASKS } from '@/lib/data';
 
@@ -10,6 +10,7 @@ type TaskContextType = {
   tasks: Task[];
   addTask: (taskData: TaskFormValues) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
+  toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -43,8 +44,24 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const toggleSubtaskCompletion = (taskId: string, subtaskId: string) => {
+    setTasks(prevTasks =>
+      prevTasks.map(task => {
+        if (task.id === taskId) {
+          const updatedSubtasks = task.subtasks.map(subtask =>
+            subtask.id === subtaskId
+              ? { ...subtask, completed: !subtask.completed }
+              : subtask
+          );
+          return { ...task, subtasks: updatedSubtasks };
+        }
+        return task;
+      })
+    );
+  };
+
   return (
-    <TaskContext.Provider value={{ tasks, addTask, updateTask }}>
+    <TaskContext.Provider value={{ tasks, addTask, updateTask, toggleSubtaskCompletion }}>
       {children}
     </TaskContext.Provider>
   );
