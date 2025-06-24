@@ -11,6 +11,8 @@ export type Status = "Te Doen" | "In Uitvoering" | "Voltooid" | "Gearchiveerd" |
 
 export type Label = "Keuken" | "Woonkamer" | "Badkamer" | "Slaapkamer" | "Algemeen" | "Kantoor";
 
+export const ALL_LABELS: Label[] = ["Keuken", "Woonkamer", "Badkamer", "Slaapkamer", "Algemeen", "Kantoor"];
+
 export type Subtask = {
   id: string;
   text: string;

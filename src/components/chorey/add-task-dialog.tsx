@@ -1,6 +1,7 @@
 'use client';
 
-import type { User } from '@/lib/types';
+import type { User, Label } from '@/lib/types';
+import { ALL_LABELS } from '@/lib/types';
 import { useState, type ReactNode } from 'react';
 import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,9 +23,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X } from 'lucide-react';
 import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
@@ -37,6 +40,7 @@ const taskFormSchema = z.object({
   assigneeId: z.string().optional(),
   dueDate: z.date().optional(),
   priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).default('Midden'),
+  labels: z.array(z.string()).optional(),
   subtasks: z.array(z.object({ text: z.string().min(1, 'Subtaak mag niet leeg zijn.') })).optional(),
   attachments: z.array(z.object({ url: z.string().url('Voer een geldige URL in.') })).optional(),
   isPrivate: z.boolean().default(false),
@@ -63,6 +67,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
       isPrivate: false,
       subtasks: [],
       attachments: [],
+      labels: [],
     },
   });
 
@@ -235,22 +240,93 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="isPrivate"
+                  name="labels"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-2">
-                      <div className="space-y-0.5">
-                        <FormLabel>Privé taak</FormLabel>
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Labels</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
+                              <Tags className="mr-2 h-4 w-4" />
+                              {field.value?.length > 0 ? `${field.value.length} geselecteerd` : 'Selecteer labels'}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Zoek label..." />
+                            <CommandList>
+                              <CommandEmpty>Geen label gevonden.</CommandEmpty>
+                              <CommandGroup>
+                                {ALL_LABELS.map((label) => {
+                                  const isSelected = field.value?.includes(label);
+                                  return (
+                                    <CommandItem
+                                      key={label}
+                                      onSelect={() => {
+                                        if (isSelected) {
+                                          field.onChange(field.value?.filter((l) => l !== label));
+                                        } else {
+                                          field.onChange([...(field.value || []), label]);
+                                        }
+                                      }}
+                                    >
+                                      <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                                      {label}
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <div className="pt-1 h-fit min-h-[22px]">
+                        {field.value?.map((label) => (
+                          <Badge
+                            variant="secondary"
+                            key={label}
+                            className="mr-1 mb-1"
+                          >
+                            {label}
+                            <button
+                              type="button"
+                              className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onClick={() => field.onChange(field.value?.filter((l) => l !== label))}
+                            >
+                              <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                            </button>
+                          </Badge>
+                        ))}
                       </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+              
+              <FormField
+                control={form.control}
+                name="isPrivate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Privé taak</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
               <TaskAssignmentSuggestion users={users} />
               
