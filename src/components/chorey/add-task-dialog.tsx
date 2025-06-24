@@ -28,11 +28,11 @@ import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 
 const taskFormSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters long.'),
+  title: z.string().min(3, 'Titel moet minimaal 3 karakters lang zijn.'),
   description: z.string().optional(),
   assigneeId: z.string().optional(),
   dueDate: z.date().optional(),
-  priority: z.enum(['Low', 'Medium', 'High']).default('Medium'),
+  priority: z.enum(['Laag', 'Midden', 'Hoog']).default('Midden'),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -51,15 +51,15 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
     defaultValues: {
       title: '',
       description: '',
-      priority: 'Medium',
+      priority: 'Midden',
     },
   });
 
   function onSubmit(data: TaskFormValues) {
     console.log(data);
     toast({
-      title: 'Task Created!',
-      description: `The task "${data.title}" has been successfully created.`,
+      title: 'Taak Aangemaakt!',
+      description: `De taak "${data.title}" is succesvol aangemaakt.`,
     });
     setOpen(false);
     form.reset();
@@ -70,8 +70,8 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Add New Task</DialogTitle>
-          <DialogDescription>Fill in the details below to create a new task.</DialogDescription>
+          <DialogTitle className="font-headline">Nieuwe Taak Toevoegen</DialogTitle>
+          <DialogDescription>Vul de details hieronder in om een nieuwe taak aan te maken.</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <Form {...form}>
@@ -81,9 +81,9 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
+                    <FormLabel>Titel</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Water the plants" {...field} />
+                      <Input placeholder="bijv., Stofzuig de woonkamer" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -94,9 +94,9 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Omschrijving</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Add a more detailed description..." className="resize-none" {...field} />
+                      <Textarea placeholder="Voeg een meer gedetailleerde omschrijving toe..." className="resize-none" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -109,12 +109,12 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                   name="assigneeId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Assignee</FormLabel>
+                      <FormLabel>Toegewezen aan</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                            <SelectValue placeholder="Select an assignee" />
+                            <SelectValue placeholder="Selecteer een persoon" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -134,7 +134,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                   name="dueDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Due Date</FormLabel>
+                      <FormLabel>Einddatum</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -145,7 +145,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                                 !field.value && 'text-muted-foreground'
                               )}
                             >
-                              {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                              {field.value ? format(field.value, 'PPP') : <span>Kies een datum</span>}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
@@ -164,9 +164,9 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
 
               <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                  Cancel
+                  Annuleren
                 </Button>
-                <Button type="submit">Create Task</Button>
+                <Button type="submit">Taak Aanmaken</Button>
               </DialogFooter>
             </form>
           </Form>

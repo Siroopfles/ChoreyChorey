@@ -31,7 +31,7 @@ export default function AppHeader({ users }: AppHeaderProps) {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search tasks..."
+              placeholder="Zoek taken..."
               className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px] bg-card"
             />
           </div>
@@ -40,7 +40,7 @@ export default function AppHeader({ users }: AppHeaderProps) {
       <div className="flex items-center gap-4">
         <AddTaskDialog users={users}>
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Task
+            <PlusCircle className="mr-2 h-4 w-4" /> Taak Toevoegen
           </Button>
         </AddTaskDialog>
 
@@ -59,11 +59,11 @@ export default function AppHeader({ users }: AppHeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Mijn Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              <span>Instellingen</span>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Home className="mr-2 h-4 w-4" />
@@ -72,7 +72,7 @@ export default function AppHeader({ users }: AppHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
+              <span>Uitloggen</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

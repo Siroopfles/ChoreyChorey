@@ -24,7 +24,7 @@ export default function Home() {
       <div className="min-h-screen">
         <Sidebar>
           <SidebarHeader className="p-4">
-            <h1 className="text-2xl font-bold font-headline text-primary">Chorey</h1>
+            <h1 className="text-2xl font-bold font-headline text-primary">Schoonmaak Rooster</h1>
           </SidebarHeader>
           <SidebarContent className="p-2">
             <Leaderboard users={users} />
@@ -35,8 +35,8 @@ export default function Home() {
           <main className="p-4 sm:p-6 lg:p-8">
             <Tabs defaultValue="board" className="w-full">
               <TabsList className="mb-4">
-                <TabsTrigger value="board">Board</TabsTrigger>
-                <TabsTrigger value="calendar">Calendar</TabsTrigger>
+                <TabsTrigger value="board">Bord</TabsTrigger>
+                <TabsTrigger value="calendar">Kalender</TabsTrigger>
               </TabsList>
               <TabsContent value="board">
                 <TaskColumns tasks={tasks} users={users} />

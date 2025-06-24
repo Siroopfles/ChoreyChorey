@@ -29,7 +29,7 @@ const Leaderboard = ({ users }: LeaderboardProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <Trophy className="text-accent" />
-          Leaderboard
+          Scorebord
         </CardTitle>
       </CardHeader>
       <CardContent>

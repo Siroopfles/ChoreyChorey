@@ -21,7 +21,7 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
             tasks.map((task) => <TaskCard key={task.id} task={task} users={users} />)
           ) : (
             <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
-              No tasks here.
+              Geen taken hier.
             </div>
           )}
         </CardContent>

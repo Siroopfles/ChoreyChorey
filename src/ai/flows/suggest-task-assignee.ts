@@ -39,30 +39,30 @@ const prompt = ai.definePrompt({
   name: 'suggestTaskAssigneePrompt',
   input: {schema: SuggestTaskAssigneeInputSchema},
   output: {schema: SuggestTaskAssigneeOutputSchema},
-  prompt: `You are an AI task assignment assistant. Your goal is to suggest the optimal assignee for a given task, considering their historical performance and preferences.
+  prompt: `Je bent een AI-assistent voor het toewijzen van taken. Je doel is om de optimale persoon voor te stellen voor een bepaalde schoonmaakklus, rekening houdend met hun historische prestaties en voorkeuren.
 
-Task Description: {{{taskDescription}}}
-Available Assignees: {{#each availableAssignees}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+Taakomschrijving: {{{taskDescription}}}
+Beschikbare Toewijzers: {{#each availableAssignees}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
 {{#if taskHistory}}
-Task History:
+Taakgeschiedenis:
 {{#each taskHistory}}
-- Assignee: {{{assignee}}}, Task: {{{taskDescription}}}, Completion Time: {{{completionTime}}} hours
+- Toegewezen aan: {{{assignee}}}, Taak: {{{taskDescription}}}, Voltooiingstijd: {{{completionTime}}} uur
 {{/each}}
 {{else}}
-No task history available.
+Geen taakgeschiedenis beschikbaar.
 {{/if}}
 
 {{#if assigneePreferences}}
-Assignee Preferences:
+Voorkeuren Toewijzer:
 {{#each assigneePreferences}}
-- Assignee: {{@key}}, Preference: {{{this}}}
+- Toegewezen aan: {{@key}}, Voorkeur: {{{this}}}
 {{/each}}
 {{else}}
-No assignee preferences available.
+Geen voorkeuren van de toewijzer beschikbaar.
 {{/if}}
 
-Based on the task description, available assignees, task history, and assignee preferences, suggest the best assignee for the task and explain your reasoning. Be concise and avoid unnecessary details.
+Stel op basis van de taakomschrijving, beschikbare toewijzers, taakgeschiedenis en voorkeuren van de toewijzer de beste toewijzer voor de taak voor en leg je redenering uit. Wees beknopt en vermijd onnodige details.
 `, 
 });
 

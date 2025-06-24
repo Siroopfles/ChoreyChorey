@@ -30,15 +30,15 @@ type TaskCardProps = {
 };
 
 const priorityIcons = {
-  High: <ArrowUp className="h-4 w-4 text-red-500" />,
-  Medium: <ArrowRight className="h-4 w-4 text-yellow-500" />,
-  Low: <ArrowRight className="h-4 w-4 text-green-500" />,
+  Hoog: <ArrowUp className="h-4 w-4 text-red-500" />,
+  Midden: <ArrowRight className="h-4 w-4 text-yellow-500" />,
+  Laag: <ArrowRight className="h-4 w-4 text-green-500" />,
 };
 
 const priorityColors = {
-  High: 'border-l-4 border-red-500',
-  Medium: 'border-l-4 border-yellow-500',
-  Low: 'border-l-4 border-green-500',
+  Hoog: 'border-l-4 border-red-500',
+  Midden: 'border-l-4 border-yellow-500',
+  Laag: 'border-l-4 border-green-500',
 };
 
 const TaskCard = ({ task, users }: TaskCardProps) => {
@@ -58,11 +58,11 @@ const TaskCard = ({ task, users }: TaskCardProps) => {
             <DropdownMenuContent align="end">
               <DropdownMenuItem>
                 <Edit className="mr-2 h-4 w-4" />
-                Edit
+                Bewerken
               </DropdownMenuItem>
               <DropdownMenuItem className="text-red-600">
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete
+                Verwijderen
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

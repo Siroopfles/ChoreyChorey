@@ -5,11 +5,11 @@ export type User = {
   points: number;
 };
 
-export type Priority = "Low" | "Medium" | "High";
+export type Priority = "Laag" | "Midden" | "Hoog";
 
 export type Status = "To-do" | "In Progress" | "Done";
 
-export type Label = "Bug" | "Feature" | "Documentation" | "Refactor" | "Design";
+export type Label = "Keuken" | "Woonkamer" | "Badkamer" | "Slaapkamer" | "Algemeen";
 
 export type Subtask = {
   id: string;

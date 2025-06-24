@@ -56,18 +56,18 @@ export function TaskAssignmentSuggestion({ users }: TaskAssignmentSuggestionProp
         ) : (
           <Lightbulb className="mr-2 h-4 w-4 text-accent" />
         )}
-        Suggest an Assignee (AI)
+        Stel een toewijzer voor (AI)
       </Button>
       {suggestion && (
         <Alert>
           <Lightbulb className="h-4 w-4" />
-          <AlertTitle>AI Suggestion: {suggestion.suggestedAssignee}</AlertTitle>
+          <AlertTitle>AI Suggestie: {suggestion.suggestedAssignee}</AlertTitle>
           <AlertDescription>{suggestion.reasoning}</AlertDescription>
         </Alert>
       )}
       {error && (
         <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Fout</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
