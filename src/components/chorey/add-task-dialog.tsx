@@ -24,10 +24,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2 } from 'lucide-react';
 import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '../ui/separator';
+import { handleSuggestSubtasks } from '@/app/actions';
+
 
 const taskFormSchema = z.object({
   title: z.string().min(3, 'Titel moet minimaal 3 karakters lang zijn.'),
@@ -49,6 +51,7 @@ type AddTaskDialogProps = {
 
 export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<TaskFormValues>({
@@ -82,6 +85,37 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
     setOpen(false);
     form.reset();
   }
+
+  const onSuggestSubtasks = async () => {
+    const title = form.getValues('title');
+    const description = form.getValues('description');
+    if (!title) {
+        toast({
+            title: 'Titel vereist',
+            description: 'Voer een titel in om subtaken te kunnen genereren.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
+    setIsSuggestingSubtasks(true);
+    const result = await handleSuggestSubtasks(title, description);
+
+    if (result.error) {
+        toast({
+            title: 'Fout bij suggereren',
+            description: result.error,
+            variant: 'destructive'
+        });
+    } else if (result.subtasks) {
+        result.subtasks.forEach(subtask => appendSubtask({ text: subtask }));
+        toast({
+            title: 'Subtaken toegevoegd!',
+            description: `${result.subtasks.length} subtaken zijn door AI gegenereerd.`,
+        });
+    }
+    setIsSuggestingSubtasks(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -239,10 +273,26 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                       </Button>
                     </div>
                   ))}
-                  <Button type="button" variant="outline" size="sm" onClick={() => appendSubtask({ text: '' })}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Subtaak toevoegen
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => appendSubtask({ text: '' })}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Subtaak toevoegen
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onSuggestSubtasks}
+                        disabled={isSuggestingSubtasks}
+                    >
+                        {isSuggestingSubtasks ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Bot className="mr-2 h-4 w-4" />
+                        )}
+                        Genereer (AI)
+                    </Button>
+                  </div>
                 </div>
               </div>
 
