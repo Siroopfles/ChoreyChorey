@@ -89,20 +89,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }) => {
-    const newTask: Omit<Task, 'id'> = {
+    const firestoreTask = {
       title: taskData.title,
       description: taskData.description || '',
       assigneeId: taskData.assigneeId || null,
-      dueDate: taskData.dueDate,
+      dueDate: taskData.dueDate || null,
       priority: taskData.priority || 'Midden',
       isPrivate: taskData.isPrivate || false,
       labels: (taskData.labels as Task['labels']) || [],
-      status: 'Te Doen',
+      status: 'Te Doen' as Status,
       createdAt: new Date(),
       subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
       attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' })) || [],
     };
-    await addDoc(collection(db, 'tasks'), newTask);
+    await addDoc(collection(db, 'tasks'), firestoreTask);
   };
   
   const cloneTask = async (taskId: string) => {
@@ -130,7 +130,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const taskToUpdate = tasks.find(t => t.id === taskId);
     if (!taskToUpdate) return;
     
-    let finalUpdates = { ...updates };
+    const finalUpdates: { [key: string]: any } = { ...updates };
 
     if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
         const points = calculatePoints(taskToUpdate.priority);
@@ -148,6 +148,17 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 });
             }
         }
+    }
+
+    // Sanitize undefined values before sending to Firestore
+    if (finalUpdates.hasOwnProperty('dueDate')) {
+      finalUpdates.dueDate = finalUpdates.dueDate || null;
+    }
+    if (finalUpdates.hasOwnProperty('description')) {
+      finalUpdates.description = finalUpdates.description || '';
+    }
+    if (finalUpdates.hasOwnProperty('assigneeId')) {
+      finalUpdates.assigneeId = finalUpdates.assigneeId || null;
     }
 
     await updateDoc(taskRef, finalUpdates);
