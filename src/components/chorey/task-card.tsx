@@ -28,7 +28,7 @@ import {
   Paperclip,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Progress } from '../ui/progress';
+import { Progress } from '@/components/ui/progress';
 
 type TaskCardProps = {
   task: Task;
