@@ -1,9 +1,22 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState } from 'react';
-import type { Task, Priority, TaskFormValues, User } from '@/lib/types';
-import { TASKS, USERS } from '@/lib/data';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  getFirestore, 
+  collection, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  Timestamp, 
+  writeBatch, 
+  getDoc,
+  increment,
+  deleteDoc
+} from 'firebase/firestore';
+import type { Task, Priority, TaskFormValues, User, Status } from '@/lib/types';
+import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 
 type TaskContextType = {
@@ -11,7 +24,7 @@ type TaskContextType = {
   users: User[];
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
-  bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => void;
+  bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments'>>) => void;
   cloneTask: (taskId: string) => void;
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
   searchTerm: string;
@@ -34,11 +47,38 @@ const calculatePoints = (priority: Priority): number => {
 };
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const [tasks, setTasks] = useState<Task[]>(TASKS);
-  const [users, setUsers] = useState<User[]>(USERS);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
+      const tasksData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          dueDate: (data.dueDate as Timestamp)?.toDate(),
+          createdAt: (data.createdAt as Timestamp)?.toDate(),
+          completedAt: (data.completedAt as Timestamp)?.toDate(),
+        } as Task;
+      });
+      setTasks(tasksData);
+    });
+
+    const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+        setUsers(usersData);
+    });
+
+    return () => {
+        unsubscribeTasks();
+        unsubscribeUsers();
+    };
+  }, []);
+
 
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTaskIds(prev =>
@@ -48,9 +88,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const addTask = (taskData: Partial<TaskFormValues> & { title: string }) => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
+  const addTask = async (taskData: Partial<TaskFormValues> & { title: string }) => {
+    const newTask: Omit<Task, 'id'> = {
       title: taskData.title,
       description: taskData.description || '',
       assigneeId: taskData.assigneeId || null,
@@ -63,25 +102,31 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
       attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' })) || [],
     };
-    setTasks(prevTasks => [...prevTasks, newTask]);
+    await addDoc(collection(db, 'tasks'), newTask);
   };
   
-  const cloneTask = (taskId: string) => {
-    const taskToClone = tasks.find(t => t.id === taskId);
-    if (!taskToClone) return;
+  const cloneTask = async (taskId: string) => {
+    const taskDocRef = doc(db, 'tasks', taskId);
+    const taskDoc = await getDoc(taskDocRef);
+    if (!taskDoc.exists()) return;
 
-    const clonedTask: Task = {
+    const taskToClone = taskDoc.data();
+    const clonedTask = {
       ...taskToClone,
-      id: crypto.randomUUID(),
       title: `[KLONE] ${taskToClone.title}`,
       status: 'Te Doen',
       createdAt: new Date(),
       completedAt: undefined,
     };
-    setTasks(prevTasks => [...prevTasks, clonedTask]);
+    
+    // remove id if it exists on data
+    delete clonedTask.id; 
+
+    await addDoc(collection(db, 'tasks'), clonedTask);
   }
 
-  const updateTask = (taskId: string, updates: Partial<Task>) => {
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    const taskRef = doc(db, 'tasks', taskId);
     const taskToUpdate = tasks.find(t => t.id === taskId);
     if (!taskToUpdate) return;
     
@@ -92,32 +137,24 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         finalUpdates.completedAt = new Date();
 
         if (taskToUpdate.assigneeId) {
-            let assigneeName = '';
-            setUsers(prevUsers => prevUsers.map(user => {
-                if (user.id === taskToUpdate.assigneeId) {
-                    assigneeName = user.name;
-                    return { ...user, points: user.points + points };
-                }
-                return user;
-            }));
-            
-            if (assigneeName) {
+            const assignee = users.find(u => u.id === taskToUpdate.assigneeId);
+            if(assignee) {
+                const userRef = doc(db, 'users', assignee.id);
+                await updateDoc(userRef, { points: increment(points) });
+                
                 toast({
                     title: 'Goed werk!',
-                    description: `${assigneeName} heeft ${points} punten verdiend voor het voltooien van een taak.`,
+                    description: `${assignee.name} heeft ${points} punten verdiend voor het voltooien van een taak.`,
                 });
             }
         }
     }
 
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === taskId ? { ...task, ...finalUpdates } : task
-      )
-    );
+    await updateDoc(taskRef, finalUpdates);
   };
 
-  const bulkUpdateTasks = (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
+  const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
+    const batch = writeBatch(db);
     let finalUpdates: Partial<Task> = { ...updates };
 
     if (updates.status === 'Voltooid') {
@@ -134,12 +171,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         });
         
         if (pointUpdates.size > 0) {
-             setUsers(prevUsers => prevUsers.map(user => {
-                if (pointUpdates.has(user.id)) {
-                    return { ...user, points: user.points + (pointUpdates.get(user.id) || 0) };
-                }
-                return user;
-            }));
+            pointUpdates.forEach((points, userId) => {
+                const userRef = doc(db, 'users', userId);
+                batch.update(userRef, { points: increment(points) });
+            });
         }
 
         if(completedCount > 0) {
@@ -151,28 +186,27 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         finalUpdates.completedAt = new Date();
     }
     
-    setTasks(prev => 
-      prev.map(task => 
-        taskIds.includes(task.id) ? { ...task, ...finalUpdates } : task
-      )
-    );
+    taskIds.forEach(id => {
+        const taskRef = doc(db, 'tasks', id);
+        batch.update(taskRef, finalUpdates);
+    });
+
+    await batch.commit();
     setSelectedTaskIds([]);
   }
 
-  const toggleSubtaskCompletion = (taskId: string, subtaskId: string) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task => {
-        if (task.id === taskId) {
-          const updatedSubtasks = task.subtasks.map(subtask =>
+  const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
+    const taskRef = doc(db, 'tasks', taskId);
+    const taskToUpdate = tasks.find(t => t.id === taskId);
+
+    if (taskToUpdate) {
+        const updatedSubtasks = taskToUpdate.subtasks.map(subtask =>
             subtask.id === subtaskId
-              ? { ...subtask, completed: !subtask.completed }
-              : subtask
-          );
-          return { ...task, subtasks: updatedSubtasks };
-        }
-        return task;
-      })
-    );
+                ? { ...subtask, completed: !subtask.completed }
+                : subtask
+        );
+        await updateDoc(taskRef, { subtasks: updatedSubtasks });
+    }
   };
 
   return (
