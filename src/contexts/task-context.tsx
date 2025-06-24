@@ -2,27 +2,30 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
-import type { Task } from '@/lib/types';
+import type { Task, Priority } from '@/lib/types';
 import type { TaskFormValues } from '@/components/chorey/add-task-dialog';
 import { TASKS } from '@/lib/data';
 
 type TaskContextType = {
   tasks: Task[];
-  addTask: (taskData: TaskFormValues) => void;
+  addTask: (taskData: Partial<TaskFormValues> & { title: string }) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>(TASKS);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const addTask = (taskData: TaskFormValues) => {
+  const addTask = (taskData: Partial<TaskFormValues> & { title: string }) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
       title: taskData.title,
-      description: taskData.description,
+      description: taskData.description || '',
       assigneeId: taskData.assigneeId || null,
       dueDate: taskData.dueDate,
       priority: taskData.priority || 'Midden',
@@ -61,7 +64,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <TaskContext.Provider value={{ tasks, addTask, updateTask, toggleSubtaskCompletion }}>
+    <TaskContext.Provider value={{ tasks, addTask, updateTask, toggleSubtaskCompletion, searchTerm, setSearchTerm }}>
       {children}
     </TaskContext.Provider>
   );

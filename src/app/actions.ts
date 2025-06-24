@@ -1,6 +1,7 @@
 'use server';
 import { suggestTaskAssignee, type SuggestTaskAssigneeInput } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks, type SuggestSubtasksInput } from '@/ai/flows/suggest-subtasks';
+import { processCommand, type ProcessCommandInput } from '@/ai/flows/process-command';
 import { USERS, TASKS } from '@/lib/data';
 
 const getTaskHistory = () => {
@@ -52,5 +53,19 @@ export async function handleSuggestSubtasks(title: string, description?: string)
     } catch (e) {
         console.error(e);
         return { error: 'Failed to get AI subtask suggestions.' };
+    }
+}
+
+export async function handleProcessCommand(command: ProcessCommandInput) {
+    if (!command) {
+        return { error: 'Command is required.' };
+    }
+
+    try {
+        const result = await processCommand(command);
+        return { result };
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to process AI command.' };
     }
 }

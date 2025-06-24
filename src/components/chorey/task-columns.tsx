@@ -31,10 +31,23 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
 };
 
 const TaskColumns = ({ users }: TaskColumnsProps) => {
-  const { tasks } = useTasks();
+  const { tasks, searchTerm } = useTasks();
   const columns: Status[] = ["Te Doen", "In Uitvoering", "Voltooid", "Geannuleerd", "Gearchiveerd"];
 
-  const tasksByStatus = (status: Status) => tasks.filter((task) => task.status === status).sort((a,b) => (a.dueDate?.getTime() || 0) - (b.dueDate?.getTime() || 0));
+  const tasksByStatus = (status: Status) => {
+    const filteredTasks = tasks.filter((task) => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return (
+          task.title.toLowerCase().includes(term) ||
+          (task.description && task.description.toLowerCase().includes(term))
+        );
+      });
+
+    return filteredTasks
+        .filter((task) => task.status === status)
+        .sort((a,b) => (a.dueDate?.getTime() || Infinity) - (b.dueDate?.getTime() || Infinity));
+  }
 
   return (
     <ScrollArea className="w-full">
