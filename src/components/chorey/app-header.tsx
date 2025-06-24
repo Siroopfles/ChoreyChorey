@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, Home, LogOut, PlusCircle, Settings, Moon, Sun } from 'lucide-react';
+import { Bell, Home, LogOut, PlusCircle, Settings, Moon, Sun, User as UserIcon } from 'lucide-react';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import { useTheme } from 'next-themes';
 
@@ -54,8 +54,16 @@ export default function AppHeader({ users }: AppHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={users[0]?.avatar} alt={users[0]?.name} data-ai-hint="woman smiling" />
-                <AvatarFallback>{users[0]?.name.charAt(0)}</AvatarFallback>
+                {users.length > 0 && users[0] ? (
+                  <>
+                    <AvatarImage src={users[0].avatar} alt={users[0].name} data-ai-hint="woman smiling" />
+                    <AvatarFallback>{users[0].name.charAt(0)}</AvatarFallback>
+                  </>
+                ) : (
+                  <AvatarFallback>
+                    <UserIcon className="h-5 w-5" />
+                  </AvatarFallback>
+                )}
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
