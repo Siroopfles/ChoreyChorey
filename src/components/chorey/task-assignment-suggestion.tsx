@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -54,7 +53,7 @@ export function TaskAssignmentSuggestion({ users }: TaskAssignmentSuggestionProp
         {loading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <Lightbulb className="mr-2 h-4 w-4 text-accent" />
+          <Lightbulb className="mr-2 h-4 w-4" />
         )}
         Stel een toewijzer voor (AI)
       </Button>
