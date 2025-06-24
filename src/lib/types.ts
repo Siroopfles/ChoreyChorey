@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export type User = {
   id: string;
   name: string;
@@ -43,3 +45,17 @@ export type Task = {
   createdAt: Date;
   completedAt?: Date;
 };
+
+export const taskFormSchema = z.object({
+  title: z.string().min(3, 'Titel moet minimaal 3 karakters lang zijn.'),
+  description: z.string().optional(),
+  assigneeId: z.string().optional(),
+  dueDate: z.date().optional(),
+  priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).default('Midden'),
+  labels: z.array(z.string()).optional(),
+  subtasks: z.array(z.object({ text: z.string().min(1, 'Subtaak mag niet leeg zijn.') })).optional(),
+  attachments: z.array(z.object({ url: z.string().url('Voer een geldige URL in.') })).optional(),
+  isPrivate: z.boolean().default(false),
+});
+
+export type TaskFormValues = z.infer<typeof taskFormSchema>;

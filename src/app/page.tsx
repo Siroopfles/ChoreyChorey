@@ -15,6 +15,7 @@ import CommandBar from '@/components/chorey/command-bar';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CalendarView from '@/components/chorey/calendar-view';
+import BulkActionBar from '@/components/chorey/bulk-action-bar';
 
 
 function MainContent() {
@@ -64,9 +65,10 @@ export default function Home() {
         </Sidebar>
         <SidebarInset className="flex flex-col">
           <AppHeader users={users} />
-          <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
             <MainContent />
           </main>
+          <BulkActionBar />
         </SidebarInset>
       </SidebarProvider>
     </TaskProvider>
