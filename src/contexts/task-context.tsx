@@ -13,7 +13,8 @@ import {
   writeBatch, 
   getDoc,
   increment,
-  deleteDoc
+  deleteDoc,
+  FirestoreError
 } from 'firebase/firestore';
 import type { Task, Priority, TaskFormValues, User, Status } from '@/lib/types';
 import { db } from '@/lib/firebase';
@@ -54,6 +55,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!db) return;
     const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
       const tasksData = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -66,18 +68,32 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         } as Task;
       });
       setTasks(tasksData);
+    }, (error: FirestoreError) => {
+        console.error("Error fetching tasks:", error);
+        toast({
+            title: 'Fout bij laden van taken',
+            description: `Kon geen verbinding maken met de database. Controleer de console voor details. (${error.code})`,
+            variant: 'destructive',
+        });
     });
 
     const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
         const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
         setUsers(usersData);
+    }, (error: FirestoreError) => {
+        console.error("Error fetching users:", error);
+        toast({
+            title: 'Fout bij laden van gebruikers',
+            description: `Kon geen verbinding maken met de database. (${error.code})`,
+            variant: 'destructive',
+        });
     });
 
     return () => {
         unsubscribeTasks();
         unsubscribeUsers();
     };
-  }, []);
+  }, [toast]);
 
 
   const toggleTaskSelection = (taskId: string) => {
@@ -87,136 +103,167 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         : [...prev, taskId]
     );
   };
+  
+  const handleError = (error: any, context: string) => {
+    console.error(`Error in ${context}:`, error);
+    const description = error instanceof FirestoreError ? `Details: ${error.message} (${error.code})` : 'Een onbekende fout is opgetreden.';
+    toast({
+        title: `Fout bij ${context}`,
+        description,
+        variant: 'destructive',
+    });
+  };
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }) => {
-    const firestoreTask = {
-      title: taskData.title,
-      description: taskData.description || '',
-      assigneeId: taskData.assigneeId || null,
-      dueDate: taskData.dueDate || null,
-      priority: taskData.priority || 'Midden',
-      isPrivate: taskData.isPrivate || false,
-      labels: (taskData.labels as Task['labels']) || [],
-      status: 'Te Doen' as Status,
-      createdAt: new Date(),
-      subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
-      attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' })) || [],
-    };
-    await addDoc(collection(db, 'tasks'), firestoreTask);
+    try {
+        const firestoreTask = {
+          title: taskData.title,
+          description: taskData.description || '',
+          assigneeId: taskData.assigneeId || null,
+          dueDate: taskData.dueDate || null,
+          priority: taskData.priority || 'Midden',
+          isPrivate: taskData.isPrivate || false,
+          labels: (taskData.labels as Task['labels']) || [],
+          status: 'Te Doen' as Status,
+          createdAt: new Date(),
+          subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
+          attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' })) || [],
+        };
+        await addDoc(collection(db, 'tasks'), firestoreTask);
+    } catch (e) {
+        handleError(e, 'opslaan van taak');
+    }
   };
   
   const cloneTask = async (taskId: string) => {
-    const taskDocRef = doc(db, 'tasks', taskId);
-    const taskDoc = await getDoc(taskDocRef);
-    if (!taskDoc.exists()) return;
+    try {
+        const taskDocRef = doc(db, 'tasks', taskId);
+        const taskDoc = await getDoc(taskDocRef);
+        if (!taskDoc.exists()) throw new Error("Task not found");
 
-    const taskToClone = taskDoc.data();
-    const clonedTask = {
-      ...taskToClone,
-      title: `[KLONE] ${taskToClone.title}`,
-      status: 'Te Doen',
-      createdAt: new Date(),
-      completedAt: undefined,
-    };
-    
-    // remove id if it exists on data
-    delete clonedTask.id; 
+        const taskToClone = taskDoc.data();
+        const clonedTask = {
+          ...taskToClone,
+          title: `[KLONE] ${taskToClone.title}`,
+          status: 'Te Doen' as Status,
+          createdAt: new Date(),
+          completedAt: null,
+        };
+        
+        delete (clonedTask as any).id; 
 
-    await addDoc(collection(db, 'tasks'), clonedTask);
+        await addDoc(collection(db, 'tasks'), clonedTask);
+    } catch (e) {
+        handleError(e, 'klonen van taak');
+    }
   }
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
-    const taskRef = doc(db, 'tasks', taskId);
-    const taskToUpdate = tasks.find(t => t.id === taskId);
-    if (!taskToUpdate) return;
-    
-    const finalUpdates: { [key: string]: any } = { ...updates };
+    try {
+        const taskRef = doc(db, 'tasks', taskId);
+        const taskToUpdate = tasks.find(t => t.id === taskId);
+        if (!taskToUpdate) return;
+        
+        const finalUpdates: { [key: string]: any } = { ...updates };
 
-    if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
-        const points = calculatePoints(taskToUpdate.priority);
-        finalUpdates.completedAt = new Date();
+        if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
+            const points = calculatePoints(taskToUpdate.priority);
+            finalUpdates.completedAt = new Date();
 
-        if (taskToUpdate.assigneeId) {
-            const assignee = users.find(u => u.id === taskToUpdate.assigneeId);
-            if(assignee) {
-                const userRef = doc(db, 'users', assignee.id);
-                await updateDoc(userRef, { points: increment(points) });
-                
-                toast({
-                    title: 'Goed werk!',
-                    description: `${assignee.name} heeft ${points} punten verdiend voor het voltooien van een taak.`,
-                });
+            if (taskToUpdate.assigneeId) {
+                const assignee = users.find(u => u.id === taskToUpdate.assigneeId);
+                if(assignee) {
+                    const userRef = doc(db, 'users', assignee.id);
+                    await updateDoc(userRef, { points: increment(points) });
+                    
+                    toast({
+                        title: 'Goed werk!',
+                        description: `${assignee.name} heeft ${points} punten verdiend voor het voltooien van een taak.`,
+                    });
+                }
             }
         }
-    }
 
-    // Sanitize undefined values before sending to Firestore
-    if (finalUpdates.hasOwnProperty('dueDate')) {
-      finalUpdates.dueDate = finalUpdates.dueDate || null;
-    }
-    if (finalUpdates.hasOwnProperty('description')) {
-      finalUpdates.description = finalUpdates.description || '';
-    }
-    if (finalUpdates.hasOwnProperty('assigneeId')) {
-      finalUpdates.assigneeId = finalUpdates.assigneeId || null;
-    }
+        Object.keys(finalUpdates).forEach(key => {
+          if (finalUpdates[key] === undefined) {
+            finalUpdates[key] = null;
+          }
+        });
 
-    await updateDoc(taskRef, finalUpdates);
+        await updateDoc(taskRef, finalUpdates);
+    } catch (e) {
+        handleError(e, `bijwerken van taak`);
+    }
   };
 
   const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
-    const batch = writeBatch(db);
-    let finalUpdates: Partial<Task> = { ...updates };
+    try {
+        const batch = writeBatch(db);
+        let finalUpdates: Partial<Task> = { ...updates };
 
-    if (updates.status === 'Voltooid') {
-        const pointUpdates = new Map<string, number>();
-        let completedCount = 0;
+        if (updates.status === 'Voltooid') {
+            const pointUpdates = new Map<string, number>();
+            let completedCount = 0;
 
-        taskIds.forEach(id => {
-            const task = tasks.find(t => t.id === id);
-            if (task && task.status !== 'Voltooid' && task.assigneeId) {
-                const points = calculatePoints(task.priority);
-                pointUpdates.set(task.assigneeId, (pointUpdates.get(task.assigneeId) || 0) + points);
-                completedCount++;
+            taskIds.forEach(id => {
+                const task = tasks.find(t => t.id === id);
+                if (task && task.status !== 'Voltooid' && task.assigneeId) {
+                    const points = calculatePoints(task.priority);
+                    pointUpdates.set(task.assigneeId, (pointUpdates.get(task.assigneeId) || 0) + points);
+                    completedCount++;
+                }
+            });
+            
+            if (pointUpdates.size > 0) {
+                pointUpdates.forEach((points, userId) => {
+                    const userRef = doc(db, 'users', userId);
+                    batch.update(userRef, { points: increment(points) });
+                });
+            }
+
+            if(completedCount > 0) {
+                toast({
+                    title: 'Taken Voltooid!',
+                    description: `${completedCount} taken voltooid en punten toegekend.`
+                });
+            }
+            finalUpdates.completedAt = new Date();
+        }
+        
+        const cleanUpdates = { ...finalUpdates };
+        Object.keys(cleanUpdates).forEach(key => {
+            if ((cleanUpdates as any)[key] === undefined) {
+                (cleanUpdates as any)[key] = null;
             }
         });
-        
-        if (pointUpdates.size > 0) {
-            pointUpdates.forEach((points, userId) => {
-                const userRef = doc(db, 'users', userId);
-                batch.update(userRef, { points: increment(points) });
-            });
-        }
 
-        if(completedCount > 0) {
-            toast({
-                title: 'Taken Voltooid!',
-                description: `${completedCount} taken voltooid en punten toegekend.`
-            });
-        }
-        finalUpdates.completedAt = new Date();
+        taskIds.forEach(id => {
+            const taskRef = doc(db, 'tasks', id);
+            batch.update(taskRef, cleanUpdates);
+        });
+
+        await batch.commit();
+        setSelectedTaskIds([]);
+    } catch (e) {
+        handleError(e, 'bulk-update');
     }
-    
-    taskIds.forEach(id => {
-        const taskRef = doc(db, 'tasks', id);
-        batch.update(taskRef, finalUpdates);
-    });
-
-    await batch.commit();
-    setSelectedTaskIds([]);
   }
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
-    const taskRef = doc(db, 'tasks', taskId);
-    const taskToUpdate = tasks.find(t => t.id === taskId);
+    try {
+        const taskRef = doc(db, 'tasks', taskId);
+        const taskToUpdate = tasks.find(t => t.id === taskId);
 
-    if (taskToUpdate) {
-        const updatedSubtasks = taskToUpdate.subtasks.map(subtask =>
-            subtask.id === subtaskId
-                ? { ...subtask, completed: !subtask.completed }
-                : subtask
-        );
-        await updateDoc(taskRef, { subtasks: updatedSubtasks });
+        if (taskToUpdate) {
+            const updatedSubtasks = taskToUpdate.subtasks.map(subtask =>
+                subtask.id === subtaskId
+                    ? { ...subtask, completed: !subtask.completed }
+                    : subtask
+            );
+            await updateDoc(taskRef, { subtasks: updatedSubtasks });
+        }
+    } catch (e) {
+        handleError(e, 'bijwerken van subtaak');
     }
   };
 
