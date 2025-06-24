@@ -1,5 +1,4 @@
 'use client';
-import { USERS } from '@/lib/data';
 import {
   SidebarProvider,
   Sidebar,
@@ -19,8 +18,7 @@ import BulkActionBar from '@/components/chorey/bulk-action-bar';
 
 
 function MainContent() {
-  const { tasks } = useTasks();
-  const users = USERS;
+  const { tasks, users } = useTasks();
 
   return (
     <Tabs defaultValue="board" className="w-full">
@@ -46,31 +44,36 @@ function MainContent() {
   );
 }
 
-export default function Home() {
-  const users = USERS;
+function ChoreyApp() {
+  const { users } = useTasks();
+  return (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader className="p-4 border-b border-sidebar-border">
+          <h1 className="text-2xl font-bold text-sidebar-primary">Chorey</h1>
+        </SidebarHeader>
+        <SidebarContent className="p-4 flex flex-col">
+          <CommandBar users={users} />
+          <div className="flex-1 overflow-y-auto mt-4">
+              <Leaderboard users={users} />
+          </div>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset className="flex flex-col">
+        <AppHeader users={users} />
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
+          <MainContent />
+        </main>
+        <BulkActionBar />
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
 
+export default function Home() {
   return (
     <TaskProvider>
-      <SidebarProvider>
-        <Sidebar>
-          <SidebarHeader className="p-4 border-b border-sidebar-border">
-            <h1 className="text-2xl font-bold text-sidebar-primary">Chorey</h1>
-          </SidebarHeader>
-          <SidebarContent className="p-4 flex flex-col">
-            <CommandBar users={users} />
-            <div className="flex-1 overflow-y-auto mt-4">
-               <Leaderboard users={users} />
-            </div>
-          </SidebarContent>
-        </Sidebar>
-        <SidebarInset className="flex flex-col">
-          <AppHeader users={users} />
-          <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
-            <MainContent />
-          </main>
-          <BulkActionBar />
-        </SidebarInset>
-      </SidebarProvider>
+      <ChoreyApp />
     </TaskProvider>
   );
 }

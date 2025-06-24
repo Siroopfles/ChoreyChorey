@@ -2,11 +2,13 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
-import type { Task, Priority, TaskFormValues } from '@/lib/types';
-import { TASKS } from '@/lib/data';
+import type { Task, Priority, TaskFormValues, User } from '@/lib/types';
+import { TASKS, USERS } from '@/lib/data';
+import { useToast } from "@/hooks/use-toast";
 
 type TaskContextType = {
   tasks: Task[];
+  users: User[];
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => void;
@@ -21,10 +23,22 @@ type TaskContextType = {
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
+const calculatePoints = (priority: Priority): number => {
+    switch (priority) {
+        case 'Urgent': return 30;
+        case 'Hoog': return 20;
+        case 'Midden': return 10;
+        case 'Laag': return 5;
+        default: return 0;
+    }
+};
+
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>(TASKS);
+  const [users, setUsers] = useState<User[]>(USERS);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const { toast } = useToast();
 
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTaskIds(prev =>
@@ -68,17 +82,78 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }
 
   const updateTask = (taskId: string, updates: Partial<Task>) => {
+    const taskToUpdate = tasks.find(t => t.id === taskId);
+    if (!taskToUpdate) return;
+    
+    let finalUpdates = { ...updates };
+
+    if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
+        const points = calculatePoints(taskToUpdate.priority);
+        finalUpdates.completedAt = new Date();
+
+        if (taskToUpdate.assigneeId) {
+            let assigneeName = '';
+            setUsers(prevUsers => prevUsers.map(user => {
+                if (user.id === taskToUpdate.assigneeId) {
+                    assigneeName = user.name;
+                    return { ...user, points: user.points + points };
+                }
+                return user;
+            }));
+            
+            if (assigneeName) {
+                toast({
+                    title: 'Goed werk!',
+                    description: `${assigneeName} heeft ${points} punten verdiend voor het voltooien van een taak.`,
+                });
+            }
+        }
+    }
+
     setTasks(prevTasks =>
       prevTasks.map(task =>
-        task.id === taskId ? { ...task, ...updates } : task
+        task.id === taskId ? { ...task, ...finalUpdates } : task
       )
     );
   };
 
   const bulkUpdateTasks = (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
+    let finalUpdates: Partial<Task> = { ...updates };
+
+    if (updates.status === 'Voltooid') {
+        const pointUpdates = new Map<string, number>();
+        let completedCount = 0;
+
+        taskIds.forEach(id => {
+            const task = tasks.find(t => t.id === id);
+            if (task && task.status !== 'Voltooid' && task.assigneeId) {
+                const points = calculatePoints(task.priority);
+                pointUpdates.set(task.assigneeId, (pointUpdates.get(task.assigneeId) || 0) + points);
+                completedCount++;
+            }
+        });
+        
+        if (pointUpdates.size > 0) {
+             setUsers(prevUsers => prevUsers.map(user => {
+                if (pointUpdates.has(user.id)) {
+                    return { ...user, points: user.points + (pointUpdates.get(user.id) || 0) };
+                }
+                return user;
+            }));
+        }
+
+        if(completedCount > 0) {
+            toast({
+                title: 'Taken Voltooid!',
+                description: `${completedCount} taken voltooid en punten toegekend.`
+            });
+        }
+        finalUpdates.completedAt = new Date();
+    }
+    
     setTasks(prev => 
       prev.map(task => 
-        taskIds.includes(task.id) ? { ...task, ...updates } : task
+        taskIds.includes(task.id) ? { ...task, ...finalUpdates } : task
       )
     );
     setSelectedTaskIds([]);
@@ -102,7 +177,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   return (
     <TaskContext.Provider value={{ 
-      tasks, 
+      tasks,
+      users,
       addTask, 
       updateTask, 
       toggleSubtaskCompletion, 
