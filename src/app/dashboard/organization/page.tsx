@@ -52,8 +52,8 @@ function CreateOrganizationView() {
         setIsSubmitting(true);
         
         try {
-            const newOrgRef = doc(collection(db, 'organizations'));
             await runTransaction(db, async (transaction) => {
+                const newOrgRef = doc(collection(db, 'organizations'));
                 const userRef = doc(db, 'users', user.id);
                 const userDoc = await transaction.get(userRef);
 
@@ -68,10 +68,8 @@ function CreateOrganizationView() {
                 transaction.set(newOrgRef, newOrgData);
                 
                 const currentOrgIds = userDoc.data().organizationIds || [];
-                const newOrgIds = [...currentOrgIds, newOrgRef.id];
-
                 transaction.update(userRef, {
-                    organizationIds: newOrgIds,
+                    organizationIds: [...currentOrgIds, newOrgRef.id],
                     currentOrganizationId: newOrgRef.id
                 });
             });
@@ -222,6 +220,7 @@ function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersInOrg: Us
 
     const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation();
     };
 
     return (
@@ -342,7 +341,7 @@ export default function OrganizationPage() {
     
     if (authLoading) {
         return (
-          <div className="flex h-screen w-full items-center justify-center p-6">
+          <div className="flex h-full w-full items-center justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         );
@@ -354,14 +353,14 @@ export default function OrganizationPage() {
 
     if (loading) {
          return (
-          <div className="flex h-screen w-full items-center justify-center p-6">
+          <div className="flex h-full w-full items-center justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         );
     }
 
     return (
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+        <>
             <div className="flex items-center justify-between">
                 <h1 className="font-semibold text-lg md:text-2xl">Team Beheer voor {currentOrganization.name}</h1>
                 <CreateTeamDialog organizationId={currentOrganization.id} />
@@ -386,6 +385,6 @@ export default function OrganizationPage() {
                     </CardContent>
                 </Card>
             )}
-        </main>
+        </>
     );
 }
