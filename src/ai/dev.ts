@@ -1,3 +1,4 @@
+'use server';
 import '@/ai/flows/suggest-task-assignee.ts';
 import '@/ai/flows/suggest-subtasks.ts';
 import '@/ai/flows/process-command.ts';
