@@ -28,7 +28,12 @@ const ProcessCommandOutputSchema = z.object({
         assignee: z.string().optional().describe('The name of the person the task is assigned to.'),
         labels: z.array(z.string()).optional().describe('A list of labels or categories for the task.')
     }).optional().describe('The details of the task to be created, if the action is "create".'),
-    searchTerm: z.string().optional().describe('The term to search for, if the action is "search".'),
+    searchParameters: z.object({
+        term: z.string().optional().describe('Any general keywords or phrases to search for in the title or description.'),
+        priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional().describe('Filter by a specific priority.'),
+        assignee: z.string().optional().describe('Filter by the name of the person the task is assigned to.'),
+        labels: z.array(z.string()).optional().describe('Filter by a list of labels or categories.')
+    }).optional().describe('The structured search parameters, if the action is "search".'),
     reasoning: z.string().describe('A brief explanation of why this action was chosen.')
 });
 
@@ -48,21 +53,25 @@ const prompt = ai.definePrompt({
 
 Analyseer het volgende commando: "{{{command}}}"
 
-Bepaal eerst de intentie van de gebruiker. Is het doel om een nieuwe taak aan te maken, of om te zoeken naar bestaande taken?
+Bepaal eerst de intentie van de gebruiker. Is het doel om een nieuwe taak aan te maken, of om te zoeken/filteren naar bestaande taken?
 
-1.  **Als het commando lijkt op een taakomschrijving (bijv. "maak de badkamer schoon", "boodschappen doen voor morgen", "project X afronden voor 15 december met hoge prioriteit"):**
+1.  **Als het commando lijkt op een taakomschrijving (bijv. "maak de badkamer schoon", "boodschappen doen voor morgen"):**
     *   Zet 'action' op 'create'.
-    *   Extraheer de 'title' (verplicht).
-    *   Extraheer een 'description' als er extra details zijn.
-    *   Extraheer een 'dueDate' in YYYY-MM-DD formaat als er een datum wordt genoemd. Vandaag is {{{currentDate}}}.
-    *   Extraheer 'priority' als deze wordt genoemd. Mogelijke waarden zijn 'Laag', 'Midden', 'Hoog', 'Urgent'. Zorg dat de waarde exact overeenkomt.
-    *   Extraheer 'labels' als er categorieën worden genoemd.
-    *   Extraheer de naam van een 'assignee' als die wordt genoemd.
+    *   Extraheer de details en vul het 'task' object.
+    *   Vandaag is {{{currentDate}}}.
     *   Geef een korte 'reasoning'.
 
-2.  **Als het commando lijkt op een zoekopdracht (bijv. "zoek naar facturen", "badkamer", "planning"):**
+2.  **Als het commando lijkt op een zoekopdracht of filter (bijv. "zoek naar urgente taken in de keuken", "wat doet Jan?", "planning", "wis filters"):**
     *   Zet 'action' op 'search'.
-    *   Plaats de volledige query (zonder zoek-gerelateerde woorden zoals "zoek naar") in 'searchTerm'.
+    *   Analyseer de zoekopdracht en vul het \`searchParameters\` object:
+        *   Plaats algemene trefwoorden die niet in een ander veld passen in \`term\`.
+        *   Extraheer \`priority\` als deze wordt genoemd.
+        *   Extraheer de naam van een \`assignee\` als er naar een persoon wordt gevraagd.
+        *   Extraheer \`labels\` als er categorieën worden genoemd.
+    *   Als een filter niet wordt genoemd, laat het veld dan weg.
+    *   Voorbeeld: "toon mij alle taken met hoge prioriteit voor de badkamer" wordt: \`{ "priority": "Hoog", "labels": ["Badkamer"] }\`.
+    *   Voorbeeld: "zoek alles over 'project phoenix'" wordt: \`{ "term": "project phoenix" }\`.
+    *   Voorbeeld: "wis alle filters" of "toon alles" moet een leeg \`searchParameters\` object teruggeven om de filters te resetten.
     *   Geef een korte 'reasoning'.
 
 3.  **Als geen van bovenstaande van toepassing is:**

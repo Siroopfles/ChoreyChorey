@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useTasks } from '@/contexts/task-context';
 import { useToast } from '@/hooks/use-toast';
 import { handleProcessCommand } from '@/app/actions';
-import type { User } from '@/lib/types';
+import type { User, Label, Filters } from '@/lib/types';
 
 type CommandBarProps = {
     users: User[];
@@ -15,7 +15,7 @@ type CommandBarProps = {
 export default function CommandBar({ users }: CommandBarProps) {
     const [command, setCommand] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { addTask, setSearchTerm } = useTasks();
+    const { addTask, setSearchTerm, setFilters, clearFilters } = useTasks();
     const { toast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -33,7 +33,7 @@ export default function CommandBar({ users }: CommandBarProps) {
                 variant: 'destructive',
             });
         } else if (response.result) {
-            const { action, task, searchTerm, reasoning } = response.result;
+            const { action, task, searchParameters, reasoning } = response.result;
 
             if (action === 'create' && task) {
                 const assignee = users.find(u => u.name.toLowerCase() === task.assignee?.toLowerCase());
@@ -48,12 +48,40 @@ export default function CommandBar({ users }: CommandBarProps) {
                     title: 'Taak Aangemaakt!',
                     description: `Taak "${task.title}" is aangemaakt.`,
                 });
-            } else if (action === 'search' && searchTerm !== undefined) {
-                setSearchTerm(searchTerm);
-                toast({
-                    title: 'Zoekresultaten',
-                    description: `Taken gefilterd op: "${searchTerm}".`,
-                });
+            } else if (action === 'search' && searchParameters) {
+                clearFilters();
+
+                if (Object.keys(searchParameters).length === 0) {
+                     toast({
+                        title: 'Filters gewist',
+                        description: 'Alle taken worden weergegeven.',
+                    });
+                } else {
+                    const { term, priority, assignee: assigneeName, labels } = searchParameters;
+                    
+                    const newFilters: Partial<Filters> = {};
+
+                    if (priority) newFilters.priority = priority;
+                    if (labels) newFilters.labels = labels as Label[];
+                    if (assigneeName) {
+                        const foundUser = users.find(u => u.name.toLowerCase().includes(assigneeName.toLowerCase()));
+                        if (foundUser) newFilters.assigneeId = foundUser.id;
+                    }
+
+                    setFilters(newFilters);
+                    setSearchTerm(term || '');
+
+                    const descriptionParts = [];
+                    if (term) descriptionParts.push(`Tekst: "${term}"`);
+                    if (newFilters.priority) descriptionParts.push(`Prioriteit: ${newFilters.priority}`);
+                    if (newFilters.assigneeId) descriptionParts.push(`Toegewezen: ${users.find(u => u.id === newFilters.assigneeId)?.name}`);
+                    if (newFilters.labels?.length) descriptionParts.push(`Labels: ${newFilters.labels.join(', ')}`);
+
+                    toast({
+                        title: 'Zoekopdracht uitgevoerd',
+                        description: descriptionParts.join('; ') || 'Filters toegepast.',
+                    });
+                }
             } else {
                 toast({
                     title: 'Commando niet begrepen',
