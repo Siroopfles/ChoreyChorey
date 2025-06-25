@@ -15,6 +15,10 @@ export async function generateTaskImage(input: GenerateTaskImageInput): Promise<
 const prompt = ai.definePrompt({
     name: 'generateTaskImagePrompt',
     input: { schema: GenerateTaskImageInputSchema },
+    model: googleAI.model('gemini-2.0-flash-preview-image-generation'),
+    config: {
+        responseModalities: ['IMAGE'],
+    },
     prompt: `You are a creative visual artist. Generate a single, compelling, photorealistic image that visually represents the following task. The image should be clean, professional, and directly related to the task's content. Do not include any text in the image.
 
 Task Title: {{{title}}}
@@ -31,13 +35,7 @@ const generateTaskImageFlow = ai.defineFlow(
     outputSchema: GenerateTaskImageOutputSchema,
   },
   async (input) => {
-    const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.0-flash-preview-image-generation'),
-      prompt: await prompt.render(input),
-      config: {
-        responseModalities: ['IMAGE'],
-      },
-    });
+    const { media } = await prompt(input);
 
     const imageDataUri = media.url;
     if (!imageDataUri) {
