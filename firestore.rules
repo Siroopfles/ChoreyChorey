@@ -1,47 +1,69 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
 
     function isOrgMember(orgId) {
-      // Check if the user document exists and the user is part of the given organization.
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             orgId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([orgId]);
     }
     
     match /users/{userId} {
-      // A user can create their own account document.
+      allow read: if isAuthenticated() && (
+                    request.auth.uid == userId || 
+                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.currentOrganizationId != null &&
+                    get(/databases/$(database)/documents/users/$(userId)).data.organizationIds.hasAny(
+                      [get(/databases/$(database)/documents/users/$(request.auth.uid)).data.currentOrganizationId]
+                    )
+                  );
       allow create: if request.auth.uid == userId;
-      // A user can read their own profile. Other members of an org can also read profiles.
-      allow read: if request.auth.uid == userId;
-      // A user can update their own profile.
-      allow update: if request.auth.uid == userId;
-    }
 
-    match /organizations/{orgId} {
-      // An authenticated user can create an organization, setting themselves as owner.
-      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.ownerId;
-      // Only members of the organization can read or update it.
-      allow read, update: if isOrgMember(orgId);
+      allow update: if request.auth.uid == userId && (
+        // Case 1: Normal profile update (e.g., name, avatar) or switching current organization.
+        // The list of organizations the user belongs to does not change.
+        // If currentOrganizationId changes, it must be to an organization they are already a member of.
+        (
+          request.resource.data.organizationIds == resource.data.organizationIds &&
+          (
+            request.resource.data.currentOrganizationId == resource.data.currentOrganizationId ||
+            request.resource.data.currentOrganizationId in resource.data.organizationIds
+          )
+        ) 
+        ||
+        // Case 2: The special transaction for creating an organization and joining it.
+        (
+          request.resource.data.organizationIds.size() == resource.data.organizationIds.size() + 1 &&
+          request.resource.data.organizationIds.containsAll(resource.data.organizationIds) &&
+          let newOrgId = request.resource.data.organizationIds.diff(resource.data.organizationIds).added()[0];
+          getAfter(/databases/$(database)/documents/organizations/$(newOrgId)).data.ownerId == request.auth.uid &&
+          request.resource.data.currentOrganizationId == newOrgId
+        )
+      );
     }
     
+    match /organizations/{orgId} {
+      allow read: if isOrgMember(orgId);
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
+    }
+
     match /teams/{teamId} {
-      // Organization members can manage teams within that organization.
-      allow read, update, delete: if isOrgMember(get(/databases/$(database)/documents/teams/$(teamId)).data.organizationId);
-      allow create: if isOrgMember(request.resource.data.organizationId);
+        allow read, write: if isOrgMember(get(/databases/$(database)/documents/teams/$(teamId)).data.organizationId);
     }
     
     match /tasks/{taskId} {
-      // Read/write access is granted to members of the task's organization.
-      allow read, update, delete: if isOrgMember(resource.data.organizationId);
-      allow create: if isOrgMember(request.resource.data.organizationId);
+      // For reads, we use the existing resource data. For writes, we use the incoming request data.
+      allow read: if isOrgMember(resource.data.organizationId);
+      allow write: if isOrgMember(request.resource.data.organizationId);
     }
-    
+
     match /notifications/{notificationId} {
-      // Any authenticated user can create notifications (server actions do this on behalf of users).
-      allow create: if request.auth.uid != null;
-      // Only the recipient can read, update, or delete their notifications.
-      allow read, update, delete: if request.auth.uid == resource.data.userId;
+      // For reads, we use the existing resource data. For writes, we use the incoming request data.
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
   }
 }
