@@ -12,30 +12,26 @@ export async function generateTaskImage(input: GenerateTaskImageInput): Promise<
   return generateTaskImageFlow(input);
 }
 
-const prompt = ai.definePrompt({
-    name: 'generateTaskImagePrompt',
-    input: { schema: GenerateTaskImageInputSchema },
-    model: 'googleai/gemini-2.0-flash-preview-image-generation',
-    config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-    },
-    prompt: `You are a creative visual artist. Generate a single, compelling, photorealistic image that visually represents the following task. The image should be clean, professional, and directly related to the task's content. Do not include any text in the image.
-
-Task Title: {{{title}}}
-{{#if description}}
-Task Description: {{{description}}}
-{{/if}}
-`,
-});
-
 const generateTaskImageFlow = ai.defineFlow(
   {
     name: 'generateTaskImageFlow',
     inputSchema: GenerateTaskImageInputSchema,
     outputSchema: GenerateTaskImageOutputSchema,
   },
-  async (input) => {
-    const { media } = await prompt(input);
+  async ({ title, description }) => {
+    const promptText = `You are a creative visual artist. Generate a single, compelling, photorealistic image that visually represents the following task. The image should be clean, professional, and directly related to the task's content. Do not include any text in the image.
+
+Task Title: ${title}
+${description ? `Task Description: ${description}` : ''}
+`;
+
+    const { media } = await ai.generate({
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      prompt: promptText,
+      config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+      },
+    });
 
     const imageDataUri = media.url;
     if (!imageDataUri) {
