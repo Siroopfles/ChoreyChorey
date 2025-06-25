@@ -1,4 +1,3 @@
-
 'use client';
 import type { Task, User } from '@/lib/types';
 import { ALL_STATUSES } from '@/lib/types';
@@ -58,7 +57,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect, useMemo } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
-import { useAuth } from '@/components/../../contexts/auth-context';
+import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { handleTextToSpeech } from '@/app/actions';
 import Image from 'next/image';
