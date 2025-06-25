@@ -111,6 +111,7 @@ export type Task = {
   blockedBy?: string[];
   recurring?: RecurringFrequency;
   organizationId: string;
+  imageDataUri?: string;
 };
 
 export type Notification = {
@@ -139,6 +140,7 @@ export const taskFormSchema = z.object({
   storyPoints: z.coerce.number().optional(),
   blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
   recurring: z.enum(['daily', 'weekly', 'monthly']).optional(),
+  imageDataUri: z.string().optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

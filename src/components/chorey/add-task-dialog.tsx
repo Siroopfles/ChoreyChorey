@@ -42,6 +42,7 @@ const defaultFormValues: TaskFormValues = {
   assigneeId: undefined,
   teamId: undefined,
   dueDate: undefined,
+  imageDataUri: undefined,
 };
 
 export default function AddTaskDialog({ users, children, template }: AddTaskDialogProps) {

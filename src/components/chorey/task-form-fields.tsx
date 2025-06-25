@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage } from '@/app/actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import Image from 'next/image';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -52,6 +53,8 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
     control: form.control,
     name: "blockedBy",
   });
+
+  const imageDataUri = form.watch('imageDataUri');
 
   const onSuggestSubtasks = async () => {
     const title = form.getValues('title');
@@ -100,8 +103,8 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
     try {
         const result = await handleGenerateTaskImage({ title, description });
         if (result.imageDataUri) {
-            appendAttachment({ name: 'AI Afbeelding - ' + title, url: result.imageDataUri });
-            toast({ title: 'Afbeelding gegenereerd en toegevoegd als bijlage!' });
+            form.setValue('imageDataUri', result.imageDataUri);
+            toast({ title: 'Afbeelding gegenereerd en toegevoegd als omslagfoto!' });
         } else {
             throw new Error(result.error || 'Geen afbeeldingsdata ontvangen.');
         }
@@ -367,6 +370,32 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
       <Separator />
 
       <div>
+        <UiLabel>Omslagfoto</UiLabel>
+        <div className="space-y-2 mt-2">
+          {imageDataUri && (
+            <div className="relative aspect-video w-full max-w-sm rounded-md border overflow-hidden">
+              <Image src={imageDataUri} alt="Omslagfoto preview" layout="fill" objectFit="cover" />
+              <Button 
+                type="button" 
+                variant="destructive" 
+                size="icon" 
+                className="absolute top-2 right-2 h-7 w-7"
+                onClick={() => form.setValue('imageDataUri', undefined)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <Button type="button" variant="outline" size="sm" onClick={onGenerateImage} disabled={isGeneratingImage}>
+            {isGeneratingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
+            Genereer Omslagfoto (AI)
+          </Button>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div>
         <UiLabel>Subtaken</UiLabel>
         <div className="space-y-2 mt-2">
           {subtaskFields.map((field, index) => (
@@ -399,7 +428,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
       <Separator />
 
       <div>
-        <UiLabel>Bijlagen</UiLabel>
+        <UiLabel>Links (Bijlagen)</UiLabel>
         <div className="space-y-2 mt-2">
           {attachmentFields.map((field, index) => (
             <div key={field.id} className="flex items-center gap-2">
@@ -422,16 +451,10 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
               </Button>
             </div>
           ))}
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ name: '', url: '' })}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Bijlage toevoegen
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={onGenerateImage} disabled={isGeneratingImage}>
-              {isGeneratingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
-              Genereer Afbeelding (AI)
-            </Button>
-          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ name: '', url: '' })}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Link toevoegen
+          </Button>
         </div>
       </div>
       

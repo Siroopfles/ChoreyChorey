@@ -155,6 +155,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           blockedBy: data.blockedBy || [],
           recurring: data.recurring,
           organizationId: data.organizationId,
+          imageDataUri: data.imageDataUri,
         } as Task;
       }).filter(task => {
         if (!authUser) return false;
@@ -280,6 +281,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           blockedBy: taskData.blockedBy || [],
           recurring: taskData.recurring || undefined,
           organizationId: currentOrganization.id,
+          imageDataUri: taskData.imageDataUri || undefined,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 

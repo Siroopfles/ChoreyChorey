@@ -107,6 +107,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       storyPoints: task.storyPoints,
       blockedBy: task.blockedBy || [],
       recurring: task.recurring,
+      imageDataUri: task.imageDataUri,
     },
   });
 
@@ -125,6 +126,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       storyPoints: task.storyPoints,
       blockedBy: task.blockedBy || [],
       recurring: task.recurring,
+      imageDataUri: task.imageDataUri,
     });
     setSummary('');
   }, [task, form, isOpen]);
