@@ -457,7 +457,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                                 <FormLabel>Story Points</FormLabel>
                                 <div className="flex items-center gap-2">
                                     <FormControl>
-                                        <Input type="number" placeholder="bijv. 5" {...field} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
+                                        <Input type="number" placeholder="bijv. 5" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
                                     </FormControl>
                                     <Button type="button" variant="outline" size="icon" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints}>
                                         {isSuggestingPoints ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
