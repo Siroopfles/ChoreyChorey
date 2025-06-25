@@ -5,7 +5,8 @@ import {
     useEffect, 
     createContext, 
     useContext, 
-    type ReactNode 
+    type ReactNode,
+    useCallback
 } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -16,7 +17,7 @@ import {
     signOut,
     type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -26,10 +27,11 @@ type AuthContextType = {
     authUser: FirebaseUser | null;
     user: User | null;
     loading: boolean;
-    loginWithEmail: (email: string, pass: string) => Promise<any>;
-    signupWithEmail: (email: string, pass: string, name: string) => Promise<any>;
-    loginWithGoogle: () => Promise<any>;
+    loginWithEmail: (email: string, pass: string) => Promise<boolean>;
+    signupWithEmail: (email: string, pass: string, name: string) => Promise<boolean>;
+    loginWithGoogle: () => Promise<boolean>;
     logout: () => void;
+    refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,9 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const userDoc = await getDoc(userDocRef);
                 if (userDoc.exists()) {
                     setUser({ id: userDoc.id, ...userDoc.data() } as User);
-                } else {
-                    // This can happen if the user doc creation is delayed
-                    setUser(null);
                 }
             } else {
                 setAuthUser(null);
@@ -71,27 +70,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             variant: 'destructive',
         });
     }
+    
+    const fetchAndSetUser = async (firebaseUser: FirebaseUser) => {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            const userData = { id: userDoc.id, ...userDoc.data() } as User;
+            setUser(userData);
+            return userData;
+        }
+        return null;
+    }
 
-    const loginWithEmail = async (email: string, pass: string) => {
+    const loginWithEmail = async (email: string, pass: string): Promise<boolean> => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-            const firebaseUser = userCredential.user;
-            const userDocRef = doc(db, 'users', firebaseUser.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                const userData = { id: userDoc.id, ...userDoc.data() } as User;
-                setUser(userData);
-            } else {
-                 handleError({ message: 'Gebruikersprofiel niet gevonden na inloggen.' }, 'inloggen');
-                 return;
-            }
-            return userCredential;
+            await fetchAndSetUser(userCredential.user);
+            return true;
         } catch (error) {
             handleError(error, 'inloggen');
+            return false;
         }
     };
 
-    const signupWithEmail = async (email: string, pass: string, name: string) => {
+    const signupWithEmail = async (email: string, pass: string, name: string): Promise<boolean> => {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
             const firebaseUser = userCredential.user;
@@ -104,10 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             } catch (aiError) {
                 console.error("Failed to generate AI avatar, using placeholder.", aiError);
-                toast({
-                    title: 'AI Avatar Mislukt',
-                    description: 'Kon geen unieke avatar genereren. Een standaardafbeelding wordt gebruikt.',
-                });
             }
 
             const newUser: User = {
@@ -116,16 +114,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email,
                 points: 0,
                 avatar: avatarUrl,
+                achievements: [],
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
             setUser(newUser);
-            return userCredential;
+            return true;
         } catch (error) {
             handleError(error, 'registreren');
+            return false;
         }
     };
 
-    const loginWithGoogle = async () => {
+    const loginWithGoogle = async (): Promise<boolean> => {
         try {
             const result = await signInWithPopup(auth, googleProvider);
             const firebaseUser = result.user;
@@ -133,8 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userDoc = await getDoc(userDocRef);
 
             if (userDoc.exists()) {
-                const userData = { id: userDoc.id, ...userDoc.data() } as User;
-                setUser(userData);
+                await fetchAndSetUser(firebaseUser);
             } else {
                  let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                 try {
@@ -151,14 +150,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     name: firebaseUser.displayName || 'Google User',
                     email: firebaseUser.email || '',
                     points: 0,
-                    avatar: avatarUrl
+                    avatar: avatarUrl,
+                    achievements: [],
                 };
                 await setDoc(userDocRef, newUser);
                 setUser(newUser);
             }
-            return result;
+            return true;
         } catch (error) {
             handleError(error, 'inloggen met Google');
+            return false;
         }
     };
 
@@ -170,6 +171,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             handleError(error, 'uitloggen');
         }
     };
+
+    const refreshUser = useCallback(async () => {
+        if (auth.currentUser) {
+            await fetchAndSetUser(auth.currentUser);
+        }
+    }, []);
     
     const value = {
         authUser,
@@ -179,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signupWithEmail,
         loginWithGoogle,
         logout,
+        refreshUser,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

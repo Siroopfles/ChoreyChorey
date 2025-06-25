@@ -6,7 +6,7 @@ export type User = {
   avatar: string;
   points: number;
   email: string;
-  achievements?: string[]; // Achievement IDs
+  achievements: string[]; // Achievement IDs
 };
 
 export const ACHIEVEMENTS = {

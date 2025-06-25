@@ -1,9 +1,16 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import type { Task, User } from '@/lib/types';
-
+import { collection, getDocs, query, where, Timestamp, updateDoc, doc } from 'firebase/firestore';
+import type { User } from '@/lib/types';
+import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
+import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
+import { processCommand } from '@/ai/flows/process-command';
+import { summarizeComments } from '@/ai/flows/summarize-comments';
+import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
+import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
+import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
+import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 
 const getTaskHistory = async () => {
     const tasksQuery = query(collection(db, 'tasks'), where('status', '==', 'Voltooid'));
@@ -31,45 +38,86 @@ const getTaskHistory = async () => {
     }).filter(th => th.completionTime > 0);
 };
 
-const aiDisabledError = { error: 'AI-functionaliteit is tijdelijk uitgeschakeld.' };
+export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar'>>) {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, data);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error updating user profile:", error);
+        return { error: error.message };
+    }
+}
 
 export async function handleSuggestAssignee(taskDescription: string, availableAssignees: string[]) {
-    console.error("AI Invocation Disabled: handleSuggestAssignee");
-    return aiDisabledError;
+    try {
+        const taskHistory = await getTaskHistory();
+        const suggestion = await suggestTaskAssignee({ taskDescription, availableAssignees, taskHistory });
+        return { suggestion };
+    } catch (e: any) {
+        return { error: e.message };
+    }
 }
 
 export async function handleSuggestSubtasks(title: string, description?: string) {
-    console.error("AI Invocation Disabled: handleSuggestSubtasks");
-    return aiDisabledError;
+    try {
+        const result = await suggestSubtasks({ title, description });
+        return { subtasks: result.subtasks };
+    } catch (e: any) {
+        return { error: e.message };
+    }
 }
 
 export async function handleProcessCommand(command: string) {
-    console.error("AI Invocation Disabled: handleProcessCommand");
-    return aiDisabledError;
+    try {
+        const result = await processCommand(command);
+        return { result };
+    } catch (e: any) {
+        return { error: e.message };
+    }
 }
 
 export async function handleSummarizeComments(comments: string[]) {
-    console.error("AI Invocation Disabled: handleSummarizeComments");
-    return aiDisabledError;
+    try {
+        const result = await summarizeComments({ comments });
+        return { summary: result.summary };
+    } catch (e: any) {
+        return { error: e.message };
+    }
 }
 
 export async function handleSuggestStoryPoints(title: string, description?: string) {
-    console.error("AI Invocation Disabled: handleSuggestStoryPoints");
-    return aiDisabledError;
+    try {
+        const suggestion = await suggestStoryPoints({ title, description });
+        return { suggestion };
+    } catch (e: any) {
+        return { error: e.message };
+    }
 }
 
 export async function handleGenerateAvatar(name: string) {
-    console.error("AI Invocation Disabled: handleGenerateAvatar");
-    // Return a placeholder to avoid breaking the signup flow
-    return { avatarDataUri: `https://placehold.co/100x100.png` };
+    try {
+        const result = await generateAvatar(name);
+        return { avatarDataUri: result.avatarDataUri };
+    } catch (e: any) {
+        return { error: e.message };
+    }
 }
 
 export async function handleGenerateTaskImage(input: { title: string, description?: string }) {
-    console.error("AI Invocation Disabled: handleGenerateTaskImage");
-    return aiDisabledError;
+    try {
+        const result = await generateTaskImage(input);
+        return { imageDataUri: result.imageDataUri };
+    } catch (e: any) {
+        return { error: e.message };
+    }
 }
 
 export async function handleTextToSpeech(text: string) {
-    console.error("AI Invocation Disabled: handleTextToSpeech");
-    return aiDisabledError;
+    try {
+        const result = await textToSpeech(text);
+        return { audioDataUri: result.audioDataUri };
+    } catch (e: any) {
+        return { error: e.message };
+    }
 }

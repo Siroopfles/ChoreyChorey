@@ -289,10 +289,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     const userData = userDoc.data() as User;
     const userAchievements = userData.achievements || [];
-    const achievementsToGrant = [];
+    const achievementsToGrant: string[] = [];
+
+    const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeId', '==', userId), where('status', '==', 'Voltooid'));
+    const completedTasksSnapshot = await getDocs(completedTasksQuery);
+    const totalCompleted = completedTasksSnapshot.size;
 
     // Achievement: First Task
-    if (!userAchievements.includes(ACHIEVEMENTS.FIRST_TASK.id)) {
+    if (totalCompleted === 1 && !userAchievements.includes(ACHIEVEMENTS.FIRST_TASK.id)) {
         achievementsToGrant.push(ACHIEVEMENTS.FIRST_TASK.id);
         toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.FIRST_TASK.name}" verdiend!` });
     }
@@ -304,9 +308,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
 
     // Achievement: 10 Tasks
-    const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeId', '==', userId), where('status', '==', 'Voltooid'));
-    const completedTasksSnapshot = await getDocs(completedTasksQuery);
-    if (completedTasksSnapshot.size >= 10 && !userAchievements.includes(ACHIEVEMENTS.TEN_TASKS.id)) {
+    if (totalCompleted >= 10 && !userAchievements.includes(ACHIEVEMENTS.TEN_TASKS.id)) {
         achievementsToGrant.push(ACHIEVEMENTS.TEN_TASKS.id);
         toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.TEN_TASKS.name}" verdiend!` });
     }
@@ -328,34 +330,45 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
 
-        if (updates.status && updates.status !== taskToUpdate.status) {
-            newHistory.push(addHistoryEntry(authUser.uid, 'Status gewijzigd', `van "${taskToUpdate.status}" naar "${updates.status}"`));
-            if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== authUser.uid) {
-                await createNotification(taskToUpdate.creatorId, `${user?.name} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId);
+        // Track history for specific field changes
+        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeId', 'priority', 'dueDate', 'title'];
+        fieldsToTrack.forEach(field => {
+            if (updates[field] !== undefined && updates[field] !== taskToUpdate[field]) {
+                const oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');
+                const newValue = field === 'dueDate' ? (updates[field] ? (updates[field] as Date).toLocaleDateString() : 'geen') : (updates[field] || 'leeg');
+                
+                let details = `van "${oldValue}" naar "${newValue}"`;
+                if (field === 'assigneeId') {
+                    const oldAssignee = users.find(u => u.id === taskToUpdate.assigneeId)?.name || 'niemand';
+                    const newAssignee = users.find(u => u.id === updates.assigneeId)?.name || 'niemand';
+                    details = `van ${oldAssignee} naar ${newAssignee}`;
+                }
+                newHistory.push(addHistoryEntry(authUser.uid, `Veld '${field}' gewijzigd`, details));
             }
-        }
+        });
+        
         if (updates.assigneeId && updates.assigneeId !== taskToUpdate.assigneeId) {
-            const assigneeName = users.find(u => u.id === updates.assigneeId)?.name || 'onbekend';
              await createNotification(updates.assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId);
-             newHistory.push(addHistoryEntry(authUser.uid, 'Toegewezen aan', assigneeName));
+        }
+
+        if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== authUser.uid) {
+             await createNotification(taskToUpdate.creatorId, `${user?.name} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId);
         }
 
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
             finalUpdates.completedAt = new Date();
             
             if(taskToUpdate.assigneeId) {
-                const points = calculatePoints(taskToUpdate.priority);
-                const assignee = users.find(u => u.id === taskToUpdate.assigneeId);
-                if(assignee) {
-                    const userRef = doc(db, 'users', assignee.id);
-                    await updateDoc(userRef, { points: increment(points) });
-                    toast({
-                        title: 'Goed werk!',
-                        description: `${assignee.name} heeft ${points} punten verdiend voor het voltooien van een taak.`,
-                    });
-                    
-                    await checkAndGrantAchievements(assignee.id, taskToUpdate);
-                }
+                const points = calculatePoints(taskToUpdate.priority, taskToUpdate.storyPoints);
+                const userRef = doc(db, 'users', taskToUpdate.assigneeId);
+                await updateDoc(userRef, { points: increment(points) });
+                toast({
+                    title: 'Goed werk!',
+                    description: `${users.find(u=>u.id === taskToUpdate.assigneeId)?.name} heeft ${points} punten verdiend.`,
+                });
+                
+                // Pass the full task object with the 'Voltooid' status
+                await checkAndGrantAchievements(taskToUpdate.assigneeId, { ...taskToUpdate, status: 'Voltooid' });
             }
         }
         
@@ -369,13 +382,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           }
         });
         
-        if (finalUpdates.history === undefined) delete finalUpdates.history;
-
         await updateDoc(taskRef, finalUpdates);
-        
-        if(finalUpdates.history) {
-            await updateDoc(taskRef, { history: finalUpdates.history });
-        }
 
     } catch (e) {
         handleError(e, `bijwerken van taak`);
@@ -412,13 +419,23 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             text,
             createdAt: new Date(),
         };
+        const historyEntry = addHistoryEntry(user.id, 'Reactie toegevoegd', `"${text}"`);
+        
         await updateDoc(taskRef, {
-            comments: arrayUnion({ ...newComment, id: crypto.randomUUID() })
+            comments: arrayUnion({ ...newComment, id: crypto.randomUUID() }),
+            history: arrayUnion(historyEntry)
         });
         
         if (taskData.assigneeId && taskData.assigneeId !== user.id) {
             await createNotification(
                 taskData.assigneeId,
+                `${user.name} heeft gereageerd op: "${taskData.title}"`,
+                taskId
+            );
+        }
+        if (taskData.creatorId && taskData.creatorId !== user.id && taskData.creatorId !== taskData.assigneeId) {
+             await createNotification(
+                taskData.creatorId,
                 `${user.name} heeft gereageerd op: "${taskData.title}"`,
                 taskId
             );
@@ -430,51 +447,33 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
-    if(taskIds.length === 0) return;
+    if(taskIds.length === 0 || !authUser) return;
     try {
         const batch = writeBatch(db);
         let finalUpdates: Partial<Task> = { ...updates };
+        
+        const updatePromises = taskIds.map(async (taskId) => {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
 
-        if (updates.assigneeId) {
-            for (const taskId of taskIds) {
-                const task = tasks.find(t => t.id === taskId);
-                if (task && task.assigneeId !== updates.assigneeId) {
-                    await createNotification(
-                        updates.assigneeId!,
-                        `Je bent toegewezen aan taak: "${task.title}"`,
-                        taskId
-                    );
-                }
+            if (updates.assigneeId && task.assigneeId !== updates.assigneeId) {
+                await createNotification(
+                    updates.assigneeId,
+                    `Je bent toegewezen aan taak: "${task.title}"`,
+                    taskId
+                );
             }
-        }
+             if (updates.status === 'Voltooid' && task.status !== 'Voltooid' && task.assigneeId) {
+                const points = calculatePoints(task.priority, task.storyPoints);
+                const userRef = doc(db, 'users', task.assigneeId);
+                batch.update(userRef, { points: increment(points) });
+                await checkAndGrantAchievements(task.assigneeId, {...task, status: 'Voltooid'});
+            }
+        });
 
+        await Promise.all(updatePromises);
+       
         if (updates.status === 'Voltooid') {
-            const pointUpdates = new Map<string, number>();
-            let completedCount = 0;
-
-            for(const id of taskIds) {
-                const task = tasks.find(t => t.id === id);
-                if (task && task.status !== 'Voltooid' && task.assigneeId) {
-                    const points = calculatePoints(task.priority);
-                    pointUpdates.set(task.assigneeId, (pointUpdates.get(task.assigneeId) || 0) + points);
-                    await checkAndGrantAchievements(task.assigneeId, task);
-                    completedCount++;
-                }
-            };
-            
-            if (pointUpdates.size > 0) {
-                pointUpdates.forEach((points, userId) => {
-                    const userRef = doc(db, 'users', userId);
-                    batch.update(userRef, { points: increment(points) });
-                });
-            }
-
-            if(completedCount > 0) {
-                toast({
-                    title: 'Taken Voltooid!',
-                    description: `${completedCount} taken voltooid en punten toegekend.`
-                });
-            }
             finalUpdates.completedAt = new Date();
         }
         
@@ -485,14 +484,19 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             }
         });
 
+        const historyEntry = addHistoryEntry(authUser.id, `Bulk-update uitgevoerd op ${taskIds.length} taken.`);
+
         taskIds.forEach(id => {
             const taskRef = doc(db, 'tasks', id);
             batch.update(taskRef, cleanUpdates);
-            const historyEntry = addHistoryEntry(user?.id ?? null, `Bulk-update: ${Object.keys(cleanUpdates).join(', ')}`);
             batch.update(taskRef, { history: arrayUnion(historyEntry) });
         });
 
         await batch.commit();
+        toast({
+            title: 'Bulk actie succesvol!',
+            description: `${taskIds.length} taken zijn bijgewerkt.`
+        });
         setSelectedTaskIds([]);
     } catch (e) {
         handleError(e, 'bulk-update');

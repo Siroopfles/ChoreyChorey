@@ -21,6 +21,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
+import Link from 'next/link';
 
 type AppHeaderProps = {
   users: User[];
@@ -109,9 +110,11 @@ export default function AppHeader({ users }: AppHeaderProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Mijn Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Instellingen</span>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Instellingen</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Home className="mr-2 h-4 w-4" />
