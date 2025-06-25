@@ -23,9 +23,14 @@ const priorityBorderColor: Record<Priority, string> = {
 };
 
 export default function CalendarView({ tasks, users }: CalendarViewProps) {
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const { setViewedUser } = useTasks();
+
+  // Set initial date on the client-side to avoid hydration mismatch
+  useEffect(() => {
+    setDate(new Date());
+  }, []);
 
   const dueDates = tasks.map((task) => task.dueDate).filter((d): d is Date => !!d);
 
@@ -98,7 +103,7 @@ export default function CalendarView({ tasks, users }: CalendarViewProps) {
             </ul>
           ) : (
             <div className="flex items-center justify-center text-center text-muted-foreground h-full min-h-[200px]">
-              <p>Geen taken voor deze dag.</p>
+              <p>{date ? 'Geen taken voor deze dag.' : 'Laden...'}</p>
             </div>
           )}
         </CardContent>
