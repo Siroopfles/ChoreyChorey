@@ -14,10 +14,10 @@ import {
     onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    signInWithRedirect,
+    signInWithPopup,
     signOut,
     type User as FirebaseUser,
-    getRedirectResult,
+    getAdditionalUserInfo,
     GoogleAuthProvider,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
@@ -80,29 +80,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setAuthUser(firebaseUser);
                     const userDocRef = doc(db, 'users', firebaseUser.uid);
                     const userDoc = await getDoc(userDocRef);
-
                     if (userDoc.exists()) {
                         setUser({ id: userDoc.id, ...userDoc.data() } as User);
                     } else {
-                        // This handles new users from both signup and Google redirect
-                        let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
-                        try {
-                            const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
-                            if (avatarResult.avatarDataUri) {
-                                avatarUrl = avatarResult.avatarDataUri;
-                            }
-                        } catch (aiError) {
-                            console.error("Failed to generate AI avatar, using placeholder.", aiError);
-                        }
+                        // This case handles a new user from email signup,
+                        // or a new user from Google that was created in the loginWithGoogle function.
+                        // We still need a fallback here in case the doc creation fails elsewhere.
                         const newUser: User = {
                             id: firebaseUser.uid,
                             name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
                             email: firebaseUser.email || '',
                             points: 0,
-                            avatar: avatarUrl,
+                            avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png`,
                             achievements: [],
                         };
-                        await setDoc(userDocRef, newUser);
+                        await setDoc(userDocRef, newUser, { merge: true }); // Use merge to be safe
                         setUser(newUser);
                     }
                 } else {
@@ -111,37 +103,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             } catch (error) {
                 handleError(error, "verwerken van authenticatiestatus");
-                 setAuthUser(null);
-                 setUser(null);
+                setAuthUser(null);
+                setUser(null);
+            } finally {
+                setLoading(false);
             }
         });
-        
-        getRedirectResult(auth)
-            .catch((error) => {
-                handleError(error, 'verwerken van Google-login');
-            })
-            .finally(() => {
-                // This is the crucial part. We set loading to false only after
-                // the redirect result has been processed. This prevents the race condition.
-                setLoading(false);
-            });
 
         return () => unsubscribe();
     }, []);
 
     const loginWithEmail = async (email: string, pass: string) => {
-        setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, pass);
-            // onAuthStateChanged will handle the rest
         } catch (error) {
             handleError(error, 'inloggen');
-            setLoading(false);
+            throw error;
         }
     };
 
     const signupWithEmail = async (email: string, pass: string, name: string) => {
-        setLoading(true);
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
             const firebaseUser = userCredential.user;
@@ -165,20 +146,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 achievements: [],
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-            // onAuthStateChanged will handle setting loading to false
         } catch (error) {
             handleError(error, 'registreren');
-            setLoading(false);
+            throw error;
         }
     };
 
     const loginWithGoogle = async (): Promise<void> => {
-        setLoading(true);
         try {
-            await signInWithRedirect(auth, googleProvider);
+            const userCredential = await signInWithPopup(auth, googleProvider);
+            const additionalInfo = getAdditionalUserInfo(userCredential);
+
+            if (additionalInfo?.isNewUser) {
+                const firebaseUser = userCredential.user;
+                let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
+                try {
+                    const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                    if (avatarResult.avatarDataUri) {
+                        avatarUrl = avatarResult.avatarDataUri;
+                    }
+                } catch (aiError) {
+                    console.error("Failed to generate AI avatar, using placeholder.", aiError);
+                }
+
+                const newUser: User = {
+                    id: firebaseUser.uid,
+                    name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
+                    email: firebaseUser.email!,
+                    points: 0,
+                    avatar: avatarUrl,
+                    achievements: [],
+                };
+                await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+            }
         } catch (error: any) {
             handleError(error, 'inloggen met Google');
-            setLoading(false);
+            throw error;
         }
     };
 
@@ -212,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
     };
 
-    return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
