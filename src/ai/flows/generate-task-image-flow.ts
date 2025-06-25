@@ -4,7 +4,7 @@
  * - generateTaskImage - A function that creates an image based on a task's title and description.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { GenerateTaskImageInputSchema, GenerateTaskImageOutputSchema } from '@/ai/schemas';
 import type { GenerateTaskImageInput, GenerateTaskImageOutput } from '@/ai/schemas';
 
@@ -26,7 +26,7 @@ ${description ? `Task Description: ${description}` : ''}
 `;
 
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      model: googleAI.model('gemini-2.5-flash-preview-image-generation'),
       prompt: promptText,
       config: {
           responseModalities: ['TEXT', 'IMAGE'],
