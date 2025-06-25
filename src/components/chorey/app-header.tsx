@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, Home, LogOut, PlusCircle, Settings, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check } from 'lucide-react';
+import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check } from 'lucide-react';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import { useTheme } from 'next-themes';
 import { useTasks } from '@/contexts/task-context';
@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { PlusCircle } from 'lucide-react';
 
 type AppHeaderProps = {
   users: User[];
@@ -152,17 +153,6 @@ export default function AppHeader({ users }: AppHeaderProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Mijn Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Instellingen</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Home className="mr-2 h-4 w-4" />
-              <span>Support</span>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />

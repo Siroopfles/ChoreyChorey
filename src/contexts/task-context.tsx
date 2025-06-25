@@ -21,7 +21,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { addDays, addMonths, addWeeks, isBefore } from 'date-fns';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, RecurringFrequency } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, RecurringFrequency, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +31,8 @@ import { calculatePoints } from '@/lib/utils';
 type TaskContextType = {
   tasks: Task[];
   users: User[];
+  templates: TaskTemplate[];
+  loading: boolean;
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments'>>) => void;
@@ -39,6 +41,9 @@ type TaskContextType = {
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
   reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => void;
   addComment: (taskId: string, text: string) => void;
+  addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
+  updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
+  deleteTemplate: (templateId: string) => Promise<void>;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   selectedTaskIds: string[];
@@ -75,7 +80,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { authUser, user, currentOrganization } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null });
@@ -112,14 +119,17 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (!db || !authUser || !currentOrganization) {
+    if (!currentOrganization) {
       setTasks([]);
+      setUsers([]);
+      setTemplates([]);
+      setLoading(false);
       return;
     }
-    
-    const q = query(collection(db, 'tasks'), where("organizationId", "==", currentOrganization.id));
+    setLoading(true);
 
-    const unsubscribeTasks = onSnapshot(q, (snapshot) => {
+    const qTasks = query(collection(db, 'tasks'), where("organizationId", "==", currentOrganization.id));
+    const unsubscribeTasks = onSnapshot(qTasks, (snapshot) => {
       const tasksData = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -147,32 +157,39 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           organizationId: data.organizationId,
         } as Task;
       }).filter(task => {
+        if (!authUser) return false;
         if (task.isPrivate && task.assigneeId !== authUser.uid && task.creatorId !== authUser.uid) {
             return false;
         }
         return true;
       });
       setTasks(tasksData);
+      setLoading(false);
     }, (error: FirestoreError) => handleError(error, 'laden van taken'));
 
-    return () => unsubscribeTasks();
-  }, [authUser, currentOrganization, toast]);
-
-  useEffect(() => {
-    if (!db || !currentOrganization) {
-      setUsers([]);
-      return;
-    }
-
-    const q = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrganization.id));
-
-    const unsubscribeUsers = onSnapshot(q, (snapshot) => {
+    const qUsers = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrganization.id));
+    const unsubscribeUsers = onSnapshot(qUsers, (snapshot) => {
         const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
         setUsers(usersData);
     }, (error: FirestoreError) => handleError(error, 'laden van gebruikers'));
 
-    return () => unsubscribeUsers();
-  }, [currentOrganization]);
+    const qTemplates = query(collection(db, 'taskTemplates'), where("organizationId", "==", currentOrganization.id));
+    const unsubscribeTemplates = onSnapshot(qTemplates, (snapshot) => {
+        const templatesData = snapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id,
+            createdAt: (doc.data().createdAt as Timestamp).toDate(),
+        } as TaskTemplate));
+        setTemplates(templatesData);
+    }, (error: FirestoreError) => handleError(error, 'laden van templates'));
+
+
+    return () => {
+        unsubscribeTasks();
+        unsubscribeUsers();
+        unsubscribeTemplates();
+    };
+  }, [authUser, currentOrganization, toast]);
 
 
   useEffect(() => {
@@ -603,15 +620,44 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addTemplate = async (templateData: TaskTemplateFormValues) => {
+    if (!authUser || !currentOrganization) throw new Error("Niet geautoriseerd of geen organisatie geselecteerd.");
+    const newTemplate = {
+      ...templateData,
+      organizationId: currentOrganization.id,
+      creatorId: authUser.uid,
+      createdAt: new Date(),
+    };
+    await addDoc(collection(db, 'taskTemplates'), newTemplate);
+  };
+
+  const updateTemplate = async (templateId: string, templateData: TaskTemplateFormValues) => {
+    if (!authUser || !currentOrganization) throw new Error("Niet geautoriseerd of geen organisatie geselecteerd.");
+    const templateRef = doc(db, 'taskTemplates', templateId);
+    await updateDoc(templateRef, templateData);
+  };
+
+  const deleteTemplate = async (templateId: string) => {
+    if (!authUser || !currentOrganization) throw new Error("Niet geautoriseerd of geen organisatie geselecteerd.");
+    const templateRef = doc(db, 'taskTemplates', templateId);
+    await deleteDoc(templateRef);
+  };
+
+
   return (
     <TaskContext.Provider value={{ 
       tasks,
       users,
+      templates,
+      loading,
       addTask, 
       updateTask, 
       toggleSubtaskCompletion, 
       reorderTasks,
       addComment,
+      addTemplate,
+      updateTemplate,
+      deleteTemplate,
       searchTerm, 
       setSearchTerm,
       selectedTaskIds,

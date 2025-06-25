@@ -143,6 +143,25 @@ export const taskFormSchema = z.object({
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
 
+export const taskTemplateSchema = z.object({
+  name: z.string().min(3, { message: "Templatenaam moet minimaal 3 karakters bevatten." }),
+  title: z.string().min(3, { message: "Standaard titel moet minimaal 3 karakters bevatten." }),
+  description: z.string().optional(),
+  priority: z.enum(ALL_PRIORITIES).default('Midden'),
+  labels: z.array(z.string()).optional().default([]),
+  subtasks: z.array(z.object({ text: z.string().min(1) })).optional().default([]),
+  storyPoints: z.coerce.number().optional(),
+});
+export type TaskTemplateFormValues = z.infer<typeof taskTemplateSchema>;
+
+export type TaskTemplate = TaskTemplateFormValues & {
+  id: string;
+  organizationId: string;
+  creatorId: string;
+  createdAt: Date;
+};
+
+
 export type Filters = {
   assigneeId: string | null;
   labels: Label[];

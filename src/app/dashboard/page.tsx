@@ -1,15 +1,20 @@
 'use client';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import {
   SidebarProvider,
   Sidebar,
   SidebarHeader,
   SidebarContent,
   SidebarInset,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import Leaderboard from '@/components/chorey/leaderboard';
 import AppHeader from '@/components/chorey/app-header';
-import { LayoutGrid, CalendarDays, LayoutDashboard } from 'lucide-react';
+import { LayoutGrid, CalendarDays, LayoutDashboard, Users, Settings, LayoutTemplate } from 'lucide-react';
 import CommandBar from '@/components/chorey/command-bar';
 import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -69,21 +74,51 @@ function MainContent() {
   );
 }
 
-export default function ChoreyApp() {
-  const { users, viewedUser, setViewedUser } = useTasks();
-  return (
-    <SidebarProvider>
+function AppSidebar() {
+    const { users } = useTasks();
+    const pathname = usePathname();
+
+    const navItems = [
+        { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
+        { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates' },
+        { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
+    ]
+
+    return (
       <Sidebar>
         <SidebarHeader className="p-4 border-b border-sidebar-border">
           <h1 className="text-2xl font-bold text-sidebar-primary">Chorey</h1>
         </SidebarHeader>
         <SidebarContent className="p-4 flex flex-col">
           <CommandBar users={users} />
+
+           <SidebarMenu className="mt-4">
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                    <Link href={item.href} passHref>
+                        <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+              ))}
+           </SidebarMenu>
+
           <div className="flex-1 overflow-y-auto mt-4">
               <Leaderboard users={users} />
           </div>
         </SidebarContent>
       </Sidebar>
+    )
+}
+
+export default function ChoreyApp() {
+  const { users, viewedUser, setViewedUser } = useTasks();
+  return (
+    <SidebarProvider>
+      <AppSidebar />
       <SidebarInset className="flex flex-col">
         <AppHeader users={users} />
         <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
