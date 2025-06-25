@@ -70,7 +70,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser } = useTasks();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
@@ -212,10 +212,20 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
         <CardFooter className="p-3 pt-2 flex justify-between items-center text-xs text-muted-foreground pl-9">
           <div className="flex items-center gap-3">
             {assignee ? (
-              <Avatar className="h-5 w-5">
-                <AvatarImage src={assignee.avatar} alt={assignee.name} data-ai-hint="person face" />
-                <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
-              </Avatar>
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-full hover:bg-accent p-0.5 -ml-1"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if(assignee) setViewedUser(assignee);
+                }}
+                aria-label={`View profile of ${assignee.name}`}
+              >
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={assignee.avatar} alt={assignee.name} data-ai-hint="person face" />
+                  <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+              </button>
             ) : (
               <div className="h-5 w-5 flex items-center justify-center">
                 <UserIcon className="h-4 w-4 text-gray-400" />

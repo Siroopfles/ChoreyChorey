@@ -17,6 +17,7 @@ import CalendarView from '@/components/chorey/calendar-view';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import DashboardView from '@/components/chorey/dashboard-view';
 import FilterBar from '@/components/chorey/filter-bar';
+import UserProfileSheet from '@/components/chorey/user-profile-sheet';
 
 
 function MainContent() {
@@ -59,7 +60,7 @@ function MainContent() {
 }
 
 function ChoreyApp() {
-  const { users } = useTasks();
+  const { users, viewedUser, setViewedUser } = useTasks();
   return (
     <SidebarProvider>
       <Sidebar>
@@ -80,6 +81,13 @@ function ChoreyApp() {
         </main>
         <BulkActionBar />
       </SidebarInset>
+      {viewedUser && (
+        <UserProfileSheet
+          user={viewedUser}
+          isOpen={!!viewedUser}
+          onOpenChange={(isOpen) => !isOpen && setViewedUser(null)}
+        />
+      )}
     </SidebarProvider>
   )
 }

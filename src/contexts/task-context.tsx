@@ -41,6 +41,8 @@ type TaskContextType = {
   clearFilters: () => void;
   notifications: Notification[];
   markNotificationsAsRead: () => void;
+  viewedUser: User | null;
+  setViewedUser: (user: User | null) => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -62,6 +64,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null });
+  const [viewedUser, setViewedUser] = useState<User | null>(null);
   const { toast } = useToast();
   
   const currentUser = users.length > 0 ? users[0] : null;
@@ -399,7 +402,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setFilters,
       clearFilters,
       notifications,
-      markNotificationsAsRead
+      markNotificationsAsRead,
+      viewedUser,
+      setViewedUser
     }}>
       {children}
     </TaskContext.Provider>

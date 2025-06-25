@@ -2,12 +2,14 @@
 import type { User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Crown, Trophy, Sparkles } from 'lucide-react';
+import { useTasks } from '@/contexts/task-context';
 
 type LeaderboardProps = {
   users: User[];
 };
 
 const Leaderboard = ({ users }: LeaderboardProps) => {
+  const { setViewedUser } = useTasks();
   const sortedUsers = [...users].sort((a, b) => b.points - a.points);
 
   const getRankIcon = (index: number) => {
@@ -29,18 +31,23 @@ const Leaderboard = ({ users }: LeaderboardProps) => {
         <Trophy />
         Scorebord
       </h3>
-      <ul className="space-y-4">
+      <ul className="space-y-1">
         {sortedUsers.map((user, index) => (
-          <li key={user.id} className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-6">{getRankIcon(index)}</div>
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person portrait" />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="font-semibold text-sm">{user.name}</p>
-              <p className="text-xs text-sidebar-foreground/80">{user.points.toLocaleString()} pts</p>
-            </div>
+          <li key={user.id}>
+            <button
+              className="flex items-center gap-3 w-full text-left p-2 rounded-md hover:bg-sidebar-accent transition-colors"
+              onClick={() => setViewedUser(user)}
+            >
+              <div className="flex items-center justify-center w-6">{getRankIcon(index)}</div>
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person portrait" />
+                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{user.name}</p>
+                <p className="text-xs text-sidebar-foreground/80">{user.points.toLocaleString()} pts</p>
+              </div>
+            </button>
           </li>
         ))}
       </ul>
