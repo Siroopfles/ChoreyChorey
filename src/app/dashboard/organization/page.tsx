@@ -220,6 +220,10 @@ function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersInOrg: Us
         }
     };
 
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+    };
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -233,7 +237,7 @@ function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersInOrg: Us
                         {usersInTeam.length > 0 && (
                             <CommandGroup heading="Huidige Leden">
                                 {usersInTeam.map(user => (
-                                    <CommandItem key={user.id} className="flex justify-between items-center">
+                                    <CommandItem key={user.id} onSelect={() => removeUser(user.id)} onMouseDown={handleMouseDown} className="flex justify-between items-center group">
                                         <div className="flex items-center gap-2">
                                             <Avatar className="h-6 w-6">
                                                 <AvatarImage src={user.avatar} />
@@ -241,9 +245,7 @@ function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersInOrg: Us
                                             </Avatar>
                                             <span>{user.name}</span>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeUser(user.id)}>
-                                            <X className="h-4 w-4 text-destructive" />
-                                        </Button>
+                                        <X className="h-4 w-4 text-muted-foreground group-aria-selected:text-destructive" />
                                     </CommandItem>
                                 ))}
                             </CommandGroup>
@@ -251,7 +253,7 @@ function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersInOrg: Us
                          {usersNotInTeam.length > 0 && (
                             <CommandGroup heading="Voeg Leden Toe">
                                 {usersNotInTeam.map(user => (
-                                    <CommandItem key={user.id} onSelect={() => addUser(user.id)}>
+                                    <CommandItem key={user.id} onSelect={() => addUser(user.id)} onMouseDown={handleMouseDown}>
                                         <Check className={cn("mr-2 h-4 w-4", "opacity-0")} />
                                         <div className="flex items-center gap-2">
                                             <Avatar className="h-6 w-6">
