@@ -7,10 +7,12 @@ import CalendarView from '@/components/chorey/calendar-view';
 import FilterBar from '@/components/chorey/filter-bar';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
-import { LayoutGrid, CalendarDays, LayoutDashboard, Download } from 'lucide-react';
+import { LayoutGrid, CalendarDays, LayoutDashboard, Download, GanttChart, FileImport } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
+import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
 
 const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
   ssr: false,
@@ -22,8 +24,14 @@ const TaskColumns = dynamic(() => import('@/components/chorey/task-columns'), {
     loading: () => <TaskColumnsSkeleton />,
 });
 
+const GanttView = dynamic(() => import('@/components/chorey/gantt-view'), {
+  ssr: false,
+  loading: () => <GanttViewSkeleton />,
+});
+
 export default function DashboardPage() {
   const { tasks, users, searchTerm, filters } = useTasks();
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -70,9 +78,10 @@ export default function DashboardPage() {
   };
 
   return (
+    <>
     <Tabs defaultValue="board" className="w-full">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <TabsList className="grid w-full grid-cols-3 md:w-fit">
+        <TabsList className="grid w-full grid-cols-4 md:w-fit">
           <TabsTrigger value="board">
             <LayoutGrid className="mr-2 h-4 w-4" />
             Bord
@@ -85,9 +94,17 @@ export default function DashboardPage() {
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Dashboard
           </TabsTrigger>
+           <TabsTrigger value="gantt">
+            <GanttChart className="mr-2 h-4 w-4" />
+            Gantt
+          </TabsTrigger>
         </TabsList>
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             <FilterBar />
+            <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)}>
+              <FileImport className="mr-2 h-4 w-4" />
+              Importeren
+            </Button>
             <Button variant="outline" size="sm" onClick={handleExportCSV}>
               <Download className="mr-2 h-4 w-4" />
               Exporteren
@@ -105,6 +122,11 @@ export default function DashboardPage() {
       <TabsContent value="dashboard">
         <DashboardView tasks={tasks} users={users} />
       </TabsContent>
+       <TabsContent value="gantt">
+          <GanttView tasks={filteredTasks} />
+      </TabsContent>
     </Tabs>
+    <ImportTasksDialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen} />
+    </>
   );
 }

@@ -39,6 +39,7 @@ type TaskContextType = {
   cloneTask: (taskId: string) => void;
   deleteTaskPermanently: (taskId: string) => void;
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
+  toggleTaskTimer: (taskId: string) => void;
   reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => void;
   addComment: (taskId: string, text: string) => void;
   thankForTask: (taskId: string) => Promise<void>;
@@ -161,6 +162,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           organizationId: data.organizationId,
           imageDataUri: data.imageDataUri,
           thanked: data.thanked || false,
+          timeLogged: data.timeLogged || 0,
+          activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
         } as Task;
       }).filter(task => {
         if (!authUser) return false;
@@ -674,6 +677,35 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const toggleTaskTimer = async (taskId: string) => {
+    if (!authUser) return;
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const taskRef = doc(db, "tasks", taskId);
+    try {
+      if (task.activeTimerStartedAt) {
+        // Timer is running, so stop it
+        const now = new Date();
+        const elapsed = Math.floor((now.getTime() - task.activeTimerStartedAt.getTime()) / 1000);
+        const newTimeLogged = (task.timeLogged || 0) + elapsed;
+        await updateDoc(taskRef, {
+          timeLogged: newTimeLogged,
+          activeTimerStartedAt: null,
+          history: arrayUnion(addHistoryEntry(authUser.uid, 'Tijdregistratie gestopt', `Totaal gelogd: ${newTimeLogged}s`))
+        });
+      } else {
+        // Timer is stopped, so start it
+        await updateDoc(taskRef, {
+          activeTimerStartedAt: new Date(),
+          history: arrayUnion(addHistoryEntry(authUser.uid, 'Tijdregistratie gestart'))
+        });
+      }
+    } catch (e) {
+      handleError(e, "tijdregistratie bijwerken");
+    }
+  };
+
   const addTemplate = async (templateData: TaskTemplateFormValues) => {
     if (!authUser || !currentOrganization) throw new Error("Niet geautoriseerd of geen organisatie geselecteerd.");
     const newTemplate = {
@@ -706,7 +738,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       loading,
       addTask, 
       updateTask, 
-      toggleSubtaskCompletion, 
+      toggleSubtaskCompletion,
+      toggleTaskTimer,
       reorderTasks,
       addComment,
       thankForTask,

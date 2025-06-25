@@ -122,6 +122,8 @@ export type Task = {
   organizationId: string;
   imageDataUri?: string;
   thanked?: boolean;
+  timeLogged?: number; // in seconds
+  activeTimerStartedAt?: Date;
 };
 
 export type Notification = {

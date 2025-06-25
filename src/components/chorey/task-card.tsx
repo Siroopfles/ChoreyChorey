@@ -1,3 +1,4 @@
+
 'use client';
 import type { Task, User } from '@/lib/types';
 import { ALL_STATUSES } from '@/lib/types';
@@ -48,6 +49,8 @@ import {
   Repeat,
   Users,
   Heart,
+  Timer,
+  TimerOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -111,7 +114,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer } = useTasks();
   const { user: currentUser, teams } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -122,8 +125,8 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const totalSubtasks = task.subtasks.length;
   const subtaskProgress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
   const points = calculatePoints(task.priority, task.storyPoints);
-
   const isSelected = selectedTaskIds.includes(task.id);
+  const [liveTime, setLiveTime] = useState(0);
 
   const [dateStatus, setDateStatus] = useState({
     isOverdue: false,
@@ -138,6 +141,32 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
       return blockerTask && blockerTask.status !== 'Voltooid';
     });
   }, [task.blockedBy, allTasks]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    if (task.activeTimerStartedAt) {
+        const updateLiveTime = () => {
+            const elapsed = Math.floor((new Date().getTime() - (task.activeTimerStartedAt as Date).getTime()) / 1000);
+            setLiveTime(elapsed);
+        };
+        updateLiveTime();
+        interval = setInterval(updateLiveTime, 1000);
+    } else {
+        setLiveTime(0);
+    }
+    return () => clearInterval(interval);
+  }, [task.activeTimerStartedAt]);
+
+  const totalTimeLogged = (task.timeLogged || 0) + liveTime;
+  
+  const formatTime = (seconds: number) => {
+      if (seconds < 60) return `${seconds}s`;
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m`;
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours}u ${remainingMinutes}m`;
+  };
 
   useEffect(() => {
     if (task.dueDate) {
@@ -234,6 +263,10 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
                     <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Bewerken
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)}>
+                      {task.activeTimerStartedAt ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
+                      <span>{task.activeTimerStartedAt ? 'Stop Timer' : 'Start Timer'}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => cloneTask(task.id)}>
                     <Copy className="mr-2 h-4 w-4" />
@@ -405,6 +438,12 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
                     <PriorityIcon className="h-3 w-3" />
                     <span>{task.priority}</span>
                     </div>
+                    {(totalTimeLogged > 0 || task.activeTimerStartedAt) && (
+                      <div className={cn("flex items-center gap-1", task.activeTimerStartedAt && "text-primary animate-pulse font-semibold")}>
+                          <Timer className="h-3 w-3" />
+                          <span>{formatTime(totalTimeLogged)}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1 font-medium text-amber-600">
                         <Trophy className="h-3 w-3" />
                         <span>{points}</span>
