@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  getFirestore, 
   collection, 
   onSnapshot, 
   addDoc, 
@@ -13,7 +12,6 @@ import {
   writeBatch, 
   getDoc,
   increment,
-  deleteDoc,
   FirestoreError
 } from 'firebase/firestore';
 import type { Task, Priority, TaskFormValues, User, Status } from '@/lib/types';
@@ -59,11 +57,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
       const tasksData = snapshot.docs.map(doc => {
         const data = doc.data();
+        // Ensure all properties have a default value to match the Task type
         return {
-          ...data,
           id: doc.id,
+          title: data.title || '',
+          description: data.description || '',
+          status: data.status || 'Te Doen',
+          priority: data.priority || 'Midden',
+          assigneeId: data.assigneeId || null,
+          labels: data.labels || [],
+          subtasks: data.subtasks || [],
+          attachments: data.attachments || [],
+          isPrivate: data.isPrivate || false,
+          createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
           dueDate: (data.dueDate as Timestamp)?.toDate(),
-          createdAt: (data.createdAt as Timestamp)?.toDate(),
           completedAt: (data.completedAt as Timestamp)?.toDate(),
         } as Task;
       });
@@ -127,7 +134,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           status: 'Te Doen' as Status,
           createdAt: new Date(),
           subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
-          attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' })) || [],
+          attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' as const })) || [],
         };
         await addDoc(collection(db, 'tasks'), firestoreTask);
     } catch (e) {
