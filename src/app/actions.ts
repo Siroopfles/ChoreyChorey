@@ -49,117 +49,45 @@ const getTaskHistory = async () => {
     }).filter(th => th.completionTime > 0);
 };
 
-export async function handleSuggestAssignee(taskDescription: string, availableAssignees: string[]) {
-    if (!taskDescription) {
-        return { error: 'Task description is required.' };
-    }
-    
-    try {
-        const taskHistory = await getTaskHistory();
-        const input: SuggestTaskAssigneeInput = {
-            taskDescription,
-            availableAssignees,
-            taskHistory,
-            // assigneePreferences can be added here if we collect them
-        };
+const aiDisabledError = { error: 'AI-functionaliteit is tijdelijk uitgeschakeld.' };
 
-        const result = await suggestTaskAssignee(input);
-        return { suggestion: result };
-    } catch (e) {
-        console.error(e);
-        return { error: 'Failed to get AI suggestion. Please check your setup.' };
-    }
+export async function handleSuggestAssignee(taskDescription: string, availableAssignees: string[]) {
+    console.error("AI Invocation Disabled: handleSuggestAssignee");
+    return aiDisabledError;
 }
 
 export async function handleSuggestSubtasks(title: string, description?: string) {
-    if (!title) {
-        return { error: 'Task title is required to suggest subtasks.' };
-    }
-    
-    try {
-        const input: SuggestSubtasksInput = {
-            title,
-            description,
-        };
-
-        const result = await suggestSubtasks(input);
-        return { subtasks: result.subtasks };
-    } catch (e) {
-        console.error(e);
-        return { error: 'Failed to get AI subtask suggestions.' };
-    }
+    console.error("AI Invocation Disabled: handleSuggestSubtasks");
+    return aiDisabledError;
 }
 
 export async function handleProcessCommand(command: ProcessCommandInput) {
-    if (!command) {
-        return { error: 'Command is required.' };
-    }
-
-    try {
-        const result = await processCommand(command);
-        return { result };
-    } catch (e) {
-        console.error(e);
-        return { error: 'Failed to process AI command.' };
-    }
+    console.error("AI Invocation Disabled: handleProcessCommand");
+    return aiDisabledError;
 }
 
 export async function handleSummarizeComments(comments: string[]) {
-    if (!comments || comments.length === 0) {
-        return { error: 'No comments to summarize.' };
-    }
-
-    try {
-        const input: SummarizeCommentsInput = { comments };
-        const result = await summarizeComments(input);
-        return { summary: result.summary };
-    } catch (e) {
-        console.error(e);
-        return { error: 'Failed to get AI summary.' };
-    }
+    console.error("AI Invocation Disabled: handleSummarizeComments");
+    return aiDisabledError;
 }
 
 export async function handleSuggestStoryPoints(title: string, description?: string) {
-    if (!title) {
-        return { error: 'Task title is required to suggest story points.' };
-    }
-
-    try {
-        const input: SuggestStoryPointsInput = { title, description };
-        const result = await suggestStoryPoints(input);
-        return { suggestion: result };
-    } catch (e) {
-        console.error(e);
-        return { error: 'Failed to get AI story point suggestion.' };
-    }
+    console.error("AI Invocation Disabled: handleSuggestStoryPoints");
+    return aiDisabledError;
 }
 
 export async function handleGenerateAvatar(name: GenerateAvatarInput) {
-    try {
-        const result = await generateAvatar(name);
-        return { avatarDataUri: result.avatarDataUri };
-    } catch (e) {
-        console.error(e);
-        return { error: 'Failed to generate AI avatar.' };
-    }
+    console.error("AI Invocation Disabled: handleGenerateAvatar");
+    // Return a placeholder to avoid breaking the signup flow
+    return { avatarDataUri: `https://placehold.co/100x100.png` };
 }
 
 export async function handleGenerateTaskImage(input: GenerateTaskImageInput) {
-    try {
-        const result = await generateTaskImage(input);
-        return { imageDataUri: result.imageDataUri };
-    } catch (e) {
-        console.error(e);
-        return { error: 'Failed to generate AI task image.' };
-    }
+    console.error("AI Invocation Disabled: handleGenerateTaskImage");
+    return aiDisabledError;
 }
 
 export async function handleTextToSpeech(text: TextToSpeechInput) {
-    try {
-        const result = await textToSpeech(text);
-        return { audioDataUri: result.audioDataUri };
-    } catch (e) {
-        console.error(e);
-        return { error: 'Failed to synthesize speech.' };
-    }
+    console.error("AI Invocation Disabled: handleTextToSpeech");
+    return aiDisabledError;
 }
