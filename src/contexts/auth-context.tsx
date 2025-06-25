@@ -29,8 +29,8 @@ type AuthContextType = {
     authUser: FirebaseUser | null;
     user: User | null;
     loading: boolean;
-    loginWithEmail: (email: string, pass: string) => Promise<boolean>;
-    signupWithEmail: (email: string, pass: string, name: string) => Promise<boolean>;
+    loginWithEmail: (email: string, pass: string) => Promise<void>;
+    signupWithEmail: (email: string, pass: string, name: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
     logout: () => void;
     refreshUser: () => Promise<void>;
@@ -41,8 +41,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
     const [user, setUser] = useState<User | null>(null);
-    const [authLoading, setAuthLoading] = useState(true);
-    const [isProcessingRedirect, setIsProcessingRedirect] = useState(true);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -74,21 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     useEffect(() => {
-      const processRedirectResult = async () => {
-        try {
-          await getRedirectResult(auth);
-        } catch (error: any) {
-          handleError(error, 'inloggen met Google');
-        } finally {
-          setIsProcessingRedirect(false);
-        }
-      };
-      processRedirectResult();
-    }, []);
-
-    useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            setAuthLoading(true);
             if (firebaseUser) {
                 setAuthUser(firebaseUser);
                 const userDocRef = doc(db, 'users', firebaseUser.uid);
@@ -121,26 +106,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setAuthUser(null);
                 setUser(null);
             }
-            setAuthLoading(false);
         });
+
+        getRedirectResult(auth)
+          .catch((error) => {
+            handleError(error, 'verwerken van Google-login');
+          })
+          .finally(() => {
+            setLoading(false);
+          });
 
         return () => unsubscribe();
     }, []);
 
-    const loginWithEmail = async (email: string, pass: string): Promise<boolean> => {
-        setAuthLoading(true);
+    const loginWithEmail = async (email: string, pass: string) => {
+        setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, pass);
-            return true;
         } catch (error) {
             handleError(error, 'inloggen');
-            setAuthLoading(false);
-            return false;
+        } finally {
+            setLoading(false);
         }
     };
 
-    const signupWithEmail = async (email: string, pass: string, name: string): Promise<boolean> => {
-        setAuthLoading(true);
+    const signupWithEmail = async (email: string, pass: string, name: string) => {
+        setLoading(true);
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
             const firebaseUser = userCredential.user;
@@ -164,47 +155,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 achievements: [],
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-            return true;
         } catch (error) {
             handleError(error, 'registreren');
-            setAuthLoading(false);
-            return false;
+        } finally {
+            setLoading(false);
         }
     };
 
     const loginWithGoogle = async (): Promise<void> => {
+        setLoading(true);
         try {
             await signInWithRedirect(auth, googleProvider);
         } catch (error: any) {
             handleError(error, 'inloggen met Google');
+            setLoading(false);
         }
     };
 
     const logout = async () => {
+        setLoading(true);
         try {
             await signOut(auth);
             router.push('/login');
         } catch (error) {
             handleError(error, 'uitloggen');
+        } finally {
+            setLoading(false);
         }
     };
 
     const refreshUser = useCallback(async () => {
         if (auth.currentUser) {
-            setAuthLoading(true);
+            setLoading(true);
             const userDocRef = doc(db, 'users', auth.currentUser.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
                 setUser({ id: userDoc.id, ...userDoc.data() } as User);
             }
-            setAuthLoading(false);
+            setLoading(false);
         }
     }, []);
     
     const value = {
         authUser,
         user,
-        loading: authLoading || isProcessingRedirect,
+        loading,
         loginWithEmail,
         signupWithEmail,
         loginWithGoogle,
