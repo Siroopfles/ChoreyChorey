@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview An AI agent for generating user avatars.
- * - generateAvatar - A function that creates a unique avatar for a user.
+ * - generateAvatar - a function that creates a unique avatar for a user.
  */
 import { ai } from '@/ai/genkit';
 import { GenerateAvatarInputSchema, GenerateAvatarOutputSchema } from '@/ai/schemas';
@@ -19,7 +19,7 @@ const generateAvatarFlow = ai.defineFlow(
   },
   async (name) => {
     const { media } = await ai.generate({
-      model: 'googleai/gemini-1.5-pro-latest',
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `Generate a unique, abstract, geometric, vibrant, flat-style avatar for a user named '${name}'. The avatar should be simple, clean, and suitable for a profile picture. Avoid using any text or recognizable faces. The style should be modern and professional. Use a colorful but harmonious palette.`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
