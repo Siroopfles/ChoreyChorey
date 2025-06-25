@@ -2,8 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc } from 'firebase/firestore';
-import type { User, Organization, Invite, Task } from '@/lib/types';
+import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import type { User, Organization, Invite, Task, TaskTemplate } from '@/lib/types';
 import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
 import { processCommand } from '@/ai/flows/process-command';
@@ -205,6 +205,106 @@ export async function acceptOrganizationInvite(inviteId: string, userId: string)
         return { success: true };
     } catch (error: any) {
         console.error("Error accepting invite:", error);
+        return { error: error.message };
+    }
+}
+
+export async function updateOrganization(organizationId: string, userId: string, data: Partial<Pick<Organization, 'name'>>) {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+
+        if (!orgDoc.exists() || orgDoc.data().ownerId !== userId) {
+            throw new Error("Alleen de eigenaar kan deze organisatie bijwerken.");
+        }
+
+        await updateDoc(orgRef, data);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error updating organization:", error);
+        return { error: error.message };
+    }
+}
+
+export async function leaveOrganization(organizationId: string, userId: string) {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+
+        if (!orgDoc.exists()) {
+            throw new Error("Organisatie niet gevonden.");
+        }
+        if (orgDoc.data().ownerId === userId) {
+            throw new Error("De eigenaar kan de organisatie niet verlaten. Verwijder de organisatie of draag het eigendom over.");
+        }
+
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+             throw new Error("Gebruiker niet gevonden.");
+        }
+
+        const userData = userDoc.data() as User;
+        const newOrgIds = userData.organizationIds?.filter(id => id !== organizationId) || [];
+        
+        const updateData: any = {
+             organizationIds: arrayRemove(organizationId)
+        };
+
+        if (userData.currentOrganizationId === organizationId) {
+            updateData.currentOrganizationId = newOrgIds.length > 0 ? newOrgIds[0] : null;
+        }
+        
+        await updateDoc(userRef, updateData);
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error leaving organization:", error);
+        return { error: error.message };
+    }
+}
+
+export async function deleteOrganization(organizationId: string, userId: string) {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+
+        if (!orgDoc.exists() || orgDoc.data().ownerId !== userId) {
+            throw new Error("Alleen de eigenaar kan deze organisatie verwijderen.");
+        }
+
+        const batch = writeBatch(db);
+
+        // Delete associated collections
+        const collectionsToDelete = ['teams', 'tasks', 'taskTemplates', 'invites'];
+        for (const coll of collectionsToDelete) {
+            const q = query(collection(db, coll), where('organizationId', '==', organizationId));
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => batch.delete(doc.ref));
+        }
+
+        // Update users who are members
+        const usersQuery = query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        usersSnapshot.forEach(userDoc => {
+            const userData = userDoc.data() as User;
+            const newOrgIds = userData.organizationIds?.filter(id => id !== organizationId) || [];
+            const updateData: any = { organizationIds: arrayRemove(organizationId) };
+            if (userData.currentOrganizationId === organizationId) {
+                updateData.currentOrganizationId = newOrgIds.length > 0 ? newOrgIds[0] : null;
+            }
+            batch.update(userDoc.ref, updateData);
+        });
+
+        // Delete the organization itself
+        batch.delete(orgRef);
+        
+        await batch.commit();
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error deleting organization:", error);
         return { error: error.message };
     }
 }
