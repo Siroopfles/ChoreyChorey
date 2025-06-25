@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -75,11 +76,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-      <div className="flex items-center">
+    <div className="space-y-6">
+       <div className="flex items-center">
         <h1 className="font-semibold text-lg md:text-2xl">Instellingen</h1>
       </div>
-      <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Profiel</CardTitle>
@@ -127,7 +127,6 @@ export default function SettingsPage() {
             </Form>
           </CardContent>
         </Card>
-      </div>
-    </main>
+    </div>
   );
 }

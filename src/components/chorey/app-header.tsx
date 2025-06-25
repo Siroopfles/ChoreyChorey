@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check } from 'lucide-react';
+import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTasks } from '@/contexts/task-context';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,6 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { PlusCircle } from 'lucide-react';
 
 
 export default function AppHeader() {
@@ -145,6 +144,13 @@ export default function AppHeader() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Mijn Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+               <Link href="/dashboard/settings">
+                 <UserIcon className="mr-2 h-4 w-4" />
+                 <span>Profiel</span>
+               </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />

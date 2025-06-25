@@ -52,7 +52,9 @@ function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarProvider>
             <Sidebar>
                 <SidebarHeader className="p-4 border-b border-sidebar-border">
-                    <h1 className="text-2xl font-bold text-sidebar-primary">Chorey</h1>
+                    <Link href="/dashboard">
+                        <h1 className="text-2xl font-bold text-sidebar-primary">Chorey</h1>
+                    </Link>
                 </SidebarHeader>
                 <SidebarContent className="p-4 flex flex-col">
                     <CommandBar users={users} />
