@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, Task, Priority } from '@/lib/types';
@@ -13,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Trophy, Award, Rocket, Users } from 'lucide-react';
+import { CheckCircle, Trophy, Award, Rocket, Users, Heart } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -29,7 +30,8 @@ const priorityBorderColors: Record<Priority, string> = {
 const achievementIcons: Record<string, React.ElementType> = {
     'first_task': Rocket,
     'ten_tasks': Award,
-    'community_helper': Users
+    'community_helper': Users,
+    'appreciated': Heart,
 };
 
 function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {

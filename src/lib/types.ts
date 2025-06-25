@@ -42,6 +42,12 @@ export const ACHIEVEMENTS = {
     name: 'Teamspeler',
     description: 'Voltooi een taak die door iemand anders is aangemaakt.',
     icon: 'Users',
+  },
+  APPRECIATED: {
+    id: 'appreciated',
+    name: 'Gewaardeerd',
+    description: 'Ontvang een bedankje van een ander voor een voltooide taak.',
+    icon: 'Heart',
   }
 };
 
@@ -112,6 +118,7 @@ export type Task = {
   recurring?: RecurringFrequency;
   organizationId: string;
   imageDataUri?: string;
+  thanked?: boolean;
 };
 
 export type Notification = {

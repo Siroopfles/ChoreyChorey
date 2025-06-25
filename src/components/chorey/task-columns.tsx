@@ -35,10 +35,11 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
 
 type TaskColumnsProps = {
   users: User[];
+  tasks: Task[];
 };
 
-const TaskColumns = ({ users }: TaskColumnsProps) => {
-  const { tasks, searchTerm, filters, updateTask, reorderTasks } = useTasks();
+const TaskColumns = ({ users, tasks: filteredTasks }: TaskColumnsProps) => {
+  const { tasks, updateTask, reorderTasks } = useTasks();
   const { toast } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -49,24 +50,6 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
   );
 
   const columns: Status[] = ["Te Doen", "In Uitvoering", "In Review", "Voltooid"];
-
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-        const term = searchTerm.toLowerCase();
-        const inSearch = searchTerm ? 
-            task.title.toLowerCase().includes(term) ||
-            (task.description && task.description.toLowerCase().includes(term))
-            : true;
-        
-        const inAssignee = filters.assigneeId ? task.assigneeId === filters.assigneeId : true;
-        const inLabels = filters.labels.length > 0 ? filters.labels.every(l => task.labels.includes(l)) : true;
-        const inPriority = filters.priority ? task.priority === filters.priority : true;
-        const inTeam = filters.teamId ? task.teamId === filters.teamId : true;
-
-        return inSearch && inAssignee && inLabels && inPriority && inTeam;
-      });
-  }, [tasks, searchTerm, filters]);
-
 
   const tasksByStatus = (status: Status) => {
     return filteredTasks

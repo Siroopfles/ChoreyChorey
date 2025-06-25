@@ -48,6 +48,7 @@ import {
   Loader2,
   Repeat,
   Users,
+  Heart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -57,7 +58,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect, useMemo } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/components/../../contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { handleTextToSpeech } from '@/app/actions';
 import Image from 'next/image';
@@ -111,7 +112,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask } = useTasks();
   const { user: currentUser, teams } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -152,6 +153,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const { isOverdue, isDueToday, isDueSoon } = dateStatus;
 
   const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && task.assigneeId !== currentUser.id;
+  const canThank = currentUser && task.status === 'Voltooid' && task.assigneeId && task.assigneeId !== currentUser.id;
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(task.id);
@@ -296,6 +298,19 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
                 >
                     <CheckCheck className="mr-2 h-4 w-4" />
                     Goedkeuren & Voltooien
+                </Button>
+            )}
+
+            {canThank && (
+                 <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mb-2"
+                    onClick={() => thankForTask(task.id)}
+                    disabled={task.thanked}
+                >
+                    <Heart className="mr-2 h-4 w-4 text-pink-500" />
+                    {task.thanked ? 'Bedankt!' : `Bedank ${assignee?.name}`}
                 </Button>
             )}
 

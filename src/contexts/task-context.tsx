@@ -41,6 +41,7 @@ type TaskContextType = {
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
   reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => void;
   addComment: (taskId: string, text: string) => void;
+  thankForTask: (taskId: string) => Promise<void>;
   addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
   updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
   deleteTemplate: (templateId: string) => Promise<void>;
@@ -159,6 +160,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           recurring: data.recurring,
           organizationId: data.organizationId,
           imageDataUri: data.imageDataUri,
+          thanked: data.thanked || false,
         } as Task;
       }).filter(task => {
         if (!authUser) return false;
@@ -285,6 +287,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           recurring: taskData.recurring || undefined,
           organizationId: currentOrganization.id,
           imageDataUri: taskData.imageDataUri || undefined,
+          thanked: false,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -319,6 +322,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           history: [addHistoryEntry(authUser.uid, 'Gekloond', `van taak ${taskId}`)],
           order: Date.now(),
           organizationId: currentOrganization.id,
+          thanked: false,
         };
         
         delete (clonedTask as any).id; 
@@ -346,7 +350,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const checkAndGrantAchievements = useCallback(async (userId: string, completedTask: Task) => {
+  const checkAndGrantAchievements = useCallback(async (userId: string, type: 'completed' | 'thanked', completedTask?: Task) => {
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
     if (!userDoc.exists()) return;
@@ -355,23 +359,32 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const userAchievements = userData.achievements || [];
     const achievementsToGrant: string[] = [];
 
-    const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeId', '==', userId), where('status', '==', 'Voltooid'));
-    const completedTasksSnapshot = await getDocs(completedTasksQuery);
-    const totalCompleted = completedTasksSnapshot.size;
+    if (type === 'completed' && completedTask) {
+        const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeId', '==', userId), where('status', '==', 'Voltooid'));
+        const completedTasksSnapshot = await getDocs(completedTasksQuery);
+        const totalCompleted = completedTasksSnapshot.size;
 
-    if (totalCompleted === 1 && !userAchievements.includes(ACHIEVEMENTS.FIRST_TASK.id)) {
-        achievementsToGrant.push(ACHIEVEMENTS.FIRST_TASK.id);
-        toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.FIRST_TASK.name}" verdiend!` });
+        if (totalCompleted === 1 && !userAchievements.includes(ACHIEVEMENTS.FIRST_TASK.id)) {
+            achievementsToGrant.push(ACHIEVEMENTS.FIRST_TASK.id);
+            toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.FIRST_TASK.name}" verdiend!` });
+        }
+        
+        if (completedTask.creatorId && completedTask.creatorId !== userId && !userAchievements.includes(ACHIEVEMENTS.COMMUNITY_HELPER.id)) {
+            achievementsToGrant.push(ACHIEVEMENTS.COMMUNITY_HELPER.id);
+            toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.COMMUNITY_HELPER.name}" verdiend!` });
+        }
+
+        if (totalCompleted >= 10 && !userAchievements.includes(ACHIEVEMENTS.TEN_TASKS.id)) {
+            achievementsToGrant.push(ACHIEVEMENTS.TEN_TASKS.id);
+            toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.TEN_TASKS.name}" verdiend!` });
+        }
     }
     
-    if (completedTask.creatorId && completedTask.creatorId !== userId && !userAchievements.includes(ACHIEVEMENTS.COMMUNITY_HELPER.id)) {
-        achievementsToGrant.push(ACHIEVEMENTS.COMMUNITY_HELPER.id);
-        toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.COMMUNITY_HELPER.name}" verdiend!` });
-    }
-
-    if (totalCompleted >= 10 && !userAchievements.includes(ACHIEVEMENTS.TEN_TASKS.id)) {
-        achievementsToGrant.push(ACHIEVEMENTS.TEN_TASKS.id);
-        toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.TEN_TASKS.name}" verdiend!` });
+    if (type === 'thanked') {
+         if (!userAchievements.includes(ACHIEVEMENTS.APPRECIATED.id)) {
+            achievementsToGrant.push(ACHIEVEMENTS.APPRECIATED.id);
+            toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.APPRECIATED.name}" verdiend!` });
+        }
     }
 
     if (achievementsToGrant.length > 0) {
@@ -427,7 +440,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                     description: `${users.find(u=>u.id === taskToUpdate.assigneeId)?.name} heeft ${points} punten verdiend.`,
                 });
                 
-                await checkAndGrantAchievements(taskToUpdate.assigneeId, { ...taskToUpdate, status: 'Voltooid' });
+                await checkAndGrantAchievements(taskToUpdate.assigneeId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
             }
 
             if (taskToUpdate.recurring) {
@@ -442,6 +455,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                         comments: [],
                         history: [addHistoryEntry(authUser.uid, 'Automatisch aangemaakt', `Herhaling van taak ${taskToUpdate.id}`)],
                         order: Date.now(),
+                        thanked: false,
                     };
                     delete (newTaskData as any).id;
                     delete (newTaskData as any).completedAt;
@@ -541,6 +555,41 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const thankForTask = async (taskId: string) => {
+    if (!user) return;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || !task.assigneeId || task.thanked) return;
+
+    try {
+        const batch = writeBatch(db);
+        
+        // Add points to assignee
+        const points = 5; // Bonus points for being thanked
+        const assigneeRef = doc(db, 'users', task.assigneeId);
+        batch.update(assigneeRef, { points: increment(points) });
+        
+        // Mark task as thanked and add history
+        const historyEntry = addHistoryEntry(user.id, 'Bedankje gegeven', `aan ${users.find(u => u.id === task.assigneeId)?.name}`);
+        const taskRef = doc(db, 'tasks', taskId);
+        batch.update(taskRef, { 
+            thanked: true,
+            history: arrayUnion(historyEntry)
+        });
+
+        await batch.commit();
+
+        await checkAndGrantAchievements(task.assigneeId, 'thanked');
+        
+        toast({
+            title: 'Bedankt!',
+            description: `${users.find(u => u.id === task.assigneeId)?.name} heeft ${points} bonuspunten ontvangen.`,
+        });
+
+    } catch (e) {
+        handleError(e, 'bedanken voor taak');
+    }
+  };
+
   const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
     if(taskIds.length === 0 || !authUser) return;
     try {
@@ -562,7 +611,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 const points = calculatePoints(task.priority, task.storyPoints);
                 const userRef = doc(db, 'users', task.assigneeId);
                 batch.update(userRef, { points: increment(points) });
-                await checkAndGrantAchievements(task.assigneeId, {...task, status: 'Voltooid'});
+                await checkAndGrantAchievements(task.assigneeId, 'completed', {...task, status: 'Voltooid'});
             }
         });
 
@@ -660,6 +709,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       toggleSubtaskCompletion, 
       reorderTasks,
       addComment,
+      thankForTask,
       addTemplate,
       updateTemplate,
       deleteTemplate,

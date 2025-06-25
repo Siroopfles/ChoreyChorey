@@ -7,7 +7,10 @@ import CalendarView from '@/components/chorey/calendar-view';
 import FilterBar from '@/components/chorey/filter-bar';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
-import { LayoutGrid, CalendarDays, LayoutDashboard } from 'lucide-react';
+import { LayoutGrid, CalendarDays, LayoutDashboard, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useMemo } from 'react';
+import { format } from 'date-fns';
 
 const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
   ssr: false,
@@ -20,7 +23,51 @@ const TaskColumns = dynamic(() => import('@/components/chorey/task-columns'), {
 });
 
 export default function DashboardPage() {
-  const { tasks, users } = useTasks();
+  const { tasks, users, searchTerm, filters } = useTasks();
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+        const term = searchTerm.toLowerCase();
+        const inSearch = searchTerm ? 
+            task.title.toLowerCase().includes(term) ||
+            (task.description && task.description.toLowerCase().includes(term))
+            : true;
+        
+        const inAssignee = filters.assigneeId ? task.assigneeId === filters.assigneeId : true;
+        const inLabels = filters.labels.length > 0 ? filters.labels.every(l => task.labels.includes(l)) : true;
+        const inPriority = filters.priority ? task.priority === filters.priority : true;
+        const inTeam = filters.teamId ? task.teamId === filters.teamId : true;
+
+        return inSearch && inAssignee && inLabels && inPriority && inTeam;
+      });
+  }, [tasks, searchTerm, filters]);
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Title', 'Status', 'Priority', 'Assignee', 'DueDate', 'Labels', 'URL'];
+    const userMap = new Map(users.map(u => [u.id, u.name]));
+    
+    const rows = filteredTasks.map(task => [
+        task.id,
+        `"${task.title.replace(/"/g, '""')}"`,
+        task.status,
+        task.priority,
+        task.assigneeId ? userMap.get(task.assigneeId) || 'Unknown' : 'Unassigned',
+        task.dueDate ? format(task.dueDate, 'yyyy-MM-dd') : '',
+        task.labels.join(', '),
+        `${window.location.origin}/dashboard?taskId=${task.id}`
+    ].join(','));
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + [headers.join(','), ...rows].join('\n');
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "chorey_tasks_export.csv");
+    document.body.appendChild(link); 
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <Tabs defaultValue="board" className="w-full">
@@ -39,12 +86,16 @@ export default function DashboardPage() {
             Dashboard
           </TabsTrigger>
         </TabsList>
-        <div className="w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             <FilterBar />
+            <Button variant="outline" size="sm" onClick={handleExportCSV}>
+              <Download className="mr-2 h-4 w-4" />
+              Exporteren
+            </Button>
         </div>
       </div>
       <TabsContent value="board">
-        <TaskColumns users={users} />
+        <TaskColumns users={users} tasks={filteredTasks} />
       </TabsContent>
       <TabsContent value="calendar">
         <div className="rounded-lg border bg-card">
