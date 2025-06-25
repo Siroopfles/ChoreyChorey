@@ -49,6 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const userDoc = await getDoc(userDocRef);
                 if (userDoc.exists()) {
                     setUser({ id: userDoc.id, ...userDoc.data() } as User);
+                } else {
+                    // This can happen if the user doc creation is delayed
+                    setUser(null);
                 }
             } else {
                 setAuthUser(null);
@@ -72,6 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loginWithEmail = async (email: string, pass: string) => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+            const firebaseUser = userCredential.user;
+            const userDocRef = doc(db, 'users', firebaseUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                const userData = { id: userDoc.id, ...userDoc.data() } as User;
+                setUser(userData);
+            } else {
+                 handleError({ message: 'Gebruikersprofiel niet gevonden na inloggen.' }, 'inloggen');
+                 return;
+            }
             return userCredential;
         } catch (error) {
             handleError(error, 'inloggen');
@@ -119,7 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userDocRef = doc(db, 'users', firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
 
-            if (!userDoc.exists()) {
+            if (userDoc.exists()) {
+                const userData = { id: userDoc.id, ...userDoc.data() } as User;
+                setUser(userData);
+            } else {
                  let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                 try {
                     const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
