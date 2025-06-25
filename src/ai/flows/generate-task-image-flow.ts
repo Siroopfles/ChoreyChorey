@@ -17,7 +17,7 @@ const prompt = ai.definePrompt({
     input: { schema: GenerateTaskImageInputSchema },
     model: googleAI.model('gemini-2.0-flash-preview-image-generation'),
     config: {
-        responseModalities: ['IMAGE'],
+        responseModalities: ['TEXT', 'IMAGE'],
     },
     prompt: `You are a creative visual artist. Generate a single, compelling, photorealistic image that visually represents the following task. The image should be clean, professional, and directly related to the task's content. Do not include any text in the image.
 

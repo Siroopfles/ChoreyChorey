@@ -22,7 +22,7 @@ const generateAvatarFlow = ai.defineFlow(
       model: googleAI.model('gemini-2.0-flash-preview-image-generation'),
       prompt: `Generate a unique, abstract, geometric, vibrant, flat-style avatar for a user named '${name}'. The avatar should be simple, clean, and suitable for a profile picture. Avoid using any text or recognizable faces. The style should be modern and professional. Use a colorful but harmonious palette.`,
       config: {
-        responseModalities: ['IMAGE'],
+        responseModalities: ['TEXT', 'IMAGE'],
       },
     });
 
