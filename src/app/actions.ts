@@ -2,8 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction, getDoc } from 'firebase/firestore';
-import type { User, Organization, Invite } from '@/lib/types';
+import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc } from 'firebase/firestore';
+import type { User, Organization, Invite, Task } from '@/lib/types';
 import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
 import { processCommand } from '@/ai/flows/process-command';
@@ -14,9 +14,9 @@ import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { auth } from '@/lib/firebase';
 
-const getTaskHistory = async () => {
-    const tasksQuery = query(collection(db, 'tasks'), where('status', '==', 'Voltooid'));
-    const usersQuery = query(collection(db, 'users'));
+const getTaskHistory = async (organizationId: string) => {
+    const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
+    const usersQuery = query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId));
 
     const [tasksSnapshot, usersSnapshot] = await Promise.all([
         getDocs(tasksQuery),
@@ -40,7 +40,7 @@ const getTaskHistory = async () => {
     }).filter(th => th.completionTime > 0);
 };
 
-export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar'>>) {
+export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills'>>) {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, data);
@@ -51,10 +51,22 @@ export async function updateUserProfile(userId: string, data: Partial<Pick<User,
     }
 }
 
-export async function handleSuggestAssignee(taskDescription: string, availableAssignees: string[]) {
+export async function handleSuggestAssignee(taskDescription: string, organizationId: string) {
     try {
-        const taskHistory = await getTaskHistory();
-        const suggestion = await suggestTaskAssignee({ taskDescription, availableAssignees, taskHistory });
+        const orgUsersSnapshot = await getDocs(query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId)));
+        const orgUsers = orgUsersSnapshot.docs.map(doc => doc.data() as User);
+
+        if (orgUsers.length === 0) {
+            return { suggestion: { suggestedAssignee: 'Niemand', reasoning: 'Er zijn geen gebruikers in deze organisatie om aan toe te wijzen.' } };
+        }
+
+        const assigneeSkills = orgUsers.reduce((acc, user) => {
+            acc[user.name] = user.skills || [];
+            return acc;
+        }, {} as Record<string, string[]>);
+        
+        const taskHistory = await getTaskHistory(organizationId);
+        const suggestion = await suggestTaskAssignee({ taskDescription, assigneeSkills, taskHistory });
         return { suggestion };
     } catch (e: any) {
         return { error: e.message };

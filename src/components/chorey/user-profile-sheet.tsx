@@ -14,11 +14,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Trophy, Award, Rocket, Users, Heart } from 'lucide-react';
+import { CheckCircle, Trophy, Award, Rocket, Users, Heart, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 const priorityBorderColors: Record<Priority, string> = {
   'Urgent': 'border-chart-1',
@@ -97,6 +98,27 @@ function Achievements({ user }: { user: User }) {
     )
 }
 
+function UserSkills({ user }: { user: User }) {
+    if (!user.skills || user.skills.length === 0) {
+        return null;
+    }
+
+    return (
+        <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">VAARDIGHEDEN</h4>
+            <div className="flex flex-wrap gap-2">
+                {user.skills.map(skill => (
+                    <Badge key={skill} variant="secondary" className="flex items-center gap-1.5">
+                       <Star className="h-3 w-3 text-amber-500" />
+                       {skill}
+                    </Badge>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+
 export default function UserProfileSheet({
   user,
   isOpen,
@@ -128,13 +150,13 @@ export default function UserProfileSheet({
           </div>
         </SheetHeader>
         
-        <Separator className="my-4" />
+        <div className="space-y-4 py-4">
+            <UserStats user={user} userTasks={userTasks} />
+            <Achievements user={user} />
+            <UserSkills user={user} />
+        </div>
 
-        <UserStats user={user} userTasks={userTasks} />
-        
-        <Separator className="my-4" />
-
-        <Achievements user={user} />
+        <Separator />
 
         <div className="flex-1 overflow-y-auto space-y-4 pt-4">
              <h4 className="text-sm font-medium text-muted-foreground">HUIDIGE TAKEN ({currentTasks.length})</h4>

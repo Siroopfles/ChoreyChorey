@@ -8,6 +8,7 @@ import { handleSuggestAssignee } from '@/app/actions';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import type { SuggestTaskAssigneeOutput } from '@/ai/schemas';
+import { useAuth } from '@/contexts/auth-context';
 
 type TaskAssignmentSuggestionProps = {
   users: User[];
@@ -17,17 +18,18 @@ export function TaskAssignmentSuggestion({ users }: TaskAssignmentSuggestionProp
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestTaskAssigneeOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const { currentOrganization } = useAuth();
   const form = useFormContext();
   const taskDescription = form.watch('description');
 
   const onSuggest = async () => {
+    if (!currentOrganization) return;
+
     setLoading(true);
     setError(null);
     setSuggestion(null);
 
-    const availableAssignees = users.map(u => u.name);
-    const result = await handleSuggestAssignee(taskDescription, availableAssignees);
+    const result = await handleSuggestAssignee(taskDescription, currentOrganization.id);
 
     if (result.error) {
       setError(result.error);
@@ -47,7 +49,7 @@ export function TaskAssignmentSuggestion({ users }: TaskAssignmentSuggestionProp
         type="button"
         variant="outline"
         onClick={onSuggest}
-        disabled={loading || !taskDescription}
+        disabled={loading || !taskDescription || !currentOrganization}
         className="w-full"
       >
         {loading ? (

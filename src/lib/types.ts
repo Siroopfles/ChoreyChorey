@@ -22,6 +22,7 @@ export type User = {
   achievements: string[]; // Achievement IDs
   organizationIds?: string[];
   currentOrganizationId?: string | null;
+  skills?: string[];
 };
 
 export const ACHIEVEMENTS = {
@@ -62,6 +63,8 @@ export const ALL_STATUSES: Status[] = ["Te Doen", "In Uitvoering", "In Review", 
 export type Label = "Keuken" | "Woonkamer" | "Badkamer" | "Slaapkamer" | "Algemeen" | "Kantoor";
 
 export const ALL_LABELS: Label[] = ["Keuken", "Woonkamer", "Badkamer", "Slaapkamer", "Algemeen", "Kantoor"];
+
+export const ALL_SKILLS: string[] = ["Koken", "Schoonmaken", "Tuinieren", "Techniek", "Administratie", "Organiseren", "Boodschappen", "Dierenverzorging", "Planning", "Communicatie"];
 
 export type RecurringFrequency = "daily" | "weekly" | "monthly";
 export const ALL_RECURRING_FREQUENCIES: RecurringFrequency[] = ["daily", "weekly", "monthly"];

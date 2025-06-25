@@ -11,12 +11,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User, Bot } from 'lucide-react';
+import { Loader2, User, Bot, Tags, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile, handleGenerateAvatar } from '@/app/actions';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Badge } from '@/components/ui/badge';
+import { ALL_SKILLS } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const settingsSchema = z.object({
   name: z.string().min(2, 'Naam moet minimaal 2 karakters bevatten.'),
+  skills: z.array(z.string()).optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -31,20 +37,21 @@ export default function SettingsPage() {
     resolver: zodResolver(settingsSchema),
     values: {
       name: user?.name || '',
+      skills: user?.skills || [],
     },
   });
 
   const onSubmit = async (data: SettingsFormValues) => {
     if (!user) return;
     setIsSubmitting(true);
-    const result = await updateUserProfile(user.id, { name: data.name });
+    const result = await updateUserProfile(user.id, { name: data.name, skills: data.skills });
     setIsSubmitting(false);
 
     if (result.error) {
       toast({ title: 'Fout', description: result.error, variant: 'destructive' });
     } else {
       await refreshUser();
-      toast({ title: 'Gelukt!', description: 'Je naam is bijgewerkt.' });
+      toast({ title: 'Gelukt!', description: 'Je profiel is bijgewerkt.' });
     }
   };
 
@@ -119,6 +126,69 @@ export default function SettingsPage() {
                     <FormLabel>E-mailadres</FormLabel>
                     <Input value={user.email} disabled />
                 </FormItem>
+                <FormField
+                  control={form.control}
+                  name="skills"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Vaardigheden</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
+                              <Tags className="mr-2 h-4 w-4" />
+                              {field.value?.length > 0 ? `${field.value.length} geselecteerd` : 'Selecteer vaardigheden'}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Zoek vaardigheid..." />
+                            <CommandList>
+                              <CommandEmpty>Geen vaardigheid gevonden.</CommandEmpty>
+                              <CommandGroup>
+                                {ALL_SKILLS.map((skill) => {
+                                  const isSelected = field.value?.includes(skill);
+                                  return (
+                                    <CommandItem
+                                      key={skill}
+                                      onSelect={() => {
+                                        if (isSelected) {
+                                          field.onChange(field.value?.filter((s) => s !== skill));
+                                        } else {
+                                          field.onChange([...(field.value || []), skill]);
+                                        }
+                                      }}
+                                    >
+                                      <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                                      {skill}
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <div className="pt-1 h-fit min-h-[22px]">
+                        {field.value?.map((skill: string) => (
+                          <Badge variant="secondary" key={skill} className="mr-1 mb-1">
+                            {skill}
+                            <button
+                              type="button"
+                              className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => field.onChange(field.value?.filter((s: string) => s !== skill))}
+                            >
+                              <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Wijzigingen Opslaan

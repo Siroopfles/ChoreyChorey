@@ -22,10 +22,16 @@ const prompt = ai.definePrompt({
   input: {schema: SuggestTaskAssigneeInputSchema},
   output: {schema: SuggestTaskAssigneeOutputSchema},
   model: 'gemini-pro',
-  prompt: `Je bent een AI-assistent voor het toewijzen van taken. Je doel is om de optimale persoon voor te stellen voor een bepaalde taak, rekening houdend met hun historische prestaties en voorkeuren.
+  prompt: `Je bent een AI-assistent voor het toewijzen van taken. Je doel is om de optimale persoon voor te stellen voor een bepaalde taak, rekening houdend met hun historische prestaties en vaardigheden.
 
 Taakomschrijving: {{{taskDescription}}}
-Beschikbare Toewijzers: {{#each availableAssignees}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+
+{{#if assigneeSkills}}
+Beschikbare Toewijzers en hun vaardigheden:
+{{#each assigneeSkills}}
+- {{@key}}: {{#if this}}{{#each this}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}Geen specifieke vaardigheden.{{/if}}
+{{/each}}
+{{/if}}
 
 {{#if taskHistory}}
 Taakgeschiedenis:
@@ -36,16 +42,7 @@ Taakgeschiedenis:
 Geen taakgeschiedenis beschikbaar.
 {{/if}}
 
-{{#if assigneePreferences}}
-Voorkeuren Toewijzer:
-{{#each assigneePreferences}}
-- Toegewezen aan: {{@key}}, Voorkeur: {{{this}}}
-{{/each}}
-{{else}}
-Geen voorkeuren van de toewijzer beschikbaar.
-{{/if}}
-
-Stel op basis van de taakomschrijving, beschikbare toewijzers, taakgeschiedenis en voorkeuren van de toewijzer de beste toewijzer voor de taak voor en leg je redenering uit. Wees beknopt en vermijd onnodige details.
+Analyseer de taakomschrijving en de vaardigheden van de beschikbare toewijzers. Geef prioriteit aan de persoon wiens vaardigheden het beste aansluiten bij de taak. Gebruik de taakgeschiedenis als een secundaire factor. Stel op basis hiervan de beste toewijzer voor en leg je redenering beknopt uit.
 `, 
 });
 

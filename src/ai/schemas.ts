@@ -39,13 +39,12 @@ export type SuggestSubtasksOutput = z.infer<typeof SuggestSubtasksOutputSchema>;
 // From suggest-task-assignee.ts
 export const SuggestTaskAssigneeInputSchema = z.object({
   taskDescription: z.string().describe('The description of the task to be assigned.'),
-  availableAssignees: z.array(z.string()).describe('The list of available assignees for the task.'),
   taskHistory: z.array(z.object({
     assignee: z.string(),
     taskDescription: z.string(),
     completionTime: z.number().describe('The time taken to complete the task in hours.'),
   })).optional().describe('Historical data of task completion times for each assignee.'),
-  assigneePreferences: z.record(z.string(), z.number().min(0).max(1)).optional().describe('A map of assignee names to their preference for the given task, from 0 to 1.'),
+  assigneeSkills: z.record(z.array(z.string())).optional().describe('A map of available assignee names to their list of skills. Use this to find the best match for the task.'),
 });
 export type SuggestTaskAssigneeInput = z.infer<typeof SuggestTaskAssigneeInputSchema>;
 
