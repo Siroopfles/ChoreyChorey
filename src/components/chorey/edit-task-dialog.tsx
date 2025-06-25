@@ -18,11 +18,11 @@ import { Form } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { MessageSquare, History, ClipboardCopy, Bot, Loader2 } from 'lucide-react';
+import { MessageSquare, History, ClipboardCopy, Bot, Loader2, Speaker } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
-import { handleSummarizeComments } from '@/app/actions';
+import { handleSummarizeComments, handleMultiSpeakerTextToSpeech } from '@/app/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -88,6 +88,9 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [isReadingAloud, setIsReadingAloud] = useState(false);
+  const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   const sortedComments = [...(task.comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const sortedHistory = [...(task.history || [])].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -130,6 +133,8 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       imageDataUri: task.imageDataUri,
     });
     setSummary('');
+    setAudioSrc(null);
+    setAudioError(null);
   }, [task, form, isOpen]);
 
 
@@ -163,12 +168,14 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
   
   const onSummarizeComments = async () => {
     const commentsToSummarize = sortedComments.map(c => c.text);
-    if (commentsToSummarize.length === 0) {
-      toast({ title: 'Geen reacties om samen te vatten.', variant: 'destructive' });
+    if (commentsToSummarize.length < 2) {
+      toast({ title: 'Niet genoeg reacties om samen te vatten.', variant: 'destructive' });
       return;
     }
     setIsSummarizing(true);
     setSummary('');
+    setAudioError(null);
+    setAudioSrc(null);
     const result = await handleSummarizeComments(commentsToSummarize);
     if (result.error) {
       toast({ title: 'Fout bij samenvatten', description: result.error, variant: 'destructive' });
@@ -177,6 +184,41 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     }
     setIsSummarizing(false);
   };
+
+  const onReadAloud = async () => {
+    if (sortedComments.length === 0) {
+      toast({ title: 'Geen reacties om voor te lezen.', variant: 'destructive' });
+      return;
+    }
+    setIsReadingAloud(true);
+    setAudioSrc(null);
+    setAudioError(null);
+    setSummary('');
+
+    try {
+      const commentsWithNames = sortedComments.map(comment => {
+        const user = users.find(u => u.id === comment.userId);
+        return {
+          userId: comment.userId,
+          userName: user?.name || 'Onbekend',
+          text: comment.text
+        };
+      });
+
+      const result = await handleMultiSpeakerTextToSpeech({ comments: commentsWithNames });
+
+      if (result.error) {
+        throw new Error(result.error);
+      } else if (result.audioDataUri) {
+        setAudioSrc(result.audioDataUri);
+      }
+    } catch (e: any) {
+      setAudioError(e.message || 'Er is een onbekende fout opgetreden.');
+    } finally {
+      setIsReadingAloud(false);
+    }
+  };
+
 
   const handleAddComment = () => {
     if (newComment.trim()) {
@@ -233,15 +275,35 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                     <TabsContent value="comments" className="flex-1 flex flex-col gap-4 min-h-0 mt-2">
                         <ScrollArea className="flex-1 pr-2 space-y-4">
                             {sortedComments.length > 1 && (
-                                <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing} className="w-full">
+                                <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing || isReadingAloud} className="flex-1">
                                     {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
                                     Samenvatten
                                 </Button>
+                                <Button variant="outline" size="sm" onClick={onReadAloud} disabled={isReadingAloud || isSummarizing} className="flex-1">
+                                    {isReadingAloud ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Speaker className="mr-2 h-4 w-4" />}
+                                    Voorlezen
+                                </Button>
+                                </div>
                             )}
                             {summary && (
                                 <Alert>
+                                    <Bot className="h-4 w-4" />
                                     <AlertTitle>AI Samenvatting</AlertTitle>
                                     <AlertDescription>{summary}</AlertDescription>
+                                </Alert>
+                            )}
+                            {audioSrc && (
+                                <div className="mt-2">
+                                    <audio controls autoPlay src={audioSrc} className="w-full h-10">
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                </div>
+                            )}
+                            {audioError && (
+                                <Alert variant="destructive" className="mt-2">
+                                    <AlertTitle>Fout bij voorlezen</AlertTitle>
+                                    <AlertDescription>{audioError}</AlertDescription>
                                 </Alert>
                             )}
                             {sortedComments.length > 0 ? (

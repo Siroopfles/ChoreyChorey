@@ -107,3 +107,18 @@ export const TextToSpeechOutputSchema = z.object({
     audioDataUri: z.string().describe("A data URI of the generated audio. Expected format: 'data:audio/wav;base64,<encoded_data>'."),
 });
 export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
+
+// From multi-speaker-tts-flow.ts
+export const MultiSpeakerTextToSpeechInputSchema = z.object({
+  comments: z.array(z.object({
+    userId: z.string(),
+    userName: z.string(),
+    text: z.string(),
+  })).describe('An array of comments to be converted into a multi-speaker conversation.'),
+});
+export type MultiSpeakerTextToSpeechInput = z.infer<typeof MultiSpeakerTextToSpeechInputSchema>;
+
+export const MultiSpeakerTextToSpeechOutputSchema = z.object({
+  audioDataUri: z.string().describe("A data URI of the generated multi-speaker audio. Expected format: 'data:audio/wav;base64,<encoded_data>'."),
+});
+export type MultiSpeakerTextToSpeechOutput = z.infer<typeof MultiSpeakerTextToSpeechOutputSchema>;

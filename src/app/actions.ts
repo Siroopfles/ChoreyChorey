@@ -12,6 +12,8 @@ import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
 import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
+import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
+import type { MultiSpeakerTextToSpeechInput } from '@/ai/schemas';
 import { auth } from '@/lib/firebase';
 
 const getTaskHistory = async (organizationId: string) => {
@@ -130,6 +132,15 @@ export async function handleGenerateTaskImage(input: { title: string, descriptio
 export async function handleTextToSpeech(text: string) {
     try {
         const result = await textToSpeech(text);
+        return { audioDataUri: result.audioDataUri };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function handleMultiSpeakerTextToSpeech(input: MultiSpeakerTextToSpeechInput) {
+    try {
+        const result = await multiSpeakerTextToSpeech(input);
         return { audioDataUri: result.audioDataUri };
     } catch (e: any) {
         return { error: e.message };

@@ -7,3 +7,4 @@ import '@/ai/flows/suggest-story-points.ts';
 import '@/ai/flows/generate-avatar-flow.ts';
 import '@/ai/flows/generate-task-image-flow.ts';
 import '@/ai/flows/text-to-speech-flow.ts';
+import '@/ai/flows/multi-speaker-tts-flow.ts';
