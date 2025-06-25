@@ -3,91 +3,91 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isOwnerOfNewOrg(orgId, userId) {
-      // Check if a document is being created in the same transaction, and if the user is the owner.
-      return existsAfter(/databases/$(database)/documents/organizations/$(orgId)) &&
-             getAfter(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == userId;
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Organizations
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // ORGANIZATIONS
     match /organizations/{orgId} {
-      // Only members of the organization can read it.
-      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([orgId]);
+      // Anyone authenticated can create an organization if they set themselves as the owner.
+      allow create: if isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
 
-      // Users can create an organization if they are the owner.
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-      
-      // Only the owner can update the organization name.
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']);
-      
-      // Owner can delete their organization.
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      // Org owner can read, update, or delete their organization.
+      // Reading for members will be handled by team logic.
+      allow read, update, delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
     }
 
-    // Teams
-    match /teams/{teamId} {
-        // Any member of the organization can read team data.
-        allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([resource.data.organizationId]);
-        
-        // Only an owner of the organization can create a team for it.
-        allow create: if request.auth != null && get(/databases/$(database)/documents/organizations/$(request.resource.data.organizationId)).data.ownerId == request.auth.uid;
-        
-        // Only an owner of the organization can update a team (e.g., add/remove members).
-        allow update: if request.auth != null && get(/databases/$(database)/documents/organizations/$(resource.data.organizationId)).data.ownerId == request.auth.uid;
-        
-        // Only the owner can delete a team.
-        allow delete: if request.auth != null && get(/databases/$(database)/documents/organizations/$(resource.data.organizationId)).data.ownerId == request.auth.uid;
-    }
-
-    // Users
+    // USERS
     match /users/{userId} {
-      // Any authenticated user can read any user's profile (for avatars, names, etc.)
-      allow read: if request.auth != null;
-      
-      // A user can only be created if the ID matches the authenticated user.
-      allow create: if request.auth.uid == userId;
+      allow read: if isAuthenticated();
+
+      // A user can create their own document.
+      allow create: if isOwner(userId);
 
       // A user can update their own document under specific conditions.
-      allow update: if request.auth.uid == userId &&
-        // 1. Only allowed fields can be modified.
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'avatar', 'currentOrganizationId', 'organizationIds']) &&
-
-        // 2. Condition for changing currentOrganizationId: The new ID must be an organization the user is already part of.
+      allow update: if isAuthenticated() && isOwner(userId) && (
+        // SCENARIO 1: Creating a new organization.
+        // This is a batch write that creates an org and updates the user.
         (
-          !request.resource.data.diff(resource.data).affectedKeys().has('currentOrganizationId') ||
-          request.resource.data.organizationIds.has(request.resource.data.currentOrganizationId)
-        ) &&
-
-        // 3. Condition for changing organizationIds: This is ONLY allowed when adding a single new org that is being created in the same transaction.
+          // organizationIds array must increase by exactly one.
+          request.resource.data.organizationIds.size() == request.data.organizationIds.size() + 1 &&
+          // Get the ID of the newly added organization.
+          let newOrgId = request.resource.data.organizationIds.diff(request.data.organizationIds).added_values()[0];
+          // currentOrganizationId must be set to this new ID.
+          request.resource.data.currentOrganizationId == newOrgId &&
+          // Look at the organization document as it will exist *after* this batch write.
+          let newOrgData = getAfter(/databases/$(database)/documents/organizations/$(newOrgId)).data;
+          // The user must be the owner of this new organization.
+          newOrgData.ownerId == request.auth.uid &&
+          // Ensure other critical fields are not changed in the same transaction.
+          request.resource.data.name == request.data.name &&
+          request.resource.data.email == request.data.email &&
+          request.resource.data.avatar == request.data.avatar
+        )
+        ||
+        // SCENARIO 2: Updating profile info (name, avatar) or switching organizations.
         (
-          !request.resource.data.diff(resource.data).affectedKeys().has('organizationIds') ||
-          (
-            request.resource.data.organizationIds.size() == resource.data.organizationIds.size() + 1 &&
-            isOwnerOfNewOrg(request.resource.data.organizationIds.diff(resource.data.organizationIds).added().values()[0], request.auth.uid)
-          )
-        );
+          // organizationIds must not change in this scenario.
+          request.resource.data.organizationIds == request.data.organizationIds &&
+          // If currentOrganizationId changes, it must be one of the user's existing orgs.
+          (request.resource.data.currentOrganizationId == request.data.currentOrganizationId || request.resource.data.currentOrganizationId in request.resource.data.organizationIds)
+        )
+      );
     }
     
-    // Tasks
-    match /tasks/{taskId} {
-      // Allow read if the user is part of the organization.
-      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([resource.data.organizationId]);
-      
-      // Allow create if the user is part of the organization.
-      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([request.resource.data.organizationId]);
-      
-      // Allow update if the user is part of the organization.
-      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([resource.data.organizationId]);
-      
-      // Allow delete if the user is part of the organization.
-      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([resource.data.organizationId]);
+    // TEAMS
+    match /teams/{teamId} {
+      function getOrg(orgId) {
+        return get(/databases/$(database)/documents/organizations/$(orgId));
+      }
+      function isOrgOwner(orgId) {
+        return getOrg(orgId).data.ownerId == request.auth.uid;
+      }
+
+      // Org owner can read, create, update, delete teams in their org.
+      allow read, delete, update: if isAuthenticated() && isOrgOwner(resource.data.organizationId);
+      allow create: if isAuthenticated() && isOrgOwner(request.resource.data.organizationId);
     }
     
-    // Notifications
+    // NOTIFICATIONS
     match /notifications/{notificationId} {
-        // Users can only read, create, update, and delete their own notifications.
-        allow read, write, delete: if request.auth != null && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid);
+      // User can read/update their own notifications
+      allow read, update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Anyone authenticated can create a notification (the server action validates who it's for)
+      allow create: if isAuthenticated();
+    }
+    
+    // TASKS
+    match /tasks/{taskId} {
+      function isOrgMember(orgId) {
+        // Simplified: only owner can access tasks. This should be expanded with team logic.
+        return get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
+      }
+      allow read, write: if isAuthenticated() && isOrgMember(resource.data.organizationId);
     }
   }
 }
