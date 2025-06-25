@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CalendarView from '@/components/chorey/calendar-view';
 import FilterBar from '@/components/chorey/filter-bar';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
-import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
+import TaskColumns from '@/components/chorey/task-columns';
 import { LayoutGrid, CalendarDays, LayoutDashboard, Download, GanttChart, FileImport } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMemo, useState } from 'react';
@@ -19,11 +19,6 @@ import type { User } from '@/lib/types';
 const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
   ssr: false,
   loading: () => <DashboardViewSkeleton />,
-});
-
-const TaskColumns = dynamic(() => import('@/components/chorey/task-columns'), {
-    ssr: false,
-    loading: () => <TaskColumnsSkeleton />,
 });
 
 const GanttView = dynamic(() => import('@/components/chorey/gantt-view'), {
