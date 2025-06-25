@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CalendarView from '@/components/chorey/calendar-view';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import DashboardView from '@/components/chorey/dashboard-view';
+import FilterBar from '@/components/chorey/filter-bar';
 
 
 function MainContent() {
@@ -23,20 +24,25 @@ function MainContent() {
 
   return (
     <Tabs defaultValue="board" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-4 md:w-fit">
-        <TabsTrigger value="board">
-          <LayoutGrid className="mr-2 h-4 w-4" />
-          Bord
-        </TabsTrigger>
-        <TabsTrigger value="calendar">
-          <CalendarDays className="mr-2 h-4 w-4" />
-          Kalender
-        </TabsTrigger>
-        <TabsTrigger value="dashboard">
-          <LayoutDashboard className="mr-2 h-4 w-4" />
-          Dashboard
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <TabsList className="grid w-full grid-cols-3 md:w-fit">
+          <TabsTrigger value="board">
+            <LayoutGrid className="mr-2 h-4 w-4" />
+            Bord
+          </TabsTrigger>
+          <TabsTrigger value="calendar">
+            <CalendarDays className="mr-2 h-4 w-4" />
+            Kalender
+          </TabsTrigger>
+          <TabsTrigger value="dashboard">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
+        </TabsList>
+        <div className="w-full md:w-auto">
+            <FilterBar />
+        </div>
+      </div>
       <TabsContent value="board">
         <TaskColumns users={users} />
       </TabsContent>

@@ -5,6 +5,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
+import { useMemo } from 'react';
 
 const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; users: User[] }) => {
   return (
@@ -35,27 +36,35 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ users }: TaskColumnsProps) => {
-  const { tasks, searchTerm, updateTask } = useTasks();
+  const { tasks, searchTerm, filters, updateTask } = useTasks();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Require pointer to move 8px before dragging starts
+        distance: 8,
       },
     })
   );
 
   const columns: Status[] = ["Te Doen", "In Uitvoering", "Voltooid", "Geannuleerd", "Gearchiveerd"];
 
-  const tasksByStatus = (status: Status) => {
-    const filteredTasks = tasks.filter((task) => {
-        if (!searchTerm) return true;
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
         const term = searchTerm.toLowerCase();
-        return (
-          task.title.toLowerCase().includes(term) ||
-          (task.description && task.description.toLowerCase().includes(term))
-        );
-      });
+        const inSearch = searchTerm ? 
+            task.title.toLowerCase().includes(term) ||
+            (task.description && task.description.toLowerCase().includes(term))
+            : true;
+        
+        const inAssignee = filters.assigneeId ? task.assigneeId === filters.assigneeId : true;
+        const inLabels = filters.labels.length > 0 ? filters.labels.every(l => task.labels.includes(l)) : true;
+        const inPriority = filters.priority ? task.priority === filters.priority : true;
 
+        return inSearch && inAssignee && inLabels && inPriority;
+      });
+  }, [tasks, searchTerm, filters]);
+
+
+  const tasksByStatus = (status: Status) => {
     return filteredTasks
         .filter((task) => task.status === status)
         .sort((a,b) => (a.dueDate?.getTime() || Infinity) - (b.dueDate?.getTime() || Infinity));
@@ -70,12 +79,9 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
     const overContainer = over.data.current?.sortable.containerId || over.id;
 
     if (!activeContainer || !overContainer || activeContainer === overContainer) {
-      // Logic for reordering within the same column could be added here
-      // but is skipped for now as it requires an `order` field on tasks.
       return;
     }
 
-    // Task is dropped in a different column, update its status
     updateTask(active.id as string, { status: overContainer as Status });
   }
 

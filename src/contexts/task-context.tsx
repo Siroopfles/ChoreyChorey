@@ -15,7 +15,7 @@ import {
   increment,
   FirestoreError
 } from 'firebase/firestore';
-import type { Task, Priority, TaskFormValues, User, Status } from '@/lib/types';
+import type { Task, Priority, TaskFormValues, User, Status, Label, Filters } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 
@@ -33,6 +33,9 @@ type TaskContextType = {
   selectedTaskIds: string[];
   setSelectedTaskIds: React.Dispatch<React.SetStateAction<string[]>>;
   toggleTaskSelection: (taskId: string) => void;
+  filters: Filters;
+  setFilters: (newFilters: Partial<Filters>) => void;
+  clearFilters: () => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -52,14 +55,23 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null });
   const { toast } = useToast();
+
+  const setFilters = (newFilters: Partial<Filters>) => {
+    setRawFilters(prev => ({...prev, ...newFilters}));
+  };
+
+  const clearFilters = () => {
+      setRawFilters({ assigneeId: null, labels: [], priority: null });
+      setSearchTerm('');
+  };
 
   useEffect(() => {
     if (!db) return;
     const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
       const tasksData = snapshot.docs.map(doc => {
         const data = doc.data();
-        // Ensure all properties have a default value to match the Task type
         return {
           id: doc.id,
           title: data.title || '',
@@ -132,7 +144,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           dueDate: taskData.dueDate || null,
           priority: taskData.priority || 'Midden',
           isPrivate: taskData.isPrivate || false,
-          labels: (taskData.labels as Task['labels']) || [],
+          labels: (taskData.labels as Label[]) || [],
           status: 'Te Doen' as Status,
           createdAt: new Date(),
           subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
@@ -309,6 +321,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       bulkUpdateTasks,
       cloneTask,
       deleteTaskPermanently,
+      filters,
+      setFilters,
+      clearFilters
     }}>
       {children}
     </TaskContext.Provider>

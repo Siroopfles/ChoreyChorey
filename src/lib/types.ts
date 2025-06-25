@@ -61,3 +61,9 @@ export const taskFormSchema = z.object({
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
+
+export type Filters = {
+  assigneeId: string | null;
+  labels: Label[];
+  priority: Priority | null;
+};
