@@ -45,6 +45,7 @@ import {
   ClipboardCopy,
   Volume2,
   Loader2,
+  Repeat,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -201,8 +202,11 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
       >
         <CardHeader className="p-3 pb-2 pl-9">
           <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-sm font-semibold font-body leading-snug pt-1">
+            <CardTitle className="text-sm font-semibold font-body leading-snug pt-1 flex items-center gap-1.5">
+              {task.recurring && <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />}
+              <span className="flex-1">
                 <Highlight text={task.title} highlight={searchTerm} />
+              </span>
             </CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

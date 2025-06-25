@@ -19,7 +19,8 @@ import {
   arrayUnion,
   getDocs,
 } from 'firebase/firestore';
-import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry } from '@/lib/types';
+import { addDays, addMonths, addWeeks, isBefore } from 'date-fns';
+import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, RecurringFrequency } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +53,24 @@ type TaskContextType = {
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
+
+const calculateNextDueDate = (currentDueDate: Date | undefined, frequency: RecurringFrequency): Date => {
+    const startDate = currentDueDate || new Date();
+    // To avoid creating tasks in the past if the due date was long ago,
+    // we should calculate from today if the due date has passed.
+    const baseDate = isBefore(startDate, new Date()) ? new Date() : startDate;
+
+    switch (frequency) {
+        case 'daily':
+            return addDays(baseDate, 1);
+        case 'weekly':
+            return addWeeks(baseDate, 1);
+        case 'monthly':
+            return addMonths(baseDate, 1);
+        default:
+            return addDays(new Date(), 1); // Fallback to tomorrow
+    }
+}
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { authUser, user } = useAuth();
@@ -119,6 +138,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           order: data.order || 0,
           storyPoints: data.storyPoints,
           blockedBy: data.blockedBy || [],
+          recurring: data.recurring,
         } as Task;
       }).filter(task => {
         if (task.isPrivate && task.assigneeId !== authUser.uid && task.creatorId !== authUser.uid) {
@@ -222,6 +242,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           order: Date.now(),
           storyPoints: taskData.storyPoints,
           blockedBy: taskData.blockedBy || [],
+          recurring: taskData.recurring || undefined,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -369,6 +390,43 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 
                 // Pass the full task object with the 'Voltooid' status
                 await checkAndGrantAchievements(taskToUpdate.assigneeId, { ...taskToUpdate, status: 'Voltooid' });
+            }
+
+            // Recurring task logic
+            if (taskToUpdate.recurring) {
+                try {
+                    const nextDueDate = calculateNextDueDate(taskToUpdate.dueDate, taskToUpdate.recurring);
+                    const newTaskData = {
+                        ...taskToUpdate,
+                        status: 'Te Doen' as Status,
+                        dueDate: nextDueDate,
+                        createdAt: new Date(),
+                        subtasks: taskToUpdate.subtasks.map(s => ({...s, completed: false })),
+                        comments: [],
+                        history: [addHistoryEntry(authUser.uid, 'Automatisch aangemaakt', `Herhaling van taak ${taskToUpdate.id}`)],
+                        order: Date.now(),
+                    };
+                    delete (newTaskData as any).id;
+                    delete (newTaskData as any).completedAt;
+
+                    const docRef = await addDoc(collection(db, 'tasks'), newTaskData);
+
+                    if (newTaskData.assigneeId) {
+                        await createNotification(
+                            newTaskData.assigneeId,
+                            `Nieuwe herhalende taak: "${newTaskData.title}"`,
+                            docRef.id
+                        );
+                    }
+                    
+                    toast({
+                        title: 'Herhalende Taak',
+                        description: `De volgende taak "${newTaskData.title}" is aangemaakt.`,
+                    });
+
+                } catch (e) {
+                    handleError(e, 'aanmaken van herhalende taak');
+                }
             }
         }
         

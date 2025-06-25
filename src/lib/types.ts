@@ -42,6 +42,9 @@ export type Label = "Keuken" | "Woonkamer" | "Badkamer" | "Slaapkamer" | "Algeme
 
 export const ALL_LABELS: Label[] = ["Keuken", "Woonkamer", "Badkamer", "Slaapkamer", "Algemeen", "Kantoor"];
 
+export type RecurringFrequency = "daily" | "weekly" | "monthly";
+export const ALL_RECURRING_FREQUENCIES: RecurringFrequency[] = ["daily", "weekly", "monthly"];
+
 export type Subtask = {
   id: string;
   text: string;
@@ -90,6 +93,7 @@ export type Task = {
   order: number;
   storyPoints?: number;
   blockedBy?: string[];
+  recurring?: RecurringFrequency;
 };
 
 export type Notification = {
@@ -116,6 +120,7 @@ export const taskFormSchema = z.object({
   isPrivate: z.boolean().default(false),
   storyPoints: z.coerce.number().optional(),
   blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
+  recurring: z.enum(['daily', 'weekly', 'monthly']).optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

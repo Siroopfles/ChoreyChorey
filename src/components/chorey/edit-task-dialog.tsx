@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, History, ClipboardCopy, Image as ImageIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, History, ClipboardCopy, Image as ImageIcon, Repeat } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useTasks } from '@/contexts/task-context';
@@ -115,6 +115,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       isPrivate: task.isPrivate,
       storyPoints: task.storyPoints,
       blockedBy: task.blockedBy || [],
+      recurring: task.recurring,
     },
   });
 
@@ -131,6 +132,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       isPrivate: task.isPrivate,
       storyPoints: task.storyPoints,
       blockedBy: task.blockedBy || [],
+      recurring: task.recurring,
     });
     setSummary('');
     setPointsSuggestion('');
@@ -503,6 +505,30 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                                 </div>
                                 {pointsSuggestion && <Alert className="mt-2"><AlertDescription>{pointsSuggestion}</AlertDescription></Alert>}
                                 <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="recurring"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Herhaling</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <Repeat className="mr-2 h-4 w-4 text-muted-foreground" />
+                                    <SelectValue placeholder="Niet herhalend" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                <SelectItem value="none">Niet herhalend</SelectItem>
+                                <SelectItem value="daily">Dagelijks</SelectItem>
+                                <SelectItem value="weekly">Wekelijks</SelectItem>
+                                <SelectItem value="monthly">Maandelijks</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
                             </FormItem>
                         )}
                     />

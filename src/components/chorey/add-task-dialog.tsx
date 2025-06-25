@@ -27,7 +27,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Database } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Database, Repeat } from 'lucide-react';
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -59,6 +59,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
       attachments: [],
       labels: [],
       blockedBy: [],
+      recurring: undefined,
     },
   });
 
@@ -349,6 +350,30 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                         </FormItem>
                     )}
                  />
+                 <FormField
+                    control={form.control}
+                    name="recurring"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Herhaling</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <Repeat className="mr-2 h-4 w-4 text-muted-foreground" />
+                                <SelectValue placeholder="Niet herhalend" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="none">Niet herhalend</SelectItem>
+                            <SelectItem value="daily">Dagelijks</SelectItem>
+                            <SelectItem value="weekly">Wekelijks</SelectItem>
+                            <SelectItem value="monthly">Maandelijks</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
               </div>
               
               <FormField
