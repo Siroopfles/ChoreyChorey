@@ -1,6 +1,6 @@
 'use client';
 
-import type { User, Task } from '@/lib/types';
+import type { User, Task, Priority } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import {
   Sheet,
@@ -17,11 +17,11 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
-const priorityColors: Record<Task['priority'], string> = {
-  Urgent: 'border-l-chart-1',
-  Hoog: 'border-l-chart-2',
-  Midden: 'border-l-chart-3',
-  Laag: 'border-l-chart-4',
+const priorityBorderColors: Record<Priority, string> = {
+  'Urgent': 'border-chart-1',
+  'Hoog': 'border-chart-2',
+  'Midden': 'border-chart-3',
+  'Laag': 'border-chart-4',
 };
 
 function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {
@@ -91,7 +91,7 @@ export default function UserProfileSheet({
             {currentTasks.length > 0 ? (
                 <div className="space-y-2">
                     {currentTasks.map(task => (
-                        <div key={task.id} className={cn("flex flex-col rounded-md border p-3 border-l-4", priorityColors[task.priority])}>
+                        <div key={task.id} className={cn("flex flex-col rounded-md border p-3 border-l-4", priorityBorderColors[task.priority])}>
                             <p className="font-semibold text-sm">{task.title}</p>
                             <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
                                <span>Status: {task.status}</span>

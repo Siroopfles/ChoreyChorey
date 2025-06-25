@@ -51,8 +51,8 @@ function MainContent() {
         <TaskColumns users={users} />
       </TabsContent>
       <TabsContent value="calendar">
-        <div className="p-4 bg-card rounded-lg border max-w-fit mx-auto">
-          <CalendarView tasks={tasks} />
+        <div className="rounded-lg border bg-card">
+          <CalendarView tasks={tasks} users={users} />
         </div>
       </TabsContent>
       <TabsContent value="dashboard">

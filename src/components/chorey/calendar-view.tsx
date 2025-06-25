@@ -1,17 +1,46 @@
 'use client';
 
-import type { Task } from '@/lib/types';
+import type { Task, User, Priority } from '@/lib/types';
 import { Calendar } from '@/components/ui/calendar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { isSameDay, format } from 'date-fns';
+import { nl } from 'date-fns/locale';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { useTasks } from '@/contexts/task-context';
 
 type CalendarViewProps = {
   tasks: Task[];
+  users: User[];
 };
 
-export default function CalendarView({ tasks }: CalendarViewProps) {
+const priorityBorderColor: Record<Priority, string> = {
+  'Urgent': 'border-chart-1',
+  'Hoog': 'border-chart-2',
+  'Midden': 'border-chart-3',
+  'Laag': 'border-chart-4',
+};
+
+export default function CalendarView({ tasks, users }: CalendarViewProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  const { setViewedUser } = useTasks();
 
   const dueDates = tasks.map((task) => task.dueDate).filter((d): d is Date => !!d);
+
+  useEffect(() => {
+    if (date) {
+      const tasksForDay = tasks.filter(task => task.dueDate && isSameDay(task.dueDate, date));
+      setSelectedTasks(tasksForDay);
+    } else {
+      setSelectedTasks([]);
+    }
+  }, [date, tasks]);
+
+  const handleSelectDate = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+  }
 
   const modifiers = {
     due: dueDates,
@@ -25,13 +54,55 @@ export default function CalendarView({ tasks }: CalendarViewProps) {
   };
 
   return (
-    <Calendar
-      mode="single"
-      selected={date}
-      onSelect={setDate}
-      className="w-full"
-      modifiers={modifiers}
-      modifiersStyles={modifiersStyles}
-    />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+      <Calendar
+        mode="single"
+        selected={date}
+        onSelect={handleSelectDate}
+        className="w-full"
+        modifiers={modifiers}
+        modifiersStyles={modifiersStyles}
+      />
+      <Card className="border-none shadow-none">
+        <CardHeader>
+          <CardTitle>
+            {date ? `Taken voor ${format(date, 'd MMMM yyyy', { locale: nl })}` : 'Selecteer een dag'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {selectedTasks.length > 0 ? (
+            <ul className="space-y-3">
+              {selectedTasks.map(task => {
+                const assignee = users.find(u => u.id === task.assigneeId);
+                return (
+                  <li key={task.id} className={cn("flex items-center justify-between p-3 rounded-lg border bg-background border-l-4", priorityBorderColor[task.priority])}>
+                    <div className="flex-1">
+                      <p className="font-semibold">{task.title}</p>
+                      <p className="text-xs text-muted-foreground">{task.priority}</p>
+                    </div>
+                    {assignee && (
+                      <button
+                        type="button"
+                        className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        onClick={() => setViewedUser(assignee)}
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={assignee.avatar} alt={assignee.name} />
+                          <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <div className="flex items-center justify-center text-center text-muted-foreground h-full min-h-[200px]">
+              <p>Geen taken voor deze dag.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
