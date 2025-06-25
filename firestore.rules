@@ -1,46 +1,56 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isOrgMember(orgId) {
+      return orgId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
+    }
+
     match /users/{userId} {
-      // A user can create their own document on signup
+      allow read: if request.auth != null;
       allow create: if request.auth.uid == userId;
-      // A user can read their own document
-      allow read: if request.auth.uid == userId;
-      // A user can update their own document.
-      // The transaction logic on the client ensures this is done safely.
-      allow update: if request.auth.uid == userId;
+      
+      function canUpdateProfile() {
+        return request.resource.data.keys().hasOnly(['name', 'avatar', 'currentOrganizationId'])
+            && request.resource.data.name is string
+            && request.resource.data.avatar is string
+            && (request.resource.data.currentOrganizationId == null || (
+                  request.resource.data.currentOrganizationId is string &&
+                  request.resource.data.currentOrganizationId in resource.data.organizationIds
+               ));
+      }
+
+      function canCreateAndJoinOrg() {
+        let newOrgId = request.resource.data.organizationIds[request.resource.data.organizationIds.size() - 1];
+        return request.resource.data.organizationIds.size() == resource.data.organizationIds.size() + 1
+          && getAfter(/databases/$(database)/documents/organizations/$(newOrgId)).data.ownerId == request.auth.uid
+          && request.resource.data.keys().hasOnly(['organizationIds', 'currentOrganizationId']);
+      }
+      
+      allow update: if request.auth.uid == userId && (canUpdateProfile() || canCreateAndJoinOrg());
     }
 
     match /organizations/{orgId} {
-      // A user can create an organization if they are authenticated and set themselves as owner.
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
-      // A user can read an organization if they are a member (checked via their user document).
-      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([orgId]);
+      allow read: if orgId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
+      allow create: if request.auth.uid == request.resource.data.ownerId;
     }
 
     match /teams/{teamId} {
-      function getOrgId() {
-        // For reads, check the existing resource. For writes, check the incoming resource.
-        return request.method == 'get' ? resource.data.organizationId : request.resource.data.organizationId;
-      }
-      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([getOrgId()]);
+      allow read, update: if isOrgMember(resource.data.organizationId);
+      allow create: if isOrgMember(request.resource.data.organizationId);
+      allow delete: if get(/databases/$(database)/documents/organizations/$(resource.data.organizationId)).data.ownerId == request.auth.uid;
     }
-
+    
     match /tasks/{taskId} {
-       function getOrgId() {
-        return request.method == 'get' ? resource.data.organizationId : request.resource.data.organizationId;
-      }
-       allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([getOrgId()]);
+      allow read, update, delete: if isOrgMember(resource.data.organizationId);
+      allow create: if isOrgMember(request.resource.data.organizationId);
     }
-
+    
     match /notifications/{notificationId} {
-      function getUserId() {
-         return request.method == 'get' ? resource.data.userId : request.resource.data.userId;
-      }
-      allow read, write: if request.auth.uid == getUserId();
+        allow read, write: if request.auth.uid == resource.data.userId;
+        allow create: if request.auth.uid == request.resource.data.userId;
     }
   }
 }
-
-    

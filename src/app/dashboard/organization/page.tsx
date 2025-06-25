@@ -18,9 +18,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2, Plus, UserPlus, X, Users, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { handleCreateTeam, handleAddUserToTeam, handleRemoveUserFromTeam } from '@/app/actions';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, runTransaction, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, runTransaction, doc, addDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { Team, User, Organization } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -133,13 +132,18 @@ function CreateTeamDialog({ organizationId }: { organizationId: string }) {
 
     const onSubmit = async (data: TeamFormValues) => {
         setIsSubmitting(true);
-        const result = await handleCreateTeam(data.name, organizationId);
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        } else {
+        try {
+            await addDoc(collection(db, 'teams'), {
+                name: data.name,
+                organizationId,
+                memberIds: [],
+            });
             toast({ title: 'Gelukt!', description: `Team "${data.name}" is aangemaakt.` });
             setOpen(false);
             form.reset();
+        } catch (error: any) {
+            console.error("Error creating team:", error);
+            toast({ title: 'Fout', description: error.message, variant: 'destructive' });
         }
         setIsSubmitting(false);
     };
@@ -195,22 +199,24 @@ function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersInOrg: Us
     const usersNotInTeam = useMemo(() => usersInOrg.filter(u => !team.memberIds.includes(u.id)), [usersInOrg, team.memberIds]);
 
     const addUser = async (userId: string) => {
-        const result = await handleAddUserToTeam(team.id, userId);
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        } else {
+        const teamRef = doc(db, 'teams', team.id);
+        try {
+            await updateDoc(teamRef, { memberIds: arrayUnion(userId) });
             const user = usersInOrg.find(u => u.id === userId);
             toast({ title: 'Lid Toegevoegd', description: `${user?.name} is toegevoegd aan team ${team.name}.` });
+        } catch (error: any) {
+             toast({ title: 'Fout', description: error.message, variant: 'destructive' });
         }
     };
 
     const removeUser = async (userId: string) => {
-        const result = await handleRemoveUserFromTeam(team.id, userId);
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        } else {
+        const teamRef = doc(db, 'teams', team.id);
+        try {
+            await updateDoc(teamRef, { memberIds: arrayRemove(userId) });
             const user = usersInOrg.find(u => u.id === userId);
             toast({ title: 'Lid Verwijderd', description: `${user?.name} is verwijderd van team ${team.name}.`, variant: 'destructive' });
+        } catch (error: any) {
+            toast({ title: 'Fout', description: error.message, variant: 'destructive' });
         }
     };
 
@@ -381,5 +387,3 @@ export default function OrganizationPage() {
         </main>
     );
 }
-
-    

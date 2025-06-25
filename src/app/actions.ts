@@ -50,49 +50,6 @@ export async function updateUserProfile(userId: string, data: Partial<Pick<User,
     }
 }
 
-export async function handleCreateTeam(name: string, organizationId: string) {
-    if (!name || !organizationId) {
-        return { error: 'Teamnaam en organisatie-ID zijn verplicht.' };
-    }
-    try {
-        const newTeamRef = await addDoc(collection(db, 'teams'), {
-            name,
-            organizationId,
-            memberIds: [],
-        });
-        return { success: true, teamId: newTeamRef.id };
-    } catch (error: any) {
-        console.error("Error creating team:", error);
-        return { error: error.message };
-    }
-}
-
-export async function handleAddUserToTeam(teamId: string, userId: string) {
-    try {
-        const teamRef = doc(db, 'teams', teamId);
-        await updateDoc(teamRef, {
-            memberIds: arrayUnion(userId)
-        });
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error adding user to team:", error);
-        return { error: error.message };
-    }
-}
-
-export async function handleRemoveUserFromTeam(teamId: string, userId: string) {
-    try {
-        const teamRef = doc(db, 'teams', teamId);
-        await updateDoc(teamRef, {
-            memberIds: arrayRemove(userId)
-        });
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error removing user from team:", error);
-        return { error: error.message };
-    }
-}
-
 export async function handleSuggestAssignee(taskDescription: string, availableAssignees: string[]) {
     try {
         const taskHistory = await getTaskHistory();
