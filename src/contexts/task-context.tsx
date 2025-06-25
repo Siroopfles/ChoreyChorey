@@ -21,6 +21,7 @@ import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Noti
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
+import { calculatePoints } from '@/lib/utils';
 
 type TaskContextType = {
   tasks: Task[];
@@ -46,16 +47,6 @@ type TaskContextType = {
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
-
-const calculatePoints = (priority: Priority): number => {
-    switch (priority) {
-        case 'Urgent': return 30;
-        case 'Hoog': return 20;
-        case 'Midden': return 10;
-        case 'Laag': return 5;
-        default: return 0;
-    }
-};
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { authUser } = useAuth();
