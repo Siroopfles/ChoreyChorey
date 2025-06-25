@@ -16,7 +16,6 @@ import {
   FirestoreError,
   query,
   where,
-  orderBy,
 } from 'firebase/firestore';
 import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification } from '@/lib/types';
 import { db } from '@/lib/firebase';
@@ -129,7 +128,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!db || !authUser) return;
     
-    const q = query(collection(db, "notifications"), where("userId", "==", authUser.uid), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "notifications"), where("userId", "==", authUser.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const notificationsData = snapshot.docs.map(doc => {
             const data = doc.data();
@@ -139,6 +138,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 createdAt: (data.createdAt as Timestamp).toDate(),
             } as Notification;
         });
+        // Sort notifications by most recent on the client
+        notificationsData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setNotifications(notificationsData);
     }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
 
