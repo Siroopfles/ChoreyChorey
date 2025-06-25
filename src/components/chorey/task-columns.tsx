@@ -45,7 +45,7 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
     })
   );
 
-  const columns: Status[] = ["Te Doen", "In Uitvoering", "Voltooid", "Geannuleerd", "Gearchiveerd"];
+  const columns: Status[] = ["Te Doen", "In Uitvoering", "In Review", "Voltooid", "Geannuleerd", "Gearchiveerd"];
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {

@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { handleSuggestAssignee } from '@/app/actions';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/types';
-import type { SuggestTaskAssigneeOutput } from '@/ai/flows/suggest-task-assignee';
+import type { SuggestTaskAssigneeOutput } from '@/ai/schemas';
 
 type TaskAssignmentSuggestionProps = {
   users: User[];

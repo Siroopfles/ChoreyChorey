@@ -8,18 +8,8 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const SuggestSubtasksInputSchema = z.object({
-  title: z.string().describe('The title of the main task.'),
-  description: z.string().optional().describe('The description of the main task.'),
-});
-export type SuggestSubtasksInput = z.infer<typeof SuggestSubtasksInputSchema>;
-
-const SuggestSubtasksOutputSchema = z.object({
-  subtasks: z.array(z.string()).describe('A list of suggested subtask descriptions.'),
-});
-export type SuggestSubtasksOutput = z.infer<typeof SuggestSubtasksOutputSchema>;
+import { SuggestSubtasksInputSchema, SuggestSubtasksOutputSchema } from '@/ai/schemas';
+import type { SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/schemas';
 
 export async function suggestSubtasks(input: SuggestSubtasksInput): Promise<SuggestSubtasksOutput> {
   return suggestSubtasksFlow(input);

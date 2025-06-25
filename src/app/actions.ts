@@ -1,7 +1,16 @@
 'use server';
-import { suggestTaskAssignee, type SuggestTaskAssigneeInput } from '@/ai/flows/suggest-task-assignee';
-import { suggestSubtasks, type SuggestSubtasksInput } from '@/ai/flows/suggest-subtasks';
-import { processCommand, type ProcessCommandInput } from '@/ai/flows/process-command';
+import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
+import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
+import { processCommand } from '@/ai/flows/process-command';
+import { summarizeComments } from '@/ai/flows/summarize-comments';
+import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
+import type { 
+    SuggestTaskAssigneeInput,
+    SuggestSubtasksInput,
+    ProcessCommandInput,
+    SummarizeCommentsInput,
+    SuggestStoryPointsInput,
+} from '@/ai/schemas';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import type { Task, User } from '@/lib/types';
@@ -85,5 +94,35 @@ export async function handleProcessCommand(command: ProcessCommandInput) {
     } catch (e) {
         console.error(e);
         return { error: 'Failed to process AI command.' };
+    }
+}
+
+export async function handleSummarizeComments(comments: string[]) {
+    if (!comments || comments.length === 0) {
+        return { error: 'No comments to summarize.' };
+    }
+
+    try {
+        const input: SummarizeCommentsInput = { comments };
+        const result = await summarizeComments(input);
+        return { summary: result.summary };
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to get AI summary.' };
+    }
+}
+
+export async function handleSuggestStoryPoints(title: string, description?: string) {
+    if (!title) {
+        return { error: 'Task title is required to suggest story points.' };
+    }
+
+    try {
+        const input: SuggestStoryPointsInput = { title, description };
+        const result = await suggestStoryPoints(input);
+        return { suggestion: result };
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to get AI story point suggestion.' };
     }
 }

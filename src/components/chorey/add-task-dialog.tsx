@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
+import { Label as UiLabel } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,12 +27,13 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Database } from 'lucide-react';
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { handleSuggestSubtasks } from '@/app/actions';
+import { handleSuggestSubtasks, handleSuggestStoryPoints } from '@/app/actions';
 import { useTasks } from '@/contexts/task-context';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type AddTaskDialogProps = {
   users: User[];
@@ -42,6 +43,8 @@ type AddTaskDialogProps = {
 export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
+  const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
+  const [pointsSuggestion, setPointsSuggestion] = useState('');
   const { toast } = useToast();
   const { addTask } = useTasks();
 
@@ -55,6 +58,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
       subtasks: [],
       attachments: [],
       labels: [],
+      blockedBy: [],
     },
   });
 
@@ -66,6 +70,11 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
   const { fields: attachmentFields, append: appendAttachment, remove: removeAttachment } = useFieldArray({
     control: form.control,
     name: "attachments",
+  });
+  
+  const { fields: blockedByFields, append: appendBlockedBy, remove: removeBlockedBy } = useFieldArray({
+    control: form.control,
+    name: "blockedBy",
   });
 
   function onSubmit(data: TaskFormValues) {
@@ -108,6 +117,32 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
     }
     setIsSuggestingSubtasks(false);
   };
+  
+  const onSuggestStoryPoints = async () => {
+    const title = form.getValues('title');
+    const description = form.getValues('description');
+     if (!title) {
+        toast({
+            title: 'Titel vereist',
+            description: 'Voer een titel in om Story Points te kunnen genereren.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    setIsSuggestingPoints(true);
+    const result = await handleSuggestStoryPoints(title, description);
+    if (result.error) {
+        toast({
+            title: 'Fout bij suggereren',
+            description: result.error,
+            variant: 'destructive'
+        });
+    } else if (result.suggestion) {
+        form.setValue('storyPoints', result.suggestion.points);
+        setPointsSuggestion(result.suggestion.reasoning);
+    }
+    setIsSuggestingPoints(false);
+  }
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) form.reset(); }}>
@@ -295,6 +330,25 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                     </FormItem>
                   )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="storyPoints"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Story Points</FormLabel>
+                            <div className="flex items-center gap-2">
+                                <FormControl>
+                                    <Input type="number" placeholder="bijv. 5" {...field} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
+                                </FormControl>
+                                <Button type="button" variant="outline" size="icon" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints}>
+                                    {isSuggestingPoints ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
+                                </Button>
+                            </div>
+                            {pointsSuggestion && <Alert className="mt-2"><AlertDescription>{pointsSuggestion}</AlertDescription></Alert>}
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                 />
               </div>
               
               <FormField
@@ -320,7 +374,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
               <Separator />
 
               <div>
-                <Label>Subtaken</Label>
+                <UiLabel>Subtaken</UiLabel>
                 <div className="space-y-2 mt-2">
                   {subtaskFields.map((field, index) => (
                     <div key={field.id} className="flex items-center gap-2">
@@ -362,7 +416,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
               <Separator />
 
                <div>
-                <Label>Bijlagen (URL)</Label>
+                <UiLabel>Bijlagen (URL)</UiLabel>
                 <div className="space-y-2 mt-2">
                   {attachmentFields.map((field, index) => (
                     <div key={field.id} className="flex items-center gap-2">
@@ -384,6 +438,32 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                   </Button>
                 </div>
               </div>
+              
+               <Separator />
+              
+               <div>
+                  <UiLabel>Geblokkeerd door (Taak ID)</UiLabel>
+                   <div className="space-y-2 mt-2">
+                    {blockedByFields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                        <FormField
+                            control={form.control}
+                            name={`blockedBy.${index}`}
+                            render={({ field }) => (
+                                <Input {...field} placeholder="Plak een taak ID..."/>
+                            )}
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeBlockedBy(index)}>
+                          <Trash2 className="h-4 w-4 text-destructive"/>
+                        </Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={() => appendBlockedBy('')}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Blocker toevoegen
+                    </Button>
+                  </div>
+               </div>
 
               <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => setOpen(false)}>

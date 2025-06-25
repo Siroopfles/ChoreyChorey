@@ -12,9 +12,9 @@ export type Priority = "Laag" | "Midden" | "Hoog" | "Urgent";
 export const ALL_PRIORITIES: Priority[] = ["Laag", "Midden", "Hoog", "Urgent"];
 
 
-export type Status = "Te Doen" | "In Uitvoering" | "Voltooid" | "Gearchiveerd" | "Geannuleerd";
+export type Status = "Te Doen" | "In Uitvoering" | "In Review" | "Voltooid" | "Gearchiveerd" | "Geannuleerd";
 
-export const ALL_STATUSES: Status[] = ["Te Doen", "In Uitvoering", "Voltooid", "Gearchiveerd", "Geannuleerd"];
+export const ALL_STATUSES: Status[] = ["Te Doen", "In Uitvoering", "In Review", "Voltooid", "Gearchiveerd", "Geannuleerd"];
 
 export type Label = "Keuken" | "Woonkamer" | "Badkamer" | "Slaapkamer" | "Algemeen" | "Kantoor";
 
@@ -56,6 +56,8 @@ export type Task = {
   createdAt: Date;
   completedAt?: Date;
   order: number;
+  storyPoints?: number;
+  blockedBy?: string[];
 };
 
 export type Notification = {
@@ -77,6 +79,8 @@ export const taskFormSchema = z.object({
   subtasks: z.array(z.object({ text: z.string().min(1, 'Subtaak mag niet leeg zijn.') })).optional(),
   attachments: z.array(z.object({ url: z.string().url('Voer een geldige URL in.') })).optional(),
   isPrivate: z.boolean().default(false),
+  storyPoints: z.coerce.number().optional(),
+  blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

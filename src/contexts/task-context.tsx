@@ -103,6 +103,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           dueDate: (data.dueDate as Timestamp)?.toDate(),
           completedAt: (data.completedAt as Timestamp)?.toDate(),
           order: data.order || 0,
+          storyPoints: data.storyPoints,
+          blockedBy: data.blockedBy || [],
         } as Task;
       }).filter(task => {
         // Filter out private tasks that are not assigned to the current user
@@ -201,6 +203,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' as const })) || [],
           comments: [],
           order: Date.now(),
+          storyPoints: taskData.storyPoints || null,
+          blockedBy: taskData.blockedBy || [],
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -275,10 +279,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
 
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
-            const points = calculatePoints(taskToUpdate.priority);
             finalUpdates.completedAt = new Date();
-
-            if (taskToUpdate.assigneeId) {
+            
+            // Only award points if moving from a non-completed state.
+            if(taskToUpdate.status !== 'Voltooid' && taskToUpdate.assigneeId) {
+                const points = calculatePoints(taskToUpdate.priority);
                 const assignee = users.find(u => u.id === taskToUpdate.assigneeId);
                 if(assignee) {
                     const userRef = doc(db, 'users', assignee.id);

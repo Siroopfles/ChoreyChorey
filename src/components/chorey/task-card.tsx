@@ -38,6 +38,10 @@ import {
   MessageSquare,
   Trophy,
   Clock,
+  Link as LinkIcon,
+  Database,
+  CheckCheck,
+  Hourglass,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -47,6 +51,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 
 type TaskCardProps = {
@@ -65,9 +70,10 @@ const priorityConfig = {
 const statusConfig: Record<Task['status'], { icon?: JSX.Element; color: string }> = {
     'Te Doen': { color: 'border-l-gray-400' },
     'In Uitvoering': { color: 'border-l-blue-500' },
-    Voltooid: { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, color: 'border-l-green-500' },
-    Gearchiveerd: { icon: <Archive className="h-5 w-5 text-gray-500" />, color: 'border-l-gray-500' },
-    Geannuleerd: { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-destructive' },
+    'In Review': { icon: <Hourglass className="h-5 w-5 text-purple-500" />, color: 'border-l-purple-500' },
+    'Voltooid': { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, color: 'border-l-green-500' },
+    'Gearchiveerd': { icon: <Archive className="h-5 w-5 text-gray-500" />, color: 'border-l-gray-500' },
+    'Geannuleerd': { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-destructive' },
 };
 
 const Highlight = ({ text, highlight }: { text: string, highlight: string }) => {
@@ -97,6 +103,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
   const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm } = useTasks();
+  const { user: currentUser } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
@@ -110,6 +117,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const isOverdue = task.dueDate && isBefore(startOfDay(task.dueDate), startOfDay(today));
   const isDueToday = task.dueDate && isToday(task.dueDate);
 
+  const canApprove = currentUser && task.assigneeId && currentUser.id !== task.assigneeId;
 
   return (
     <div className="relative">
@@ -123,7 +131,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
         </div>
       <Card 
         className={cn(
-            'hover:shadow-lg transition-shadow duration-200 bg-card border-l-4', 
+            'group/task-card hover:shadow-lg transition-shadow duration-200 bg-card border-l-4', 
             statusInfo.color,
             isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
             isDragging && 'opacity-50'
@@ -179,6 +187,12 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+           {task.blockedBy && task.blockedBy.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                    <LinkIcon className="h-3 w-3" />
+                    <span>Geblokkeerd door: {task.blockedBy.join(', ')}</span>
+                </div>
+            )}
         </CardHeader>
         <CardContent className="p-3 pt-1 pl-9">
           <div className="flex flex-wrap gap-1 mb-2">
@@ -188,6 +202,17 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
               </Badge>
             ))}
           </div>
+          
+          {task.status === 'In Review' && canApprove && (
+            <Button
+                size="sm"
+                className="w-full mb-2 bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => updateTask(task.id, { status: 'Voltooid' })}
+            >
+                <CheckCheck className="mr-2 h-4 w-4" />
+                Goedkeuren & Voltooien
+            </Button>
+          )}
 
           {task.attachments.length > 0 && (
             <div className="mb-2 space-y-1 pt-2 mt-2 border-t">
@@ -244,54 +269,64 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
           )}
         </CardContent>
         <CardFooter className="p-3 pt-2 flex justify-between items-center text-xs text-muted-foreground pl-9">
-          <div className="flex items-center gap-3 flex-wrap">
-            {assignee ? (
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-full hover:bg-accent p-0.5 -ml-1"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if(assignee) setViewedUser(assignee);
-                }}
-                aria-label={`View profile of ${assignee.name}`}
-              >
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={assignee.avatar} alt={assignee.name} data-ai-hint="person face" />
-                  <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-              </button>
-            ) : (
-              <div className="h-5 w-5 flex items-center justify-center">
-                <UserIcon className="h-4 w-4 text-gray-400" />
-              </div>
-            )}
-            {task.dueDate && (
-              <div className={cn('flex items-center gap-1', { 'text-destructive': isOverdue, 'text-chart-2 font-semibold': isDueToday })}>
-                <CalendarIcon className="h-3 w-3" />
-                <span>{format(task.dueDate, 'd MMM')}</span>
-              </div>
-            )}
-            <div className={cn('flex items-center gap-1 font-medium', priorityConfig[task.priority].color)}>
-              <PriorityIcon className="h-3 w-3" />
-              <span>{task.priority}</span>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 w-full items-center">
+                {assignee ? (
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-full hover:bg-accent p-0.5 -ml-1"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if(assignee) setViewedUser(assignee);
+                    }}
+                    aria-label={`View profile of ${assignee.name}`}
+                  >
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={assignee.avatar} alt={assignee.name} data-ai-hint="person face" />
+                      <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  </button>
+                ) : (
+                  <div className="h-5 w-5 flex items-center justify-center">
+                    <UserIcon className="h-4 w-4 text-gray-400" />
+                  </div>
+                )}
+                {task.dueDate && (
+                  <div className={cn('flex items-center gap-1', { 'text-destructive': isOverdue, 'text-chart-2 font-semibold': isDueToday })}>
+                    <CalendarIcon className="h-3 w-3" />
+                    <span>{format(task.dueDate, 'd MMM')}</span>
+                  </div>
+                )}
+                <div className={cn('flex items-center gap-1 font-medium', priorityConfig[task.priority].color)}>
+                  <PriorityIcon className="h-3 w-3" />
+                  <span>{task.priority}</span>
+                </div>
+                 <div className="flex items-center gap-1 font-medium text-amber-600">
+                    <Trophy className="h-3 w-3" />
+                    <span>{points}</span>
+                </div>
+                {task.comments?.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" />
+                    <span>{task.comments.length}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{formatDistanceToNow(task.createdAt, { locale: nl, addSuffix: true })}</span>
+                </div>
+                {task.storyPoints !== undefined && (
+                    <div className="flex items-center gap-1 font-medium">
+                        <Database className="h-3 w-3" />
+                        <span>{task.storyPoints}</span>
+                    </div>
+                )}
+                <div className="flex items-center gap-1">
+                    {task.isPrivate && <Lock className="h-3 w-3" />}
+                    {statusInfo.icon && (
+                        <div className="ml-auto">{statusInfo.icon}</div>
+                    )}
+                </div>
             </div>
-             <div className="flex items-center gap-1 font-medium text-amber-600">
-                <Trophy className="h-3 w-3" />
-                <span>{points}</span>
-            </div>
-            {task.comments?.length > 0 && (
-              <div className="flex items-center gap-1">
-                <MessageSquare className="h-3 w-3" />
-                <span>{task.comments.length}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span>{formatDistanceToNow(task.createdAt, { locale: nl, addSuffix: true })}</span>
-            </div>
-            {task.isPrivate && <Lock className="h-3 w-3" />}
-          </div>
-          {statusInfo.icon}
         </CardFooter>
       </Card>
       <EditTaskDialog 

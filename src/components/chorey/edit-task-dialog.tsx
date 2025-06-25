@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
+import { Label as UiLabel } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,13 +27,14 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useTasks } from '@/contexts/task-context';
-import { handleSuggestSubtasks } from '@/app/actions';
+import { handleSuggestSubtasks, handleSummarizeComments, handleSuggestStoryPoints } from '@/app/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 type EditTaskDialogProps = {
   users: User[];
@@ -66,10 +67,13 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
   const { toast } = useToast();
   const { updateTask, addComment } = useTasks();
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
+  const [pointsSuggestion, setPointsSuggestion] = useState('');
   const [newComment, setNewComment] = useState('');
 
   const sortedComments = [...(task.comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -83,6 +87,8 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       subtasks: task.subtasks.map(({id, ...rest}) => rest),
       attachments: task.attachments.map(({id, name, type, ...rest}) => rest),
       isPrivate: task.isPrivate,
+      storyPoints: task.storyPoints,
+      blockedBy: task.blockedBy || [],
     },
   });
 
@@ -97,8 +103,10 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       subtasks: task.subtasks.map(({id, ...rest}) => rest),
       attachments: task.attachments.map(({id, name, type, ...rest}) => rest),
       isPrivate: task.isPrivate,
+      storyPoints: task.storyPoints,
+      blockedBy: task.blockedBy || [],
     });
-  }, [task, form]);
+  }, [task, form, isOpen]);
 
   const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
     control: form.control,
@@ -108,6 +116,11 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
   const { fields: attachmentFields, append: appendAttachment, remove: removeAttachment } = useFieldArray({
     control: form.control,
     name: "attachments",
+  });
+  
+  const { fields: blockedByFields, append: appendBlockedBy, remove: removeBlockedBy } = useFieldArray({
+    control: form.control,
+    name: "blockedBy",
   });
 
   function onSubmit(data: TaskFormValues) {
@@ -129,6 +142,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
         labels: data.labels as Label[],
         subtasks: updatedSubtasks,
         attachments: updatedAttachments,
+        blockedBy: data.blockedBy || [],
     });
 
     toast({
@@ -169,6 +183,50 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     setIsSuggestingSubtasks(false);
   };
   
+   const onSuggestStoryPoints = async () => {
+    const title = form.getValues('title');
+    const description = form.getValues('description');
+     if (!title) {
+        toast({
+            title: 'Titel vereist',
+            description: 'Voer een titel in om Story Points te kunnen genereren.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    setIsSuggestingPoints(true);
+    const result = await handleSuggestStoryPoints(title, description);
+    if (result.error) {
+        toast({
+            title: 'Fout bij suggereren',
+            description: result.error,
+            variant: 'destructive'
+        });
+    } else if (result.suggestion) {
+        form.setValue('storyPoints', result.suggestion.points);
+        setPointsSuggestion(result.suggestion.reasoning);
+    }
+    setIsSuggestingPoints(false);
+  }
+  
+  const onSummarizeComments = async () => {
+    const commentsToSummarize = sortedComments.map(c => c.text);
+    if (commentsToSummarize.length === 0) {
+      toast({ title: 'Geen reacties om samen te vatten.', variant: 'destructive' });
+      return;
+    }
+
+    setIsSummarizing(true);
+    setSummary('');
+    const result = await handleSummarizeComments(commentsToSummarize);
+    if (result.error) {
+      toast({ title: 'Fout bij samenvatten', description: result.error, variant: 'destructive' });
+    } else if (result.summary) {
+      setSummary(result.summary);
+    }
+    setIsSummarizing(false);
+  };
+
   const handleAddComment = () => {
     if (newComment.trim()) {
       addComment(task.id, newComment.trim());
@@ -363,6 +421,25 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="storyPoints"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Story Points</FormLabel>
+                             <div className="flex items-center gap-2">
+                                <FormControl>
+                                    <Input type="number" placeholder="bijv. 5" {...field} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
+                                </FormControl>
+                                <Button type="button" variant="outline" size="icon" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints}>
+                                    {isSuggestingPoints ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
+                                </Button>
+                            </div>
+                            {pointsSuggestion && <Alert className="mt-2"><AlertDescription>{pointsSuggestion}</AlertDescription></Alert>}
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                 />
                 </div>
                 
                 <FormField
@@ -386,7 +463,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                 <Separator />
 
                 <div>
-                  <Label>Subtaken</Label>
+                  <UiLabel>Subtaken</UiLabel>
                   <div className="space-y-2 mt-2">
                     {subtaskFields.map((field, index) => (
                       <div key={field.id} className="flex items-center gap-2">
@@ -428,7 +505,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                 <Separator />
 
                  <div>
-                  <Label>Bijlagen (URL)</Label>
+                  <UiLabel>Bijlagen (URL)</UiLabel>
                   <div className="space-y-2 mt-2">
                     {attachmentFields.map((field, index) => (
                       <div key={field.id} className="flex items-center gap-2">
@@ -450,6 +527,32 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                     </Button>
                   </div>
                 </div>
+                
+                <Separator />
+                
+                 <div>
+                  <UiLabel>Geblokkeerd door (Taak ID)</UiLabel>
+                   <div className="space-y-2 mt-2">
+                    {blockedByFields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                        <FormField
+                            control={form.control}
+                            name={`blockedBy.${index}`}
+                            render={({ field }) => (
+                                <Input {...field} value={field.value ?? ''} placeholder="Plak een taak ID..."/>
+                            )}
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeBlockedBy(index)}>
+                          <Trash2 className="h-4 w-4 text-destructive"/>
+                        </Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={() => appendBlockedBy('')}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Blocker toevoegen
+                    </Button>
+                  </div>
+               </div>
 
                 <DialogFooter className="sticky bottom-0 bg-background pt-4 pb-0 -mx-6 px-6">
                   <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
@@ -464,7 +567,21 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
           <Separator className="my-4" />
 
           <div className="space-y-4">
-              <Label>Reacties</Label>
+            <div className="flex justify-between items-center">
+              <UiLabel>Reacties</UiLabel>
+               {sortedComments.length > 1 && (
+                 <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing}>
+                    {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                    Samenvatten
+                 </Button>
+               )}
+            </div>
+             {summary && (
+                <Alert>
+                    <AlertTitle>AI Samenvatting</AlertTitle>
+                    <AlertDescription>{summary}</AlertDescription>
+                </Alert>
+             )}
               <div className="space-y-4">
                   {sortedComments.length > 0 ? (
                       sortedComments.map(comment => (
