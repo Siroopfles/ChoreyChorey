@@ -1,13 +1,15 @@
+
 'use client';
 import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider } from '@/contexts/task-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, currentOrganization } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (loading) return; 
@@ -17,11 +19,11 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    if (user && !currentOrganization) {
+    if (user && !currentOrganization && pathname !== '/dashboard/organization') {
       router.push('/dashboard/organization');
     }
 
-  }, [user, loading, currentOrganization, router]);
+  }, [user, loading, currentOrganization, router, pathname]);
 
   if (loading || !user) {
     return (
@@ -31,7 +33,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!currentOrganization) {
+  if (!currentOrganization && pathname !== '/dashboard/organization') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2">

@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,25 +16,82 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, Plus, UserPlus, X, Users, Check, Search } from 'lucide-react';
+import { Loader2, Plus, UserPlus, X, Users, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { handleCreateTeam, handleAddUserToTeam, handleRemoveUserFromTeam } from '@/app/actions';
+import { handleCreateTeam, handleAddUserToTeam, handleRemoveUserFromTeam, handleCreateOrganization } from '@/app/actions';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { Team, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
-const orgSchema = z.object({
+const orgCreationSchema = z.object({
   name: z.string().min(3, 'Naam moet minimaal 3 karakters bevatten.'),
 });
-type OrgFormValues = z.infer<typeof orgSchema>;
+type OrgCreationFormValues = z.infer<typeof orgCreationSchema>;
 
 const teamSchema = z.object({
     name: z.string().min(2, 'Teamnaam moet minimaal 2 karakters bevatten.'),
 });
 type TeamFormValues = z.infer<typeof teamSchema>;
 
+function CreateOrganizationView() {
+    const { user, refreshUser } = useAuth();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const form = useForm<OrgCreationFormValues>({
+        resolver: zodResolver(orgCreationSchema),
+        defaultValues: { name: '' },
+    });
+
+    const onSubmit = async (data: OrgCreationFormValues) => {
+        if (!user) return;
+        setIsSubmitting(true);
+        const result = await handleCreateOrganization(data.name, user.id);
+        if (result.error) {
+            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
+        } else {
+            toast({ title: 'Gelukt!', description: `Organisatie "${data.name}" is aangemaakt.` });
+            await refreshUser();
+        }
+        setIsSubmitting(false);
+    };
+
+    return (
+        <main className="flex flex-1 items-center justify-center p-4">
+            <Card className="w-full max-w-md">
+                <CardHeader>
+                    <CardTitle>Maak je eerste organisatie</CardTitle>
+                    <CardDescription>Om Chorey te gebruiken, moet je lid zijn van een organisatie. Maak er nu een aan.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Naam van de organisatie</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="bijv. Mijn Familie" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Organisatie Aanmaken
+                            </Button>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
+        </main>
+    );
+}
 
 function CreateTeamDialog({ organizationId }: { organizationId: string }) {
     const [open, setOpen] = useState(false);
@@ -224,13 +280,16 @@ function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] }) {
 
 
 export default function OrganizationPage() {
-    const { user, currentOrganization, loading: authLoading } = useAuth();
+    const { currentOrganization, loading: authLoading } = useAuth();
     const { users: usersInOrg } = useTasks();
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!currentOrganization) return;
+        if (!currentOrganization) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         const q = query(collection(db, "teams"), where("organizationId", "==", currentOrganization.id));
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -245,21 +304,24 @@ export default function OrganizationPage() {
         return () => unsubscribe();
     }, [currentOrganization]);
     
-    if (authLoading || loading) {
+    if (authLoading) {
         return (
-          <div className="flex h-full w-full items-center justify-center p-6">
+          <div className="flex h-screen w-full items-center justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         );
     }
     
     if (!currentOrganization) {
-        // This case should be handled by the layout guard, but as a fallback:
-        return (
-             <div className="flex flex-1 items-center justify-center p-4">
-                <p>Selecteer of maak een organisatie om door te gaan.</p>
-             </div>
-        )
+        return <CreateOrganizationView />;
+    }
+
+    if (loading) {
+         return (
+          <div className="flex h-screen w-full items-center justify-center p-6">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        );
     }
 
     return (
