@@ -1,23 +1,5 @@
 'use server';
-import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
-import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
-import { processCommand } from '@/ai/flows/process-command';
-import { summarizeComments } from '@/ai/flows/summarize-comments';
-import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
-import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
-import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
-import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 
-import type { 
-    SuggestTaskAssigneeInput,
-    SuggestSubtasksInput,
-    ProcessCommandInput,
-    SummarizeCommentsInput,
-    SuggestStoryPointsInput,
-    GenerateAvatarInput,
-    GenerateTaskImageInput,
-    TextToSpeechInput,
-} from '@/ai/schemas';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import type { Task, User } from '@/lib/types';
@@ -61,7 +43,7 @@ export async function handleSuggestSubtasks(title: string, description?: string)
     return aiDisabledError;
 }
 
-export async function handleProcessCommand(command: ProcessCommandInput) {
+export async function handleProcessCommand(command: string) {
     console.error("AI Invocation Disabled: handleProcessCommand");
     return aiDisabledError;
 }
@@ -76,18 +58,18 @@ export async function handleSuggestStoryPoints(title: string, description?: stri
     return aiDisabledError;
 }
 
-export async function handleGenerateAvatar(name: GenerateAvatarInput) {
+export async function handleGenerateAvatar(name: string) {
     console.error("AI Invocation Disabled: handleGenerateAvatar");
     // Return a placeholder to avoid breaking the signup flow
     return { avatarDataUri: `https://placehold.co/100x100.png` };
 }
 
-export async function handleGenerateTaskImage(input: GenerateTaskImageInput) {
+export async function handleGenerateTaskImage(input: { title: string, description?: string }) {
     console.error("AI Invocation Disabled: handleGenerateTaskImage");
     return aiDisabledError;
 }
 
-export async function handleTextToSpeech(text: TextToSpeechInput) {
+export async function handleTextToSpeech(text: string) {
     console.error("AI Invocation Disabled: handleTextToSpeech");
     return aiDisabledError;
 }
