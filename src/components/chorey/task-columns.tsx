@@ -6,6 +6,7 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, re
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useMemo } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; users: User[] }) => {
   return (
@@ -37,6 +38,7 @@ type TaskColumnsProps = {
 
 const TaskColumns = ({ users }: TaskColumnsProps) => {
   const { tasks, searchTerm, filters, updateTask, reorderTasks } = useTasks();
+  const { toast } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -91,6 +93,20 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
         } else {
             return;
         }
+    }
+
+    const isBlocked = activeTask.blockedBy?.some(blockerId => {
+        const blockerTask = tasks.find(t => t.id === blockerId);
+        return blockerTask && blockerTask.status !== 'Voltooid';
+    });
+
+    if (isBlocked && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
+        toast({
+            title: 'Taak Geblokkeerd',
+            description: 'Deze taak kan niet worden gestart omdat een van de afhankelijke taken nog niet is voltooid.',
+            variant: 'destructive',
+        });
+        return;
     }
 
     if (activeContainer !== overContainer) {

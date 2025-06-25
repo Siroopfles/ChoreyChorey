@@ -220,7 +220,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           comments: [],
           history: history,
           order: Date.now(),
-          storyPoints: taskData.storyPoints || null,
+          storyPoints: taskData.storyPoints,
           blockedBy: taskData.blockedBy || [],
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);

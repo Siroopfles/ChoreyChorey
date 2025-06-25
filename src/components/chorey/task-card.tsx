@@ -51,7 +51,7 @@ import { Progress } from '@/components/ui/progress';
 import { useTasks } from '@/contexts/task-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
@@ -107,7 +107,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks } = useTasks();
   const { user: currentUser } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -116,7 +116,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
   const totalSubtasks = task.subtasks.length;
   const subtaskProgress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
-  const points = calculatePoints(task.priority);
+  const points = calculatePoints(task.priority, task.storyPoints);
 
   const isSelected = selectedTaskIds.includes(task.id);
 
@@ -125,6 +125,14 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
     isDueToday: false,
     isDueSoon: false,
   });
+
+  const isBlocked = useMemo(() => {
+    if (!task.blockedBy || task.blockedBy.length === 0) return false;
+    return task.blockedBy.some(blockerId => {
+      const blockerTask = allTasks.find(t => t.id === blockerId);
+      return blockerTask && blockerTask.status !== 'Voltooid';
+    });
+  }, [task.blockedBy, allTasks]);
 
   useEffect(() => {
     if (task.dueDate) {
@@ -187,7 +195,8 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
             'group/task-card hover:shadow-lg transition-shadow duration-200 bg-card border-l-4', 
             statusInfo.color,
             isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
-            isDragging && 'opacity-50'
+            isDragging && 'opacity-50',
+            isBlocked && 'opacity-60 bg-red-500/10'
         )}
       >
         <CardHeader className="p-3 pb-2 pl-9">
@@ -244,10 +253,10 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-           {task.blockedBy && task.blockedBy.length > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+           {isBlocked && (
+                <div className="flex items-center gap-1.5 text-xs text-red-500 mt-1 font-semibold">
                     <LinkIcon className="h-3 w-3" />
-                    <span>Geblokkeerd door: {task.blockedBy.join(', ')}</span>
+                    <span>Geblokkeerd</span>
                 </div>
             )}
         </CardHeader>
