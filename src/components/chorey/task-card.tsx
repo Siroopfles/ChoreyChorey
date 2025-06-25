@@ -1,5 +1,6 @@
+
 'use client';
-import type { Task, User } from '@/lib/types';
+import type { Task, User, Team } from '@/lib/types';
 import { ALL_STATUSES } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -59,7 +60,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect, useMemo } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
-import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { handleTextToSpeech } from '@/app/actions';
 import Image from 'next/image';
@@ -69,6 +69,8 @@ type TaskCardProps = {
   task: Task;
   users: User[];
   isDragging?: boolean;
+  currentUser: User | null;
+  teams: Team[];
 };
 
 const priorityConfig = {
@@ -109,12 +111,11 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
   };
 
 
-const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
+const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
   const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer } = useTasks();
-  const { user: currentUser, teams } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();

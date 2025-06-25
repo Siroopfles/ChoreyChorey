@@ -13,6 +13,8 @@ import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
 import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
+import { useAuth } from '@/contexts/auth-context';
+import type { User } from '@/lib/types';
 
 const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
   ssr: false,
@@ -31,6 +33,7 @@ const GanttView = dynamic(() => import('@/components/chorey/gantt-view'), {
 
 export default function DashboardPage() {
   const { tasks, users, searchTerm, filters } = useTasks();
+  const { user: currentUser, teams } = useAuth();
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const filteredTasks = useMemo(() => {
@@ -112,7 +115,7 @@ export default function DashboardPage() {
         </div>
       </div>
       <TabsContent value="board">
-        <TaskColumns users={users} tasks={filteredTasks} />
+        <TaskColumns users={users} tasks={filteredTasks} currentUser={currentUser} teams={teams} />
       </TabsContent>
       <TabsContent value="calendar">
         <div className="rounded-lg border bg-card">

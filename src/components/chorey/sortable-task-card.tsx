@@ -1,15 +1,18 @@
+
 'use client';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import TaskCard from '@/components/chorey/task-card';
-import type { Task, User } from '@/lib/types';
+import type { Task, User, Team } from '@/lib/types';
 
 type SortableTaskCardProps = {
     task: Task;
     users: User[];
+    currentUser: User | null;
+    teams: Team[];
 }
 
-export function SortableTaskCard({ task, users }: SortableTaskCardProps) {
+export function SortableTaskCard({ task, users, currentUser, teams }: SortableTaskCardProps) {
     const {
         attributes,
         listeners,
@@ -26,7 +29,7 @@ export function SortableTaskCard({ task, users }: SortableTaskCardProps) {
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <TaskCard task={task} users={users} isDragging={isDragging} />
+            <TaskCard task={task} users={users} isDragging={isDragging} currentUser={currentUser} teams={teams} />
         </div>
     );
 }
