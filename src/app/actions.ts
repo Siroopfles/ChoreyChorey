@@ -62,7 +62,7 @@ export async function handleCreateOrganization(name: string, userId: string) {
             const userDoc = await transaction.get(userRef);
 
             if (!userDoc.exists()) {
-                throw new Error("Gebruikersdocument niet gevonden!");
+                throw new Error("Gebruikersdocument niet gevonden! Kan organisatie niet aanmaken.");
             }
 
             const currentOrgIds = userDoc.data().organizationIds || [];

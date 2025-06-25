@@ -1,88 +1,52 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // --- Helper Functions ---
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isOrgOwner(orgId) {
-      return get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
-    }
-
-    function isOrgMember(orgId) {
-      // A user is a member if they are in the 'organizationIds' list in their own user doc.
-      return orgId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
-    }
-
-    // --- User Profiles ---
-    match /users/{userId} {
-      allow read: if isUser(userId) || isSignedIn(); // Allow any signed in user to read profiles for assignee lookups
-
-      // A user can create their own profile document upon signup.
-      allow create: if isUser(userId);
-
-      // A user can update their own profile document under specific conditions.
-      allow update: if isUser(userId) && (
-        (
-          // SCENARIO 1: Updating name/avatar.
-          // The list of orgs must not change.
-          request.resource.data.organizationIds == resource.data.organizationIds &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'avatar'])
-        ) ||
-        (
-          // SCENARIO 2: Switching current organization.
-          // The list of orgs must not change, and the new org must be in the list.
-          request.resource.data.organizationIds == resource.data.organizationIds &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentOrganizationId']) &&
-          request.resource.data.currentOrganizationId in resource.data.organizationIds
-        ) ||
-        (
-          // SCENARIO 3: Creating a new organization (THE FIX).
-          // This is part of the batch write in handleCreateOrganization.
-          // The user's org list grows by one, and it becomes the current org.
-          request.resource.data.organizationIds.size() == resource.data.organizationIds.size() + 1 &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['organizationIds', 'currentOrganizationId']) &&
-          // The newly added orgId must match the new currentOrganizationId
-          request.resource.data.organizationIds.diff(resource.data.organizationIds).added().get(0) == request.resource.data.currentOrganizationId &&
-          // The corresponding organization document must be created in the same transaction with this user as owner.
-          getAfter(/databases/$(database)/documents/organizations/$(request.resource.data.currentOrganizationId)).data.ownerId == userId
-        )
-      );
+    
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
     
-    // --- Organizations ---
-    match /organizations/{orgId} {
-      // Only members of the organization can read its details.
-      allow read: if isOrgMember(orgId);
-      
-      // A user can create an organization if they set themselves as the owner.
-      allow create: if request.resource.data.ownerId == request.auth.uid;
-
-      // Only the owner can update an organization (e.g., change its name).
-      allow update: if isOrgOwner(orgId);
+    // USERS
+    // A user can read, create, and update their own document.
+    match /users/{userId} {
+      allow read, create, update: if request.auth.uid == userId;
     }
-
-    // --- Teams ---
+    
+    // ORGANIZATIONS
+    // A user can create an organization if they set themselves as the owner.
+    // A user can read/update an organization if their user ID is in the organizationIds list of their own user document.
+    match /organizations/{orgId} {
+      allow create: if request.resource.data.ownerId == request.auth.uid;
+      allow read, update: if orgId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
+    }
+    
+    // TEAMS
+    // A user can read/write a team if they are a member of the parent organization.
     match /teams/{teamId} {
-      function getOrgId() {
+      function getParentOrgId() {
         return get(/databases/$(database)/documents/teams/$(teamId)).data.organizationId;
       }
-      allow read, write: if isSignedIn() && isOrgMember(getOrgId());
+      allow read, write: if getParentOrgId() in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
     }
-
-    // --- Tasks, Notifications ---
-    match /{collection}/{docId} {
-      function getOrgId() {
-        return get(/databases/$(database)/documents/$(collection)/$(docId)).data.organizationId;
+    
+    // TASKS
+    // A user can read/write a task if they are a member of the parent organization.
+    match /tasks/{taskId} {
+      function getParentOrgId() {
+        return get(/databases/$(database)/documents/tasks/$(taskId)).data.organizationId;
       }
-      allow read, write: if isSignedIn() && collection in ['tasks', 'notifications'] && isOrgMember(getOrgId());
+       allow read, write: if getParentOrgId() in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
+    }
+    
+    // NOTIFICATIONS
+    // Users can create notifications for others.
+    // Users can only read/write their own notifications.
+    match /notifications/{notificationId} {
+      allow create: if request.auth.uid != null;
+      allow read, write: if resource.data.userId == request.auth.uid;
     }
   }
 }
