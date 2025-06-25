@@ -8,8 +8,9 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
+import { Skeleton } from '../ui/skeleton';
 
 
 const COLORS: Record<string, string> = {
@@ -31,8 +32,50 @@ type DashboardViewProps = {
   users: User[];
 };
 
+function ChartSkeletons() {
+    return (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Taak Status</CardTitle>
+                    <CardDescription>Distributie van taken per status.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="mx-auto aspect-square h-[250px] rounded-full" />
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Scorebord</CardTitle>
+                    <CardDescription>Totaal aantal punten per gebruiker.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 h-[250px]">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Prioriteit Distributie</CardTitle>
+                    <CardDescription>Hoe taken zijn verdeeld op basis van prioriteit.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="mx-auto aspect-square h-[250px] rounded-full" />
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
+
 export default function DashboardView({ tasks, users }: DashboardViewProps) {
   const { resolvedTheme } = useTheme();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const tasksByStatus = useMemo(() => {
     const statusCounts = tasks.reduce((acc, task) => {
@@ -60,6 +103,10 @@ export default function DashboardView({ tasks, users }: DashboardViewProps) {
       fill: `hsl(${user.id.charCodeAt(0) % 360}, 70%, ${lightness}%)`
     })).sort((a,b) => b.points - a.points);
   }, [users, resolvedTheme]);
+
+  if (!isClient) {
+    return <ChartSkeletons />;
+  }
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
