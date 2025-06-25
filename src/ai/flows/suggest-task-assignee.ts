@@ -21,6 +21,7 @@ const prompt = ai.definePrompt({
   name: 'suggestTaskAssigneePrompt',
   input: {schema: SuggestTaskAssigneeInputSchema},
   output: {schema: SuggestTaskAssigneeOutputSchema},
+  model: 'gemini-pro',
   prompt: `Je bent een AI-assistent voor het toewijzen van taken. Je doel is om de optimale persoon voor te stellen voor een bepaalde taak, rekening houdend met hun historische prestaties en voorkeuren.
 
 Taakomschrijving: {{{taskDescription}}}

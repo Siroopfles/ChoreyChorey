@@ -27,6 +27,7 @@ const prompt = ai.definePrompt({
   name: 'processCommandPrompt',
   input: { schema: ProcessCommandPromptSchema },
   output: { schema: ProcessCommandOutputSchema },
+  model: 'gemini-pro',
   prompt: `Je bent een intelligente assistent in een taakbeheer-app genaamd Chorey. Je analyseert een commando van de gebruiker en zet dit om in een gestructureerde actie.
 
 Analyseer het volgende commando: "{{{command}}}"

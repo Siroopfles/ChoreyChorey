@@ -19,6 +19,7 @@ const prompt = ai.definePrompt({
   name: 'suggestSubtasksPrompt',
   input: {schema: SuggestSubtasksInputSchema},
   output: {schema: SuggestSubtasksOutputSchema},
+  model: 'gemini-pro',
   prompt: `Je bent een efficiënte projectmanager. Jouw taak is om een hoofdtaak op te splitsen in kleinere, uitvoerbare subtaken.
 
 Hoofdtaak Titel: {{{title}}}

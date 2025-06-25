@@ -14,6 +14,7 @@ const prompt = ai.definePrompt({
   name: 'suggestStoryPointsPrompt',
   input: { schema: SuggestStoryPointsInputSchema },
   output: { schema: SuggestStoryPointsOutputSchema },
+  model: 'gemini-pro',
   prompt: `Je bent een ervaren agile projectmanager. Jouw taak is om de complexiteit van een taak in te schatten en er een story point-waarde aan toe te kennen. Gebruik een aangepaste Fibonacci-reeks: 1, 2, 3, 5, 8, 13.
 
 Analyseer de volgende taak:

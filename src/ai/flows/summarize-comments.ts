@@ -14,6 +14,7 @@ const prompt = ai.definePrompt({
   name: 'summarizeCommentsPrompt',
   input: { schema: SummarizeCommentsInputSchema },
   output: { schema: SummarizeCommentsOutputSchema },
+  model: 'gemini-pro',
   prompt: `Je bent een efficiënte assistent. Analyseer de volgende reeks van comments uit een taak en vat de discussie, de belangrijkste punten en de uiteindelijke beslissingen beknopt samen.
 
 Comments:
