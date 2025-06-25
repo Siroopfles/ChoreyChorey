@@ -26,7 +26,7 @@ ${description ? `Task Description: ${description}` : ''}
 `;
 
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
+      model: 'googleai/gemini-1.5-pro-latest',
       prompt: promptText,
       config: {
           responseModalities: ['TEXT', 'IMAGE'],
