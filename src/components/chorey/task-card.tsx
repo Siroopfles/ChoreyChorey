@@ -43,6 +43,8 @@ import {
   CheckCheck,
   Hourglass,
   ClipboardCopy,
+  Volume2,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -54,6 +56,7 @@ import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { handleTextToSpeech } from '@/app/actions';
 
 
 type TaskCardProps = {
@@ -107,6 +110,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm } = useTasks();
   const { user: currentUser } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
   
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
@@ -131,6 +135,30 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
         description: `ID ${task.id} is naar je klembord gekopieerd.`
     })
   }
+
+  const onTextToSpeech = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsSynthesizing(true);
+    try {
+      const result = await handleTextToSpeech(task.title);
+      if (result.audioDataUri) {
+        const audio = new Audio(result.audioDataUri);
+        audio.play();
+        audio.onended = () => setIsSynthesizing(false);
+      } else {
+        throw new Error(result.error || 'Geen audio data ontvangen');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Fout bij spraaksynthese',
+        description: error.message || 'Kon de taak niet voorlezen.',
+        variant: 'destructive',
+      });
+      setIsSynthesizing(false);
+    }
+  };
+
 
   return (
     <div className="relative">
@@ -344,6 +372,9 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
                     )}
                 </div>
             </div>
+            <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 ml-1" onClick={onTextToSpeech} disabled={isSynthesizing}>
+              {isSynthesizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
+            </Button>
         </CardFooter>
       </Card>
       <EditTaskDialog 

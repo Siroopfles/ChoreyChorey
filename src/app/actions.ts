@@ -4,12 +4,19 @@ import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
 import { processCommand } from '@/ai/flows/process-command';
 import { summarizeComments } from '@/ai/flows/summarize-comments';
 import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
+import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
+import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
+import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
+
 import type { 
     SuggestTaskAssigneeInput,
     SuggestSubtasksInput,
     ProcessCommandInput,
     SummarizeCommentsInput,
     SuggestStoryPointsInput,
+    GenerateAvatarInput,
+    GenerateTaskImageInput,
+    TextToSpeechInput,
 } from '@/ai/schemas';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
@@ -124,5 +131,35 @@ export async function handleSuggestStoryPoints(title: string, description?: stri
     } catch (e) {
         console.error(e);
         return { error: 'Failed to get AI story point suggestion.' };
+    }
+}
+
+export async function handleGenerateAvatar(name: GenerateAvatarInput) {
+    try {
+        const result = await generateAvatar(name);
+        return { avatarDataUri: result.avatarDataUri };
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to generate AI avatar.' };
+    }
+}
+
+export async function handleGenerateTaskImage(input: GenerateTaskImageInput) {
+    try {
+        const result = await generateTaskImage(input);
+        return { imageDataUri: result.imageDataUri };
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to generate AI task image.' };
+    }
+}
+
+export async function handleTextToSpeech(text: TextToSpeechInput) {
+    try {
+        const result = await textToSpeech(text);
+        return { audioDataUri: result.audioDataUri };
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to synthesize speech.' };
     }
 }

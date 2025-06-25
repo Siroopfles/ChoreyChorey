@@ -20,6 +20,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { handleGenerateAvatar } from '@/app/actions';
 
 type AuthContextType = {
     authUser: FirebaseUser | null;
@@ -81,12 +82,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
             const firebaseUser = userCredential.user;
+            
+            let avatarUrl = `https://placehold.co/100x100.png`;
+            try {
+                const avatarResult = await handleGenerateAvatar(name);
+                if (avatarResult.avatarDataUri) {
+                    avatarUrl = avatarResult.avatarDataUri;
+                }
+            } catch (aiError) {
+                console.error("Failed to generate AI avatar, using placeholder.", aiError);
+                toast({
+                    title: 'AI Avatar Mislukt',
+                    description: 'Kon geen unieke avatar genereren. Een standaardafbeelding wordt gebruikt.',
+                });
+            }
+
             const newUser: User = {
                 id: firebaseUser.uid,
                 name,
                 email,
                 points: 0,
-                avatar: `https://placehold.co/100x100.png`
+                avatar: avatarUrl,
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
             setUser(newUser);
@@ -104,12 +120,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userDoc = await getDoc(userDocRef);
 
             if (!userDoc.exists()) {
+                 let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
+                try {
+                    const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                    if (avatarResult.avatarDataUri) {
+                        avatarUrl = avatarResult.avatarDataUri;
+                    }
+                } catch (aiError) {
+                    console.error("Failed to generate AI avatar, using placeholder.", aiError);
+                }
+
                 const newUser: User = {
                     id: firebaseUser.uid,
                     name: firebaseUser.displayName || 'Google User',
                     email: firebaseUser.email || '',
                     points: 0,
-                    avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png`
+                    avatar: avatarUrl
                 };
                 await setDoc(userDocRef, newUser);
                 setUser(newUser);

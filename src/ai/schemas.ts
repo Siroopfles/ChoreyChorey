@@ -78,3 +78,33 @@ export const ProcessCommandOutputSchema = z.object({
     reasoning: z.string().describe('A brief explanation of why this action was chosen.')
 });
 export type ProcessCommandOutput = z.infer<typeof ProcessCommandOutputSchema>;
+
+// From generate-avatar-flow.ts
+export const GenerateAvatarInputSchema = z.string().describe("The user's name or email to base the avatar on.");
+export type GenerateAvatarInput = z.infer<typeof GenerateAvatarInputSchema>;
+
+export const GenerateAvatarOutputSchema = z.object({
+  avatarDataUri: z.string().describe("A data URI of the generated avatar image. Expected format: 'data:image/png;base64,<encoded_data>'."),
+});
+export type GenerateAvatarOutput = z.infer<typeof GenerateAvatarOutputSchema>;
+
+// From generate-task-image-flow.ts
+export const GenerateTaskImageInputSchema = z.object({
+  title: z.string().describe('The title of the task.'),
+  description: z.string().optional().describe('The description of the task.'),
+});
+export type GenerateTaskImageInput = z.infer<typeof GenerateTaskImageInputSchema>;
+
+export const GenerateTaskImageOutputSchema = z.object({
+  imageDataUri: z.string().describe("A data URI of the generated image. Expected format: 'data:image/png;base64,<encoded_data>'."),
+});
+export type GenerateTaskImageOutput = z.infer<typeof GenerateTaskImageOutputSchema>;
+
+// From text-to-speech-flow.ts
+export const TextToSpeechInputSchema = z.string().describe("The text to be converted to speech.");
+export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
+
+export const TextToSpeechOutputSchema = z.object({
+    audioDataUri: z.string().describe("A data URI of the generated audio. Expected format: 'data:audio/wav;base64,<encoded_data>'."),
+});
+export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;

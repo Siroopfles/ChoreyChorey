@@ -27,11 +27,11 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, History, ClipboardCopy } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, History, ClipboardCopy, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useTasks } from '@/contexts/task-context';
-import { handleSuggestSubtasks, handleSummarizeComments, handleSuggestStoryPoints } from '@/app/actions';
+import { handleSuggestSubtasks, handleSummarizeComments, handleSuggestStoryPoints, handleGenerateTaskImage } from '@/app/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -95,6 +95,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
   const [summary, setSummary] = useState('');
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
   const [pointsSuggestion, setPointsSuggestion] = useState('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [newComment, setNewComment] = useState('');
 
   const sortedComments = [...(task.comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -267,6 +268,28 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
         description: `ID ${task.id} is naar je klembord gekopieerd.`
     })
   }
+
+  const onGenerateImage = async () => {
+    const title = form.getValues('title');
+    const description = form.getValues('description');
+    if (!title) {
+        toast({ title: 'Titel is vereist om een afbeelding te genereren.', variant: 'destructive' });
+        return;
+    }
+    setIsGeneratingImage(true);
+    try {
+        const result = await handleGenerateTaskImage({ title, description });
+        if (result.imageDataUri) {
+            appendAttachment({ name: 'AI Afbeelding - ' + title, url: result.imageDataUri });
+            toast({ title: 'Afbeelding gegenereerd en toegevoegd als bijlage!' });
+        } else {
+            throw new Error(result.error || 'Geen afbeeldingsdata ontvangen.');
+        }
+    } catch (error: any) {
+        toast({ title: 'Fout bij genereren afbeelding', description: error.message, variant: 'destructive' });
+    }
+    setIsGeneratingImage(false);
+  };
 
 
   return (
@@ -571,10 +594,16 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                             </Button>
                         </div>
                         ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ name: '', url: '' })}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Bijlage toevoegen
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ name: '', url: '' })}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Bijlage toevoegen
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={onGenerateImage} disabled={isGeneratingImage}>
+                                {isGeneratingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
+                                Genereer Afbeelding (AI)
+                            </Button>
+                        </div>
                     </div>
                     </div>
                     
