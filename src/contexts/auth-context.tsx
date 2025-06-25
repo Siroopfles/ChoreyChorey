@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -74,47 +75,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                setAuthUser(firebaseUser);
-                const userDocRef = doc(db, 'users', firebaseUser.uid);
-                const userDoc = await getDoc(userDocRef);
+            try {
+                if (firebaseUser) {
+                    setAuthUser(firebaseUser);
+                    const userDocRef = doc(db, 'users', firebaseUser.uid);
+                    const userDoc = await getDoc(userDocRef);
 
-                if (!userDoc.exists()) {
-                    let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
-                    try {
-                        const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
-                        if (avatarResult.avatarDataUri) {
-                            avatarUrl = avatarResult.avatarDataUri;
+                    if (userDoc.exists()) {
+                        setUser({ id: userDoc.id, ...userDoc.data() } as User);
+                    } else {
+                        let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
+                        try {
+                            const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                            if (avatarResult.avatarDataUri) {
+                                avatarUrl = avatarResult.avatarDataUri;
+                            }
+                        } catch (aiError) {
+                            console.error("Failed to generate AI avatar, using placeholder.", aiError);
                         }
-                    } catch (aiError) {
-                        console.error("Failed to generate AI avatar, using placeholder.", aiError);
+                        const newUser: User = {
+                            id: firebaseUser.uid,
+                            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
+                            email: firebaseUser.email || '',
+                            points: 0,
+                            avatar: avatarUrl,
+                            achievements: [],
+                        };
+                        await setDoc(userDocRef, newUser);
+                        setUser(newUser);
                     }
-                    const newUser: User = {
-                        id: firebaseUser.uid,
-                        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
-                        email: firebaseUser.email || '',
-                        points: 0,
-                        avatar: avatarUrl,
-                        achievements: [],
-                    };
-                    await setDoc(userDocRef, newUser);
-                    setUser(newUser);
                 } else {
-                    setUser({ id: userDoc.id, ...userDoc.data() } as User);
+                    setAuthUser(null);
+                    setUser(null);
                 }
-            } else {
-                setAuthUser(null);
-                setUser(null);
+            } catch(error) {
+                 handleError(error, "verwerken van authenticatiestatus");
+            } finally {
+                setLoading(false);
             }
         });
-
-        getRedirectResult(auth)
-          .catch((error) => {
+        
+        getRedirectResult(auth).catch((error) => {
             handleError(error, 'verwerken van Google-login');
-          })
-          .finally(() => {
-            setLoading(false);
-          });
+        });
 
         return () => unsubscribe();
     }, []);
@@ -123,9 +126,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, pass);
+            // onAuthStateChanged will handle the rest
         } catch (error) {
             handleError(error, 'inloggen');
-        } finally {
             setLoading(false);
         }
     };
@@ -155,9 +158,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 achievements: [],
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+            // onAuthStateChanged will handle the rest
         } catch (error) {
             handleError(error, 'registreren');
-        } finally {
             setLoading(false);
         }
     };
@@ -180,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             handleError(error, 'uitloggen');
         } finally {
-            setLoading(false);
+            // onAuthStateChanged will set loading to false
         }
     };
 
