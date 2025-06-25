@@ -41,17 +41,16 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
     const result = await loginWithEmail(data.email, data.password);
-    if (result) {
-      router.push('/dashboard');
+    if (!result) {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
+    // On success, the useEffect hook will redirect.
   };
   
   const handleGoogleLogin = async () => {
     setIsSubmitting(true);
     await loginWithGoogle();
-    // The user will be redirected, so we don't need to set isSubmitting to false here
-    // unless the redirect call itself fails, which is handled in the context.
+    // The redirect will happen, and on return the useEffect hook will handle redirection to dashboard.
   }
 
   if (loading || user) {
@@ -85,7 +84,7 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>E-mailadres</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="naam@voorbeeld.com" {...field} />
+                        <Input type="email" placeholder="naam@voorbeeld.com" {...field} autoComplete="email" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -98,7 +97,7 @@ export default function LoginPage() {
                     <FormItem>
                       <FormLabel>Wachtwoord</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                        <Input type="password" placeholder="••••••••" {...field} autoComplete="current-password" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

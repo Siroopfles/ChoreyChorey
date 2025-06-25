@@ -14,7 +14,6 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithRedirect,
-    getRedirectResult,
     signOut,
     type User as FirebaseUser,
 } from 'firebase/auth';
@@ -44,64 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
     const { toast } = useToast();
 
-    // This effect handles the result from a redirect sign-in
-    useEffect(() => {
-        const processRedirectResult = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result) {
-                    setLoading(true); // We have a result, show loading until user doc is processed
-                    const firebaseUser = result.user;
-                    const userDocRef = doc(db, 'users', firebaseUser.uid);
-                    const userDoc = await getDoc(userDocRef);
-
-                    if (!userDoc.exists()) {
-                        let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
-                        try {
-                            const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
-                            if (avatarResult.avatarDataUri) {
-                                avatarUrl = avatarResult.avatarDataUri;
-                            }
-                        } catch (aiError) {
-                            console.error("Failed to generate AI avatar, using placeholder.", aiError);
-                        }
-
-                        const newUser: User = {
-                            id: firebaseUser.uid,
-                            name: firebaseUser.displayName || 'Google User',
-                            email: firebaseUser.email || '',
-                            points: 0,
-                            avatar: avatarUrl,
-                            achievements: [],
-                        };
-                        await setDoc(userDocRef, newUser);
-                    }
-                    router.push('/dashboard');
-                }
-            } catch (error: any) {
-                handleError(error, 'Google redirect login');
-            }
-        };
-
-        processRedirectResult();
-    }, [router, toast]);
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            setLoading(true);
-            if (firebaseUser) {
-                setAuthUser(firebaseUser);
-                await fetchAndSetUser(firebaseUser);
-            } else {
-                setAuthUser(null);
-                setUser(null);
-            }
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
     const handleError = (error: any, context: string) => {
         console.error(`Error in ${context}:`, error);
 
@@ -128,23 +69,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             variant: 'destructive',
         });
     }
-    
-    const fetchAndSetUser = async (firebaseUser: FirebaseUser) => {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            const userData = { id: userDoc.id, ...userDoc.data() } as User;
-            setUser(userData);
-            return userData;
-        }
-        return null;
-    }
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            setLoading(true);
+            if (firebaseUser) {
+                // User is authenticated with Firebase
+                setAuthUser(firebaseUser);
+                const userDocRef = doc(db, 'users', firebaseUser.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (!userDoc.exists()) {
+                    // This is a new user (likely from Google Sign-In), create their profile in Firestore
+                    let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
+                    try {
+                        const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                        if (avatarResult.avatarDataUri) {
+                            avatarUrl = avatarResult.avatarDataUri;
+                        }
+                    } catch (aiError) {
+                        console.error("Failed to generate AI avatar, using placeholder.", aiError);
+                    }
+                    const newUser: User = {
+                        id: firebaseUser.uid,
+                        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
+                        email: firebaseUser.email || '',
+                        points: 0,
+                        avatar: avatarUrl,
+                        achievements: [],
+                    };
+                    await setDoc(userDocRef, newUser);
+                    setUser(newUser);
+                } else {
+                    // Existing user, just fetch their data
+                    setUser({ id: userDoc.id, ...userDoc.data() } as User);
+                }
+            } else {
+                // User is not authenticated
+                setAuthUser(null);
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const loginWithEmail = async (email: string, pass: string): Promise<boolean> => {
         setLoading(true);
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-            await fetchAndSetUser(userCredential.user);
+            await signInWithEmailAndPassword(auth, email, pass);
+            // onAuthStateChanged will handle the rest.
             return true;
         } catch (error) {
             handleError(error, 'inloggen');
@@ -178,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 achievements: [],
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-            setUser(newUser);
+            // onAuthStateChanged will handle setting the user state.
             return true;
         } catch (error) {
             handleError(error, 'registreren');
@@ -208,7 +183,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const refreshUser = useCallback(async () => {
         if (auth.currentUser) {
-            await fetchAndSetUser(auth.currentUser);
+            setLoading(true);
+            const userDocRef = doc(db, 'users', auth.currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                setUser({ id: userDoc.id, ...userDoc.data() } as User);
+            }
+            setLoading(false);
         }
     }, []);
     
