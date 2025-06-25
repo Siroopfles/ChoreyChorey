@@ -17,7 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon } from 'lucide-react';
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -478,7 +478,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
               </div>
             ))}
             <Button type="button" variant="outline" size="sm" onClick={() => appendBlockedBy('')}>
-              <PlusCircle className="mr-2 h-4 w-4" />
+              <LinkIcon className="mr-2 h-4 w-4" />
               Blocker toevoegen
             </Button>
           </div>
