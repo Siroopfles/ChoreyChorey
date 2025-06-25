@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+export type Organization = {
+  id: string;
+  name: string;
+  ownerId: string;
+};
+
+export type Team = {
+  id: string;
+  name: string;
+  organizationId: string;
+  memberIds: string[];
+};
+
 export type User = {
   id: string;
   name: string;
@@ -7,6 +20,8 @@ export type User = {
   points: number;
   email: string;
   achievements: string[]; // Achievement IDs
+  organizationIds?: string[];
+  currentOrganizationId?: string | null;
 };
 
 export const ACHIEVEMENTS = {
@@ -94,6 +109,7 @@ export type Task = {
   storyPoints?: number;
   blockedBy?: string[];
   recurring?: RecurringFrequency;
+  organizationId: string;
 };
 
 export type Notification = {

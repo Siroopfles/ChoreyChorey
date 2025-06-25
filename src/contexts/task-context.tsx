@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -20,7 +21,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { addDays, addMonths, addWeeks, isBefore } from 'date-fns';
-import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, RecurringFrequency } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, RecurringFrequency } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -56,8 +57,6 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 const calculateNextDueDate = (currentDueDate: Date | undefined, frequency: RecurringFrequency): Date => {
     const startDate = currentDueDate || new Date();
-    // To avoid creating tasks in the past if the due date was long ago,
-    // we should calculate from today if the due date has passed.
     const baseDate = isBefore(startDate, new Date()) ? new Date() : startDate;
 
     switch (frequency) {
@@ -68,12 +67,12 @@ const calculateNextDueDate = (currentDueDate: Date | undefined, frequency: Recur
         case 'monthly':
             return addMonths(baseDate, 1);
         default:
-            return addDays(new Date(), 1); // Fallback to tomorrow
+            return addDays(new Date(), 1);
     }
 }
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { authUser, user } = useAuth();
+  const { authUser, user, currentOrganization } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -113,9 +112,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (!db || !authUser) return;
+    if (!db || !authUser || !currentOrganization) {
+      setTasks([]);
+      return;
+    }
     
-    const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
+    const q = query(collection(db, 'tasks'), where("organizationId", "==", currentOrganization.id));
+
+    const unsubscribeTasks = onSnapshot(q, (snapshot) => {
       const tasksData = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -139,6 +143,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           storyPoints: data.storyPoints,
           blockedBy: data.blockedBy || [],
           recurring: data.recurring,
+          organizationId: data.organizationId,
         } as Task;
       }).filter(task => {
         if (task.isPrivate && task.assigneeId !== authUser.uid && task.creatorId !== authUser.uid) {
@@ -149,16 +154,25 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setTasks(tasksData);
     }, (error: FirestoreError) => handleError(error, 'laden van taken'));
 
-    const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+    return () => unsubscribeTasks();
+  }, [authUser, currentOrganization, toast]);
+
+  useEffect(() => {
+    if (!db || !currentOrganization) {
+      setUsers([]);
+      return;
+    }
+
+    const q = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrganization.id));
+
+    const unsubscribeUsers = onSnapshot(q, (snapshot) => {
         const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
         setUsers(usersData);
     }, (error: FirestoreError) => handleError(error, 'laden van gebruikers'));
 
-    return () => {
-        unsubscribeTasks();
-        unsubscribeUsers();
-    };
-  }, [authUser, toast]);
+    return () => unsubscribeUsers();
+  }, [currentOrganization]);
+
 
   useEffect(() => {
     if (!db || !authUser) return;
@@ -221,7 +235,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }) => {
-    if (!authUser) return;
+    if (!authUser || !currentOrganization) {
+      toast({ title: 'Geen organisatie geselecteerd', description: 'Selecteer een organisatie voordat je een taak toevoegt.', variant: 'destructive' });
+      return;
+    };
     try {
         const history = [addHistoryEntry(authUser.uid, 'Aangemaakt')];
         const firestoreTask = {
@@ -243,6 +260,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           storyPoints: taskData.storyPoints,
           blockedBy: taskData.blockedBy || [],
           recurring: taskData.recurring || undefined,
+          organizationId: currentOrganization.id,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -259,7 +277,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
   
   const cloneTask = async (taskId: string) => {
-    if (!authUser) return;
+    if (!authUser || !currentOrganization) return;
     try {
         const taskDocRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskDocRef);
@@ -276,6 +294,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           comments: [],
           history: [addHistoryEntry(authUser.uid, 'Gekloond', `van taak ${taskId}`)],
           order: Date.now(),
+          organizationId: currentOrganization.id,
         };
         
         delete (clonedTask as any).id; 
@@ -316,19 +335,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const completedTasksSnapshot = await getDocs(completedTasksQuery);
     const totalCompleted = completedTasksSnapshot.size;
 
-    // Achievement: First Task
     if (totalCompleted === 1 && !userAchievements.includes(ACHIEVEMENTS.FIRST_TASK.id)) {
         achievementsToGrant.push(ACHIEVEMENTS.FIRST_TASK.id);
         toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.FIRST_TASK.name}" verdiend!` });
     }
     
-    // Achievement: Team Player
     if (completedTask.creatorId && completedTask.creatorId !== userId && !userAchievements.includes(ACHIEVEMENTS.COMMUNITY_HELPER.id)) {
         achievementsToGrant.push(ACHIEVEMENTS.COMMUNITY_HELPER.id);
         toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.COMMUNITY_HELPER.name}" verdiend!` });
     }
 
-    // Achievement: 10 Tasks
     if (totalCompleted >= 10 && !userAchievements.includes(ACHIEVEMENTS.TEN_TASKS.id)) {
         achievementsToGrant.push(ACHIEVEMENTS.TEN_TASKS.id);
         toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.TEN_TASKS.name}" verdiend!` });
@@ -351,7 +367,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
 
-        // Track history for specific field changes
         const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeId', 'priority', 'dueDate', 'title'];
         fieldsToTrack.forEach(field => {
             if (updates[field] !== undefined && updates[field] !== taskToUpdate[field]) {
@@ -388,11 +403,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                     description: `${users.find(u=>u.id === taskToUpdate.assigneeId)?.name} heeft ${points} punten verdiend.`,
                 });
                 
-                // Pass the full task object with the 'Voltooid' status
                 await checkAndGrantAchievements(taskToUpdate.assigneeId, { ...taskToUpdate, status: 'Voltooid' });
             }
 
-            // Recurring task logic
             if (taskToUpdate.recurring) {
                 try {
                     const nextDueDate = calculateNextDueDate(taskToUpdate.dueDate, taskToUpdate.recurring);

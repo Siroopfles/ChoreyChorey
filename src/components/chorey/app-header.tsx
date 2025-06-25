@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User } from '@/lib/types';
@@ -12,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, Home, LogOut, PlusCircle, Settings, Moon, Sun, User as UserIcon } from 'lucide-react';
+import { Bell, Home, LogOut, PlusCircle, Settings, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check } from 'lucide-react';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import { useTheme } from 'next-themes';
 import { useTasks } from '@/contexts/task-context';
@@ -22,6 +23,7 @@ import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type AppHeaderProps = {
   users: User[];
@@ -30,13 +32,54 @@ type AppHeaderProps = {
 export default function AppHeader({ users }: AppHeaderProps) {
   const { setTheme, theme } = useTheme();
   const { notifications, markNotificationsAsRead } = useTasks();
-  const { user, logout } = useAuth();
+  const { user, logout, organizations, currentOrganization, switchOrganization } = useAuth();
   const unreadCount = notifications.filter(n => !n.read).length;
+  const router = useRouter();
+  
+  const handleSwitch = async (orgId: string) => {
+    await switchOrganization(orgId);
+    // Optional: force a reload or navigate to refresh contexts if needed,
+    // though the context update should trigger re-renders.
+    router.refresh();
+  }
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-30">
       <SidebarTrigger className="md:hidden" />
+      
+      <div>
+        {currentOrganization && (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-[180px] sm:w-[220px] justify-between">
+                        <Building className="mr-2 h-4 w-4 shrink-0" />
+                        <span className="truncate font-medium">{currentOrganization.name}</span>
+                        <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[220px]">
+                    <DropdownMenuLabel>Kies Organisatie</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {organizations.map(org => (
+                        <DropdownMenuItem key={org.id} onSelect={() => handleSwitch(org.id)}>
+                            <Check className={cn("mr-2 h-4 w-4", currentOrganization.id === org.id ? "opacity-100" : "opacity-0")} />
+                            {org.name}
+                        </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard/organization">
+                            <Building className="mr-2 h-4 w-4" />
+                            <span>Beheer Organisaties</span>
+                        </Link>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        )}
+      </div>
+
       <div className="flex-1" />
+
       <div className="flex items-center gap-2">
         <AddTaskDialog users={users}>
           <Button>

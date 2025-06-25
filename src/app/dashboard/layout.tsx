@@ -6,19 +6,38 @@ import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, currentOrganization } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return; 
+
+    if (!user) {
       router.push('/login');
+      return;
     }
-  }, [user, loading, router]);
+    
+    if (user && !currentOrganization) {
+      router.push('/dashboard/organization');
+    }
+
+  }, [user, loading, currentOrganization, router]);
 
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!currentOrganization) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-muted-foreground">Organisatie laden...</p>
+        </div>
       </div>
     );
   }

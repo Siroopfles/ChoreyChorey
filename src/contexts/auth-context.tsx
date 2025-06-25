@@ -18,11 +18,10 @@ import {
     signOut,
     type User as FirebaseUser,
     getAdditionalUserInfo,
-    GoogleAuthProvider,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
-import type { User } from '@/lib/types';
+import type { User, Organization } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions';
 
@@ -35,6 +34,9 @@ type AuthContextType = {
     loginWithGoogle: () => Promise<void>;
     logout: () => void;
     refreshUser: () => Promise<void>;
+    organizations: Organization[];
+    currentOrganization: Organization | null;
+    switchOrganization: (orgId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,29 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [organizations, setOrganizations] = useState<Organization[]>([]);
+    const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
     const router = useRouter();
     const { toast } = useToast();
 
     const handleError = (error: any, context: string) => {
         console.error(`Error in ${context}:`, error);
-
-        if (error.code === 'auth/popup-closed-by-user') {
-            toast({
-                title: 'Login geannuleerd',
-                description: 'Het login-venster is gesloten voordat het proces voltooid was.',
-            });
-            return;
-        }
-        if (error.code === 'auth/unauthorized-domain') {
-            toast({
-                title: 'Domein niet geautoriseerd',
-                description: 'Dit domein is niet goedgekeurd. Voeg het toe in de Firebase Console onder Authenticatie > Instellingen > Geautoriseerde domeinen.',
-                variant: 'destructive',
-                duration: 9000,
-            });
-            return;
-        }
-
         toast({
             title: `Fout bij ${context}`,
             description: error.message,
@@ -73,45 +59,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
     }
 
+    const fetchUserAndOrgData = useCallback(async (firebaseUser: FirebaseUser) => {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            console.warn("No user document found for existing auth user. This may happen briefly during signup.");
+            return;
+        }
+
+        const userData = { id: userDoc.id, ...userDoc.data() } as User;
+        setUser(userData);
+
+        if (userData.organizationIds && userData.organizationIds.length > 0) {
+            const orgsQuery = query(collection(db, 'organizations'), where('__name__', 'in', userData.organizationIds));
+            const orgsSnapshot = await getDocs(orgsQuery);
+            const userOrgs = orgsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
+            setOrganizations(userOrgs);
+
+            const currentOrgId = userData.currentOrganizationId || userData.organizationIds[0];
+            const currentOrg = userOrgs.find(o => o.id === currentOrgId) || userOrgs[0] || null;
+            
+            if (currentOrg && currentOrg.id !== userData.currentOrganizationId) {
+                // If currentOrganizationId was null or invalid, fix it.
+                await updateDoc(userDocRef, { currentOrganizationId: currentOrg.id });
+            }
+            setCurrentOrganization(currentOrg);
+        } else {
+            setOrganizations([]);
+            setCurrentOrganization(null);
+        }
+    }, []);
+    
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            try {
-                if (firebaseUser) {
-                    setAuthUser(firebaseUser);
-                    const userDocRef = doc(db, 'users', firebaseUser.uid);
-                    const userDoc = await getDoc(userDocRef);
-                    if (userDoc.exists()) {
-                        setUser({ id: userDoc.id, ...userDoc.data() } as User);
-                    } else {
-                        // This case handles a new user from email signup,
-                        // or a new user from Google that was created in the loginWithGoogle function.
-                        // We still need a fallback here in case the doc creation fails elsewhere.
-                        const newUser: User = {
-                            id: firebaseUser.uid,
-                            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
-                            email: firebaseUser.email || '',
-                            points: 0,
-                            avatar: firebaseUser.photoURL || `https://placehold.co/100x100.png`,
-                            achievements: [],
-                        };
-                        await setDoc(userDocRef, newUser, { merge: true }); // Use merge to be safe
-                        setUser(newUser);
-                    }
-                } else {
-                    setAuthUser(null);
-                    setUser(null);
-                }
-            } catch (error) {
-                handleError(error, "verwerken van authenticatiestatus");
+            setLoading(true);
+            if (firebaseUser) {
+                setAuthUser(firebaseUser);
+                await fetchUserAndOrgData(firebaseUser);
+            } else {
                 setAuthUser(null);
                 setUser(null);
-            } finally {
-                setLoading(false);
+                setOrganizations([]);
+                setCurrentOrganization(null);
             }
+            setLoading(false);
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [fetchUserAndOrgData]);
 
     const loginWithEmail = async (email: string, pass: string) => {
         try {
@@ -144,8 +140,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 points: 0,
                 avatar: avatarUrl,
                 achievements: [],
+                organizationIds: [],
+                currentOrganizationId: null,
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+            setUser(newUser);
+            setOrganizations([]);
+            setCurrentOrganization(null);
+
         } catch (error) {
             handleError(error, 'registreren');
             throw error;
@@ -153,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const loginWithGoogle = async (): Promise<void> => {
+        setLoading(true);
         try {
             const userCredential = await signInWithPopup(auth, googleProvider);
             const additionalInfo = getAdditionalUserInfo(userCredential);
@@ -176,12 +179,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     points: 0,
                     avatar: avatarUrl,
                     achievements: [],
+                    organizationIds: [],
+                    currentOrganizationId: null,
                 };
                 await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+                setUser(newUser);
+                setOrganizations([]);
+                setCurrentOrganization(null);
             }
         } catch (error: any) {
             handleError(error, 'inloggen met Google');
             throw error;
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -196,13 +206,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const refreshUser = useCallback(async () => {
         if (auth.currentUser) {
-            const userDocRef = doc(db, 'users', auth.currentUser.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                setUser({ id: userDoc.id, ...userDoc.data() } as User);
-            }
+            setLoading(true);
+            await fetchUserAndOrgData(auth.currentUser);
+            setLoading(false);
         }
-    }, []);
+    }, [fetchUserAndOrgData]);
+
+    const switchOrganization = async (orgId: string) => {
+        if (!user || orgId === currentOrganization?.id) return;
+        try {
+            setLoading(true);
+            const userRef = doc(db, 'users', user.id);
+            await updateDoc(userRef, { currentOrganizationId: orgId });
+            await refreshUser();
+            toast({ title: "Organisatie gewisseld" });
+        } catch(e) {
+            handleError(e, 'wisselen van organisatie');
+        } finally {
+            setLoading(false);
+        }
+    };
     
     const value = {
         authUser,
@@ -213,9 +236,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithGoogle,
         logout,
         refreshUser,
+        organizations,
+        currentOrganization,
+        switchOrganization,
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
