@@ -50,44 +50,6 @@ export async function updateUserProfile(userId: string, data: Partial<Pick<User,
     }
 }
 
-export async function handleCreateOrganization(name: string, userId: string) {
-    if (!name || !userId) {
-        return { error: 'Organisatienaam en gebruikers-ID zijn verplicht.' };
-    }
-    try {
-        const newOrgRef = doc(collection(db, 'organizations'));
-
-        await runTransaction(db, async (transaction) => {
-            const userRef = doc(db, 'users', userId);
-            const userDoc = await transaction.get(userRef);
-
-            if (!userDoc.exists()) {
-                throw new Error("Gebruikersdocument niet gevonden! Kan organisatie niet aanmaken.");
-            }
-
-            const currentOrgIds = userDoc.data().organizationIds || [];
-            const newOrgIds = [...currentOrgIds, newOrgRef.id];
-
-            const newOrgData: Omit<Organization, 'id'> = {
-                name,
-                ownerId: userId,
-            };
-            transaction.set(newOrgRef, newOrgData);
-
-            transaction.update(userRef, {
-                organizationIds: newOrgIds,
-                currentOrganizationId: newOrgRef.id
-            });
-        });
-
-        return { success: true, organizationId: newOrgRef.id };
-    } catch (error: any) {
-        console.error("Error creating organization:", error);
-        return { error: error.message };
-    }
-}
-
-
 export async function handleCreateTeam(name: string, organizationId: string) {
     if (!name || !organizationId) {
         return { error: 'Teamnaam en organisatie-ID zijn verplicht.' };
@@ -203,3 +165,5 @@ export async function handleTextToSpeech(text: string) {
         return { error: e.message };
     }
 }
+
+    

@@ -18,10 +18,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Loader2, Plus, UserPlus, X, Users, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { handleCreateTeam, handleAddUserToTeam, handleRemoveUserFromTeam, handleCreateOrganization } from '@/app/actions';
+import { handleCreateTeam, handleAddUserToTeam, handleRemoveUserFromTeam } from '@/app/actions';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import type { Team, User } from '@/lib/types';
+import { collection, query, where, onSnapshot, runTransaction, doc } from 'firebase/firestore';
+import type { Team, User, Organization } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
@@ -46,16 +46,44 @@ function CreateOrganizationView() {
     });
 
     const onSubmit = async (data: OrgCreationFormValues) => {
-        if (!user) return;
+        if (!user) {
+            toast({ title: 'Fout', description: 'Je moet ingelogd zijn om een organisatie aan te maken.', variant: 'destructive' });
+            return;
+        }
         setIsSubmitting(true);
-        const result = await handleCreateOrganization(data.name, user.id);
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        } else {
+        
+        try {
+            const newOrgRef = doc(collection(db, 'organizations'));
+            await runTransaction(db, async (transaction) => {
+                const userRef = doc(db, 'users', user.id);
+                const userDoc = await transaction.get(userRef);
+
+                if (!userDoc.exists()) {
+                    throw new Error("Gebruikersdocument niet gevonden! Kan organisatie niet aanmaken.");
+                }
+
+                const newOrgData: Omit<Organization, 'id'> = {
+                    name: data.name,
+                    ownerId: user.id,
+                };
+                transaction.set(newOrgRef, newOrgData);
+                
+                const currentOrgIds = userDoc.data().organizationIds || [];
+                const newOrgIds = [...currentOrgIds, newOrgRef.id];
+
+                transaction.update(userRef, {
+                    organizationIds: newOrgIds,
+                    currentOrganizationId: newOrgRef.id
+                });
+            });
             toast({ title: 'Gelukt!', description: `Organisatie "${data.name}" is aangemaakt.` });
             await refreshUser();
+        } catch (error: any) {
+            console.error("Error creating organization:", error);
+            toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
         }
-        setIsSubmitting(false);
     };
 
     return (
@@ -353,3 +381,5 @@ export default function OrganizationPage() {
         </main>
     );
 }
+
+    

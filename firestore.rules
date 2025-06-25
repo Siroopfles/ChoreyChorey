@@ -3,43 +3,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      allow read: if request.auth != null;
+      // A user can create their own document on signup
       allow create: if request.auth.uid == userId;
-      // A user can only update their own document.
-      // The logic within the 'use server' action is trusted to be correct.
+      // A user can read their own document
+      allow read: if request.auth.uid == userId;
+      // A user can update their own document.
+      // The transaction logic on the client ensures this is done safely.
       allow update: if request.auth.uid == userId;
     }
 
     match /organizations/{orgId} {
-      // Only members of an org can read or write to it.
-      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([orgId]);
-      // A user can create an organization if they set themselves as the owner.
-      allow create: if request.resource.data.ownerId == request.auth.uid;
+      // A user can create an organization if they are authenticated and set themselves as owner.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+      // A user can read an organization if they are a member (checked via their user document).
+      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([orgId]);
     }
 
     match /teams/{teamId} {
-      // To read/write a team, the user must be a member of the parent organization.
-      // For create, check the incoming data. For others, check existing data.
-      allow read, update, delete: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([resource.data.organizationId]);
-      allow create: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([request.resource.data.organizationId]);
+      function getOrgId() {
+        // For reads, check the existing resource. For writes, check the incoming resource.
+        return request.method == 'get' ? resource.data.organizationId : request.resource.data.organizationId;
+      }
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([getOrgId()]);
     }
 
     match /tasks/{taskId} {
-      function isParticipant() {
-        return request.auth.uid == resource.data.creatorId || request.auth.uid == resource.data.assigneeId;
+       function getOrgId() {
+        return request.method == 'get' ? resource.data.organizationId : request.resource.data.organizationId;
       }
-      
-      // To read/write a task, user must be in the org. If private, must be participant.
-      allow read, update, delete: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([resource.data.organizationId])
-                                  && (!resource.data.isPrivate || isParticipant());
-
-      allow create: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([request.resource.data.organizationId]);
+       allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([getOrgId()]);
     }
 
     match /notifications/{notificationId} {
-      // A user can read/write their own notifications
-      allow read, write: if request.auth.uid == resource.data.userId;
-      allow create: if request.auth.uid == request.resource.data.userId;
+      function getUserId() {
+         return request.method == 'get' ? resource.data.userId : request.resource.data.userId;
+      }
+      allow read, write: if request.auth.uid == getUserId();
     }
   }
 }
+
+    
