@@ -51,7 +51,7 @@ import { Progress } from '@/components/ui/progress';
 import { useTasks } from '@/contexts/task-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
@@ -119,12 +119,24 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const points = calculatePoints(task.priority);
 
   const isSelected = selectedTaskIds.includes(task.id);
-  
-  const today = new Date();
-  const isOverdue = task.dueDate && isBefore(startOfDay(task.dueDate), startOfDay(today));
-  const isDueToday = task.dueDate && isToday(task.dueDate);
-  const isDueSoon = task.dueDate && !isDueToday && !isOverdue && isWithinInterval(task.dueDate, { start: today, end: addDays(today, 7) });
 
+  const [dateStatus, setDateStatus] = useState({
+    isOverdue: false,
+    isDueToday: false,
+    isDueSoon: false,
+  });
+
+  useEffect(() => {
+    if (task.dueDate) {
+      const today = new Date();
+      const overdue = isBefore(startOfDay(task.dueDate), startOfDay(today));
+      const dueToday = isToday(task.dueDate);
+      const dueSoon = !dueToday && !overdue && isWithinInterval(task.dueDate, { start: today, end: addDays(today, 7) });
+      setDateStatus({ isOverdue: overdue, isDueToday: dueToday, isDueSoon: dueSoon });
+    }
+  }, [task.dueDate]);
+
+  const { isOverdue, isDueToday, isDueSoon } = dateStatus;
 
   const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && task.assigneeId !== currentUser.id;
 
