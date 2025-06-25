@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 type AppHeaderProps = {
   users: User[];
@@ -28,6 +29,7 @@ type AppHeaderProps = {
 export default function AppHeader({ users }: AppHeaderProps) {
   const { setTheme, theme } = useTheme();
   const { notifications, markNotificationsAsRead } = useTasks();
+  const { user, logout } = useAuth();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -91,10 +93,10 @@ export default function AppHeader({ users }: AppHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                {users.length > 0 && users[0] ? (
+                {user ? (
                   <>
-                    <AvatarImage src={users[0].avatar} alt={users[0].name} data-ai-hint="woman smiling" />
-                    <AvatarFallback>{users[0].name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="woman smiling" />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </>
                 ) : (
                   <AvatarFallback>
@@ -116,7 +118,7 @@ export default function AppHeader({ users }: AppHeaderProps) {
               <span>Support</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Uitloggen</span>
             </DropdownMenuItem>

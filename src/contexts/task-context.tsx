@@ -21,6 +21,7 @@ import {
 import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from './auth-context';
 
 type TaskContextType = {
   tasks: Task[];
@@ -58,6 +59,7 @@ const calculatePoints = (priority: Priority): number => {
 };
 
 export function TaskProvider({ children }: { children: ReactNode }) {
+  const { user: authUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -66,8 +68,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null });
   const [viewedUser, setViewedUser] = useState<User | null>(null);
   const { toast } = useToast();
-  
-  const currentUser = users.length > 0 ? users[0] : null;
 
   const setFilters = (newFilters: Partial<Filters>) => {
     setRawFilters(prev => ({...prev, ...newFilters}));
@@ -90,6 +90,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!db) return;
+    
+    // For now, we fetch all tasks. In a real multi-tenant app, this would be scoped
+    // by householdId or teamId. Private tasks are also not filtered out here yet.
     const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
       const tasksData = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -124,9 +127,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   useEffect(() => {
-    if (!db || !currentUser) return;
+    if (!db || !authUser) return;
     
-    const q = query(collection(db, "notifications"), where("userId", "==", currentUser.id), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "notifications"), where("userId", "==", authUser.uid), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const notificationsData = snapshot.docs.map(doc => {
             const data = doc.data();
@@ -140,11 +143,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
 
     return () => unsubscribe();
-  }, [currentUser, toast]);
+  }, [authUser, toast]);
 
 
   const createNotification = async (userId: string, message: string, taskId: string) => {
-      if (!currentUser || userId === currentUser.id) return; // Don't notify self
+      if (!authUser || userId === authUser.uid) return; // Don't notify self
       try {
           await addDoc(collection(db, 'notifications'), {
               userId,
@@ -159,7 +162,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
   
   const markNotificationsAsRead = async () => {
-    if (!currentUser) return;
+    if (!authUser) return;
     try {
         const batch = writeBatch(db);
         const unreadIds = notifications.filter(n => !n.read).map(n => n.id);

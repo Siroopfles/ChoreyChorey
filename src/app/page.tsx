@@ -9,15 +9,18 @@ import {
 import Leaderboard from '@/components/chorey/leaderboard';
 import AppHeader from '@/components/chorey/app-header';
 import TaskColumns from '@/components/chorey/task-columns';
-import { LayoutGrid, CalendarDays, LayoutDashboard } from 'lucide-react';
+import { LayoutGrid, CalendarDays, LayoutDashboard, Loader2 } from 'lucide-react';
 import CommandBar from '@/components/chorey/command-bar';
-import { TaskProvider, useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CalendarView from '@/components/chorey/calendar-view';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import DashboardView from '@/components/chorey/dashboard-view';
 import FilterBar from '@/components/chorey/filter-bar';
 import UserProfileSheet from '@/components/chorey/user-profile-sheet';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 
 function MainContent() {
@@ -92,10 +95,36 @@ function ChoreyApp() {
   )
 }
 
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <>{children}</>;
+  }
+
+  return null;
+}
+
+
 export default function Home() {
   return (
-    <TaskProvider>
+    <AuthGuard>
       <ChoreyApp />
-    </TaskProvider>
+    </AuthGuard>
   );
 }
