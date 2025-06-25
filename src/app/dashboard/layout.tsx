@@ -1,5 +1,5 @@
 'use client';
-import { AuthProvider, useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider } from '@/contexts/task-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -32,12 +32,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
-      <TaskProvider>
-        <AuthGuard>
-          {children}
-        </AuthGuard>
-      </TaskProvider>
-    </AuthProvider>
+    <TaskProvider>
+      <AuthGuard>
+        {children}
+      </AuthGuard>
+    </TaskProvider>
   );
 }
