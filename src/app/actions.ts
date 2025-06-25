@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction } from 'firebase/firestore';
 import type { User, Organization } from '@/lib/types';
 import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
@@ -55,28 +55,38 @@ export async function handleCreateOrganization(name: string, userId: string) {
         return { error: 'Organisatienaam en gebruikers-ID zijn verplicht.' };
     }
     try {
-        const batch = writeBatch(db);
+        const newOrgRef = doc(collection(db, 'organizations'));
 
-        const orgRef = doc(collection(db, 'organizations'));
-        const newOrg: Omit<Organization, 'id'> = {
-            name,
-            ownerId: userId,
-        };
-        batch.set(orgRef, newOrg);
+        await runTransaction(db, async (transaction) => {
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await transaction.get(userRef);
 
-        const userRef = doc(db, 'users', userId);
-        batch.update(userRef, {
-            organizationIds: arrayUnion(orgRef.id),
-            currentOrganizationId: orgRef.id
+            if (!userDoc.exists()) {
+                throw new Error("Gebruikersdocument niet gevonden!");
+            }
+
+            const currentOrgIds = userDoc.data().organizationIds || [];
+            const newOrgIds = [...currentOrgIds, newOrgRef.id];
+
+            const newOrgData: Omit<Organization, 'id'> = {
+                name,
+                ownerId: userId,
+            };
+            transaction.set(newOrgRef, newOrgData);
+
+            transaction.update(userRef, {
+                organizationIds: newOrgIds,
+                currentOrganizationId: newOrgRef.id
+            });
         });
-        
-        await batch.commit();
-        return { success: true, organizationId: orgRef.id };
+
+        return { success: true, organizationId: newOrgRef.id };
     } catch (error: any) {
         console.error("Error creating organization:", error);
         return { error: error.message };
     }
 }
+
 
 export async function handleCreateTeam(name: string, organizationId: string) {
     if (!name || !organizationId) {
