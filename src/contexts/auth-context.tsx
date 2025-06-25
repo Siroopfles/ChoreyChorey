@@ -84,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (userDoc.exists()) {
                         setUser({ id: userDoc.id, ...userDoc.data() } as User);
                     } else {
+                        // This handles new users from both signup and Google redirect
                         let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                         try {
                             const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
@@ -108,16 +109,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setAuthUser(null);
                     setUser(null);
                 }
-            } catch(error) {
-                 handleError(error, "verwerken van authenticatiestatus");
-            } finally {
-                setLoading(false);
+            } catch (error) {
+                handleError(error, "verwerken van authenticatiestatus");
+                 setAuthUser(null);
+                 setUser(null);
             }
         });
         
-        getRedirectResult(auth).catch((error) => {
-            handleError(error, 'verwerken van Google-login');
-        });
+        getRedirectResult(auth)
+            .catch((error) => {
+                handleError(error, 'verwerken van Google-login');
+            })
+            .finally(() => {
+                // This is the crucial part. We set loading to false only after
+                // the redirect result has been processed. This prevents the race condition.
+                setLoading(false);
+            });
 
         return () => unsubscribe();
     }, []);
@@ -158,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 achievements: [],
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-            // onAuthStateChanged will handle the rest
+            // onAuthStateChanged will handle setting loading to false
         } catch (error) {
             handleError(error, 'registreren');
             setLoading(false);
@@ -176,26 +183,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = async () => {
-        setLoading(true);
         try {
             await signOut(auth);
             router.push('/login');
         } catch (error) {
             handleError(error, 'uitloggen');
-        } finally {
-            // onAuthStateChanged will set loading to false
         }
     };
 
     const refreshUser = useCallback(async () => {
         if (auth.currentUser) {
-            setLoading(true);
             const userDocRef = doc(db, 'users', auth.currentUser.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
                 setUser({ id: userDoc.id, ...userDoc.data() } as User);
             }
-            setLoading(false);
         }
     }, []);
     
@@ -210,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
