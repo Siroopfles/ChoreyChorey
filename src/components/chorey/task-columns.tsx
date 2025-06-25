@@ -2,8 +2,8 @@
 import type { User, Status, Task } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection } from '@dnd-kit/core';
-import { SortableContext } from '@dnd-kit/sortable';
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, closestCenter } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useMemo } from 'react';
 
@@ -16,7 +16,7 @@ const TaskColumn = ({ title, tasks, users }: { title: Status; tasks: Task[]; use
           {tasks.length}
         </span>
       </div>
-       <SortableContext id={title} items={tasks.map(t => t.id)}>
+       <SortableContext id={title} items={tasks} strategy={verticalListSortingStrategy}>
         <div className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
             {tasks.length > 0 ? (
             tasks.map((task) => <SortableTaskCard key={task.id} task={task} users={users} />)
@@ -36,7 +36,7 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ users }: TaskColumnsProps) => {
-  const { tasks, searchTerm, filters, updateTask } = useTasks();
+  const { tasks, searchTerm, filters, updateTask, reorderTasks } = useTasks();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -67,7 +67,7 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
   const tasksByStatus = (status: Status) => {
     return filteredTasks
         .filter((task) => task.status === status)
-        .sort((a,b) => (a.dueDate?.getTime() || Infinity) - (b.dueDate?.getTime() || Infinity));
+        .sort((a,b) => a.order - b.order);
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -75,26 +75,54 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
 
     if (!over) return;
     
-    const activeContainer = active.data.current?.sortable.containerId;
-    const overContainer = over.data.current?.sortable.containerId || over.id;
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
-    if (!activeContainer || !overContainer || activeContainer === overContainer) {
-      return;
+    const activeTask = tasks.find(t => t.id === activeId);
+    if (!activeTask) return;
+
+    const activeContainer = active.data.current?.sortable.containerId as Status;
+    let overContainer = over.data.current?.sortable.containerId as Status;
+
+    if(!overContainer) {
+        // This case handles dropping on a column directly, not on another card
+        if (columns.includes(over.id as Status)) {
+            overContainer = over.id as Status;
+        } else {
+            return;
+        }
     }
 
-    updateTask(active.id as string, { status: overContainer as Status });
+    if (activeContainer !== overContainer) {
+      // Task is moved to a different column
+      updateTask(activeId, { status: overContainer, order: Date.now() });
+    } else if (activeId !== overId) {
+      // Task is reordered within the same column
+      const tasksInColumn = tasksByStatus(activeContainer);
+      const oldIndex = tasksInColumn.findIndex(t => t.id === activeId);
+      const newIndex = tasksInColumn.findIndex(t => t.id === overId);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedTasks = arrayMove(tasksInColumn, oldIndex, newIndex);
+        const tasksToUpdate = reorderedTasks.map((task, index) => ({
+            id: task.id,
+            order: index
+        }));
+        reorderTasks(tasksToUpdate);
+      }
+    }
   }
 
   return (
      <DndContext 
       sensors={sensors} 
       onDragEnd={handleDragEnd} 
-      collisionDetection={rectIntersection}
+      collisionDetection={closestCenter}
     >
         <ScrollArea className="w-full">
         <div className="flex gap-6 pb-4">
             {columns.map((status) => (
-            <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} />
+                <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} />
             ))}
         </div>
         <ScrollBar orientation="horizontal" />

@@ -32,6 +32,13 @@ export type Attachment = {
   type: "image" | "file";
 };
 
+export type Comment = {
+  id: string;
+  userId: string;
+  text: string;
+  createdAt: Date;
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -43,9 +50,11 @@ export type Task = {
   labels: Label[];
   subtasks: Subtask[];
   attachments: Attachment[];
+  comments: Comment[];
   isPrivate: boolean;
   createdAt: Date;
   completedAt?: Date;
+  order: number;
 };
 
 export type Notification = {

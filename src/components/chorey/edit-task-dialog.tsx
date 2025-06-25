@@ -1,6 +1,6 @@
 'use client';
 
-import type { User, Label, TaskFormValues, Task } from '@/lib/types';
+import type { User, Label, TaskFormValues, Task, Comment } from '@/lib/types';
 import { ALL_LABELS, taskFormSchema } from '@/lib/types';
 import { useState, type ReactNode, useEffect } from 'react';
 import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
@@ -24,12 +24,15 @@ import { Switch } from '@/components/ui/switch';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X } from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
+import { nl } from 'date-fns/locale';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useTasks } from '@/contexts/task-context';
 import { handleSuggestSubtasks } from '@/app/actions';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type EditTaskDialogProps = {
   users: User[];
@@ -38,10 +41,33 @@ type EditTaskDialogProps = {
   setIsOpen: (isOpen: boolean) => void;
 };
 
+const CommentItem = ({ comment, user }: { comment: Comment; user?: User }) => {
+  return (
+    <div className="flex items-start gap-3">
+      <Avatar className="h-8 w-8 border">
+        <AvatarImage src={user?.avatar} />
+        <AvatarFallback>{user?.name.charAt(0) ?? '?'}</AvatarFallback>
+      </Avatar>
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+            <p className="font-semibold text-sm">{user?.name ?? 'Onbekende gebruiker'}</p>
+            <p className="text-xs text-muted-foreground">
+                {formatDistanceToNow(comment.createdAt, { addSuffix: true, locale: nl })}
+            </p>
+        </div>
+        <p className="text-sm text-foreground/90">{comment.text}</p>
+      </div>
+    </div>
+  );
+};
+
 export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
-  const { updateTask } = useTasks();
+  const { updateTask, addComment } = useTasks();
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
+  const [newComment, setNewComment] = useState('');
+
+  const sortedComments = [...(task.comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
 
   const form = useForm<TaskFormValues>({
@@ -141,6 +167,13 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     }
     setIsSuggestingSubtasks(false);
   };
+  
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      addComment(task.id, newComment.trim());
+      setNewComment('');
+    }
+  };
 
 
   return (
@@ -150,281 +183,309 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
           <DialogTitle className="font-headline">Taak Bewerken</DialogTitle>
           <DialogDescription>Pas de details van de taak hieronder aan.</DialogDescription>
         </DialogHeader>
-        <FormProvider {...form}>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Titel</FormLabel>
-                    <FormControl>
-                      <Input placeholder="bijv., Stofzuig de woonkamer" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Omschrijving</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Voeg een meer gedetailleerde omschrijving toe..." className="resize-none" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ScrollArea className="max-h-[70vh] pr-6">
+          <FormProvider {...form}>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="assigneeId"
+                  name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Toegewezen aan</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                            <SelectValue placeholder="Selecteer een persoon" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.name}
-                            </SelectItem>
+                      <FormLabel>Titel</FormLabel>
+                      <FormControl>
+                        <Input placeholder="bijv., Stofzuig de woonkamer" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Omschrijving</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Voeg een meer gedetailleerde omschrijving toe..." className="resize-none" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="assigneeId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Toegewezen aan</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                              <SelectValue placeholder="Selecteer een persoon" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {users.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                {user.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Einddatum</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={'outline'}
+                                className={cn(
+                                  'w-full pl-3 text-left font-normal',
+                                  !field.value && 'text-muted-foreground'
+                                )}
+                              >
+                                {field.value ? format(field.value, 'PPP') : <span>Kies een datum</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prioriteit</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecteer een prioriteit" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Laag">Laag</SelectItem>
+                            <SelectItem value="Midden">Midden</SelectItem>
+                            <SelectItem value="Hoog">Hoog</SelectItem>
+                            <SelectItem value="Urgent">Urgent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="labels"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Labels</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
+                                <Tags className="mr-2 h-4 w-4" />
+                                {field.value?.length > 0 ? `${field.value.length} geselecteerd` : 'Selecteer labels'}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                              <CommandInput placeholder="Zoek label..." />
+                              <CommandList>
+                                <CommandEmpty>Geen label gevonden.</CommandEmpty>
+                                <CommandGroup>
+                                  {ALL_LABELS.map((label) => {
+                                    const isSelected = field.value?.includes(label);
+                                    return (
+                                      <CommandItem
+                                        key={label}
+                                        onSelect={() => {
+                                          if (isSelected) {
+                                            field.onChange(field.value?.filter((l) => l !== label));
+                                          } else {
+                                            field.onChange([...(field.value || []), label]);
+                                          }
+                                        }}
+                                      >
+                                        <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                                        {label}
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <div className="pt-1 h-fit min-h-[22px]">
+                          {field.value?.map((label) => (
+                            <Badge
+                              variant="secondary"
+                              key={label}
+                              className="mr-1 mb-1"
+                            >
+                              {label}
+                              <button
+                                type="button"
+                                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
+                                onClick={() => field.onChange(field.value?.filter((l) => l !== label))}
+                              >
+                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                              </button>
+                            </Badge>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
                 <FormField
                   control={form.control}
-                  name="dueDate"
+                  name="isPrivate"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Einddatum</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? format(field.value, 'PPP') : <span>Kies een datum</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Prioriteit</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecteer een prioriteit" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Laag">Laag</SelectItem>
-                          <SelectItem value="Midden">Midden</SelectItem>
-                          <SelectItem value="Hoog">Hoog</SelectItem>
-                          <SelectItem value="Urgent">Urgent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="labels"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Labels</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
-                              <Tags className="mr-2 h-4 w-4" />
-                              {field.value?.length > 0 ? `${field.value.length} geselecteerd` : 'Selecteer labels'}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                          <Command>
-                            <CommandInput placeholder="Zoek label..." />
-                            <CommandList>
-                              <CommandEmpty>Geen label gevonden.</CommandEmpty>
-                              <CommandGroup>
-                                {ALL_LABELS.map((label) => {
-                                  const isSelected = field.value?.includes(label);
-                                  return (
-                                    <CommandItem
-                                      key={label}
-                                      onSelect={() => {
-                                        if (isSelected) {
-                                          field.onChange(field.value?.filter((l) => l !== label));
-                                        } else {
-                                          field.onChange([...(field.value || []), label]);
-                                        }
-                                      }}
-                                    >
-                                      <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
-                                      {label}
-                                    </CommandItem>
-                                  );
-                                })}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <div className="pt-1 h-fit min-h-[22px]">
-                        {field.value?.map((label) => (
-                          <Badge
-                            variant="secondary"
-                            key={label}
-                            className="mr-1 mb-1"
-                          >
-                            {label}
-                            <button
-                              type="button"
-                              className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                              }}
-                              onClick={() => field.onChange(field.value?.filter((l) => l !== label))}
-                            >
-                              <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                            </button>
-                          </Badge>
-                        ))}
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Privé taak</FormLabel>
                       </div>
-                      <FormMessage />
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="isPrivate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
-                      <FormLabel>Privé taak</FormLabel>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <Separator />
+                
+                <Separator />
 
-              <div>
-                <FormLabel>Subtaken</FormLabel>
-                <div className="space-y-2 mt-2">
-                  {subtaskFields.map((field, index) => (
-                    <div key={field.id} className="flex items-center gap-2">
-                      <FormField
-                        control={form.control}
-                        name={`subtasks.${index}.text`}
-                        render={({ field }) => (
-                           <Input {...field} placeholder="Beschrijf subtaak..."/>
-                        )}
-                      />
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
-                        <Trash2 className="h-4 w-4 text-destructive"/>
+                <div>
+                  <FormLabel>Subtaken</FormLabel>
+                  <div className="space-y-2 mt-2">
+                    {subtaskFields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                        <FormField
+                          control={form.control}
+                          name={`subtasks.${index}.text`}
+                          render={({ field }) => (
+                             <Input {...field} placeholder="Beschrijf subtaak..."/>
+                          )}
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
+                          <Trash2 className="h-4 w-4 text-destructive"/>
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => appendSubtask({ text: '' })}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Subtaak toevoegen
+                      </Button>
+                      <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={onSuggestSubtasks}
+                          disabled={isSuggestingSubtasks}
+                      >
+                          {isSuggestingSubtasks ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                              <Bot className="mr-2 h-4 w-4" />
+                          )}
+                          Genereer (AI)
                       </Button>
                     </div>
-                  ))}
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => appendSubtask({ text: '' })}>
+                  </div>
+                </div>
+
+                <Separator />
+
+                 <div>
+                  <FormLabel>Bijlagen (URL)</FormLabel>
+                  <div className="space-y-2 mt-2">
+                    {attachmentFields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                        <FormField
+                          control={form.control}
+                          name={`attachments.${index}.url`}
+                          render={({ field }) => (
+                             <Input {...field} placeholder="https://..."/>
+                          )}
+                        />
+                         <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(index)}>
+                          <Trash2 className="h-4 w-4 text-destructive"/>
+                        </Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ url: '' })}>
                       <PlusCircle className="mr-2 h-4 w-4" />
-                      Subtaak toevoegen
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={onSuggestSubtasks}
-                        disabled={isSuggestingSubtasks}
-                    >
-                        {isSuggestingSubtasks ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Bot className="mr-2 h-4 w-4" />
-                        )}
-                        Genereer (AI)
+                      Bijlage toevoegen
                     </Button>
                   </div>
                 </div>
-              </div>
 
-              <Separator />
-
-               <div>
-                <FormLabel>Bijlagen (URL)</FormLabel>
-                <div className="space-y-2 mt-2">
-                  {attachmentFields.map((field, index) => (
-                    <div key={field.id} className="flex items-center gap-2">
-                      <FormField
-                        control={form.control}
-                        name={`attachments.${index}.url`}
-                        render={({ field }) => (
-                           <Input {...field} placeholder="https://..."/>
-                        )}
-                      />
-                       <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(index)}>
-                        <Trash2 className="h-4 w-4 text-destructive"/>
-                      </Button>
-                    </div>
-                  ))}
-                  <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ url: '' })}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Bijlage toevoegen
+                <DialogFooter className="sticky bottom-0 bg-background pt-4 pb-0 -mx-6 px-6">
+                  <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
+                    Annuleren
                   </Button>
-                </div>
-              </div>
+                  <Button type="submit">Wijzigingen Opslaan</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </FormProvider>
+        
+          <Separator className="my-4" />
 
-              <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
-                  Annuleren
-                </Button>
-                <Button type="submit">Wijzigingen Opslaan</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </FormProvider>
+          <div className="space-y-4">
+              <FormLabel>Reacties</FormLabel>
+              <div className="space-y-4">
+                  {sortedComments.length > 0 ? (
+                      sortedComments.map(comment => (
+                          <CommentItem key={comment.id} comment={comment} user={users.find(u => u.id === comment.userId)} />
+                      ))
+                  ) : (
+                      <p className="text-sm text-muted-foreground">Nog geen reacties.</p>
+                  )}
+              </div>
+              <div className="flex items-start gap-3">
+                  <Textarea 
+                      placeholder="Voeg een reactie toe..." 
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      rows={2}
+                  />
+                  <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+                      Plaats
+                  </Button>
+              </div>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

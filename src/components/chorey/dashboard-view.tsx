@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
 import { useMemo } from 'react';
+import { useTheme } from 'next-themes';
+
 
 const COLORS: Record<string, string> = {
     // Status
@@ -30,6 +32,8 @@ type DashboardViewProps = {
 };
 
 export default function DashboardView({ tasks, users }: DashboardViewProps) {
+  const { resolvedTheme } = useTheme();
+
   const tasksByStatus = useMemo(() => {
     const statusCounts = tasks.reduce((acc, task) => {
       acc[task.status] = (acc[task.status] || 0) + 1;
@@ -49,12 +53,13 @@ export default function DashboardView({ tasks, users }: DashboardViewProps) {
   }, [tasks]);
 
   const pointsPerUser = useMemo(() => {
+    const lightness = resolvedTheme === 'dark' ? 60 : 45;
     return users.map(user => ({
       name: user.name,
       points: user.points,
-      fill: `hsl(${user.id.charCodeAt(0) % 360}, 70%, 50%)`
+      fill: `hsl(${user.id.charCodeAt(0) % 360}, 70%, ${lightness}%)`
     })).sort((a,b) => b.points - a.points);
-  }, [users]);
+  }, [users, resolvedTheme]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

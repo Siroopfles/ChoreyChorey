@@ -16,7 +16,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow, isBefore, isToday, startOfDay } from 'date-fns';
+import { nl } from 'date-fns/locale';
 import {
   Archive,
   ChevronDown,
@@ -34,6 +35,9 @@ import {
   Paperclip,
   Replace,
   Copy,
+  MessageSquare,
+  Trophy,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -42,6 +46,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
+import { calculatePoints } from '@/lib/utils';
 
 
 type TaskCardProps = {
@@ -65,19 +70,46 @@ const statusConfig: Record<Task['status'], { icon?: JSX.Element; color: string }
     Geannuleerd: { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-destructive' },
 };
 
+const Highlight = ({ text, highlight }: { text: string, highlight: string }) => {
+    if (!highlight.trim()) {
+      return <>{text}</>;
+    }
+    const regex = new RegExp(`(${highlight})`, 'gi');
+    const parts = text.split(regex);
+    return (
+      <>
+        {parts.map((part, i) =>
+          regex.test(part) ? (
+            <mark key={i} className="bg-primary/20 text-primary-foreground rounded-sm px-0.5 py-px">
+              {part}
+            </mark>
+          ) : (
+            <span key={i}>{part}</span>
+          )
+        )}
+      </>
+    );
+  };
+
 
 const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm } = useTasks();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
   const totalSubtasks = task.subtasks.length;
   const subtaskProgress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
+  const points = calculatePoints(task.priority);
 
   const isSelected = selectedTaskIds.includes(task.id);
+  
+  const today = new Date();
+  const isOverdue = task.dueDate && isBefore(startOfDay(task.dueDate), startOfDay(today));
+  const isDueToday = task.dueDate && isToday(task.dueDate);
+
 
   return (
     <div className="relative">
@@ -99,7 +131,9 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
       >
         <CardHeader className="p-3 pb-2 pl-9">
           <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-sm font-semibold font-body leading-snug pt-1">{task.title}</CardTitle>
+            <CardTitle className="text-sm font-semibold font-body leading-snug pt-1">
+                <Highlight text={task.title} highlight={searchTerm} />
+            </CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
@@ -210,7 +244,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
           )}
         </CardContent>
         <CardFooter className="p-3 pt-2 flex justify-between items-center text-xs text-muted-foreground pl-9">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {assignee ? (
               <button
                 type="button"
@@ -232,7 +266,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
               </div>
             )}
             {task.dueDate && (
-              <div className="flex items-center gap-1">
+              <div className={cn('flex items-center gap-1', { 'text-destructive': isOverdue, 'text-chart-2 font-semibold': isDueToday })}>
                 <CalendarIcon className="h-3 w-3" />
                 <span>{format(task.dueDate, 'd MMM')}</span>
               </div>
@@ -241,12 +275,20 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
               <PriorityIcon className="h-3 w-3" />
               <span>{task.priority}</span>
             </div>
-            {task.attachments.length > 0 && (
+             <div className="flex items-center gap-1 font-medium text-amber-600">
+                <Trophy className="h-3 w-3" />
+                <span>{points}</span>
+            </div>
+            {task.comments?.length > 0 && (
               <div className="flex items-center gap-1">
-                <Paperclip className="h-3 w-3" />
-                <span>{task.attachments.length}</span>
+                <MessageSquare className="h-3 w-3" />
+                <span>{task.comments.length}</span>
               </div>
             )}
+            <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>{formatDistanceToNow(task.createdAt, { locale: nl, addSuffix: true })}</span>
+            </div>
             {task.isPrivate && <Lock className="h-3 w-3" />}
           </div>
           {statusInfo.icon}

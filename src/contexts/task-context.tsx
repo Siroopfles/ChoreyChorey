@@ -16,8 +16,9 @@ import {
   FirestoreError,
   query,
   where,
+  arrayUnion
 } from 'firebase/firestore';
-import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification } from '@/lib/types';
+import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification, Comment } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
@@ -32,6 +33,8 @@ type TaskContextType = {
   cloneTask: (taskId: string) => void;
   deleteTaskPermanently: (taskId: string) => void;
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
+  reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => void;
+  addComment: (taskId: string, text: string) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   selectedTaskIds: string[];
@@ -49,7 +52,7 @@ type TaskContextType = {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { authUser } = useAuth();
+  const { authUser, user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -81,8 +84,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!db) return;
     
-    // For now, we fetch all tasks. In a real multi-tenant app, this would be scoped
-    // by householdId or teamId. Private tasks are also not filtered out here yet.
     const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
       const tasksData = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -96,10 +97,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           labels: data.labels || [],
           subtasks: data.subtasks || [],
           attachments: data.attachments || [],
+          comments: (data.comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate() })),
           isPrivate: data.isPrivate || false,
           createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
           dueDate: (data.dueDate as Timestamp)?.toDate(),
           completedAt: (data.completedAt as Timestamp)?.toDate(),
+          order: data.order || 0,
         } as Task;
       });
       setTasks(tasksData);
@@ -129,7 +132,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 createdAt: (data.createdAt as Timestamp).toDate(),
             } as Notification;
         });
-        // Sort notifications by most recent on the client
         notificationsData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setNotifications(notificationsData);
     }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
@@ -192,6 +194,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           createdAt: new Date(),
           subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
           attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' as const })) || [],
+          comments: [],
+          order: Date.now(),
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -220,6 +224,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           status: 'Te Doen' as Status,
           createdAt: new Date(),
           completedAt: null,
+          comments: [],
+          order: Date.now(),
         };
         
         delete (clonedTask as any).id; 
@@ -290,6 +296,39 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         await updateDoc(taskRef, finalUpdates);
     } catch (e) {
         handleError(e, `bijwerken van taak`);
+    }
+  };
+
+  const reorderTasks = async (tasksToUpdate: {id: string, order: number}[]) => {
+      try {
+        const batch = writeBatch(db);
+        tasksToUpdate.forEach(taskUpdate => {
+            const taskRef = doc(db, 'tasks', taskUpdate.id);
+            batch.update(taskRef, { order: taskUpdate.order });
+        });
+        await batch.commit();
+      } catch (e) {
+        handleError(e, 'herordenen van taken');
+      }
+  };
+
+  const addComment = async (taskId: string, text: string) => {
+    if (!user) {
+        handleError({ message: 'Je moet ingelogd zijn om te reageren.' }, 'reageren op taak');
+        return;
+    }
+    try {
+        const taskRef = doc(db, 'tasks', taskId);
+        const newComment: Omit<Comment, 'id'> = {
+            userId: user.id,
+            text,
+            createdAt: new Date(),
+        };
+        await updateDoc(taskRef, {
+            comments: arrayUnion({ ...newComment, id: crypto.randomUUID() })
+        });
+    } catch (e) {
+        handleError(e, 'reageren op taak');
     }
   };
 
@@ -385,6 +424,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       addTask, 
       updateTask, 
       toggleSubtaskCompletion, 
+      reorderTasks,
+      addComment,
       searchTerm, 
       setSearchTerm,
       selectedTaskIds,
