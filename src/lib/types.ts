@@ -5,6 +5,7 @@ export type User = {
   name: string;
   avatar: string;
   points: number;
+  email: string;
 };
 
 export type Priority = "Laag" | "Midden" | "Hoog" | "Urgent";

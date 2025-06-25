@@ -82,7 +82,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (!db) return;
+    if (!db || !authUser) return;
     
     const unsubscribeTasks = onSnapshot(collection(db, 'tasks'), (snapshot) => {
       const tasksData = snapshot.docs.map(doc => {
@@ -104,6 +104,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           completedAt: (data.completedAt as Timestamp)?.toDate(),
           order: data.order || 0,
         } as Task;
+      }).filter(task => {
+        // Filter out private tasks that are not assigned to the current user
+        if (task.isPrivate && task.assigneeId !== authUser.uid) {
+            return false;
+        }
+        return true;
       });
       setTasks(tasksData);
     }, (error: FirestoreError) => handleError(error, 'laden van taken'));
@@ -117,7 +123,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         unsubscribeTasks();
         unsubscribeUsers();
     };
-  }, [toast]);
+  }, [authUser, toast]);
 
   useEffect(() => {
     if (!db || !authUser) return;
@@ -131,8 +137,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 ...data,
                 createdAt: (data.createdAt as Timestamp).toDate(),
             } as Notification;
-        });
-        notificationsData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setNotifications(notificationsData);
     }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
 
@@ -319,6 +324,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
     try {
         const taskRef = doc(db, 'tasks', taskId);
+        const taskDoc = await getDoc(taskRef);
+        if (!taskDoc.exists()) throw new Error("Task not found");
+        
+        const taskData = taskDoc.data() as Task;
+
         const newComment: Omit<Comment, 'id'> = {
             userId: user.id,
             text,
@@ -327,6 +337,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         await updateDoc(taskRef, {
             comments: arrayUnion({ ...newComment, id: crypto.randomUUID() })
         });
+        
+        if (taskData.assigneeId && taskData.assigneeId !== user.id) {
+            await createNotification(
+                taskData.assigneeId,
+                `${user.name} heeft gereageerd op: "${taskData.title}"`,
+                taskId
+            );
+        }
+
     } catch (e) {
         handleError(e, 'reageren op taak');
     }
