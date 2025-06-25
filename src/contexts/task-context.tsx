@@ -59,7 +59,7 @@ const calculatePoints = (priority: Priority): number => {
 };
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { user: authUser } = useAuth();
+  const { authUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
