@@ -1,8 +1,8 @@
 'use client';
 
-import type { User, Label, TaskFormValues } from '@/lib/types';
+import type { User, Label, TaskFormValues, TaskTemplateFormValues } from '@/lib/types';
 import { ALL_LABELS, taskFormSchema } from '@/lib/types';
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useEffect } from 'react';
 import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -39,9 +39,26 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 type AddTaskDialogProps = {
   users: User[];
   children: ReactNode;
+  template?: TaskTemplateFormValues;
 };
 
-export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
+const defaultFormValues: TaskFormValues = {
+  title: '',
+  description: '',
+  priority: 'Midden',
+  isPrivate: false,
+  subtasks: [],
+  attachments: [],
+  labels: [],
+  blockedBy: [],
+  recurring: undefined,
+  storyPoints: undefined,
+  assigneeId: undefined,
+  teamId: undefined,
+  dueDate: undefined,
+};
+
+export default function AddTaskDialog({ users, children, template }: AddTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
@@ -52,18 +69,28 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      priority: 'Midden',
-      isPrivate: false,
-      subtasks: [],
-      attachments: [],
-      labels: [],
-      blockedBy: [],
-      recurring: undefined,
-    },
+    defaultValues: defaultFormValues,
   });
+
+  useEffect(() => {
+    if (open) {
+      if (template) {
+        form.reset({
+          ...defaultFormValues,
+          title: template.title,
+          description: template.description,
+          priority: template.priority,
+          labels: template.labels,
+          subtasks: template.subtasks,
+          storyPoints: template.storyPoints,
+        });
+      } else {
+        form.reset(defaultFormValues);
+      }
+      setPointsSuggestion('');
+    }
+  }, [open, template, form]);
+
 
   const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
     control: form.control,
@@ -87,7 +114,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
       description: `De taak "${data.title}" is succesvol aangemaakt.`,
     });
     setOpen(false);
-    form.reset();
+    form.reset(defaultFormValues);
   }
 
   const onSuggestSubtasks = async () => {
@@ -148,12 +175,12 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) form.reset(); }}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Nieuwe Taak Toevoegen</DialogTitle>
-          <DialogDescription>Vul de details hieronder in om een nieuwe taak aan te maken.</DialogDescription>
+          <DialogTitle className="font-headline">{template ? 'Taak aanmaken met template' : 'Nieuwe Taak Toevoegen'}</DialogTitle>
+          <DialogDescription>{template ? `Template: "${template.name}"` : 'Vul de details hieronder in om een nieuwe taak aan te maken.'}</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <Form {...form}>

@@ -51,7 +51,7 @@ import { Loader2, Plus, MoreVertical, Edit, Trash2, LayoutTemplate, FilePlus, Bo
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
 import { Separator } from '@/components/ui/separator';
-import type { TaskTemplate, TaskTemplateFormValues, Label } from '@/lib/types';
+import type { TaskTemplate, TaskTemplateFormValues, Label, User } from '@/lib/types';
 import { taskTemplateSchema, ALL_LABELS, ALL_PRIORITIES } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,6 +59,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import AddTaskDialog from '@/components/chorey/add-task-dialog';
 
 
 function TemplateDialog({
@@ -242,7 +243,7 @@ function TemplateDialog({
   );
 }
 
-function TemplateCard({ template }: { template: TaskTemplate }) {
+function TemplateCard({ template, users }: { template: TaskTemplate, users: User[] }) {
   const { deleteTemplate } = useTasks();
   const { toast } = useToast();
 
@@ -307,16 +308,18 @@ function TemplateCard({ template }: { template: TaskTemplate }) {
         )}
       </CardContent>
       <CardFooter>
+        <AddTaskDialog users={users} template={template}>
           <Button variant="outline" size="sm" className="w-full">
             <FilePlus className="mr-2 h-4 w-4" /> Taak aanmaken met template
           </Button>
+        </AddTaskDialog>
       </CardFooter>
     </Card>
   );
 }
 
 export default function TemplatesPage() {
-  const { templates, loading } = useTasks();
+  const { templates, loading, users } = useTasks();
 
   if (loading) {
     return (
@@ -342,7 +345,7 @@ export default function TemplatesPage() {
       {templates.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {templates.map(template => (
-            <TemplateCard key={template.id} template={template} />
+            <TemplateCard key={template.id} template={template} users={users} />
           ))}
         </div>
       ) : (
