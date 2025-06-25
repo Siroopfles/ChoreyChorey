@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/sidebar';
 import Leaderboard from '@/components/chorey/leaderboard';
 import AppHeader from '@/components/chorey/app-header';
-import TaskColumns from '@/components/chorey/task-columns';
 import { LayoutGrid, CalendarDays, LayoutDashboard } from 'lucide-react';
 import CommandBar from '@/components/chorey/command-bar';
 import { useTasks } from '@/contexts/task-context';
@@ -19,12 +18,17 @@ import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import FilterBar from '@/components/chorey/filter-bar';
 import UserProfileSheet from '@/components/chorey/user-profile-sheet';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
+import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 
 const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
   ssr: false,
   loading: () => <DashboardViewSkeleton />,
 });
 
+const TaskColumns = dynamic(() => import('@/components/chorey/task-columns'), {
+    ssr: false,
+    loading: () => <TaskColumnsSkeleton />,
+});
 
 function MainContent() {
   const { tasks, users } = useTasks();
