@@ -45,13 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            setLoading(true);
             if (firebaseUser) {
                 setAuthUser(firebaseUser);
-                const userDocRef = doc(db, 'users', firebaseUser.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    setUser({ id: userDoc.id, ...userDoc.data() } as User);
-                }
+                await fetchAndSetUser(firebaseUser);
             } else {
                 setAuthUser(null);
                 setUser(null);
@@ -157,8 +154,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(newUser);
             }
             return true;
-        } catch (error) {
-            handleError(error, 'inloggen met Google');
+        } catch (error: any) {
+             if (error.code === 'auth/unauthorized-domain') {
+                toast({
+                    title: 'Domein niet geautoriseerd',
+                    description: 'Dit domein is niet goedgekeurd. Voeg het toe in de Firebase Console onder Authenticatie > Instellingen > Geautoriseerde domeinen.',
+                    variant: 'destructive',
+                    duration: 9000,
+                });
+            } else {
+                handleError(error, 'inloggen met Google');
+            }
             return false;
         }
     };
