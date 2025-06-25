@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 export default function FilterBar() {
   const { users, filters, setFilters, clearFilters } = useTasks();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, teams } = useAuth();
   
   const handleLabelToggle = (label: Label) => {
     const newLabels = filters.labels.includes(label)
@@ -24,8 +24,10 @@ export default function FilterBar() {
     setFilters({ labels: newLabels as Label[] });
   };
   
-  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0);
+  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.teamId ? 1 : 0);
   const assigneeName = filters.assigneeId ? users.find(u => u.id === filters.assigneeId)?.name : null;
+  const teamName = filters.teamId ? teams.find(t => t.id === filters.teamId)?.name : null;
+
 
   const handleSetMyTasks = () => {
     if (currentUser) {
@@ -57,6 +59,27 @@ export default function FilterBar() {
           {users.map(user => (
             <DropdownMenuItem key={user.id} onSelect={() => setFilters({ assigneeId: user.id })}>
               {user.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+       <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Users className="mr-2 h-4 w-4" />
+            Team
+            {teamName && <Badge variant="secondary" className="ml-2">{teamName}</Badge>}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onSelect={() => setFilters({ teamId: null })}>
+            Alle Teams
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {teams.map(team => (
+            <DropdownMenuItem key={team.id} onSelect={() => setFilters({ teamId: team.id })}>
+              {team.name}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>

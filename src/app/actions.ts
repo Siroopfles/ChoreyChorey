@@ -2,8 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction } from 'firebase/firestore';
-import type { User, Organization } from '@/lib/types';
+import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction, getDoc } from 'firebase/firestore';
+import type { User, Organization, Invite } from '@/lib/types';
 import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
 import { processCommand } from '@/ai/flows/process-command';
@@ -12,6 +12,7 @@ import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
 import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
+import { auth } from '@/lib/firebase';
 
 const getTaskHistory = async () => {
     const tasksQuery = query(collection(db, 'tasks'), where('status', '==', 'Voltooid'));
@@ -123,4 +124,75 @@ export async function handleTextToSpeech(text: string) {
     }
 }
 
-    
+export async function createOrganizationInvite(organizationId: string, inviterId: string) {
+    try {
+        const newInviteRef = doc(collection(db, 'invites'));
+        const newInvite: Omit<Invite, 'id'> = {
+            organizationId,
+            inviterId,
+            status: 'pending',
+            createdAt: new Date(),
+        };
+        await setDoc(newInviteRef, newInvite);
+        return { success: true, inviteId: newInviteRef.id };
+    } catch (error: any) {
+        console.error("Error creating invite:", error);
+        return { error: error.message };
+    }
+}
+
+export async function getInviteDetails(inviteId: string) {
+    try {
+        const inviteRef = doc(db, 'invites', inviteId);
+        const inviteDoc = await getDoc(inviteRef);
+
+        if (!inviteDoc.exists() || inviteDoc.data().status !== 'pending') {
+            return { error: 'Uitnodiging is ongeldig of al gebruikt.' };
+        }
+        
+        const organizationRef = doc(db, 'organizations', inviteDoc.data().organizationId);
+        const organizationDoc = await getDoc(organizationRef);
+        
+        if (!organizationDoc.exists()) {
+             return { error: 'De organisatie voor deze uitnodiging bestaat niet meer.' };
+        }
+
+        return {
+            success: true,
+            invite: { id: inviteDoc.id, ...inviteDoc.data() } as Invite,
+            organization: { id: organizationDoc.id, ...organizationDoc.data() } as Organization,
+        };
+
+    } catch(e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function acceptOrganizationInvite(inviteId: string, userId: string) {
+     try {
+        await runTransaction(db, async (transaction) => {
+            const inviteRef = doc(db, 'invites', inviteId);
+            const userRef = doc(db, 'users', userId);
+
+            const inviteDoc = await transaction.get(inviteRef);
+            if (!inviteDoc.exists() || inviteDoc.data().status !== 'pending') {
+                throw new Error("Uitnodiging is ongeldig of al gebruikt.");
+            }
+
+            const organizationId = inviteDoc.data().organizationId;
+
+            transaction.update(userRef, {
+                organizationIds: arrayUnion(organizationId),
+                currentOrganizationId: organizationId,
+            });
+            
+            transaction.update(inviteRef, {
+                status: 'accepted'
+            });
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error accepting invite:", error);
+        return { error: error.message };
+    }
+}

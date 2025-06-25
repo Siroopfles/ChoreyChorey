@@ -56,6 +56,8 @@ type TaskContextType = {
   markNotificationsAsRead: () => void;
   viewedUser: User | null;
   setViewedUser: (user: User | null) => void;
+  isAddTaskDialogOpen: boolean;
+  setIsAddTaskDialogOpen: (open: boolean) => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -85,8 +87,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
-  const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null });
+  const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, teamId: null });
   const [viewedUser, setViewedUser] = useState<User | null>(null);
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const setFilters = (newFilters: Partial<Filters>) => {
@@ -94,7 +97,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const clearFilters = () => {
-      setRawFilters({ assigneeId: null, labels: [], priority: null });
+      setRawFilters({ assigneeId: null, labels: [], priority: null, teamId: null });
       setSearchTerm('');
   };
 
@@ -674,7 +677,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       notifications,
       markNotificationsAsRead,
       viewedUser,
-      setViewedUser
+      setViewedUser,
+      isAddTaskDialogOpen,
+      setIsAddTaskDialogOpen
     }}>
       {children}
     </TaskContext.Provider>

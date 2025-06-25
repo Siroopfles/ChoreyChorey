@@ -168,4 +168,13 @@ export type Filters = {
   assigneeId: string | null;
   labels: Label[];
   priority: Priority | null;
+  teamId: string | null;
+};
+
+export type Invite = {
+    id: string;
+    organizationId: string;
+    inviterId: string;
+    status: 'pending' | 'accepted';
+    createdAt: Date;
 };

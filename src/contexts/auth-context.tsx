@@ -79,12 +79,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const userOrgs = orgsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
             setOrganizations(userOrgs);
 
-            const currentOrgId = userData.currentOrganizationId || userData.organizationIds[0];
-            const currentOrg = userOrgs.find(o => o.id === currentOrgId) || userOrgs[0] || null;
-            
-            if (currentOrg && currentOrg.id !== userData.currentOrganizationId) {
+            let currentOrg = null;
+            if (userData.currentOrganizationId && userOrgs.some(o => o.id === userData.currentOrganizationId)) {
+                currentOrg = userOrgs.find(o => o.id === userData.currentOrganizationId) || null;
+            } else if (userOrgs.length > 0) {
+                currentOrg = userOrgs[0];
                 await updateDoc(userDocRef, { currentOrganizationId: currentOrg.id });
             }
+            
             setCurrentOrganization(currentOrg);
 
             if (currentOrg) {

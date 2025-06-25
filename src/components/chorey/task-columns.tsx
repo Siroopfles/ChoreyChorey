@@ -1,3 +1,4 @@
+
 'use client';
 import type { User, Status, Task } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
@@ -60,8 +61,9 @@ const TaskColumns = ({ users }: TaskColumnsProps) => {
         const inAssignee = filters.assigneeId ? task.assigneeId === filters.assigneeId : true;
         const inLabels = filters.labels.length > 0 ? filters.labels.every(l => task.labels.includes(l)) : true;
         const inPriority = filters.priority ? task.priority === filters.priority : true;
+        const inTeam = filters.teamId ? task.teamId === filters.teamId : true;
 
-        return inSearch && inAssignee && inLabels && inPriority;
+        return inSearch && inAssignee && inLabels && inPriority && inTeam;
       });
   }, [tasks, searchTerm, filters]);
 

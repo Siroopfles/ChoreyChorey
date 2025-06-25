@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { Team } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
@@ -12,6 +13,9 @@ import { db } from '@/lib/firebase';
 import { CreateOrganizationView } from '@/components/chorey/organization/create-organization-view';
 import { CreateTeamDialog } from '@/components/chorey/organization/create-team-dialog';
 import { TeamCard } from '@/components/chorey/organization/team-card';
+import { InviteMembersDialog } from '@/components/chorey/organization/invite-members-dialog';
+import { Button } from '@/components/ui/button';
+
 
 export default function OrganizationPage() {
     const { currentOrganization, loading: authLoading } = useAuth();
@@ -60,9 +64,12 @@ export default function OrganizationPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-4">
                 <h1 className="font-semibold text-lg md:text-2xl">Team Beheer voor {currentOrganization.name}</h1>
-                <CreateTeamDialog organizationId={currentOrganization.id} />
+                <div className="flex items-center gap-2">
+                    <InviteMembersDialog organizationId={currentOrganization.id} />
+                    <CreateTeamDialog organizationId={currentOrganization.id} />
+                </div>
             </div>
 
             <Separator />

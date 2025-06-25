@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check } from 'lucide-react';
-import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import { useTheme } from 'next-themes';
 import { useTasks } from '@/contexts/task-context';
 import { Badge } from '@/components/ui/badge';
@@ -26,21 +25,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PlusCircle } from 'lucide-react';
 
-type AppHeaderProps = {
-  users: User[];
-};
 
-export default function AppHeader({ users }: AppHeaderProps) {
+export default function AppHeader() {
   const { setTheme, theme } = useTheme();
-  const { notifications, markNotificationsAsRead } = useTasks();
+  const { notifications, markNotificationsAsRead, setIsAddTaskDialogOpen } = useTasks();
   const { user, logout, organizations, currentOrganization, switchOrganization } = useAuth();
   const unreadCount = notifications.filter(n => !n.read).length;
   const router = useRouter();
   
   const handleSwitch = async (orgId: string) => {
     await switchOrganization(orgId);
-    // Optional: force a reload or navigate to refresh contexts if needed,
-    // though the context update should trigger re-renders.
     router.refresh();
   }
 
@@ -82,11 +76,9 @@ export default function AppHeader({ users }: AppHeaderProps) {
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
-        <AddTaskDialog users={users}>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Taak Toevoegen
-          </Button>
-        </AddTaskDialog>
+        <Button onClick={() => setIsAddTaskDialogOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Taak Toevoegen
+        </Button>
 
         <DropdownMenu>
             <DropdownMenuTrigger asChild>

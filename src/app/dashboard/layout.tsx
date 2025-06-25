@@ -21,11 +21,12 @@ import CommandBar from '@/components/chorey/command-bar';
 import Leaderboard from '@/components/chorey/leaderboard';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import UserProfileSheet from '@/components/chorey/user-profile-sheet';
+import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import Link from 'next/link';
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
-    const { users, viewedUser, setViewedUser } = useTasks();
+    const { users, viewedUser, setViewedUser, isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
     const pathname = usePathname();
 
     const navItems = [
@@ -34,6 +35,18 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates' },
         { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
     ];
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsAddTaskDialogOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [setIsAddTaskDialogOpen]);
+
 
     return (
         <SidebarProvider>
@@ -62,7 +75,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
             </Sidebar>
 
             <SidebarInset className="flex flex-col">
-                <AppHeader users={users} />
+                <AppHeader />
                 <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
                     {children}
                 </main>
@@ -76,6 +89,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                     onOpenChange={(isOpen) => !isOpen && setViewedUser(null)}
                 />
             )}
+            <AddTaskDialog users={users} open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
         </SidebarProvider>
     );
 }
@@ -93,19 +107,25 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    if (user && !currentOrganization && pathname !== '/dashboard/organization') {
+    if (user && !currentOrganization && !pathname.startsWith('/dashboard/organization') && !pathname.startsWith('/invite/')) {
       router.push('/dashboard/organization');
     }
 
   }, [user, loading, currentOrganization, router, pathname]);
 
-  if (loading || !user) {
+  if (loading || (!user && !pathname.startsWith('/invite/'))) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
+  
+  // Allow access to invite page without an organization
+  if (pathname.startsWith('/invite/')) {
+      return <>{children}</>;
+  }
+
 
   if (!currentOrganization && pathname !== '/dashboard/organization') {
     return (
