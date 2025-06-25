@@ -43,19 +43,17 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsSubmitting(true);
     const result = await signupWithEmail(data.email, data.password, data.name);
-    setIsSubmitting(false);
     if (result) {
       router.push('/dashboard');
     }
+    setIsSubmitting(false);
   };
 
   const handleGoogleLogin = async () => {
     setIsSubmitting(true);
-    const result = await loginWithGoogle();
-    setIsSubmitting(false);
-    if (result) {
-        router.push('/dashboard');
-    }
+    await loginWithGoogle();
+    // The user will be redirected, so we don't need to set isSubmitting to false here
+    // unless the redirect call itself fails, which is handled in the context.
   }
   
   if (loading || user) {

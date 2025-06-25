@@ -13,7 +13,8 @@ import {
     onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signOut,
     type User as FirebaseUser,
 } from 'firebase/auth';
@@ -29,7 +30,7 @@ type AuthContextType = {
     loading: boolean;
     loginWithEmail: (email: string, pass: string) => Promise<boolean>;
     signupWithEmail: (email: string, pass: string, name: string) => Promise<boolean>;
-    loginWithGoogle: () => Promise<boolean>;
+    loginWithGoogle: () => Promise<void>;
     logout: () => void;
     refreshUser: () => Promise<void>;
 };
@@ -42,6 +43,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const { toast } = useToast();
+
+    // This effect handles the result from a redirect sign-in
+    useEffect(() => {
+        const processRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    setLoading(true); // We have a result, show loading until user doc is processed
+                    const firebaseUser = result.user;
+                    const userDocRef = doc(db, 'users', firebaseUser.uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (!userDoc.exists()) {
+                        let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
+                        try {
+                            const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                            if (avatarResult.avatarDataUri) {
+                                avatarUrl = avatarResult.avatarDataUri;
+                            }
+                        } catch (aiError) {
+                            console.error("Failed to generate AI avatar, using placeholder.", aiError);
+                        }
+
+                        const newUser: User = {
+                            id: firebaseUser.uid,
+                            name: firebaseUser.displayName || 'Google User',
+                            email: firebaseUser.email || '',
+                            points: 0,
+                            avatar: avatarUrl,
+                            achievements: [],
+                        };
+                        await setDoc(userDocRef, newUser);
+                    }
+                    router.push('/dashboard');
+                }
+            } catch (error: any) {
+                handleError(error, 'Google redirect login');
+            }
+        };
+
+        processRedirectResult();
+    }, [router, toast]);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -61,6 +104,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const handleError = (error: any, context: string) => {
         console.error(`Error in ${context}:`, error);
+
+        if (error.code === 'auth/popup-closed-by-user') {
+            toast({
+                title: 'Login geannuleerd',
+                description: 'Het login-venster is gesloten voordat het proces voltooid was.',
+            });
+            return;
+        }
+        if (error.code === 'auth/unauthorized-domain') {
+            toast({
+                title: 'Domein niet geautoriseerd',
+                description: 'Dit domein is niet goedgekeurd. Voeg het toe in de Firebase Console onder Authenticatie > Instellingen > Geautoriseerde domeinen.',
+                variant: 'destructive',
+                duration: 9000,
+            });
+            return;
+        }
+
         toast({
             title: `Fout bij ${context}`,
             description: error.message,
@@ -80,17 +141,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const loginWithEmail = async (email: string, pass: string): Promise<boolean> => {
+        setLoading(true);
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, pass);
             await fetchAndSetUser(userCredential.user);
             return true;
         } catch (error) {
             handleError(error, 'inloggen');
+            setLoading(false);
             return false;
         }
     };
 
     const signupWithEmail = async (email: string, pass: string, name: string): Promise<boolean> => {
+        setLoading(true);
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
             const firebaseUser = userCredential.user;
@@ -118,54 +182,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return true;
         } catch (error) {
             handleError(error, 'registreren');
+            setLoading(false);
             return false;
         }
     };
 
-    const loginWithGoogle = async (): Promise<boolean> => {
+    const loginWithGoogle = async (): Promise<void> => {
+        setLoading(true);
         try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const firebaseUser = result.user;
-            const userDocRef = doc(db, 'users', firebaseUser.uid);
-            const userDoc = await getDoc(userDocRef);
-
-            if (userDoc.exists()) {
-                await fetchAndSetUser(firebaseUser);
-            } else {
-                 let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
-                try {
-                    const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
-                    if (avatarResult.avatarDataUri) {
-                        avatarUrl = avatarResult.avatarDataUri;
-                    }
-                } catch (aiError) {
-                    console.error("Failed to generate AI avatar, using placeholder.", aiError);
-                }
-
-                const newUser: User = {
-                    id: firebaseUser.uid,
-                    name: firebaseUser.displayName || 'Google User',
-                    email: firebaseUser.email || '',
-                    points: 0,
-                    avatar: avatarUrl,
-                    achievements: [],
-                };
-                await setDoc(userDocRef, newUser);
-                setUser(newUser);
-            }
-            return true;
+            await signInWithRedirect(auth, googleProvider);
         } catch (error: any) {
-             if (error.code === 'auth/unauthorized-domain') {
-                toast({
-                    title: 'Domein niet geautoriseerd',
-                    description: 'Dit domein is niet goedgekeurd. Voeg het toe in de Firebase Console onder Authenticatie > Instellingen > Geautoriseerde domeinen.',
-                    variant: 'destructive',
-                    duration: 9000,
-                });
-            } else {
-                handleError(error, 'inloggen met Google');
-            }
-            return false;
+            handleError(error, 'inloggen met Google');
+            setLoading(false);
         }
     };
 
