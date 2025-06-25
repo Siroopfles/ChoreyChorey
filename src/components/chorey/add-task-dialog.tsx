@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -319,7 +320,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
               <Separator />
 
               <div>
-                <FormLabel>Subtaken</FormLabel>
+                <Label>Subtaken</Label>
                 <div className="space-y-2 mt-2">
                   {subtaskFields.map((field, index) => (
                     <div key={field.id} className="flex items-center gap-2">
@@ -361,7 +362,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
               <Separator />
 
                <div>
-                <FormLabel>Bijlagen (URL)</FormLabel>
+                <Label>Bijlagen (URL)</Label>
                 <div className="space-y-2 mt-2">
                   {attachmentFields.map((field, index) => (
                     <div key={field.id} className="flex items-center gap-2">
