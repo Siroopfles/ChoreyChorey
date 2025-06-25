@@ -97,6 +97,7 @@ export type Task = {
   dueDate?: Date;
   assigneeId: string | null;
   creatorId: string | null;
+  teamId?: string;
   labels: Label[];
   subtasks: Subtask[];
   attachments: Attachment[];
@@ -125,6 +126,7 @@ export const taskFormSchema = z.object({
   title: z.string().min(3, 'Titel moet minimaal 3 karakters lang zijn.'),
   description: z.string().optional(),
   assigneeId: z.string().optional(),
+  teamId: z.string().optional(),
   dueDate: z.date().optional(),
   priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).default('Midden'),
   labels: z.array(z.string()).optional(),

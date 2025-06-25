@@ -1,6 +1,6 @@
 'use client';
 
-import type { User, Label, TaskFormValues, Task, Comment, HistoryEntry } from '@/lib/types';
+import type { User, Label, TaskFormValues, Task, Comment, HistoryEntry, Team } from '@/lib/types';
 import { ALL_LABELS, taskFormSchema } from '@/lib/types';
 import { useState, type ReactNode, useEffect } from 'react';
 import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
@@ -27,10 +27,11 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, History, ClipboardCopy, Image as ImageIcon, Repeat } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, History, ClipboardCopy, Image as ImageIcon, Repeat, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/auth-context';
 import { handleSuggestSubtasks, handleSummarizeComments, handleSuggestStoryPoints, handleGenerateTaskImage } from '@/app/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -90,6 +91,7 @@ const HistoryItem = ({ entry, user }: { entry: HistoryEntry; user?: User }) => {
 export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
   const { updateTask, addComment } = useTasks();
+  const { teams } = useAuth();
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState('');
@@ -107,6 +109,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       title: task.title,
       description: task.description,
       assigneeId: task.assigneeId || undefined,
+      teamId: task.teamId || undefined,
       dueDate: task.dueDate,
       priority: task.priority,
       labels: task.labels,
@@ -124,6 +127,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       title: task.title,
       description: task.description,
       assigneeId: task.assigneeId || undefined,
+      teamId: task.teamId || undefined,
       dueDate: task.dueDate,
       priority: task.priority,
       labels: task.labels,
@@ -348,7 +352,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Toegewezen aan</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
                             <FormControl>
                                 <SelectTrigger>
                                 <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -356,6 +360,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                                <SelectItem value="none">Niemand</SelectItem>
                                 {users.map((user) => (
                                 <SelectItem key={user.id} value={user.id}>
                                     {user.name}
@@ -367,6 +372,32 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                         </FormItem>
                         )}
                     />
+                     <FormField
+                        control={form.control}
+                        name="teamId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Team</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <Users className="mr-2 h-4 w-4 text-muted-foreground" />
+                                    <SelectValue placeholder="Selecteer een team" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="none">Geen team</SelectItem>
+                                    {teams.map((team) => (
+                                        <SelectItem key={team.id} value={team.id}>
+                                        {team.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
                     <FormField
                         control={form.control}
                         name="dueDate"

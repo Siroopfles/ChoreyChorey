@@ -27,12 +27,13 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Database, Repeat } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Database, Repeat, Users } from 'lucide-react';
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { handleSuggestSubtasks, handleSuggestStoryPoints } from '@/app/actions';
 import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type AddTaskDialogProps = {
@@ -47,6 +48,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
   const [pointsSuggestion, setPointsSuggestion] = useState('');
   const { toast } = useToast();
   const { addTask } = useTasks();
+  const { teams } = useAuth();
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -190,7 +192,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Toegewezen aan</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
                         <FormControl>
                           <SelectTrigger>
                             <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -198,9 +200,36 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="none">Niemand</SelectItem>
                           {users.map((user) => (
                             <SelectItem key={user.id} value={user.id}>
                               {user.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="teamId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Team</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <Users className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <SelectValue placeholder="Selecteer een team" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Geen team</SelectItem>
+                          {teams.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>
+                              {team.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

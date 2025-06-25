@@ -46,6 +46,7 @@ import {
   Volume2,
   Loader2,
   Repeat,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -109,11 +110,12 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
   const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks } = useTasks();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, teams } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
   
+  const team = teams.find((t) => t.id === task.teamId);
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
   const totalSubtasks = task.subtasks.length;
   const subtaskProgress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
@@ -359,6 +361,12 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
                   <div className="h-5 w-5 flex items-center justify-center">
                     <UserIcon className="h-4 w-4 text-gray-400" />
                   </div>
+                )}
+                 {team && (
+                    <div className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        <span className="truncate">{team.name}</span>
+                    </div>
                 )}
                 {task.dueDate && (
                   <div className={cn('flex items-center gap-1', { 'text-destructive': isOverdue, 'text-orange-500 font-semibold': isDueToday, 'text-yellow-600': isDueSoon })}>

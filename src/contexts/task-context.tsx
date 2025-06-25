@@ -130,6 +130,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           priority: data.priority || 'Midden',
           assigneeId: data.assigneeId || null,
           creatorId: data.creatorId || null,
+          teamId: data.teamId || null,
           labels: data.labels || [],
           subtasks: data.subtasks || [],
           attachments: data.attachments || [],
@@ -246,6 +247,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           description: taskData.description || '',
           assigneeId: taskData.assigneeId || null,
           creatorId: authUser.uid,
+          teamId: taskData.teamId || null,
           dueDate: taskData.dueDate || null,
           priority: taskData.priority || 'Midden',
           isPrivate: taskData.isPrivate || false,
@@ -367,7 +369,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
 
-        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeId', 'priority', 'dueDate', 'title'];
+        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeId', 'priority', 'dueDate', 'title', 'teamId'];
         fieldsToTrack.forEach(field => {
             if (updates[field] !== undefined && updates[field] !== taskToUpdate[field]) {
                 const oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');

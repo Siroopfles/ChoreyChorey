@@ -21,7 +21,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
-import type { User, Organization } from '@/lib/types';
+import type { User, Organization, Team } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions';
 
@@ -37,6 +37,7 @@ type AuthContextType = {
     organizations: Organization[];
     currentOrganization: Organization | null;
     switchOrganization: (orgId: string) => Promise<void>;
+    teams: Team[];
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+    const [teams, setTeams] = useState<Team[]>([]);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -81,13 +83,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const currentOrg = userOrgs.find(o => o.id === currentOrgId) || userOrgs[0] || null;
             
             if (currentOrg && currentOrg.id !== userData.currentOrganizationId) {
-                // If currentOrganizationId was null or invalid, fix it.
                 await updateDoc(userDocRef, { currentOrganizationId: currentOrg.id });
             }
             setCurrentOrganization(currentOrg);
+
+            if (currentOrg) {
+                 const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrg.id));
+                 const teamsSnapshot = await getDocs(teamsQuery);
+                 const orgTeams = teamsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
+                 setTeams(orgTeams);
+            } else {
+                 setTeams([]);
+            }
+
         } else {
             setOrganizations([]);
             setCurrentOrganization(null);
+            setTeams([]);
         }
     }, []);
     
@@ -102,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(null);
                 setOrganizations([]);
                 setCurrentOrganization(null);
+                setTeams([]);
             }
             setLoading(false);
         });
@@ -239,6 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organizations,
         currentOrganization,
         switchOrganization,
+        teams,
     };
 
     return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
