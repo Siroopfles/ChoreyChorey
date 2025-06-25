@@ -11,6 +11,7 @@ import {
   Timestamp, 
   writeBatch, 
   getDoc,
+  deleteDoc,
   increment,
   FirestoreError
 } from 'firebase/firestore';
@@ -25,6 +26,7 @@ type TaskContextType = {
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments'>>) => void;
   cloneTask: (taskId: string) => void;
+  deleteTaskPermanently: (taskId: string) => void;
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
@@ -160,10 +162,27 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         delete (clonedTask as any).id; 
 
         await addDoc(collection(db, 'tasks'), clonedTask);
+        toast({
+            title: 'Taak Gekloond!',
+            description: `Een kopie van "${taskToClone.title}" is aangemaakt.`,
+        });
     } catch (e) {
         handleError(e, 'klonen van taak');
     }
   }
+
+  const deleteTaskPermanently = async (taskId: string) => {
+    try {
+        const taskRef = doc(db, 'tasks', taskId);
+        await deleteDoc(taskRef);
+        toast({
+            title: 'Taak Permanent Verwijderd',
+            variant: 'destructive',
+        });
+    } catch (e) {
+        handleError(e, 'permanent verwijderen van taak');
+    }
+  };
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     try {
@@ -204,6 +223,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
+    if(taskIds.length === 0) return;
     try {
         const batch = writeBatch(db);
         let finalUpdates: Partial<Task> = { ...updates };
@@ -288,6 +308,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       toggleTaskSelection,
       bulkUpdateTasks,
       cloneTask,
+      deleteTaskPermanently,
     }}>
       {children}
     </TaskContext.Provider>

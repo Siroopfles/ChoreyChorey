@@ -1,6 +1,6 @@
 'use client';
 import type { Task, User } from '@/lib/types';
-import { ALL_STATUSES } from '@/lib/types';
+import { ALL_STATUSES, ALL_PRIORITIES } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -70,7 +70,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const assignee = users.find((user) => user.id === task.assigneeId);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently } = useTasks();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
@@ -131,10 +131,17 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => updateTask(task.id, { status: 'Geannuleerd' })}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Verwijderen
-                </DropdownMenuItem>
+                {task.status === 'Geannuleerd' ? (
+                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => deleteTaskPermanently(task.id)}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Permanent verwijderen
+                  </DropdownMenuItem>
+                 ) : (
+                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => updateTask(task.id, { status: 'Geannuleerd' })}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Annuleren
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

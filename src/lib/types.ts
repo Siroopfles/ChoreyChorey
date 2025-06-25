@@ -8,6 +8,8 @@ export type User = {
 };
 
 export type Priority = "Laag" | "Midden" | "Hoog" | "Urgent";
+export const ALL_PRIORITIES: Priority[] = ["Laag", "Midden", "Hoog", "Urgent"];
+
 
 export type Status = "Te Doen" | "In Uitvoering" | "Voltooid" | "Gearchiveerd" | "Geannuleerd";
 
