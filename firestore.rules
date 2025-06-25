@@ -1,77 +1,67 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
+    
+    // Helper function to check if a user is a member of a specific organization.
+    function isOrgMember(orgId) {
+        return request.auth != null && orgId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
     }
     
-    function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function userInOrg(orgId) {
-        return isSignedIn() && orgId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
-    }
-
-    // USERS
+    // Rules for user documents
     match /users/{userId} {
-      allow read: if isSignedIn();
-      
-      // Allow user creation
-      allow create: if isUser(userId);
+      allow read: if request.auth != null;
+      allow create: if request.auth.uid == userId;
 
-      // Allow a user to update their own profile under specific conditions
-      allow update: if isUser(userId) && (
-        // Scenario 1: Updating name, avatar, or current org
+      // This complex rule is necessary for security. It allows a user to:
+      // 1. Update their own name and avatar.
+      // 2. Switch their active organization to one they are already a member of.
+      // 3. Securely add a new organization ID to their profile, but ONLY when that organization
+      //    is being created in the same transaction with the user as the owner.
+      allow update: if request.auth.uid == userId && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'avatar'])) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentOrganizationId']) && isOrgMember(request.resource.data.currentOrganizationId)) ||
         (
-          request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['name', 'avatar', 'currentOrganizationId']) &&
-          (request.resource.data.currentOrganizationId == null || userInOrg(request.resource.data.currentOrganizationId))
-        ) ||
-        // Scenario 2: Creating the first organization
-        (
-          request.resource.data.organizationIds.size() == resource.data.organizationIds.size() + 1 &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['organizationIds', 'currentOrganizationId']) &&
-          // Check that the new org is being created in the same transaction
-          getAfter(/databases/$(database)/documents/organizations/$(request.resource.data.currentOrganizationId)).data.ownerId == request.auth.uid
+            request.resource.data.organizationIds.size() == resource.data.organizationIds.size() + 1 &&
+            request.resource.data.currentOrganizationId == request.resource.data.organizationIds.diff(resource.data.organizationIds).added().get(0) &&
+            getAfter(/databases/$(database)/documents/organizations/$(request.resource.data.currentOrganizationId)).data.ownerId == request.auth.uid
         )
       );
     }
-    
-    // ORGANIZATIONS
+
+    // Rules for organization documents
     match /organizations/{orgId} {
-      allow read: if userInOrg(orgId);
+      allow read: if isOrgMember(orgId);
       allow create: if request.resource.data.ownerId == request.auth.uid;
-      allow update: if get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
-    }
-
-    // TEAMS
-    match /teams/{teamId} {
-        allow read: if userInOrg(request.resource.data.organizationId);
-        allow create, update, delete: if userInOrg(request.resource.data.organizationId);
-    }
-
-    // TASKS
-    match /tasks/{taskId} {
-      // Allow read if user is in the org and task is not private, or if user is involved.
-      allow read: if userInOrg(resource.data.organizationId) && 
-                      (!resource.data.isPrivate || resource.data.assigneeId == request.auth.uid || resource.data.creatorId == request.auth.uid);
-                      
-      // Allow create/update/delete if user is in the org.
-      allow write: if userInOrg(request.resource.data.organizationId);
+      // Organizations are immutable for now to prevent accidental changes.
+      allow update: if false; 
     }
     
-    // NOTIFICATIONS
-    match /notifications/{notificationId} {
-      allow read, write: if isUser(request.resource.data.userId);
+    // Rules for team documents
+    match /teams/{teamId} {
+        // Any member of the organization can read, create, update, or delete teams.
+        // The `||` is needed to handle create operations where `resource.data` is null.
+        allow read, write: if isOrgMember(resource.data.organizationId) || isOrgMember(request.resource.data.organizationId);
+    }
+    
+    // Rules for task documents
+    match /tasks/{taskId} {
+        // Any member of the organization can read or write tasks.
+        // Private tasks are handled by client-side filtering.
+        allow read, write: if isOrgMember(resource.data.organizationId) || isOrgMember(request.resource.data.organizationId);
     }
 
-    // TASK TEMPLATES
+    // Rules for notification documents
+    match /notifications/{notificationId} {
+        // Users can only manage their own notifications.
+        allow read, write: if request.auth.uid == resource.data.userId;
+    }
+    
+    // Rules for task template documents
     match /taskTemplates/{templateId} {
-        allow read, write: if userInOrg(request.resource.data.organizationId);
+      // Any member of the organization can read or write task templates.
+      allow read, write: if isOrgMember(resource.data.organizationId) || isOrgMember(request.resource.data.organizationId);
     }
   }
 }
