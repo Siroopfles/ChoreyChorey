@@ -46,16 +46,13 @@ export default function SignupPage() {
     if (!result) {
       setIsSubmitting(false);
     }
-    // On success, the useEffect hook will redirect.
   };
 
   const handleGoogleLogin = async () => {
-    setIsSubmitting(true);
     await loginWithGoogle();
-    // The redirect will happen, and on return the useEffect hook will handle redirection to dashboard.
   }
   
-  if (loading || user) {
+  if (loading || (!loading && user)) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
