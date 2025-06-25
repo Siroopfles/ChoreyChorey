@@ -57,7 +57,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                     </Link>
                 </SidebarHeader>
                 <SidebarContent className="p-4 flex flex-col">
-                    <CommandBar users={users} />
+                    <CommandBar />
                     <SidebarMenu className="mt-4">
                         {navItems.map((item) => (
                             <SidebarMenuItem key={item.href}>

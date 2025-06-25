@@ -13,7 +13,7 @@ import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
-import type { MultiSpeakerTextToSpeechInput } from '@/ai/schemas';
+import type { MultiSpeakerTextToSpeechInput, ProcessCommandInput } from '@/ai/schemas';
 import { auth } from '@/lib/firebase';
 
 const getTaskHistory = async (organizationId: string) => {
@@ -84,9 +84,9 @@ export async function handleSuggestSubtasks(title: string, description?: string)
     }
 }
 
-export async function handleProcessCommand(command: string) {
+export async function handleProcessCommand(command: string, userId: string, organizationId: string, userName: string) {
     try {
-        const result = await processCommand(command);
+        const result = await processCommand({ command, userId, organizationId, userName });
         return { result };
     } catch (e: any) {
         return { error: e.message };

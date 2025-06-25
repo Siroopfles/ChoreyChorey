@@ -1,0 +1,199 @@
+
+'use server';
+/**
+ * @fileOverview A set of AI tools for interacting with tasks in Firestore.
+ */
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import type { Status, Task } from '@/lib/types';
+
+// Helper to add history entries
+const addHistoryEntry = (userId: string | null, action: string, details?: string) => {
+    return {
+        id: crypto.randomUUID(),
+        userId: userId || 'system',
+        timestamp: new Date(),
+        action,
+        details,
+    };
+};
+
+// Schema for creating a task
+const CreateTaskDataSchema = z.object({
+  title: z.string().describe('The title of the task.'),
+  description: z.string().optional().describe('The detailed description of the task.'),
+  priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional().describe('The priority of the task.'),
+  assigneeId: z.string().optional().describe('The ID of the user the task is assigned to.'),
+  labels: z.array(z.string()).optional().describe('A list of labels for the task.'),
+  dueDate: z.string().optional().describe("The due date in 'YYYY-MM-DD' format."),
+});
+
+export const createTask = ai.defineTool(
+  {
+    name: 'createTask',
+    description: 'Create a new task.',
+    inputSchema: z.object({
+      organizationId: z.string().describe('The ID of the organization.'),
+      creatorId: z.string().describe('The ID of the user creating the task.'),
+      taskData: CreateTaskDataSchema,
+    }),
+    outputSchema: z.object({
+      taskId: z.string().describe('The ID of the newly created task.'),
+    }),
+  },
+  async ({ organizationId, creatorId, taskData }) => {
+    const firestoreTask = {
+      ...taskData,
+      status: 'Te Doen' as Status,
+      creatorId: creatorId,
+      createdAt: new Date(),
+      order: Date.now(),
+      organizationId: organizationId,
+      dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null,
+      history: [addHistoryEntry(creatorId, 'Aangemaakt', `via AI commando.`)],
+    };
+    const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
+    return { taskId: docRef.id };
+  }
+);
+
+// Schema for task search filters
+const TaskSearchFiltersSchema = z.object({
+  status: z.enum(['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Gearchiveerd', 'Geannuleerd']).optional(),
+  priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional(),
+  assigneeId: z.string().optional().describe('Filter by the ID of the assigned user.'),
+  labels: z.array(z.string()).optional().describe('Filter by a list of labels.'),
+  term: z.string().optional().describe('A search term to match in the title or description.'),
+});
+
+// Search Tasks Tool
+export const searchTasks = ai.defineTool(
+  {
+    name: 'searchTasks',
+    description: 'Search for existing tasks based on filters.',
+    inputSchema: z.object({
+      organizationId: z.string().describe('The ID of the organization to search within.'),
+      filters: TaskSearchFiltersSchema,
+    }),
+    outputSchema: z.array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        status: z.string(),
+        priority: z.string(),
+        assigneeId: z.string().nullable(),
+        dueDate: z.string().nullable(),
+      })
+    ),
+  },
+  async ({ organizationId, filters }) => {
+    let q = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
+
+    if (filters.status) {
+      q = query(q, where('status', '==', filters.status));
+    }
+    if (filters.priority) {
+      q = query(q, where('priority', '==', filters.priority));
+    }
+    if (filters.assigneeId) {
+      q = query(q, where('assigneeId', '==', filters.assigneeId));
+    }
+    if (filters.labels && filters.labels.length > 0) {
+      q = query(q, where('labels', 'array-contains-any', filters.labels));
+    }
+    
+    const snapshot = await getDocs(q);
+    let tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+
+    if (filters.term) {
+        const lowercasedTerm = filters.term.toLowerCase();
+        tasks = tasks.filter(task => 
+            task.title.toLowerCase().includes(lowercasedTerm) || 
+            (task.description && task.description.toLowerCase().includes(lowercasedTerm))
+        );
+    }
+
+    return tasks.map(task => ({
+      id: task.id,
+      title: task.title,
+      status: task.status,
+      priority: task.priority,
+      assigneeId: task.assigneeId,
+      dueDate: task.dueDate ? task.dueDate.toISOString().split('T')[0] : null,
+    }));
+  }
+);
+
+// Schema for updating a task
+const TaskUpdateDataSchema = z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    status: z.enum(['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Gearchiveerd', 'Geannuleerd']).optional(),
+    priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional(),
+    assigneeId: z.string().optional(),
+    add_subtask: z.string().optional().describe("A subtask description to add to the task.")
+});
+
+// Update Task Tool
+export const updateTask = ai.defineTool(
+    {
+        name: 'updateTask',
+        description: 'Update an existing task by its ID.',
+        inputSchema: z.object({
+            taskId: z.string().describe('The ID of the task to update.'),
+            userId: z.string().describe('The ID of the user performing the update.'),
+            updates: TaskUpdateDataSchema,
+        }),
+        outputSchema: z.object({
+            success: z.boolean(),
+        }),
+    },
+    async ({ taskId, userId, updates }) => {
+        const taskRef = doc(db, 'tasks', taskId);
+        const historyEntries = [];
+
+        if(updates.add_subtask) {
+            const newSubtask = {
+                id: crypto.randomUUID(),
+                text: updates.add_subtask,
+                completed: false,
+            };
+            await updateDoc(taskRef, { subtasks: arrayUnion(newSubtask) });
+            historyEntries.push(addHistoryEntry(userId, 'Subtaak toegevoegd', `"${updates.add_subtask}"`));
+            delete (updates as any).add_subtask;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            await updateDoc(taskRef, { ...updates });
+             historyEntries.push(addHistoryEntry(userId, 'Taak bijgewerkt', `via AI commando.`));
+        }
+
+        if (historyEntries.length > 0) {
+             await updateDoc(taskRef, { history: arrayUnion(...historyEntries) });
+        }
+        
+        return { success: true };
+    }
+);
+
+export const getUsers = ai.defineTool(
+    {
+        name: 'getUsers',
+        description: 'Get a list of users in the organization.',
+        inputSchema: z.object({
+            organizationId: z.string().describe('The ID of the organization.'),
+        }),
+        outputSchema: z.array(z.object({
+            id: z.string(),
+            name: z.string(),
+        })),
+    },
+    async ({ organizationId }) => {
+        const q = query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId));
+        const snapshot = await getDocs(q);
+        const users = snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+        return users;
+    }
+);
