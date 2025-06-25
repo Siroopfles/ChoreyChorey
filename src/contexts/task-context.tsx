@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { 
   collection, 
   onSnapshot, 
@@ -16,9 +16,11 @@ import {
   FirestoreError,
   query,
   where,
-  arrayUnion
+  arrayUnion,
+  getDocs,
 } from 'firebase/firestore';
-import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification, Comment } from '@/lib/types';
+import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry } from '@/lib/types';
+import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
@@ -81,6 +83,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const addHistoryEntry = (userId: string | null, action: string, details?: string): HistoryEntry => {
+    return {
+        id: crypto.randomUUID(),
+        userId: userId || 'system',
+        timestamp: new Date(),
+        action,
+        details,
+    };
+  };
+
   useEffect(() => {
     if (!db || !authUser) return;
     
@@ -94,10 +106,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           status: data.status || 'Te Doen',
           priority: data.priority || 'Midden',
           assigneeId: data.assigneeId || null,
+          creatorId: data.creatorId || null,
           labels: data.labels || [],
           subtasks: data.subtasks || [],
           attachments: data.attachments || [],
           comments: (data.comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate() })),
+          history: (data.history || []).map((h: any) => ({ ...h, timestamp: (h.timestamp as Timestamp)?.toDate() })),
           isPrivate: data.isPrivate || false,
           createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
           dueDate: (data.dueDate as Timestamp)?.toDate(),
@@ -107,8 +121,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           blockedBy: data.blockedBy || [],
         } as Task;
       }).filter(task => {
-        // Filter out private tasks that are not assigned to the current user
-        if (task.isPrivate && task.assigneeId !== authUser.uid) {
+        if (task.isPrivate && task.assigneeId !== authUser.uid && task.creatorId !== authUser.uid) {
             return false;
         }
         return true;
@@ -139,7 +152,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 ...data,
                 createdAt: (data.createdAt as Timestamp).toDate(),
             } as Notification;
-        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }).sort((a, b) => b.createdAt.getTime() - b.createdAt.getTime());
         setNotifications(notificationsData);
     }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
 
@@ -148,7 +161,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
 
   const createNotification = async (userId: string, message: string, taskId: string) => {
-      if (!authUser || userId === authUser.uid) return; // Don't notify self
+      if (!authUser || userId === authUser.uid) return;
       try {
           await addDoc(collection(db, 'notifications'), {
               userId,
@@ -188,11 +201,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }) => {
+    if (!authUser) return;
     try {
+        const history = [addHistoryEntry(authUser.uid, 'Aangemaakt')];
         const firestoreTask = {
           title: taskData.title,
           description: taskData.description || '',
           assigneeId: taskData.assigneeId || null,
+          creatorId: authUser.uid,
           dueDate: taskData.dueDate || null,
           priority: taskData.priority || 'Midden',
           isPrivate: taskData.isPrivate || false,
@@ -202,6 +218,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
           attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' as const })) || [],
           comments: [],
+          history: history,
           order: Date.now(),
           storyPoints: taskData.storyPoints || null,
           blockedBy: taskData.blockedBy || [],
@@ -211,7 +228,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (firestoreTask.assigneeId) {
             await createNotification(
                 firestoreTask.assigneeId,
-                `Je bent toegewezen aan taak: "${firestoreTask.title}"`,
+                `${user?.name} heeft je toegewezen aan: "${firestoreTask.title}"`,
                 docRef.id
             );
         }
@@ -221,6 +238,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
   
   const cloneTask = async (taskId: string) => {
+    if (!authUser) return;
     try {
         const taskDocRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskDocRef);
@@ -232,8 +250,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           title: `[KLONE] ${taskToClone.title}`,
           status: 'Te Doen' as Status,
           createdAt: new Date(),
+          creatorId: authUser.uid,
           completedAt: null,
           comments: [],
+          history: [addHistoryEntry(authUser.uid, 'Gekloond', `van taak ${taskId}`)],
           order: Date.now(),
         };
         
@@ -262,39 +282,85 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const checkAndGrantAchievements = useCallback(async (userId: string, completedTask: Task) => {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) return;
+
+    const userData = userDoc.data() as User;
+    const userAchievements = userData.achievements || [];
+    const achievementsToGrant = [];
+
+    // Achievement: First Task
+    if (!userAchievements.includes(ACHIEVEMENTS.FIRST_TASK.id)) {
+        achievementsToGrant.push(ACHIEVEMENTS.FIRST_TASK.id);
+        toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.FIRST_TASK.name}" verdiend!` });
+    }
+    
+    // Achievement: Team Player
+    if (completedTask.creatorId && completedTask.creatorId !== userId && !userAchievements.includes(ACHIEVEMENTS.COMMUNITY_HELPER.id)) {
+        achievementsToGrant.push(ACHIEVEMENTS.COMMUNITY_HELPER.id);
+        toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.COMMUNITY_HELPER.name}" verdiend!` });
+    }
+
+    // Achievement: 10 Tasks
+    const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeId', '==', userId), where('status', '==', 'Voltooid'));
+    const completedTasksSnapshot = await getDocs(completedTasksQuery);
+    if (completedTasksSnapshot.size >= 10 && !userAchievements.includes(ACHIEVEMENTS.TEN_TASKS.id)) {
+        achievementsToGrant.push(ACHIEVEMENTS.TEN_TASKS.id);
+        toast({ title: 'Prestatie ontgrendeld!', description: `Je hebt de prestatie "${ACHIEVEMENTS.TEN_TASKS.name}" verdiend!` });
+    }
+
+    if (achievementsToGrant.length > 0) {
+        await updateDoc(userRef, {
+            achievements: arrayUnion(...achievementsToGrant)
+        });
+    }
+  }, [toast]);
+
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    if (!authUser) return;
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskToUpdate = tasks.find(t => t.id === taskId);
         if (!taskToUpdate) return;
         
         const finalUpdates: { [key: string]: any } = { ...updates };
+        const newHistory: HistoryEntry[] = [];
 
+        if (updates.status && updates.status !== taskToUpdate.status) {
+            newHistory.push(addHistoryEntry(authUser.uid, 'Status gewijzigd', `van "${taskToUpdate.status}" naar "${updates.status}"`));
+            if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== authUser.uid) {
+                await createNotification(taskToUpdate.creatorId, `${user?.name} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId);
+            }
+        }
         if (updates.assigneeId && updates.assigneeId !== taskToUpdate.assigneeId) {
-             await createNotification(
-                updates.assigneeId,
-                `Je bent toegewezen aan taak: "${taskToUpdate.title}"`,
-                taskId
-            );
+            const assigneeName = users.find(u => u.id === updates.assigneeId)?.name || 'onbekend';
+             await createNotification(updates.assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId);
+             newHistory.push(addHistoryEntry(authUser.uid, 'Toegewezen aan', assigneeName));
         }
 
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
             finalUpdates.completedAt = new Date();
             
-            // Only award points if moving from a non-completed state.
-            if(taskToUpdate.status !== 'Voltooid' && taskToUpdate.assigneeId) {
+            if(taskToUpdate.assigneeId) {
                 const points = calculatePoints(taskToUpdate.priority);
                 const assignee = users.find(u => u.id === taskToUpdate.assigneeId);
                 if(assignee) {
                     const userRef = doc(db, 'users', assignee.id);
                     await updateDoc(userRef, { points: increment(points) });
-                    
                     toast({
                         title: 'Goed werk!',
                         description: `${assignee.name} heeft ${points} punten verdiend voor het voltooien van een taak.`,
                     });
+                    
+                    await checkAndGrantAchievements(assignee.id, taskToUpdate);
                 }
             }
+        }
+        
+        if (newHistory.length > 0) {
+            finalUpdates.history = arrayUnion(...newHistory);
         }
 
         Object.keys(finalUpdates).forEach(key => {
@@ -302,8 +368,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             finalUpdates[key] = null;
           }
         });
+        
+        if (finalUpdates.history === undefined) delete finalUpdates.history;
 
         await updateDoc(taskRef, finalUpdates);
+        
+        if(finalUpdates.history) {
+            await updateDoc(taskRef, { history: finalUpdates.history });
+        }
+
     } catch (e) {
         handleError(e, `bijwerken van taak`);
     }
@@ -379,14 +452,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             const pointUpdates = new Map<string, number>();
             let completedCount = 0;
 
-            taskIds.forEach(id => {
+            for(const id of taskIds) {
                 const task = tasks.find(t => t.id === id);
                 if (task && task.status !== 'Voltooid' && task.assigneeId) {
                     const points = calculatePoints(task.priority);
                     pointUpdates.set(task.assigneeId, (pointUpdates.get(task.assigneeId) || 0) + points);
+                    await checkAndGrantAchievements(task.assigneeId, task);
                     completedCount++;
                 }
-            });
+            };
             
             if (pointUpdates.size > 0) {
                 pointUpdates.forEach((points, userId) => {
@@ -414,6 +488,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         taskIds.forEach(id => {
             const taskRef = doc(db, 'tasks', id);
             batch.update(taskRef, cleanUpdates);
+            const historyEntry = addHistoryEntry(user?.id ?? null, `Bulk-update: ${Object.keys(cleanUpdates).join(', ')}`);
+            batch.update(taskRef, { history: arrayUnion(historyEntry) });
         });
 
         await batch.commit();
@@ -424,17 +500,26 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
+    if (!authUser) return;
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskToUpdate = tasks.find(t => t.id === taskId);
 
         if (taskToUpdate) {
+            const subtaskText = taskToUpdate.subtasks.find(s => s.id === subtaskId)?.text;
+            const isCompleted = !taskToUpdate.subtasks.find(s => s.id === subtaskId)?.completed;
+
             const updatedSubtasks = taskToUpdate.subtasks.map(subtask =>
                 subtask.id === subtaskId
                     ? { ...subtask, completed: !subtask.completed }
                     : subtask
             );
-            await updateDoc(taskRef, { subtasks: updatedSubtasks });
+            
+            const historyEntry = addHistoryEntry(authUser.uid, 'Subtaak bijgewerkt', `"${subtaskText}" gemarkeerd als ${isCompleted ? 'voltooid' : 'open'}`);
+            await updateDoc(taskRef, { 
+                subtasks: updatedSubtasks,
+                history: arrayUnion(historyEntry)
+             });
         }
     } catch (e) {
         handleError(e, 'bijwerken van subtaak');

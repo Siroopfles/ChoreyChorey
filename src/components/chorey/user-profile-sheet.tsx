@@ -1,6 +1,7 @@
 'use client';
 
 import type { User, Task, Priority } from '@/lib/types';
+import { ACHIEVEMENTS } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import {
   Sheet,
@@ -12,16 +13,23 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Trophy } from 'lucide-react';
+import { CheckCircle, Trophy, Award, Rocket, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const priorityBorderColors: Record<Priority, string> = {
   'Urgent': 'border-chart-1',
   'Hoog': 'border-chart-2',
   'Midden': 'border-chart-3',
   'Laag': 'border-chart-4',
+};
+
+const achievementIcons: Record<string, React.ElementType> = {
+    'first_task': Rocket,
+    'ten_tasks': Award,
+    'community_helper': Users
 };
 
 function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {
@@ -51,6 +59,42 @@ function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {
   );
 }
 
+function Achievements({ user }: { user: User }) {
+    if (!user.achievements || user.achievements.length === 0) {
+        return null;
+    }
+    
+    const achievementDetails = Object.values(ACHIEVEMENTS);
+
+    return (
+        <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">PRESTATIES</h4>
+            <TooltipProvider>
+                <div className="flex flex-wrap gap-2">
+                    {user.achievements.map(achId => {
+                        const achievement = achievementDetails.find(a => a.id === achId);
+                        if (!achievement) return null;
+                        const Icon = achievementIcons[achId];
+                        return (
+                             <Tooltip key={achId}>
+                                <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2 rounded-full border bg-background p-1 pr-3 text-sm">
+                                        {Icon && <div className="bg-yellow-400 text-white rounded-full p-1"><Icon className="h-4 w-4" /></div>}
+                                        <span>{achievement.name}</span>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{achievement.description}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )
+                    })}
+                </div>
+            </TooltipProvider>
+        </div>
+    )
+}
+
 export default function UserProfileSheet({
   user,
   isOpen,
@@ -62,7 +106,7 @@ export default function UserProfileSheet({
 }) {
   const { tasks } = useTasks();
   const userTasks = tasks.filter(task => task.assigneeId === user.id);
-  const currentTasks = userTasks.filter(t => t.status === 'Te Doen' || t.status === 'In Uitvoering');
+  const currentTasks = userTasks.filter(t => t.status === 'Te Doen' || t.status === 'In Uitvoering' || t.status === 'In Review');
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -86,6 +130,10 @@ export default function UserProfileSheet({
 
         <UserStats user={user} userTasks={userTasks} />
         
+        <Separator className="my-4" />
+
+        <Achievements user={user} />
+
         <div className="flex-1 overflow-y-auto space-y-4 pt-4">
              <h4 className="text-sm font-medium text-muted-foreground">HUIDIGE TAKEN ({currentTasks.length})</h4>
             {currentTasks.length > 0 ? (

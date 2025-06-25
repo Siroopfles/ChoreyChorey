@@ -1,6 +1,6 @@
 'use client';
 import type { Task, User } from '@/lib/types';
-import { ALL_STATUSES, ALL_PRIORITIES } from '@/lib/types';
+import { ALL_STATUSES } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { format, formatDistanceToNow, isBefore, isToday, startOfDay } from 'date-fns';
+import { format, formatDistanceToNow, isBefore, isToday, startOfDay, isWithinInterval, addDays } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import {
   Archive,
@@ -42,6 +42,7 @@ import {
   Database,
   CheckCheck,
   Hourglass,
+  ClipboardCopy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -52,6 +53,7 @@ import { useState } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 
 type TaskCardProps = {
@@ -105,6 +107,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm } = useTasks();
   const { user: currentUser } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { toast } = useToast();
   
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
   const totalSubtasks = task.subtasks.length;
@@ -116,8 +119,18 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
   const today = new Date();
   const isOverdue = task.dueDate && isBefore(startOfDay(task.dueDate), startOfDay(today));
   const isDueToday = task.dueDate && isToday(task.dueDate);
+  const isDueSoon = task.dueDate && !isDueToday && !isOverdue && isWithinInterval(task.dueDate, { start: today, end: addDays(today, 7) });
 
-  const canApprove = currentUser && task.assigneeId && currentUser.id !== task.assigneeId;
+
+  const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && task.assigneeId !== currentUser.id;
+
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(task.id);
+    toast({
+        title: "Taak ID Gekopieerd!",
+        description: `ID ${task.id} is naar je klembord gekopieerd.`
+    })
+  }
 
   return (
     <div className="relative">
@@ -156,6 +169,10 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
                  <DropdownMenuItem onClick={() => cloneTask(task.id)}>
                   <Copy className="mr-2 h-4 w-4" />
                   Klonen
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCopyId}>
+                  <ClipboardCopy className="mr-2 h-4 w-4" />
+                  Kopieer ID
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -291,7 +308,7 @@ const TaskCard = ({ task, users, isDragging }: TaskCardProps) => {
                   </div>
                 )}
                 {task.dueDate && (
-                  <div className={cn('flex items-center gap-1', { 'text-destructive': isOverdue, 'text-chart-2 font-semibold': isDueToday })}>
+                  <div className={cn('flex items-center gap-1', { 'text-destructive': isOverdue, 'text-orange-500 font-semibold': isDueToday, 'text-yellow-600': isDueSoon })}>
                     <CalendarIcon className="h-3 w-3" />
                     <span>{format(task.dueDate, 'd MMM')}</span>
                   </div>

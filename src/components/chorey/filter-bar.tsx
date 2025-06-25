@@ -1,6 +1,7 @@
 
 'use client';
 import { useTasks } from "@/contexts/task-context";
+import { useAuth } from "@/contexts/auth-context";
 import type { User, Label, Priority } from "@/lib/types";
 import { ALL_LABELS, ALL_PRIORITIES } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Check, Filter, Users, Tags, ArrowUpNarrowWide, X } from "lucide-react";
+import { Check, Filter, Users, Tags, ArrowUpNarrowWide, X, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
 export default function FilterBar() {
   const { users, filters, setFilters, clearFilters } = useTasks();
+  const { user: currentUser } = useAuth();
   
   const handleLabelToggle = (label: Label) => {
     const newLabels = filters.labels.includes(label)
@@ -25,9 +27,20 @@ export default function FilterBar() {
   const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0);
   const assigneeName = filters.assigneeId ? users.find(u => u.id === filters.assigneeId)?.name : null;
 
+  const handleSetMyTasks = () => {
+    if (currentUser) {
+        setFilters({ assigneeId: currentUser.id });
+    }
+  }
+
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
+      <Button variant="outline" size="sm" onClick={handleSetMyTasks}>
+          <UserIcon className="mr-2 h-4 w-4"/>
+          Mijn Taken
+      </Button>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">

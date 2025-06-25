@@ -6,6 +6,28 @@ export type User = {
   avatar: string;
   points: number;
   email: string;
+  achievements?: string[]; // Achievement IDs
+};
+
+export const ACHIEVEMENTS = {
+  FIRST_TASK: { 
+    id: 'first_task', 
+    name: 'Pionier', 
+    description: 'Voltooi je allereerste taak.',
+    icon: 'Rocket',
+  },
+  TEN_TASKS: { 
+    id: 'ten_tasks', 
+    name: 'Taakmeester', 
+    description: 'Voltooi 10 taken.',
+    icon: 'Award',
+  },
+   COMMUNITY_HELPER: {
+    id: 'community_helper',
+    name: 'Teamspeler',
+    description: 'Voltooi een taak die door iemand anders is aangemaakt.',
+    icon: 'Users',
+  }
 };
 
 export type Priority = "Laag" | "Midden" | "Hoog" | "Urgent";
@@ -40,6 +62,14 @@ export type Comment = {
   createdAt: Date;
 };
 
+export type HistoryEntry = {
+    id: string;
+    userId: string;
+    timestamp: Date;
+    action: string;
+    details?: string;
+}
+
 export type Task = {
   id: string;
   title: string;
@@ -48,10 +78,12 @@ export type Task = {
   priority: Priority;
   dueDate?: Date;
   assigneeId: string | null;
+  creatorId: string | null;
   labels: Label[];
   subtasks: Subtask[];
   attachments: Attachment[];
   comments: Comment[];
+  history: HistoryEntry[];
   isPrivate: boolean;
   createdAt: Date;
   completedAt?: Date;
