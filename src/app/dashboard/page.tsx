@@ -1,4 +1,5 @@
 'use client';
+import dynamic from 'next/dynamic';
 import {
   SidebarProvider,
   Sidebar,
@@ -15,9 +16,15 @@ import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CalendarView from '@/components/chorey/calendar-view';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
-import DashboardView from '@/components/chorey/dashboard-view';
 import FilterBar from '@/components/chorey/filter-bar';
 import UserProfileSheet from '@/components/chorey/user-profile-sheet';
+import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
+
+const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
+  ssr: false,
+  loading: () => <DashboardViewSkeleton />,
+});
+
 
 function MainContent() {
   const { tasks, users } = useTasks();
