@@ -48,6 +48,7 @@ body {
     /* Status Colors */
     --status-todo: 220 13% 69%;      /* Gray */
     --status-inprogress: 210 89% 64%; /* Blue */
+    --status-in-review: 262 83% 58%; /* Purple */
     --status-completed: 142 71% 45%;   /* Green */
     --status-cancelled: 0 84.2% 60.2%; /* Red */
     --status-archived: 240 5% 65%;   /* Muted Gray */
@@ -102,6 +103,7 @@ body {
     /* Status Colors */
     --status-todo: 220 13% 69%;
     --status-inprogress: 210 89% 64%;
+    --status-in-review: 262 83% 58%;
     --status-completed: 142 71% 45%;
     --status-cancelled: 0 84.2% 60.2%;
     --status-archived: 240 5% 65%;

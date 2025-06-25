@@ -1,6 +1,6 @@
 import type {Config} from 'tailwindcss';
 
-export default {
+const config: Config = {
   darkMode: ['class'],
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -55,6 +55,14 @@ export default {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+         status: {
+          'todo': 'hsl(var(--status-todo))',
+          'inprogress': 'hsl(var(--status-inprogress))',
+          'in-review': 'hsl(var(--status-in-review))',
+          'completed': 'hsl(var(--status-completed))',
+          'cancelled': 'hsl(var(--status-cancelled))',
+          'archived': 'hsl(var(--status-archived))',
+        },
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',
           foreground: 'hsl(var(--sidebar-foreground))',
@@ -82,7 +90,7 @@ export default {
         },
         'accordion-up': {
           from: {
-            height: 'var(--radix-accordion-content-height)',
+            height: '0',
           },
           to: {
             height: '0',
@@ -96,4 +104,5 @@ export default {
     },
   },
   plugins: [require('tailwindcss-animate')],
-} satisfies Config;
+};
+export default config;

@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, Database, History } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, MessageSquare, History, ClipboardCopy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useTasks } from '@/contexts/task-context';
@@ -110,7 +110,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       priority: task.priority,
       labels: task.labels,
       subtasks: task.subtasks.map(({id, ...rest}) => rest),
-      attachments: task.attachments.map(({id, name, type, ...rest}) => rest),
+      attachments: task.attachments.map(({id, type, ...rest}) => rest),
       isPrivate: task.isPrivate,
       storyPoints: task.storyPoints,
       blockedBy: task.blockedBy || [],
@@ -126,7 +126,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       priority: task.priority,
       labels: task.labels,
       subtasks: task.subtasks.map(({id, ...rest}) => rest),
-      attachments: task.attachments.map(({id, name, type, ...rest}) => rest),
+      attachments: task.attachments.map(({id, type, ...rest}) => rest),
       isPrivate: task.isPrivate,
       storyPoints: task.storyPoints,
       blockedBy: task.blockedBy || [],
@@ -160,7 +160,6 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     const updatedAttachments = data.attachments?.map((att, index) => ({
         ...att,
         id: task.attachments[index]?.id || crypto.randomUUID(),
-        name: att.url,
         type: 'file' as const,
     })) || [];
 
@@ -261,13 +260,29 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     }
   };
 
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(task.id);
+    toast({
+        title: "Taak ID Gekopieerd!",
+        description: `ID ${task.id} is naar je klembord gekopieerd.`
+    })
+  }
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="font-headline">Taak Bewerken: {task.title}</DialogTitle>
-          <DialogDescription>ID: {task.id}</DialogDescription>
+          <DialogTitle className="font-headline flex items-center gap-2">
+            <span>Taak Bewerken: {task.title}</span>
+             <Badge variant="outline">{task.status}</Badge>
+          </DialogTitle>
+          <DialogDescription>
+            <button onClick={handleCopyId} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                ID: {task.id}
+                <ClipboardCopy className="h-3 w-3" />
+            </button>
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh]">
             <ScrollArea className="pr-2">
@@ -294,7 +309,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                         <FormItem>
                         <FormLabel>Omschrijving</FormLabel>
                         <FormControl>
-                            <Textarea placeholder="Voeg een meer gedetailleerde omschrijving toe..." className="resize-none" {...field} />
+                            <Textarea placeholder="Voeg een meer gedetailleerde omschrijving toe..." className="resize-none" {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -533,10 +548,17 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                     <Separator />
 
                     <div>
-                    <UiLabel>Bijlagen (URL)</UiLabel>
+                    <UiLabel>Bijlagen</UiLabel>
                     <div className="space-y-2 mt-2">
                         {attachmentFields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
+                             <FormField
+                                control={form.control}
+                                name={`attachments.${index}.name`}
+                                render={({ field }) => (
+                                <Input {...field} placeholder="Naam bijlage" className="w-1/3"/>
+                                )}
+                            />
                             <FormField
                             control={form.control}
                             name={`attachments.${index}.url`}
@@ -549,7 +571,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                             </Button>
                         </div>
                         ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ url: '' })}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ name: '', url: '' })}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Bijlage toevoegen
                         </Button>

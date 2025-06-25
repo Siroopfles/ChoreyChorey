@@ -70,11 +70,11 @@ const priorityConfig = {
 };
 
 const statusConfig: Record<Task['status'], { icon?: JSX.Element; color: string }> = {
-    'Te Doen': { color: 'border-l-gray-400' },
-    'In Uitvoering': { color: 'border-l-blue-500' },
-    'In Review': { icon: <Hourglass className="h-5 w-5 text-purple-500" />, color: 'border-l-purple-500' },
-    'Voltooid': { icon: <CheckCircle2 className="h-5 w-5 text-green-500" />, color: 'border-l-green-500' },
-    'Gearchiveerd': { icon: <Archive className="h-5 w-5 text-gray-500" />, color: 'border-l-gray-500' },
+    'Te Doen': { color: 'border-l-[hsl(var(--status-todo))]' },
+    'In Uitvoering': { color: 'border-l-[hsl(var(--status-inprogress))]' },
+    'In Review': { icon: <Hourglass className="h-5 w-5 text-[hsl(var(--status-in-review))]" />, color: 'border-l-[hsl(var(--status-in-review))]' },
+    'Voltooid': { icon: <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-completed))]" />, color: 'border-l-[hsl(var(--status-completed))]' },
+    'Gearchiveerd': { icon: <Archive className="h-5 w-5 text-gray-500" />, color: 'border-l-[hsl(var(--status-archived))]' },
     'Geannuleerd': { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-destructive' },
 };
 

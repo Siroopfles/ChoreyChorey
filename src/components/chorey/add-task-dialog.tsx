@@ -175,7 +175,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                   <FormItem>
                     <FormLabel>Omschrijving</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Voeg een meer gedetailleerde omschrijving toe..." className="resize-none" {...field} />
+                      <Textarea placeholder="Voeg een meer gedetailleerde omschrijving toe..." className="resize-none" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -416,11 +416,18 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
               <Separator />
 
                <div>
-                <UiLabel>Bijlagen (URL)</UiLabel>
+                <UiLabel>Bijlagen</UiLabel>
                 <div className="space-y-2 mt-2">
                   {attachmentFields.map((field, index) => (
                     <div key={field.id} className="flex items-center gap-2">
                       <FormField
+                        control={form.control}
+                        name={`attachments.${index}.name`}
+                        render={({ field }) => (
+                           <Input {...field} placeholder="Naam bijlage" className="w-1/3"/>
+                        )}
+                      />
+                       <FormField
                         control={form.control}
                         name={`attachments.${index}.url`}
                         render={({ field }) => (
@@ -432,7 +439,7 @@ export default function AddTaskDialog({ users, children }: AddTaskDialogProps) {
                       </Button>
                     </div>
                   ))}
-                  <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ url: '' })}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ name: '', url: '' })}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Bijlage toevoegen
                   </Button>

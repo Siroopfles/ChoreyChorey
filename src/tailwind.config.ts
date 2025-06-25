@@ -55,6 +55,14 @@ const config: Config = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        status: {
+          'todo': 'hsl(var(--status-todo))',
+          'inprogress': 'hsl(var(--status-inprogress))',
+          'in-review': 'hsl(var(--status-in-review))',
+          'completed': 'hsl(var(--status-completed))',
+          'cancelled': 'hsl(var(--status-cancelled))',
+          'archived': 'hsl(var(--status-archived))',
+        },
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',
           foreground: 'hsl(var(--sidebar-foreground))',

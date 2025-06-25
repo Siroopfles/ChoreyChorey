@@ -152,7 +152,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 ...data,
                 createdAt: (data.createdAt as Timestamp).toDate(),
             } as Notification;
-        }).sort((a, b) => b.createdAt.getTime() - b.createdAt.getTime());
+        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setNotifications(notificationsData);
     }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
 
@@ -216,7 +216,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           status: 'Te Doen' as Status,
           createdAt: new Date(),
           subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
-          attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' as const })) || [],
+          attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.name || at.url, type: 'file' as const })) || [],
           comments: [],
           history: history,
           order: Date.now(),
