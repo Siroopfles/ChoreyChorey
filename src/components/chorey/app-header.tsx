@@ -15,6 +15,11 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, Home, LogOut, PlusCircle, Settings, Moon, Sun, User as UserIcon } from 'lucide-react';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import { useTheme } from 'next-themes';
+import { useTasks } from '@/contexts/task-context';
+import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
+import { nl } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 type AppHeaderProps = {
   users: User[];
@@ -22,6 +27,8 @@ type AppHeaderProps = {
 
 export default function AppHeader({ users }: AppHeaderProps) {
   const { setTheme, theme } = useTheme();
+  const { notifications, markNotificationsAsRead } = useTasks();
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-30">
@@ -34,10 +41,40 @@ export default function AppHeader({ users }: AppHeaderProps) {
           </Button>
         </AddTaskDialog>
 
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">Toggle notifications</span>
-        </Button>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full relative">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                        <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 shrink-0 rounded-full p-0 flex items-center justify-center text-[10px]">{unreadCount}</Badge>
+                    )}
+                    <span className="sr-only">Toggle notifications</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 sm:w-96">
+                <DropdownMenuLabel className="flex justify-between items-center">
+                    <span className="font-bold">Notificaties</span>
+                    {unreadCount > 0 && (
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={markNotificationsAsRead}>
+                            Markeer als gelezen
+                        </Button>
+                    )}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                 <div className="max-h-80 overflow-y-auto">
+                    {notifications.length > 0 ? (
+                        notifications.map(n => (
+                            <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-1 whitespace-normal">
+                                <p className={cn("text-sm", !n.read ? 'font-semibold' : 'text-muted-foreground')}>{n.message}</p>
+                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(n.createdAt, { addSuffix: true, locale: nl })}</p>
+                            </DropdownMenuItem>
+                        ))
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center p-4">Geen notificaties</p>
+                    )}
+                 </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button
           variant="ghost"

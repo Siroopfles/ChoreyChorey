@@ -13,9 +13,12 @@ import {
   getDoc,
   deleteDoc,
   increment,
-  FirestoreError
+  FirestoreError,
+  query,
+  where,
+  orderBy,
 } from 'firebase/firestore';
-import type { Task, Priority, TaskFormValues, User, Status, Label, Filters } from '@/lib/types';
+import type { Task, Priority, TaskFormValues, User, Status, Label, Filters, Notification } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,6 +39,8 @@ type TaskContextType = {
   filters: Filters;
   setFilters: (newFilters: Partial<Filters>) => void;
   clearFilters: () => void;
+  notifications: Notification[];
+  markNotificationsAsRead: () => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -53,10 +58,13 @@ const calculatePoints = (priority: Priority): number => {
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null });
   const { toast } = useToast();
+  
+  const currentUser = users.length > 0 ? users[0] : null;
 
   const setFilters = (newFilters: Partial<Filters>) => {
     setRawFilters(prev => ({...prev, ...newFilters}));
@@ -65,6 +73,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const clearFilters = () => {
       setRawFilters({ assigneeId: null, labels: [], priority: null });
       setSearchTerm('');
+  };
+
+  const handleError = (error: any, context: string) => {
+    console.error(`Error in ${context}:`, error);
+    const description = error instanceof FirestoreError ? `Details: ${error.message} (${error.code})` : 'Een onbekende fout is opgetreden.';
+    toast({
+        title: `Fout bij ${context}`,
+        description,
+        variant: 'destructive',
+    });
   };
 
   useEffect(() => {
@@ -89,26 +107,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         } as Task;
       });
       setTasks(tasksData);
-    }, (error: FirestoreError) => {
-        console.error("Error fetching tasks:", error);
-        toast({
-            title: 'Fout bij laden van taken',
-            description: `Kon geen verbinding maken met de database. Controleer de console voor details. (${error.code})`,
-            variant: 'destructive',
-        });
-    });
+    }, (error: FirestoreError) => handleError(error, 'laden van taken'));
 
     const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
         const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
         setUsers(usersData);
-    }, (error: FirestoreError) => {
-        console.error("Error fetching users:", error);
-        toast({
-            title: 'Fout bij laden van gebruikers',
-            description: `Kon geen verbinding maken met de database. (${error.code})`,
-            variant: 'destructive',
-        });
-    });
+    }, (error: FirestoreError) => handleError(error, 'laden van gebruikers'));
 
     return () => {
         unsubscribeTasks();
@@ -116,6 +120,57 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     };
   }, [toast]);
 
+  useEffect(() => {
+    if (!db || !currentUser) return;
+    
+    const q = query(collection(db, "notifications"), where("userId", "==", currentUser.id), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const notificationsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+            } as Notification;
+        });
+        setNotifications(notificationsData);
+    }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
+
+    return () => unsubscribe();
+  }, [currentUser, toast]);
+
+
+  const createNotification = async (userId: string, message: string, taskId: string) => {
+      if (!currentUser || userId === currentUser.id) return; // Don't notify self
+      try {
+          await addDoc(collection(db, 'notifications'), {
+              userId,
+              message,
+              taskId,
+              read: false,
+              createdAt: new Date(),
+          });
+      } catch (e) {
+          handleError(e, 'maken van notificatie');
+      }
+  };
+  
+  const markNotificationsAsRead = async () => {
+    if (!currentUser) return;
+    try {
+        const batch = writeBatch(db);
+        const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+        if(unreadIds.length === 0) return;
+
+        unreadIds.forEach(id => {
+            const notifRef = doc(db, 'notifications', id);
+            batch.update(notifRef, { read: true });
+        });
+        await batch.commit();
+    } catch(e) {
+        handleError(e, 'bijwerken van notificaties');
+    }
+  };
 
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTaskIds(prev =>
@@ -123,16 +178,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         ? prev.filter(id => id !== taskId)
         : [...prev, taskId]
     );
-  };
-  
-  const handleError = (error: any, context: string) => {
-    console.error(`Error in ${context}:`, error);
-    const description = error instanceof FirestoreError ? `Details: ${error.message} (${error.code})` : 'Een onbekende fout is opgetreden.';
-    toast({
-        title: `Fout bij ${context}`,
-        description,
-        variant: 'destructive',
-    });
   };
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }) => {
@@ -150,7 +195,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
           attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.url, type: 'file' as const })) || [],
         };
-        await addDoc(collection(db, 'tasks'), firestoreTask);
+        const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
+
+        if (firestoreTask.assigneeId) {
+            await createNotification(
+                firestoreTask.assigneeId,
+                `Je bent toegewezen aan taak: "${firestoreTask.title}"`,
+                docRef.id
+            );
+        }
     } catch (e) {
         handleError(e, 'opslaan van taak');
     }
@@ -204,6 +257,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         
         const finalUpdates: { [key: string]: any } = { ...updates };
 
+        if (updates.assigneeId && updates.assigneeId !== taskToUpdate.assigneeId) {
+             await createNotification(
+                updates.assigneeId,
+                `Je bent toegewezen aan taak: "${taskToUpdate.title}"`,
+                taskId
+            );
+        }
+
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
             const points = calculatePoints(taskToUpdate.priority);
             finalUpdates.completedAt = new Date();
@@ -239,6 +300,19 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     try {
         const batch = writeBatch(db);
         let finalUpdates: Partial<Task> = { ...updates };
+
+        if (updates.assigneeId) {
+            for (const taskId of taskIds) {
+                const task = tasks.find(t => t.id === taskId);
+                if (task && task.assigneeId !== updates.assigneeId) {
+                    await createNotification(
+                        updates.assigneeId!,
+                        `Je bent toegewezen aan taak: "${task.title}"`,
+                        taskId
+                    );
+                }
+            }
+        }
 
         if (updates.status === 'Voltooid') {
             const pointUpdates = new Map<string, number>();
@@ -323,7 +397,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       deleteTaskPermanently,
       filters,
       setFilters,
-      clearFilters
+      clearFilters,
+      notifications,
+      markNotificationsAsRead
     }}>
       {children}
     </TaskContext.Provider>
