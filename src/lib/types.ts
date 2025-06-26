@@ -235,6 +235,7 @@ export type Filters = {
 export type Invite = {
     id: string;
     organizationId: string;
+    organizationName: string;
     inviterId: string;
     status: 'pending' | 'accepted';
     createdAt: Date;

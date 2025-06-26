@@ -13,7 +13,7 @@ import { collection, doc, setDoc } from 'firebase/firestore';
 import type { Invite } from '@/lib/types';
 
 export function InviteMembersDialog({ organizationId }: { organizationId: string }) {
-    const { user } = useAuth();
+    const { user, currentOrganization } = useAuth();
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [inviteLink, setInviteLink] = useState('');
@@ -21,12 +21,13 @@ export function InviteMembersDialog({ organizationId }: { organizationId: string
     const { toast } = useToast();
 
     const handleCreateInvite = async () => {
-        if (!user) return;
+        if (!user || !currentOrganization) return;
         setIsLoading(true);
         try {
             const newInviteRef = doc(collection(db, 'invites'));
             const newInvite: Omit<Invite, 'id'> = {
                 organizationId,
+                organizationName: currentOrganization.name,
                 inviterId: user.id,
                 status: 'pending',
                 createdAt: new Date(),

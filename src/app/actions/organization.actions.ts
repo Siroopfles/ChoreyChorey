@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -5,11 +6,12 @@ import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUni
 import type { User, Organization, Invite, RoleName } from '@/lib/types';
 
 
-export async function createOrganizationInvite(organizationId: string, inviterId: string) {
+export async function createOrganizationInvite(organizationId: string, inviterId: string, organizationName: string) {
     try {
         const newInviteRef = doc(collection(db, 'invites'));
         const newInvite: Omit<Invite, 'id'> = {
             organizationId,
+            organizationName,
             inviterId,
             status: 'pending',
             createdAt: new Date(),
@@ -30,57 +32,14 @@ export async function getInviteDetails(inviteId: string) {
         if (!inviteDoc.exists() || inviteDoc.data().status !== 'pending') {
             return { error: 'Uitnodiging is ongeldig of al gebruikt.' };
         }
-        
-        const organizationRef = doc(db, 'organizations', inviteDoc.data().organizationId);
-        const organizationDoc = await getDoc(organizationRef);
-        
-        if (!organizationDoc.exists()) {
-             return { error: 'De organisatie voor deze uitnodiging bestaat niet meer.' };
-        }
 
         return {
             success: true,
             invite: { id: inviteDoc.id, ...inviteDoc.data() } as Invite,
-            organization: { id: organizationDoc.id, ...organizationDoc.data() } as Organization,
         };
 
     } catch(e: any) {
         return { error: e.message };
-    }
-}
-
-export async function acceptOrganizationInvite(inviteId: string, userId: string) {
-     try {
-        await runTransaction(db, async (transaction) => {
-            const inviteRef = doc(db, 'invites', inviteId);
-            const userRef = doc(db, 'users', userId);
-
-            const inviteDoc = await transaction.get(inviteRef);
-            if (!inviteDoc.exists() || inviteDoc.data().status !== 'pending') {
-                throw new Error("Uitnodiging is ongeldig of al gebruikt.");
-            }
-
-            const organizationId = inviteDoc.data().organizationId;
-            const organizationRef = doc(db, 'organizations', organizationId);
-            const memberPath = `members.${userId}`;
-
-            transaction.update(userRef, {
-                organizationIds: arrayUnion(organizationId),
-                currentOrganizationId: organizationId,
-            });
-            
-            transaction.update(organizationRef, {
-                [memberPath]: { role: 'Member' }
-            });
-
-            transaction.update(inviteRef, {
-                status: 'accepted'
-            });
-        });
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error accepting invite:", error);
-        return { error: error.message };
     }
 }
 

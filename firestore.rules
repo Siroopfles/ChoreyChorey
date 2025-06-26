@@ -1,66 +1,94 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    function isOrgMember(orgId) {
-      // Safely access members map. Return false if members map doesn't exist.
-      let members = get(/databases/$(database)/documents/organizations/$(orgId)).data.members;
-      return members != null && request.auth.uid in members;
-    }
 
-    function getOrgRole(orgId) {
-       let members = get(/databases/$(database)/documents/organizations/$(orgId)).data.members;
-       if (members != null && request.auth.uid in members) {
-         return members[request.auth.uid].role;
-       }
-       return ''; // Return empty string if no role found
-    }
-
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow update: if request.auth.uid == userId;
-      allow create: if request.auth.uid == userId;
-    }
-
-    match /organizations/{orgId} {
-      allow read: if isOrgMember(orgId);
-      allow create: if request.auth.uid == request.resource.data.ownerId;
-      allow update: if getOrgRole(orgId) == 'Owner' || getOrgRole(orgId) == 'Admin';
-    }
-
-    match /teams/{teamId} {
-      let orgId = request.resource.data.organizationId;
-      allow read, create, update, delete: if getOrgRole(orgId) == 'Owner' || getOrgRole(orgId) == 'Admin';
-    }
-
-    match /tasks/{taskId} {
-      let orgId = resource.data.organizationId;
-      allow read: if isOrgMember(orgId);
-      allow create: if isOrgMember(request.resource.data.organizationId);
-      allow update: if isOrgMember(orgId);
-      allow delete: if getOrgRole(orgId) == 'Owner' || getOrgRole(orgId) == 'Admin';
+    // Helper Functions
+    function isOrgMember(orgId, userId) {
+      // Safely check if the members map and the user's entry exist.
+      return get(/databases/$(database)/documents/organizations/$(orgId)).data.members[userId] != null;
     }
     
-    match /taskTemplates/{templateId} {
-        let orgId = request.resource.data.organizationId;
-        allow read, create, update, delete: if isOrgMember(orgId);
+    function getOrgRole(orgId, userId) {
+      // Safely access the user's role.
+      return get(/databases/$(database)/documents/organizations/$(orgId)).data.members[userId].role;
+    }
+    
+    function isOrgAdmin(orgId, userId) {
+      let role = getOrgRole(orgId, userId);
+      return role == 'Admin' || role == 'Owner';
+    }
+    
+    function isOrgOwner(orgId, userId) {
+      return getOrgRole(orgId, userId) == 'Owner';
     }
 
+    // USER
+    match /users/{userId} {
+      allow read, create, update: if request.auth.uid == userId;
+    }
+
+    // ORGANIZATIONS
+    match /organizations/{orgId} {
+      // Members can read their organization's details
+      allow read: if isOrgMember(orgId, request.auth.uid);
+      // Allow update if user is Owner OR if they are only adding themselves as a 'Member'
+      allow update: if isOrgOwner(orgId, request.auth.uid) || 
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members.' + request.auth.uid]) &&
+                       request.resource.data.members[request.auth.uid].role == 'Member');
+      // Any authenticated user can create an organization
+      allow create: if request.auth != null;
+      // Only the owner can delete an organization
+      allow delete: if isOrgOwner(orgId, request.auth.uid);
+    }
+
+    // INVITES
     match /invites/{inviteId} {
-      let orgId = request.resource.data.organizationId;
-      // Anyone logged in can read an invite to get its details.
-      allow read: if request.auth != null;
-      // Only an Owner or Admin of the organization can create an invite.
-      allow create: if (getOrgRole(orgId) == 'Owner' || getOrgRole(orgId) == 'Admin') && request.resource.data.inviterId == request.auth.uid;
-      // The user accepting the invite can update it to 'accepted'.
+      // Anyone can read an invite document using its secret ID
+      allow read: if true;
+      // Only an org admin can create an invite for their org, and they must be the inviter
+      allow create: if isOrgAdmin(request.resource.data.organizationId, request.auth.uid) && request.resource.data.inviterId == request.auth.uid;
+      // Any authenticated user can accept an invite (update status)
       allow update: if request.auth != null;
     }
+
+    // TEAMS
+    match /teams/{teamId} {
+      // Org members can read teams in their org
+      allow read: if isOrgMember(get(/databases/$(database)/documents/teams/$(teamId)).data.organizationId, request.auth.uid);
+      // Org admins can create/update teams
+      allow create, update: if isOrgAdmin(request.resource.data.organizationId, request.auth.uid);
+      // Org admins can delete teams
+      allow delete: if isOrgAdmin(get(/databases/$(database)/documents/teams/$(teamId)).data.organizationId, request.auth.uid);
+    }
     
+    // TASKS
+    match /tasks/{taskId} {
+      // Org members can read tasks, with a check for private tasks
+      allow read: if (isOrgMember(resource.data.organizationId, request.auth.uid) && 
+                      (!resource.data.isPrivate || resource.data.creatorId == request.auth.uid || resource.data.assigneeId == request.auth.uid));
+      // Org members can create tasks
+      allow create: if isOrgMember(request.resource.data.organizationId, request.auth.uid);
+      // Org members can update tasks
+      allow update: if isOrgMember(resource.data.organizationId, request.auth.uid);
+       // Org members can delete tasks (soft delete by cancelling)
+      allow delete: if isOrgMember(resource.data.organizationId, request.auth.uid);
+    }
+    
+     // TASK TEMPLATES
+    match /taskTemplates/{templateId} {
+      // Org members can read templates in their org
+      allow read: if isOrgMember(resource.data.organizationId, request.auth.uid);
+      // Org members can create templates
+      allow create: if isOrgMember(request.resource.data.organizationId, request.auth.uid);
+      // Org members can update/delete templates
+      allow update, delete: if isOrgMember(resource.data.organizationId, request.auth.uid);
+    }
+    
+    // NOTIFICATIONS
     match /notifications/{notificationId} {
-        allow read, update, delete: if request.auth.uid == resource.data.userId;
-        allow create: if request.auth != null; // Notifications are created server-side (implicitly trusted) or by users for themselves.
+      allow read, update: if resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
     }
   }
 }

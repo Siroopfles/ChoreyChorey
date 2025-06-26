@@ -4,12 +4,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { getInviteDetails, acceptOrganizationInvite } from '@/app/actions/organization.actions';
+import { getInviteDetails } from '@/app/actions/organization.actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
-import type { Invite, Organization } from '@/lib/types';
+import type { Invite } from '@/lib/types';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { runTransaction, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+
 
 export default function InvitePage() {
     const { inviteId } = useParams();
@@ -17,7 +20,6 @@ export default function InvitePage() {
     const router = useRouter();
 
     const [invite, setInvite] = useState<Invite | null>(null);
-    const [organization, setOrganization] = useState<Organization | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isAccepting, setIsAccepting] = useState(false);
@@ -31,9 +33,8 @@ export default function InvitePage() {
             const result = await getInviteDetails(inviteId);
             if (result.error) {
                 setError(result.error);
-            } else if (result.invite && result.organization) {
+            } else if (result.invite) {
                 setInvite(result.invite);
-                setOrganization(result.organization);
             }
             setLoading(false);
         }
@@ -41,18 +42,44 @@ export default function InvitePage() {
     }, [inviteId]);
 
     const handleAcceptInvite = async () => {
-        if (!user || typeof inviteId !== 'string') {
+        if (!user || typeof inviteId !== 'string' || !invite) {
             router.push(`/login?redirect=/invite/${inviteId}`);
             return;
         }
         setIsAccepting(true);
-        const result = await acceptOrganizationInvite(inviteId, user.id);
-        if (result.error) {
-            setError(result.error);
-            setIsAccepting(false);
-        } else {
+        try {
+            await runTransaction(db, async (transaction) => {
+                const inviteRef = doc(db, 'invites', inviteId);
+                const userRef = doc(db, 'users', user.id);
+
+                const inviteDoc = await transaction.get(inviteRef);
+                if (!inviteDoc.exists() || inviteDoc.data().status !== 'pending') {
+                    throw new Error("Uitnodiging is ongeldig of al gebruikt.");
+                }
+
+                const organizationId = inviteDoc.data().organizationId;
+                const organizationRef = doc(db, 'organizations', organizationId);
+                const memberPath = `members.${user.id}`;
+
+                transaction.update(userRef, {
+                    organizationIds: arrayUnion(organizationId),
+                    currentOrganizationId: organizationId,
+                });
+                
+                transaction.update(organizationRef, {
+                    [memberPath]: { role: 'Member' }
+                });
+
+                transaction.update(inviteRef, {
+                    status: 'accepted'
+                });
+            });
             await refreshUser();
             setIsAccepted(true);
+
+        } catch (error: any) {
+            setError(error.message);
+            setIsAccepting(false);
         }
     };
     
@@ -94,7 +121,7 @@ export default function InvitePage() {
                             <CheckCircle className="h-6 w-6 text-green-500" />
                         </div>
                         <CardTitle className="mt-4">Uitnodiging Geaccepteerd!</CardTitle>
-                        <CardDescription>Je bent nu lid van **{organization?.name}**. Je wordt doorgestuurd.</CardDescription>
+                        <CardDescription>Je bent nu lid van **{invite?.organizationName}**. Je wordt doorgestuurd.</CardDescription>
                     </CardHeader>
                     <CardFooter>
                         <Button onClick={() => router.push('/dashboard')} className="w-full">
@@ -112,7 +139,7 @@ export default function InvitePage() {
                 <CardHeader>
                     <CardTitle>Je bent uitgenodigd!</CardTitle>
                     <CardDescription>
-                       Je bent uitgenodigd om lid te worden van de organisatie **{organization?.name}**.
+                       Je bent uitgenodigd om lid te worden van de organisatie **{invite?.organizationName}**.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
