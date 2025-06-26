@@ -1,7 +1,6 @@
 
 'use client';
 import type { Task, User, Team } from '@/lib/types';
-import { ALL_STATUSES } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +59,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/auth-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect, useMemo } from 'react';
@@ -87,7 +87,7 @@ const priorityConfig = {
   Laag: { icon: ChevronDown, color: 'text-chart-4' },
 };
 
-const statusConfig: Record<Task['status'], { icon?: JSX.Element; color: string }> = {
+const statusConfig: Record<string, { icon?: JSX.Element; color: string }> = {
     'Te Doen': { color: 'border-l-[hsl(var(--status-todo))]' },
     'In Uitvoering': { color: 'border-l-[hsl(var(--status-inprogress))]' },
     'In Review': { icon: <Hourglass className="h-5 w-5 text-[hsl(var(--status-in-review))]" />, color: 'border-l-[hsl(var(--status-in-review))]' },
@@ -121,12 +121,15 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps) => {
   const assignees = useMemo(() => task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
   const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
-  const PriorityIcon = priorityConfig[task.priority].icon;
-  const statusInfo = statusConfig[task.status];
+  const PriorityIcon = priorityConfig[task.priority as keyof typeof priorityConfig]?.icon || Equal;
+  const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
   const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks } = useTasks();
+  const { currentOrganization } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
+
+  const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
   
   const team = teams.find((t) => t.id === task.teamId);
 
@@ -342,7 +345,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
                         <DropdownMenuSubContent>
-                            {ALL_STATUSES.map(status => (
+                            {allStatuses.map(status => (
                                 <DropdownMenuItem key={status} onClick={() => updateTask(task.id, { status })}>
                                     {status}
                                 </DropdownMenuItem>
@@ -605,7 +608,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         <span>{format(task.dueDate, 'd MMM')}</span>
                     </div>
                     )}
-                    <div className={cn('flex items-center gap-1 font-medium', priorityConfig[task.priority].color)}>
+                    <div className={cn('flex items-center gap-1 font-medium', priorityConfig[task.priority as keyof typeof priorityConfig]?.color || 'text-muted-foreground')}>
                     <PriorityIcon className="h-3 w-3" />
                     <span>{task.priority}</span>
                     </div>

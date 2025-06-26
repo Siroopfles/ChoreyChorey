@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type ReactNode } from 'react';
@@ -24,9 +25,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/auth-context';
 import { Separator } from '@/components/ui/separator';
 import type { TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
-import { taskTemplateSchema, ALL_LABELS, ALL_PRIORITIES } from '@/lib/types';
+import { taskTemplateSchema } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,6 +48,10 @@ export function TemplateDialog({
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const { addTemplate, updateTemplate } = useTasks();
+  const { currentOrganization } = useAuth();
+
+  const allLabels = currentOrganization?.settings?.customization?.labels || [];
+  const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
 
   const form = useForm<TaskTemplateFormValues>({
     resolver: zodResolver(taskTemplateSchema),
@@ -53,7 +59,7 @@ export function TemplateDialog({
       name: '',
       title: '',
       description: '',
-      priority: 'Midden',
+      priority: allPriorities[1] || 'Midden',
       labels: [],
       subtasks: [],
       storyPoints: undefined,
@@ -144,7 +150,7 @@ export function TemplateDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {ALL_PRIORITIES.map((p) => (
+                        {allPriorities.map((p) => (
                           <SelectItem key={p} value={p}>
                             {p}
                           </SelectItem>
@@ -188,7 +194,7 @@ export function TemplateDialog({
                         <CommandList>
                           <CommandEmpty>Geen labels gevonden</CommandEmpty>
                           <CommandGroup>
-                            {ALL_LABELS.map((label) => (
+                            {allLabels.map((label) => (
                               <CommandItem
                                 key={label}
                                 onSelect={() => {

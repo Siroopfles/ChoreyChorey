@@ -1,6 +1,8 @@
+
 'use client';
 
 import { useTasks } from "@/contexts/task-context";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { 
     DropdownMenu, 
@@ -8,13 +10,16 @@ import {
     DropdownMenuItem, 
     DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import type { Priority } from "@/lib/types";
-import { ALL_STATUSES, ALL_PRIORITIES } from "@/lib/types";
 import { Replace, Trash2, X, UserPlus, ArrowUpNarrowWide } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 export default function BulkActionBar() {
     const { selectedTaskIds, bulkUpdateTasks, setSelectedTaskIds, users } = useTasks();
+    const { currentOrganization } = useAuth();
+    
+    const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
+    const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+
 
     if (selectedTaskIds.length === 0) {
         return null;
@@ -38,7 +43,7 @@ export default function BulkActionBar() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        {ALL_STATUSES.map(status => (
+                        {allStatuses.map(status => (
                             <DropdownMenuItem 
                                 key={status}
                                 onSelect={() => bulkUpdateTasks(selectedTaskIds, { status })}
@@ -81,10 +86,10 @@ export default function BulkActionBar() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        {ALL_PRIORITIES.map(priority => (
+                        {allPriorities.map(priority => (
                             <DropdownMenuItem 
                                 key={priority}
-                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { priority: priority as Priority })}
+                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { priority: priority })}
                             >
                                 {priority}
                             </DropdownMenuItem>

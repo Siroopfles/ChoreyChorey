@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, TaskFormValues, TaskTemplateFormValues } from '@/lib/types';
@@ -29,28 +30,30 @@ type AddTaskDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-const defaultFormValues: TaskFormValues = {
-  title: '',
-  description: '',
-  priority: 'Midden',
-  isPrivate: false,
-  subtasks: [],
-  attachments: [],
-  labels: [],
-  blockedBy: [],
-  recurring: undefined,
-  storyPoints: undefined,
-  assigneeIds: [],
-  teamId: undefined,
-  dueDate: undefined,
-  imageDataUri: undefined,
-};
-
 export default function AddTaskDialog({ users, template, open, onOpenChange }: AddTaskDialogProps) {
   const { toast } = useToast();
   const { addTask } = useTasks();
-  const { teams } = useAuth();
+  const { teams, currentOrganization } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const defaultPriority = currentOrganization?.settings?.customization?.priorities?.[1] || 'Midden';
+
+  const defaultFormValues: TaskFormValues = {
+    title: '',
+    description: '',
+    priority: defaultPriority,
+    isPrivate: false,
+    subtasks: [],
+    attachments: [],
+    labels: [],
+    blockedBy: [],
+    recurring: undefined,
+    storyPoints: undefined,
+    assigneeIds: [],
+    teamId: undefined,
+    dueDate: undefined,
+    imageDataUri: undefined,
+  };
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -73,7 +76,7 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
         form.reset(defaultFormValues);
       }
     }
-  }, [open, template, form]);
+  }, [open, template, form, defaultFormValues]);
 
   async function onSubmit(data: TaskFormValues) {
     setIsSubmitting(true);

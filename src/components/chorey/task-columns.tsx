@@ -1,14 +1,15 @@
 
 'use client';
-import type { User, Status, Task, Team } from '@/lib/types';
+import type { User, Task, Team } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/auth-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
 
-const TaskColumn = ({ title, tasks, users, currentUser, teams }: { title: Status; tasks: Task[]; users: User[], currentUser: User | null, teams: Team[] }) => {
+const TaskColumn = ({ title, tasks, users, currentUser, teams }: { title: string; tasks: Task[]; users: User[], currentUser: User | null, teams: Team[] }) => {
   const { setNodeRef } = useDroppable({
     id: title,
   });
@@ -44,6 +45,7 @@ type TaskColumnsProps = {
 
 const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskColumnsProps) => {
   const { tasks, updateTask, reorderTasks } = useTasks();
+  const { currentOrganization } = useAuth();
   const { toast } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -53,9 +55,9 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
     })
   );
 
-  const columns: Status[] = ["Te Doen", "In Uitvoering", "In Review", "Voltooid", "Geannuleerd"];
+  const columns = currentOrganization?.settings?.customization?.statuses || [];
 
-  const tasksByStatus = (status: Status) => {
+  const tasksByStatus = (status: string) => {
     return filteredTasks
         .filter((task) => task.status === status)
         .sort((a,b) => a.order - b.order);
@@ -71,8 +73,8 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    const activeContainer = active.data.current?.sortable.containerId as Status;
-    const overContainer = (over.data.current?.sortable.containerId || over.id) as Status;
+    const activeContainer = active.data.current?.sortable.containerId as string;
+    const overContainer = (over.data.current?.sortable.containerId || over.id) as string;
     
     if (!activeContainer || !overContainer || !columns.includes(overContainer)) {
       return;

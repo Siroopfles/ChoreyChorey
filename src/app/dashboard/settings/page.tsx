@@ -7,6 +7,7 @@ import ProfileSettings from '@/components/chorey/settings/profile-settings';
 import OrganizationSettings from '@/components/chorey/settings/organization-settings';
 import DangerZone from '@/components/chorey/settings/danger-zone';
 import DebugSettings from '@/components/chorey/settings/debug-settings';
+import CustomizationSettings from '@/components/chorey/settings/customization-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
@@ -19,7 +20,7 @@ export default function SettingsPage() {
     );
   }
 
-  const isOwner = currentUserRole === 'Owner';
+  const isOwnerOrAdmin = currentUserRole === 'Owner' || currentUserRole === 'Admin';
 
   return (
     <div className="space-y-6">
@@ -31,10 +32,11 @@ export default function SettingsPage() {
 
       {currentOrganization && (
         <>
-          {isOwner && <OrganizationSettings organization={currentOrganization} />}
+          {isOwnerOrAdmin && <OrganizationSettings organization={currentOrganization} />}
+          {isOwnerOrAdmin && <CustomizationSettings organization={currentOrganization} />}
           <DangerZone
             organization={currentOrganization}
-            isOwner={isOwner}
+            isOwner={currentUserRole === 'Owner'}
           />
         </>
       )}

@@ -1,8 +1,8 @@
+
 'use client';
 import { useTasks } from "@/contexts/task-context";
 import { useAuth } from "@/contexts/auth-context";
-import type { User, Label, Priority } from "@/lib/types";
-import { ALL_LABELS, ALL_PRIORITIES } from "@/lib/types";
+import type { User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,13 +14,17 @@ import { cn } from "@/lib/utils";
 
 export default function FilterBar() {
   const { users, filters, setFilters, clearFilters } = useTasks();
-  const { user: currentUser, teams } = useAuth();
+  const { user: currentUser, teams, currentOrganization } = useAuth();
   
-  const handleLabelToggle = (label: Label) => {
+  const allLabels = currentOrganization?.settings?.customization?.labels || [];
+  const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+
+
+  const handleLabelToggle = (label: string) => {
     const newLabels = filters.labels.includes(label)
       ? filters.labels.filter(l => l !== label)
       : [...filters.labels, label];
-    setFilters({ labels: newLabels as Label[] });
+    setFilters({ labels: newLabels });
   };
   
   const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.teamId ? 1 : 0);
@@ -98,7 +102,7 @@ export default function FilterBar() {
             <CommandList>
               <CommandEmpty>Geen label gevonden.</CommandEmpty>
               <CommandGroup>
-                {ALL_LABELS.map((label) => (
+                {allLabels.map((label) => (
                   <CommandItem
                     key={label}
                     onSelect={() => handleLabelToggle(label)}
@@ -126,8 +130,8 @@ export default function FilterBar() {
               Alle Prioriteiten
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {ALL_PRIORITIES.map(priority => (
-                <DropdownMenuItem key={priority} onSelect={() => setFilters({ priority: priority as Priority })}>
+            {allPriorities.map(priority => (
+                <DropdownMenuItem key={priority} onSelect={() => setFilters({ priority: priority })}>
                     {priority}
                 </DropdownMenuItem>
             ))}

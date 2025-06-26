@@ -1,7 +1,7 @@
+
 'use client';
 
-import type { User, Label, Team, Priority } from '@/lib/types';
-import { ALL_LABELS, ALL_PRIORITIES } from '@/lib/types';
+import type { User, Team } from '@/lib/types';
 import { useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,9 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
   const form = useFormContext();
   const { currentOrganization } = useAuth();
   const status = form.watch('status');
+
+  const allLabels = currentOrganization?.settings?.customization?.labels || [];
+  const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
 
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
@@ -448,7 +451,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {ALL_PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    {allPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Button type="button" variant="outline" size="icon" onClick={onSuggestPriority} disabled={isSuggestingPriority}>
@@ -482,7 +485,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
                             <CommandList>
                             <CommandEmpty>Geen label gevonden.</CommandEmpty>
                             <CommandGroup>
-                                {ALL_LABELS.map((label) => {
+                                {allLabels.map((label) => {
                                 const isSelected = field.value?.includes(label);
                                 return (
                                     <CommandItem

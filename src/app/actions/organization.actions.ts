@@ -54,13 +54,22 @@ export async function updateUserRoleInOrganization(organizationId: string, targe
     }
 }
 
-export async function updateOrganization(organizationId: string, userId: string, data: Partial<Pick<Organization, 'name'>>) {
+export async function updateOrganization(organizationId: string, userId: string, data: Partial<Pick<Organization, 'name' | 'settings'>>) {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
+        
+        if (!orgDoc.exists()) {
+             throw new Error("Organisatie niet gevonden.");
+        }
+        
+        const orgData = orgDoc.data() as Organization;
+        const member = orgData.members?.[userId];
+        const isOwnerOrAdmin = member?.role === 'Owner' || member?.role === 'Admin';
 
-        if (!orgDoc.exists() || orgDoc.data().ownerId !== userId) {
-            throw new Error("Alleen de eigenaar kan deze organisatie bijwerken.");
+
+        if (!isOwnerOrAdmin) {
+            throw new Error("Alleen een Eigenaar of Beheerder kan deze organisatie bijwerken.");
         }
 
         await updateDoc(orgRef, data);

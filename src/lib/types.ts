@@ -1,10 +1,20 @@
+
 import { z } from 'zod';
+
+export type OrganizationSettings = {
+  customization: {
+    statuses: string[];
+    labels: string[];
+    priorities: string[];
+  }
+}
 
 export type Organization = {
   id: string;
   name: string;
   ownerId: string;
   members: Record<string, OrganizationMember>; // Map of userId to their role info
+  settings?: OrganizationSettings;
 };
 
 export type OrganizationMember = {
@@ -34,6 +44,7 @@ export const ROLES: Record<string, { name: string; permissions: Permission[] }> 
   Admin: {
     name: 'Beheerder',
     permissions: [
+      PERMISSIONS.MANAGE_ORGANIZATION,
       PERMISSIONS.MANAGE_ROLES,
       PERMISSIONS.MANAGE_MEMBERS,
       PERMISSIONS.MANAGE_TEAMS,
@@ -105,18 +116,12 @@ export const ACHIEVEMENTS = {
   }
 };
 
-export type Priority = "Laag" | "Midden" | "Hoog" | "Urgent";
+export type Priority = string;
 export const ALL_PRIORITIES: Priority[] = ["Laag", "Midden", "Hoog", "Urgent"];
 
 
-export type Status = "Te Doen" | "In Uitvoering" | "In Review" | "Voltooid" | "Gearchiveerd" | "Geannuleerd";
-
-export const ALL_STATUSES: Status[] = ["Te Doen", "In Uitvoering", "In Review", "Voltooid", "Gearchiveerd", "Geannuleerd"];
-
-export type Label = "Keuken" | "Woonkamer" | "Badkamer" | "Slaapkamer" | "Algemeen" | "Kantoor";
-
-export const ALL_LABELS: Label[] = ["Keuken", "Woonkamer", "Badkamer", "Slaapkamer", "Algemeen", "Kantoor"];
-
+export type Status = string;
+export type Label = string;
 export const ALL_SKILLS: string[] = ["Koken", "Schoonmaken", "Tuinieren", "Techniek", "Administratie", "Organiseren", "Boodschappen", "Dierenverzorging", "Planning", "Communicatie"];
 
 export const monthlyRecurringSchema = z.union([
@@ -230,7 +235,7 @@ export const taskFormSchema = z.object({
   assigneeIds: z.array(z.string()).optional(),
   teamId: z.string().optional(),
   dueDate: z.date().optional(),
-  priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).default('Midden'),
+  priority: z.string().min(1, 'Prioriteit is verplicht.'),
   labels: z.array(z.string()).optional(),
   subtasks: z.array(subtaskSchema).optional(),
   attachments: z.array(z.object({ 
@@ -252,7 +257,7 @@ export const taskTemplateSchema = z.object({
   name: z.string().min(3, { message: "Templatenaam moet minimaal 3 karakters bevatten." }),
   title: z.string().min(3, { message: "Standaard titel moet minimaal 3 karakters bevatten." }),
   description: z.string().optional(),
-  priority: z.enum(ALL_PRIORITIES).default('Midden'),
+  priority: z.string().min(1, 'Prioriteit is verplicht.'),
   labels: z.array(z.string()).optional().default([]),
   subtasks: z.array(z.object({ text: z.string().min(1) })).optional().default([]),
   storyPoints: z.coerce.number().optional(),
@@ -269,7 +274,7 @@ export type TaskTemplate = TaskTemplateFormValues & {
 
 export type Filters = {
   assigneeId: string | null;
-  labels: Label[];
+  labels: string[];
   priority: Priority | null;
   teamId: string | null;
 };

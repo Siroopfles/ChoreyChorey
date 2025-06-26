@@ -49,6 +49,13 @@ export function CreateOrganizationView() {
                     members: {
                         [user.id]: { role: 'Owner' }
                     },
+                    settings: {
+                        customization: {
+                            statuses: ['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Geannuleerd'],
+                            labels: ['Keuken', 'Woonkamer', 'Badkamer', 'Slaapkamer', 'Algemeen', 'Kantoor'],
+                            priorities: ['Laag', 'Midden', 'Hoog', 'Urgent'],
+                        }
+                    }
                 };
                 transaction.set(newOrgRef, newOrgData);
                 
