@@ -21,7 +21,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
-import type { User, Organization, Team } from '@/lib/types';
+import type { User, Organization, Team, RoleName } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions';
 
@@ -36,6 +36,7 @@ type AuthContextType = {
     refreshUser: () => Promise<void>;
     organizations: Organization[];
     currentOrganization: Organization | null;
+    currentUserRole: RoleName | null;
     switchOrganization: (orgId: string) => Promise<void>;
     teams: Team[];
 };
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+    const [currentUserRole, setCurrentUserRole] = useState<RoleName | null>(null);
     const [teams, setTeams] = useState<Team[]>([]);
     const router = useRouter();
     const { toast } = useToast();
@@ -88,19 +90,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             
             setCurrentOrganization(currentOrg);
-
+            
             if (currentOrg) {
+                 const role = currentOrg.members[firebaseUser.uid]?.role || null;
+                 setCurrentUserRole(role);
+
                  const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrg.id));
                  const teamsSnapshot = await getDocs(teamsQuery);
                  const orgTeams = teamsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
                  setTeams(orgTeams);
             } else {
                  setTeams([]);
+                 setCurrentUserRole(null);
             }
 
         } else {
             setOrganizations([]);
             setCurrentOrganization(null);
+            setCurrentUserRole(null);
             setTeams([]);
         }
     }, []);
@@ -116,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(null);
                 setOrganizations([]);
                 setCurrentOrganization(null);
+                setCurrentUserRole(null);
                 setTeams([]);
             }
             setLoading(false);
@@ -253,6 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
         organizations,
         currentOrganization,
+        currentUserRole,
         switchOrganization,
         teams,
     };

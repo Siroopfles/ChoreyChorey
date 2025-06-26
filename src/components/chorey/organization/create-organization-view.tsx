@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { runTransaction, doc, collection } from 'firebase/firestore';
+import { runTransaction, doc, collection, arrayUnion } from 'firebase/firestore';
 import type { Organization } from '@/lib/types';
 
 const orgCreationSchema = z.object({
@@ -41,22 +41,18 @@ export function CreateOrganizationView() {
             await runTransaction(db, async (transaction) => {
                 const newOrgRef = doc(collection(db, 'organizations'));
                 const userRef = doc(db, 'users', user.id);
-                const userDoc = await transaction.get(userRef);
-
-                if (!userDoc.exists()) {
-                    throw new Error("Gebruikersdocument niet gevonden! Kan organisatie niet aanmaken.");
-                }
-
+                
                 const newOrgData: Omit<Organization, 'id'> = {
                     name: data.name,
                     ownerId: user.id,
-                    memberIds: [user.id],
+                    members: {
+                        [user.id]: { role: 'Owner' }
+                    },
                 };
                 transaction.set(newOrgRef, newOrgData);
                 
-                const currentOrgIds = userDoc.data().organizationIds || [];
                 transaction.update(userRef, {
-                    organizationIds: [...currentOrgIds, newOrgRef.id],
+                    organizationIds: arrayUnion(newOrgRef.id),
                     currentOrganizationId: newOrgRef.id
                 });
             });

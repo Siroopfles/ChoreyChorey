@@ -4,8 +4,56 @@ export type Organization = {
   id: string;
   name: string;
   ownerId: string;
-  memberIds: string[];
+  members: Record<string, OrganizationMember>; // Map of userId to their role info
 };
+
+export type OrganizationMember = {
+  role: RoleName;
+};
+
+export const PERMISSIONS = {
+  MANAGE_ORGANIZATION: 'MANAGE_ORGANIZATION',
+  MANAGE_ROLES: 'MANAGE_ROLES',
+  MANAGE_MEMBERS: 'MANAGE_MEMBERS',
+  MANAGE_TEAMS: 'MANAGE_TEAMS',
+  CREATE_TASK: 'CREATE_TASK',
+  EDIT_TASK: 'EDIT_TASK',
+  DELETE_TASK: 'DELETE_TASK',
+  ASSIGN_TASK: 'ASSIGN_TASK',
+  VIEW_ALL_TASKS: 'VIEW_ALL_TASKS',
+} as const;
+
+export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
+
+export const ROLES: Record<string, { name: string; permissions: Permission[] }> = {
+  Owner: {
+    name: 'Eigenaar',
+    permissions: Object.values(PERMISSIONS),
+  },
+  Admin: {
+    name: 'Beheerder',
+    permissions: [
+      PERMISSIONS.MANAGE_ROLES,
+      PERMISSIONS.MANAGE_MEMBERS,
+      PERMISSIONS.MANAGE_TEAMS,
+      PERMISSIONS.CREATE_TASK,
+      PERMISSIONS.EDIT_TASK,
+      PERMISSIONS.DELETE_TASK,
+      PERMISSIONS.ASSIGN_TASK,
+      PERMISSIONS.VIEW_ALL_TASKS,
+    ],
+  },
+  Member: {
+    name: 'Lid',
+    permissions: [
+      PERMISSIONS.CREATE_TASK,
+      PERMISSIONS.EDIT_TASK, // Note: Rules should enforce editing only assigned/created tasks
+      PERMISSIONS.VIEW_ALL_TASKS,
+    ],
+  },
+};
+export type RoleName = keyof typeof ROLES;
+
 
 export type Team = {
   id: string;

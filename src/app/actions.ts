@@ -2,8 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import type { User, Organization, Invite, Task, TaskTemplate } from '@/lib/types';
+import { collection, getDocs, query, where, Timestamp, updateDoc, doc, writeBatch, addDoc, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc, deleteField } from 'firebase/firestore';
+import type { User, Organization, Invite, Task, TaskTemplate, RoleName } from '@/lib/types';
 import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
 import { processCommand } from '@/ai/flows/process-command';
@@ -205,6 +205,7 @@ export async function acceptOrganizationInvite(inviteId: string, userId: string)
 
             const organizationId = inviteDoc.data().organizationId;
             const organizationRef = doc(db, 'organizations', organizationId);
+            const memberPath = `members.${userId}`;
 
             transaction.update(userRef, {
                 organizationIds: arrayUnion(organizationId),
@@ -212,7 +213,7 @@ export async function acceptOrganizationInvite(inviteId: string, userId: string)
             });
             
             transaction.update(organizationRef, {
-                memberIds: arrayUnion(userId)
+                [memberPath]: { role: 'Member' }
             });
 
             transaction.update(inviteRef, {
@@ -222,6 +223,36 @@ export async function acceptOrganizationInvite(inviteId: string, userId: string)
         return { success: true };
     } catch (error: any) {
         console.error("Error accepting invite:", error);
+        return { error: error.message };
+    }
+}
+
+export async function updateUserRoleInOrganization(organizationId: string, targetUserId: string, newRole: RoleName, currentUserId: string) {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
+        
+        const orgData = orgDoc.data() as Organization;
+        const currentUserRole = orgData.members[currentUserId]?.role;
+
+        if (currentUserRole !== 'Owner' && currentUserRole !== 'Admin') {
+            throw new Error("Je hebt geen permissie om rollen aan te passen.");
+        }
+        if (orgData.ownerId === targetUserId) {
+            throw new Error("De rol van de eigenaar kan niet worden gewijzigd.");
+        }
+        if (orgData.ownerId === currentUserId && newRole !== 'Owner' && targetUserId === currentUserId) {
+             throw new Error("De eigenaar kan zijn eigen rol niet verlagen.");
+        }
+
+        const memberPath = `members.${targetUserId}.role`;
+        await updateDoc(orgRef, { [memberPath]: newRole });
+
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Error updating user role:", error);
         return { error: error.message };
     }
 }
@@ -264,16 +295,19 @@ export async function leaveOrganization(organizationId: string, userId: string) 
         const userData = userDoc.data() as User;
         const newOrgIds = userData.organizationIds?.filter(id => id !== organizationId) || [];
         
-        const updateData: any = {
+        const userUpdateData: any = {
              organizationIds: arrayRemove(organizationId)
         };
 
         if (userData.currentOrganizationId === organizationId) {
-            updateData.currentOrganizationId = newOrgIds.length > 0 ? newOrgIds[0] : null;
+            userUpdateData.currentOrganizationId = newOrgIds.length > 0 ? newOrgIds[0] : null;
         }
         
-        await updateDoc(userRef, updateData);
-        await updateDoc(orgRef, { memberIds: arrayRemove(userId) });
+        const memberPath = `members.${userId}`;
+        const orgUpdateData = { [memberPath]: deleteField() };
+
+        await updateDoc(userRef, userUpdateData);
+        await updateDoc(orgRef, orgUpdateData);
 
         return { success: true };
     } catch (error: any) {

@@ -35,7 +35,7 @@ const orgSettingsSchema = z.object({
 type OrgSettingsFormValues = z.infer<typeof orgSettingsSchema>;
 
 export default function SettingsPage() {
-  const { user, currentOrganization, refreshUser } = useAuth();
+  const { user, currentOrganization, currentUserRole, refreshUser } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
@@ -44,7 +44,7 @@ export default function SettingsPage() {
   const [isLeaving, setIsLeaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const isOwner = user && currentOrganization && user.id === currentOrganization.ownerId;
+  const isOwner = currentUserRole === 'Owner';
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
