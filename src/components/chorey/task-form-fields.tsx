@@ -16,7 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock } from 'lucide-react';
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -76,7 +76,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
     if (result.error) {
         toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
     } else if (result.subtasks) {
-        result.subtasks.forEach(subtask => appendSubtask({ text: subtask }));
+        result.subtasks.forEach(subtask => appendSubtask({ text: subtask, isPrivate: false }));
         toast({ title: 'Subtaken toegevoegd!', description: `${result.subtasks.length} subtaken zijn door AI gegenereerd.` });
     }
     setIsSuggestingSubtasks(false);
@@ -623,22 +623,34 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
       <div>
         <UiLabel>Subtaken</UiLabel>
         <div className="space-y-2 mt-2">
-          {subtaskFields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-2">
-              <FormField
-                control={form.control}
-                name={`subtasks.${index}.text`}
-                render={({ field }) => (
-                    <Input {...field} placeholder="Beschrijf subtaak..."/>
-                )}
-              />
-              <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
-                <Trash2 className="h-4 w-4 text-destructive"/>
-              </Button>
-            </div>
-          ))}
+          {subtaskFields.map((field, index) => {
+            const isPrivate = form.watch(`subtasks.${index}.isPrivate`);
+            return (
+                <div key={field.id} className="flex items-center gap-2">
+                <FormField
+                    control={form.control}
+                    name={`subtasks.${index}.text`}
+                    render={({ field }) => (
+                        <Input {...field} placeholder="Beschrijf subtaak..."/>
+                    )}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => form.setValue(`subtasks.${index}.isPrivate`, !isPrivate)}
+                  title={isPrivate ? "Maak publiek" : "Maak privé"}
+                >
+                  {isPrivate ? <Lock className="h-4 w-4 text-primary" /> : <Unlock className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
+                    <Trash2 className="h-4 w-4 text-destructive"/>
+                </Button>
+                </div>
+            )
+          })}
           <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => appendSubtask({ text: '' })}>
+            <Button type="button" variant="outline" size="sm" onClick={() => appendSubtask({ text: '', isPrivate: false })}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Subtaak toevoegen
             </Button>

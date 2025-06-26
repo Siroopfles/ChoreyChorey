@@ -50,6 +50,7 @@ import {
   Timer,
   TimerOff,
   RefreshCw,
+  EyeOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -121,8 +122,13 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const { toast } = useToast();
   
   const team = teams.find((t) => t.id === task.teamId);
-  const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
-  const totalSubtasks = task.subtasks.length;
+
+  const isPrivilegedUser = useMemo(() => currentUser && (task.creatorId === currentUser.id || task.assigneeIds.includes(currentUser.id)), [currentUser, task.creatorId, task.assigneeIds]);
+  const visibleSubtasks = useMemo(() => task.subtasks.filter(s => !s.isPrivate || isPrivilegedUser), [task.subtasks, isPrivilegedUser]);
+  const hiddenSubtasksCount = task.subtasks.length - visibleSubtasks.length;
+
+  const completedSubtasks = visibleSubtasks.filter((s) => s.completed).length;
+  const totalSubtasks = visibleSubtasks.length;
   const subtaskProgress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
   const points = calculatePoints(task.priority, task.storyPoints);
   const isSelected = selectedTaskIds.includes(task.id);
@@ -399,7 +405,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                 </div>
             )}
 
-            {totalSubtasks > 0 && (
+            {task.subtasks.length > 0 && (
                 <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="subtasks" className="border-b-0">
                     <AccordionTrigger className="p-0 hover:no-underline [&_svg]:h-4 [&_svg]:w-4">
@@ -410,12 +416,12 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                             {completedSubtasks}/{totalSubtasks}
                         </span>
                         </div>
-                        <Progress value={subtaskProgress} className="h-1" />
+                        {totalSubtasks > 0 && <Progress value={subtaskProgress} className="h-1" />}
                     </div>
                     </AccordionTrigger>
                     <AccordionContent className="pt-2 pb-0">
                     <div className="space-y-2">
-                        {task.subtasks.map(subtask => (
+                        {visibleSubtasks.map(subtask => (
                         <div key={subtask.id} className="flex items-center gap-3">
                             <Checkbox
                             id={`subtask-${subtask.id}`}
@@ -424,12 +430,19 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                             />
                             <label
                             htmlFor={`subtask-${subtask.id}`}
-                            className={cn("text-sm leading-none cursor-pointer", subtask.completed && "line-through text-muted-foreground")}
+                            className={cn("text-sm leading-none cursor-pointer flex items-center gap-1.5", subtask.completed && "line-through text-muted-foreground")}
                             >
+                            {subtask.isPrivate && <Lock className="h-3 w-3 text-muted-foreground" />}
                             {subtask.text}
                             </label>
                         </div>
                         ))}
+                         {hiddenSubtasksCount > 0 && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
+                                <EyeOff className="h-3 w-3" />
+                                {hiddenSubtasksCount} privé subtaak verborgen
+                            </div>
+                         )}
                     </div>
                     </AccordionContent>
                 </AccordionItem>

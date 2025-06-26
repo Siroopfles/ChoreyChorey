@@ -146,6 +146,7 @@ export type Subtask = {
   id: string;
   text: string;
   completed: boolean;
+  isPrivate?: boolean;
 };
 
 export type Attachment = {
@@ -209,6 +210,11 @@ export type Notification = {
   snoozedUntil?: Date;
 };
 
+export const subtaskSchema = z.object({
+    text: z.string().min(1, 'Subtaak mag niet leeg zijn.'),
+    isPrivate: z.boolean().optional(),
+});
+
 export const taskFormSchema = z.object({
   title: z.string().min(3, 'Titel moet minimaal 3 karakters lang zijn.'),
   description: z.string().optional(),
@@ -217,7 +223,7 @@ export const taskFormSchema = z.object({
   dueDate: z.date().optional(),
   priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).default('Midden'),
   labels: z.array(z.string()).optional(),
-  subtasks: z.array(z.object({ text: z.string().min(1, 'Subtaak mag niet leeg zijn.') })).optional(),
+  subtasks: z.array(subtaskSchema).optional(),
   attachments: z.array(z.object({ 
       name: z.string().min(1, 'Naam mag niet leeg zijn.'),
       url: z.string().url('Voer een geldige URL in.'),
