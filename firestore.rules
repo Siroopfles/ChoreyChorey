@@ -3,92 +3,95 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // =================================
-    // Helper Functions
-    // =================================
-    function isSignedIn() {
+    // ======== HELPER FUNCTIONS ========
+    
+    function isAuth() {
       return request.auth != null;
     }
-
-    function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
     
-    function getRole(userId, orgId) {
-        let orgDoc = get(/databases/$(database)/documents/organizations/$(orgId));
-        // Check if org exists, has members map, and user entry exists. Default to null if not.
-        if (orgDoc.data != null && 'members' in orgDoc.data && userId in orgDoc.data.members) {
-            return orgDoc.data.members[userId].role;
-        }
+    function getOrg(orgId) {
+        return get(/databases/$(database)/documents/organizations/$(orgId));
+    }
+
+    function isOrgMember(userId, orgId) {
+        let orgDoc = getOrg(orgId);
+        return isAuth() &&
+               exists(/databases/$(database)/documents/organizations/$(orgId)) &&
+               userId in orgDoc.data.members;
+    }
+
+    function getUserRole(userId, orgId) {
+      if (!isOrgMember(userId, orgId)) {
         return null;
+      }
+      return getOrg(orgId).data.members[userId].role;
     }
 
-    function hasPermission(permission, orgId) {
-      if (orgId == null) {
-        return false;
-      }
-      let role = getRole(request.auth.uid, orgId);
-      let permissions = {
-          'Owner': ['MANAGE_ORGANIZATION', 'MANAGE_ROLES', 'MANAGE_MEMBERS', 'MANAGE_TEAMS', 'CREATE_TASK', 'EDIT_TASK', 'DELETE_TASK', 'ASSIGN_TASK', 'VIEW_ALL_TASKS'],
-          'Admin': ['MANAGE_ROLES', 'MANAGE_MEMBERS', 'MANAGE_TEAMS', 'CREATE_TASK', 'EDIT_TASK', 'DELETE_TASK', 'ASSIGN_TASK', 'VIEW_ALL_TASKS'],
-          'Member': ['CREATE_TASK', 'EDIT_TASK', 'VIEW_ALL_TASKS']
-      };
-      
-      if (role == null) {
-          return false;
-      }
-      
-      return permission in permissions[role];
+    function isOrgAdmin(userId, orgId) {
+        let role = getUserRole(userId, orgId);
+        return role == 'Admin' || role == 'Owner';
     }
-    
-    // =================================
-    // Collection Rules
-    // =================================
-    
+
+    function isOrgOwner(userId, orgId) {
+        return getUserRole(userId, orgId) == 'Owner';
+    }
+
+
+    // ======== COLLECTION RULES ========
+
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isUser(userId);
+      allow read: if isAuth();
+      allow update: if isAuth() && request.auth.uid == userId;
+      // Disallow create/delete through client
+      allow create, delete: if false;
     }
 
     match /organizations/{orgId} {
-      // User can read an org if they are a member
-      allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/organizations/$(orgId)).data.members;
-      // User can create an org, rules on user doc will link it
-      allow create: if isSignedIn();
-      // Only users with permission in *this* org can update/delete it
-      allow update: if hasPermission('MANAGE_ORGANIZATION', orgId);
-      allow delete: if hasPermission('MANAGE_ORGANIZATION', orgId);
-    }
-
-    match /teams/{teamId} {
-      // Org ID for read/update/delete comes from the existing document
-      allow read, update, delete: if hasPermission('MANAGE_TEAMS', resource.data.organizationId);
-      // Org ID for create comes from the new document data
-      allow create: if hasPermission('MANAGE_TEAMS', request.resource.data.organizationId);
+      allow get: if isOrgMember(request.auth.uid, orgId);
+      allow list: if isAuth() && request.auth.uid in resource.data.members;
+      allow create: if isAuth() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isOrgOwner(request.auth.uid, orgId);
+      allow delete: if isOrgOwner(request.auth.uid, orgId);
     }
 
     match /tasks/{taskId} {
-      allow read: if hasPermission('VIEW_ALL_TASKS', resource.data.organizationId);
-      allow create: if hasPermission('CREATE_TASK', request.resource.data.organizationId);
-      // Further logic needed for "own tasks only" for Members, but this is a start
-      allow update: if hasPermission('EDIT_TASK', resource.data.organizationId);
-      allow delete: if hasPermission('DELETE_TASK', resource.data.organizationId);
-    }
+      // Allow read if user is a member of the organization
+      allow get, list: if isOrgMember(request.auth.uid, resource.data.organizationId);
 
-    match /taskTemplates/{templateId} {
-      allow read, update, delete: if hasPermission('MANAGE_TEAMS', resource.data.organizationId);
-      allow create: if hasPermission('MANAGE_TEAMS', request.resource.data.organizationId);
+      // Allow create if user is a member and the creator
+      allow create: if isOrgMember(request.auth.uid, request.resource.data.organizationId) &&
+                       request.resource.data.creatorId == request.auth.uid;
+      
+      // Allow update if user is a member (more granular checks can be added, e.g., only assignee or admin)
+      allow update: if isOrgMember(request.auth.uid, resource.data.organizationId);
+      
+      // Allow delete if user is an admin/owner of the organization
+      allow delete: if isOrgAdmin(request.auth.uid, resource.data.organizationId);
     }
     
     match /invites/{inviteId} {
-      allow read: if isSignedIn();
-      allow create: if hasPermission('MANAGE_MEMBERS', request.resource.data.organizationId) && isUser(request.resource.data.inviterId);
-      // Anyone signed in can update (to accept) an invite. The transaction logic handles security.
-      allow update: if isSignedIn();
+        allow get: if isAuth(); // Anyone authenticated can check an invite
+        allow create: if isOrgAdmin(request.auth.uid, request.resource.data.organizationId) &&
+                         request.resource.data.inviterId == request.auth.uid;
+        allow update: if isOrgAdmin(request.auth.uid, resource.data.organizationId); // To accept/reject
+        allow delete: if isOrgAdmin(request.auth.uid, resource.data.organizationId);
+    }
+
+    match /teams/{teamId} {
+        allow get, list: if isOrgMember(request.auth.uid, resource.data.organizationId);
+        allow create, update, delete: if isOrgAdmin(request.auth.uid, resource.data.organizationId);
+    }
+    
+    match /taskTemplates/{templateId} {
+        allow get, list: if isOrgMember(request.auth.uid, resource.data.organizationId);
+        allow create: if isOrgMember(request.auth.uid, request.resource.data.organizationId);
+        allow update, delete: if isOrgAdmin(request.auth.uid, resource.data.organizationId);
     }
 
     match /notifications/{notificationId} {
-        allow read, write: if isUser(request.resource.data.userId);
+        allow read, update: if isAuth() && request.auth.uid == resource.data.userId;
+        allow create: if isAuth(); // Created by server-side actions/triggers
+        allow delete: if false;
     }
   }
 }
