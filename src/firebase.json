@@ -1,0 +1,14 @@
+
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "hosting": {
+    "rewrites": [
+      {
+        "source": "/invite/**",
+        "destination": "/invite/[inviteId]"
+      }
+    ]
+  }
+}

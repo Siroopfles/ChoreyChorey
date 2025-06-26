@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User as UserType, RoleName } from '@/lib/types';
@@ -66,7 +67,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
                                             {Object.keys(ROLES).map(roleKey => (
                                                 <DropdownMenuItem key={roleKey} onSelect={() => handleRoleChange(member.id, roleKey as RoleName)}>
                                                     <Shield className="mr-2 h-4 w-4" />
-                                                    <span>Wijs rol '{ROLES[roleKey].name}' toe</span>
+                                                    <span>Wijs rol '{ROLES[roleKey as RoleName].name}' toe</span>
                                                 </DropdownMenuItem>
                                             ))}
                                         </DropdownMenuContent>

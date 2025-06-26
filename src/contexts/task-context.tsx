@@ -20,7 +20,7 @@ import {
   arrayUnion,
   getDocs,
 } from 'firebase/firestore';
-import { addDays, addHours, addMonths, addWeeks, isAfter, isBefore, startOfMonth, getDay, setDate } from 'date-fns';
+import { addDays, addHours, addMonths, addWeeks, isBefore, startOfMonth, getDay, setDate } from 'date-fns';
 import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
@@ -338,7 +338,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           thanked: false,
           timeLogged: 0,
           activeTimerStartedAt: null,
-          completedAt: undefined,
+          completedAt: null,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -515,6 +515,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                     };
                     delete (newTaskData as any).id;
                     delete (newTaskData as any).completedAt;
+                    delete (newTaskData as any).activeTimerStartedAt;
+                    delete (newTaskData as any).timeLogged;
 
                     const docRef = await addDoc(collection(db, 'tasks'), newTaskData);
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -12,9 +13,6 @@ export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] 
     const members = useMemo(() => {
         return team.memberIds.map(id => usersInOrg.find(u => u.id === id)).filter(Boolean) as User[];
     }, [team.memberIds, usersInOrg]);
-    
-    const usersInTeam = useMemo(() => usersInOrg.filter(u => team.memberIds.includes(u.id)), [usersInOrg, team.memberIds]);
-    const usersNotInTeam = useMemo(() => usersInOrg.filter(u => !team.memberIds.includes(u.id)), [usersInOrg, team.memberIds]);
 
     return (
         <Card>
@@ -23,7 +21,7 @@ export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] 
                     <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary"/>{team.name}</CardTitle>
                     <CardDescription>{members.length} {members.length === 1 ? 'lid' : 'leden'}</CardDescription>
                 </div>
-                <ManageMembersPopover team={team} usersInOrg={usersInOrg} usersInTeam={usersInTeam} usersNotInTeam={usersNotInTeam} />
+                <ManageMembersPopover team={team} usersInOrg={usersInOrg} />
             </CardHeader>
             <CardContent>
                 {members.length > 0 ? (

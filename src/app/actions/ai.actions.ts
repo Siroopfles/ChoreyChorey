@@ -14,7 +14,7 @@ import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
 import { suggestPriority } from '@/ai/flows/suggest-priority';
 import { identifyRisk } from '@/ai/flows/identify-risk';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput } from '@/ai/schemas';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -109,7 +109,7 @@ export async function handleGenerateAvatar(name: string) {
     }
 }
 
-export async function handleGenerateTaskImage(input: { title: string, description?: string }) {
+export async function handleGenerateTaskImage(input: GenerateTaskImageInput) {
     try {
         const result = await generateTaskImage(input);
         return { imageDataUri: result.imageDataUri };

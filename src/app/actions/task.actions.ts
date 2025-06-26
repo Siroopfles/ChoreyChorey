@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -47,7 +48,7 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
             const assigneeEmail = row[invertedMapping.assigneeEmail];
             const assignee = assigneeEmail ? usersByEmail[assigneeEmail] : null;
 
-            const taskData = {
+            const taskData: any = {
                 title,
                 description: row[invertedMapping.description] || '',
                 priority: row[invertedMapping.priority] || 'Midden',
@@ -72,6 +73,11 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
                 comments: [],
                 isPrivate: false,
                 thanked: false,
+                completedAt: null,
+                storyPoints: null,
+                teamId: null,
+                timeLogged: 0,
+                activeTimerStartedAt: null,
             };
 
             const taskRef = doc(collection(db, 'tasks'));

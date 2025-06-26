@@ -35,7 +35,7 @@ export default function DashboardPage() {
         : true;
 
       const assigneeMatch = filters.assigneeId ? task.assigneeId === filters.assigneeId : true;
-      const labelMatch = filters.labels.length > 0 ? filters.labels.every(label => task.labels.includes(label as Label)) : true;
+      const labelMatch = filters.labels.length > 0 ? task.labels.every(label => task.labels.includes(label as Label)) : true;
       const priorityMatch = filters.priority ? task.priority === filters.priority : true;
       const teamMatch = filters.teamId ? task.teamId === filters.teamId : true;
 

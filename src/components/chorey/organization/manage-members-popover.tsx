@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -13,9 +14,12 @@ import type { Team, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 
-export function ManageMembersPopover({ team, usersInOrg, usersInTeam, usersNotInTeam }: { team: Team, usersInOrg: User[], usersInTeam: User[], usersNotInTeam: User[] }) {
+export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersInOrg: User[] }) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
+
+    const usersInTeam = usersInOrg.filter(u => team.memberIds.includes(u.id));
+    const usersNotInTeam = usersInOrg.filter(u => !team.memberIds.includes(u.id));
 
     const addUser = async (userId: string) => {
         const teamRef = doc(db, 'teams', team.id);

@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCurrentUserRole(null);
             setTeams([]);
         }
-    }, [isDebugMode]);
+    }, [isDebugMode, toast]);
     
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {

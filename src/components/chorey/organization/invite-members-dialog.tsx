@@ -8,9 +8,7 @@ import { Loader2, Mail, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { Input } from '@/components/ui/input';
-import { db } from '@/lib/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import type { Invite } from '@/lib/types';
+import { createOrganizationInvite } from '@/app/actions/organization.actions';
 
 export function InviteMembersDialog({ organizationId }: { organizationId: string }) {
     const { user, currentOrganization } = useAuth();
@@ -24,16 +22,10 @@ export function InviteMembersDialog({ organizationId }: { organizationId: string
         if (!user || !currentOrganization) return;
         setIsLoading(true);
         try {
-            const newInviteRef = doc(collection(db, 'invites'));
-            const newInvite: Omit<Invite, 'id'> = {
-                organizationId,
-                organizationName: currentOrganization.name,
-                inviterId: user.id,
-                status: 'pending',
-                createdAt: new Date(),
-            };
-            await setDoc(newInviteRef, newInvite);
-            const link = `${window.location.origin}/invite/${newInviteRef.id}`;
+            const result = await createOrganizationInvite(organizationId, user.id, currentOrganization.name);
+            if(result.error || !result.inviteId) throw new Error(result.error || 'Kon geen invite ID aanmaken');
+
+            const link = `${window.location.origin}/invite/${result.inviteId}`;
             setInviteLink(link);
         } catch (error: any) {
             toast({ title: 'Fout', description: error.message, variant: 'destructive' });

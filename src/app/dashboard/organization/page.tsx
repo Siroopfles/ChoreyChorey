@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -17,9 +18,8 @@ import { MemberList } from '@/components/chorey/organization/member-list';
 
 
 export default function OrganizationPage() {
-    const { currentOrganization, loading: authLoading, currentUserRole } = useAuth();
+    const { currentOrganization, loading: authLoading, currentUserRole, teams } = useAuth();
     const { users: usersInOrg } = useTasks();
-    const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -27,18 +27,7 @@ export default function OrganizationPage() {
             setLoading(false);
             return;
         }
-        setLoading(true);
-        const q = query(collection(db, "teams"), where("organizationId", "==", currentOrganization.id));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const teamsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
-            setTeams(teamsData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching teams:", error);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
+        setLoading(false);
     }, [currentOrganization]);
     
     if (authLoading) {

@@ -179,7 +179,7 @@ export type Task = {
   dueDate?: Date;
   assigneeId: string | null;
   creatorId: string | null;
-  teamId?: string;
+  teamId?: string | null;
   labels: Label[];
   subtasks: Subtask[];
   attachments: Attachment[];
@@ -193,10 +193,10 @@ export type Task = {
   blockedBy?: string[];
   recurring?: Recurring;
   organizationId: string;
-  imageDataUri?: string;
+  imageDataUri?: string | null;
   thanked?: boolean;
   timeLogged?: number; // in seconds
-  activeTimerStartedAt?: Date;
+  activeTimerStartedAt?: Date | null;
 };
 
 export type Notification = {

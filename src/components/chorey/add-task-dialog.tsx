@@ -80,10 +80,6 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
     setIsSubmitting(true);
     const success = await addTask(data);
     if (success) {
-      toast({
-        title: 'Taak Aangemaakt!',
-        description: `De taak "${data.title}" is succesvol aangemaakt.`,
-      });
       onOpenChange(false);
       form.reset(defaultFormValues);
     }
