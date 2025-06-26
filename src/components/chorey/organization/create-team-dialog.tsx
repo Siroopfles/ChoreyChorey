@@ -16,6 +16,7 @@ import { addDoc, collection } from 'firebase/firestore';
 
 const teamSchema = z.object({
     name: z.string().min(2, 'Teamnaam moet minimaal 2 karakters bevatten.'),
+    program: z.string().optional(),
 });
 type TeamFormValues = z.infer<typeof teamSchema>;
 
@@ -26,7 +27,7 @@ export function CreateTeamDialog({ organizationId }: { organizationId: string })
 
     const form = useForm<TeamFormValues>({
         resolver: zodResolver(teamSchema),
-        defaultValues: { name: '' },
+        defaultValues: { name: '', program: '' },
     });
 
     const onSubmit = async (data: TeamFormValues) => {
@@ -34,6 +35,7 @@ export function CreateTeamDialog({ organizationId }: { organizationId: string })
         try {
             await addDoc(collection(db, 'teams'), {
                 name: data.name,
+                program: data.program || null,
                 organizationId,
                 memberIds: [],
             });
@@ -69,6 +71,19 @@ export function CreateTeamDialog({ organizationId }: { organizationId: string })
                                     <FormLabel>Teamnaam</FormLabel>
                                     <FormControl>
                                         <Input placeholder="bijv. Development" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="program"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Programma (Optioneel)</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="bijv. Product Innovatie" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

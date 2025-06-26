@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -19,6 +19,19 @@ export default function OrganizationPage() {
     const { currentOrganization, loading: authLoading, currentUserRole, teams } = useAuth();
     const { users: usersInOrg } = useTasks();
     const [loading, setLoading] = useState(true);
+
+    const groupedTeams = useMemo(() => {
+      if (!teams) return {};
+      return teams.reduce((acc, team) => {
+        const programName = team.program || 'Geen Programma';
+        if (!acc[programName]) {
+          acc[programName] = [];
+        }
+        acc[programName].push(team);
+        return acc;
+      }, {} as Record<string, Team[]>);
+    }, [teams]);
+
 
     useEffect(() => {
         if (!currentOrganization) {
@@ -63,15 +76,20 @@ export default function OrganizationPage() {
 
             <Separator />
 
-            <div className="grid gap-6 lg:grid-cols-2">
-                <div className="space-y-6">
+            <div className="grid gap-x-6 gap-y-12 lg:grid-cols-2">
+                <div className="space-y-8">
                     <h2 className="text-xl font-semibold">Teams</h2>
-                    {teams.length > 0 ? (
-                        <div className="grid gap-6 md:grid-cols-1">
-                            {teams.map(team => (
-                                <TeamCard key={team.id} team={team} usersInOrg={usersInOrg} />
-                            ))}
-                        </div>
+                     {teams.length > 0 ? (
+                        Object.entries(groupedTeams).map(([program, programTeams]) => (
+                            <div key={program} className="space-y-4">
+                                <h3 className="text-lg font-semibold text-muted-foreground">{program}</h3>
+                                <div className="grid gap-6 md:grid-cols-1">
+                                    {programTeams.map(team => (
+                                        <TeamCard key={team.id} team={team} usersInOrg={usersInOrg} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))
                     ) : (
                         <Card className="flex flex-col items-center justify-center py-12">
                             <CardHeader className="text-center">

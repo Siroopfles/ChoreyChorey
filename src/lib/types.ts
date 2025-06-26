@@ -62,6 +62,7 @@ export type Team = {
   name: string;
   organizationId: string;
   memberIds: string[];
+  program?: string;
 };
 
 export type User = {
