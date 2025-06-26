@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,12 +12,14 @@ import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
 import type { Task, User, Label, Priority, Team } from '@/lib/types';
 import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
+import DashboardView from '@/components/chorey/dashboard-view';
+import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
 
 export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
   const { user: currentUser, teams } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
-  const [activeTab, setActiveTab] = useState('board');
+  const [activeTab, setActiveTab] = useState('dashboard'); // Default to dashboard for testing
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -69,7 +72,9 @@ export default function DashboardPage() {
           <p>Board Placeholder</p>
         </TabsContent>
         <TabsContent value="dashboard" className="flex-1 mt-4 overflow-y-auto">
-          <p>Dashboard Placeholder</p>
+           <Suspense fallback={<DashboardViewSkeleton />}>
+              <DashboardView tasks={filteredTasks} users={users} />
+           </Suspense>
         </TabsContent>
         <TabsContent value="calendar" className="flex-1 mt-4 overflow-y-auto">
           <p>Calendar Placeholder</p>
