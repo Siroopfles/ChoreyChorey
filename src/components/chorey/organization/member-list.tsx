@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User as UserType, RoleName } from '@/lib/types';
@@ -12,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from '@/components/ui/button';
 import { MoreVertical, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const statusStyles: Record<string, { dot: string; label: string }> = {
     Online: { dot: 'bg-green-500', label: 'Online' },
