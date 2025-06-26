@@ -115,8 +115,32 @@ export const ALL_LABELS: Label[] = ["Keuken", "Woonkamer", "Badkamer", "Slaapkam
 
 export const ALL_SKILLS: string[] = ["Koken", "Schoonmaken", "Tuinieren", "Techniek", "Administratie", "Organiseren", "Boodschappen", "Dierenverzorging", "Planning", "Communicatie"];
 
-export type RecurringFrequency = "daily" | "weekly" | "monthly";
-export const ALL_RECURRING_FREQUENCIES: RecurringFrequency[] = ["daily", "weekly", "monthly"];
+export const monthlyRecurringSchema = z.union([
+  z.object({
+    type: z.literal('day_of_month'),
+    day: z.number().min(1).max(31),
+  }),
+  z.object({
+    type: z.literal('day_of_week'),
+    week: z.enum(['first', 'second', 'third', 'fourth', 'last']),
+    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    weekday: z.number().min(0).max(6),
+  })
+]);
+
+export const recurringSchema = z.object({
+  frequency: z.enum(['daily', 'weekly', 'monthly']),
+  monthly: monthlyRecurringSchema.optional(),
+}).refine(data => {
+  // If frequency is monthly, the monthly details must be provided.
+  return data.frequency !== 'monthly' || !!data.monthly;
+}, {
+  message: "Maandelijkse herhalingsdetails zijn vereist wanneer de frequentie is ingesteld op maandelijks.",
+  path: ["monthly"],
+});
+
+export type Recurring = z.infer<typeof recurringSchema>;
+
 
 export type Subtask = {
   id: string;
@@ -167,7 +191,7 @@ export type Task = {
   order: number;
   storyPoints?: number;
   blockedBy?: string[];
-  recurring?: RecurringFrequency;
+  recurring?: Recurring;
   organizationId: string;
   imageDataUri?: string;
   thanked?: boolean;
@@ -200,7 +224,7 @@ export const taskFormSchema = z.object({
   isPrivate: z.boolean().default(false),
   storyPoints: z.coerce.number().optional(),
   blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
-  recurring: z.enum(['daily', 'weekly', 'monthly']).optional(),
+  recurring: recurringSchema.optional(),
   imageDataUri: z.string().optional(),
 });
 

@@ -20,8 +20,8 @@ import {
   arrayUnion,
   getDocs,
 } from 'firebase/firestore';
-import { addDays, addMonths, addWeeks, isBefore } from 'date-fns';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, RecurringFrequency, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
+import { addDays, addMonths, addWeeks, isBefore, startOfMonth, getDay, setDate } from 'date-fns';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -64,21 +64,51 @@ type TaskContextType = {
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
-const calculateNextDueDate = (currentDueDate: Date | undefined, frequency: RecurringFrequency): Date => {
+const calculateNextDueDate = (currentDueDate: Date | undefined, recurring: Recurring): Date => {
     const startDate = currentDueDate || new Date();
+    // If the due date is in the past, we calculate from today to avoid creating a bunch of overdue tasks.
     const baseDate = isBefore(startDate, new Date()) ? new Date() : startDate;
 
-    switch (frequency) {
+    switch (recurring.frequency) {
         case 'daily':
             return addDays(baseDate, 1);
         case 'weekly':
             return addWeeks(baseDate, 1);
         case 'monthly':
+            const nextMonthDate = addMonths(baseDate, 1);
+            const startOfNextMonth = startOfMonth(nextMonthDate);
+            
+            if (recurring.monthly?.type === 'day_of_month' && recurring.monthly.day) {
+                return setDate(startOfNextMonth, recurring.monthly.day);
+            }
+            
+            if (recurring.monthly?.type === 'day_of_week' && recurring.monthly.weekday !== undefined && recurring.monthly.week) {
+                const { week, weekday } = recurring.monthly;
+
+                const allMatchingWeekdaysInMonth: Date[] = [];
+                let date = startOfNextMonth;
+                // Find all instances of the target weekday in the next month
+                while(date.getMonth() === startOfNextMonth.getMonth()) {
+                    if (getDay(date) === weekday) {
+                        allMatchingWeekdaysInMonth.push(new Date(date.getTime()));
+                    }
+                    date = addDays(date, 1);
+                }
+                
+                if (week === 'last') {
+                    return allMatchingWeekdaysInMonth[allMatchingWeekdaysInMonth.length - 1] || addMonths(baseDate, 1);
+                }
+                
+                const weekIndex = { 'first': 0, 'second': 1, 'third': 2, 'fourth': 3 }[week];
+                return allMatchingWeekdaysInMonth[weekIndex] || addMonths(baseDate, 1); // Fallback
+            }
+            // Fallback for misconfigured monthly
             return addMonths(baseDate, 1);
         default:
             return addDays(new Date(), 1);
     }
 }
+
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { authUser, user, currentOrganization } = useAuth();
@@ -271,7 +301,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     };
     try {
         const history = [addHistoryEntry(authUser.uid, 'Aangemaakt')];
-        const firestoreTask = {
+        const firestoreTask: Omit<Task, 'id'> = {
           title: taskData.title,
           description: taskData.description || '',
           assigneeId: taskData.assigneeId || null,
@@ -296,6 +326,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           thanked: false,
           timeLogged: 0,
           activeTimerStartedAt: null,
+          completedAt: undefined,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -460,6 +491,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                     const nextDueDate = calculateNextDueDate(taskToUpdate.dueDate, taskToUpdate.recurring);
                     const newTaskData = {
                         ...taskToUpdate,
+                        recurring: taskToUpdate.recurring,
                         status: 'Te Doen' as Status,
                         dueDate: nextDueDate,
                         createdAt: new Date(),

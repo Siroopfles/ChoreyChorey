@@ -16,8 +16,8 @@ const roadmapData = {
     { id: 9, title: "Historie & Logging", description: "Volledige taakgeschiedenis, auditlog voor wijzigingen, en deadline waarschuwingen.", completed: true },
     { id: 10, title: "Taak Klonen", description: "Dupliceer taken efficiënt.", completed: true },
     { id: 12, title: "Bulk Taakoperaties", description: "Selecteer en bewerk meerdere taken tegelijk in het webdashboard.", completed: true },
+    { id: 11, title: "Geavanceerde Terugkerende Taken", description: "Complexe patronen (bv. 'elke 3e donderdag van de maand').", completed: true },
     { id: 8, title: "Persoonlijke Herinneringen (`/remindme`)", description: "Vraag de bot om je ergens aan te herinneren.", completed: false },
-    { id: 11, title: "Geavanceerde Terugkerende Taken", description: "Complexe patronen (bv. 'elke 3e donderdag van de maand').", completed: false },
   ],
   "Geavanceerd Project- & Resource Management": [
      { id: 14, title: "Task Review & Approval Workflow", description: "Een formele goedkeuringsstap voor voltooide taken.", completed: true },
