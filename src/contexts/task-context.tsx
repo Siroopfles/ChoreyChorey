@@ -42,6 +42,7 @@ type TaskContextType = {
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
   toggleTaskTimer: (taskId: string) => void;
   reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => void;
+  resetSubtasks: (taskId: string) => void;
   addComment: (taskId: string, text: string) => void;
   thankForTask: (taskId: string) => Promise<void>;
   addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
@@ -943,6 +944,35 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     await deleteDoc(templateRef);
   };
 
+  const resetSubtasks = async (taskId: string) => {
+    if (!authUser) return;
+    try {
+        const taskRef = doc(db, 'tasks', taskId);
+        const taskToUpdate = tasks.find(t => t.id === taskId);
+
+        if (!taskToUpdate || !taskToUpdate.subtasks || taskToUpdate.subtasks.length === 0) {
+            toast({ title: 'Geen subtaken om te resetten.', variant: 'destructive' });
+            return;
+        }
+
+        const resetSubtasks = taskToUpdate.subtasks.map(subtask => ({ ...subtask, completed: false }));
+        
+        const historyEntry = addHistoryEntry(authUser.uid, 'Alle subtaken gereset');
+        await updateDoc(taskRef, { 
+            subtasks: resetSubtasks,
+            history: arrayUnion(historyEntry)
+        });
+
+        toast({
+            title: 'Subtaken gereset!',
+            description: `Alle subtaken voor "${taskToUpdate.title}" zijn gereset.`,
+        });
+
+    } catch (e) {
+        handleError(e, 'resetten van subtaken');
+    }
+  };
+
 
   return (
     <TaskContext.Provider value={{ 
@@ -956,6 +986,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       toggleSubtaskCompletion,
       toggleTaskTimer,
       reorderTasks,
+      resetSubtasks,
       addComment,
       thankForTask,
       addTemplate,

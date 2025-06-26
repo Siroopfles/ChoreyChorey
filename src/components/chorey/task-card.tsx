@@ -120,7 +120,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks } = useTasks();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
@@ -317,6 +317,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     <DropdownMenuItem onClick={() => splitTask(task.id)} disabled={task.subtasks.length < 2}>
                       <Divide className="mr-2 h-4 w-4" />
                       Splitsen
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => resetSubtasks(task.id)} disabled={task.subtasks.length === 0}>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Reset Subtaken
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleCopyId}>
                     <ClipboardCopy className="mr-2 h-4 w-4" />
