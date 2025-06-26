@@ -1,119 +1,116 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
+    // --- Helper Functions ---
+    
+    // Is the user authenticated?
     function isAuth() {
       return request.auth != null;
     }
-
-    function getOrgRole(orgId, userId) {
-      // Safely access the role from the organization document.
-      // Returns the role string or null if not found.
-      let orgData = get(/databases/$(database)/documents/organizations/$(orgId)).data;
-      if (!('members' in orgData) || !(userId in orgData.members)) {
+    
+    // Get the user's role in a specific organization. Returns null if not a member.
+    function getOrgRole(orgId) {
+      let orgDoc = get(/databases/$(database)/documents/organizations/$(orgId)).data;
+      if (!('members' in orgDoc) || !(request.auth.uid in orgDoc.members)) {
         return null;
       }
-      return orgData.members[userId].role;
+      return orgDoc.members[request.auth.uid].role;
     }
 
-    function isOrgMember(orgId, userId) {
-      // Checks if a user is part of an organization's members map.
-      return getOrgRole(orgId, userId) != null;
+    // Is the user an owner of the organization?
+    function isOrgOwner(orgId) {
+      return getOrgRole(orgId) == 'Owner';
     }
 
-    function isOrgAdmin(orgId, userId) {
-      let role = getOrgRole(orgId, userId);
-      return role == 'Admin' || role == 'Owner';
+    // Is the user an admin of the organization?
+    function isOrgAdmin(orgId) {
+       let role = getOrgRole(orgId);
+       return role == 'Admin' || role == 'Owner';
+    }
+    
+    // Is the user a member of the organization?
+    function isOrgMember(orgId) {
+      return getOrgRole(orgId) != null;
     }
 
-    function isOrgOwner(orgId, userId) {
-      return getOrgRole(orgId, userId) == 'Owner';
+    // Can the user view this specific task?
+    function canViewTask(task) {
+        if (!isOrgMember(task.organizationId)) {
+            return false;
+        }
+        // Public tasks are visible to all org members.
+        // Private tasks are only visible to the creator and assignee.
+        return !task.isPrivate || task.creatorId == request.auth.uid || task.assigneeId == request.auth.uid;
     }
 
-
-    // Collection Rules
-
+    // --- User Rules ---
     match /users/{userId} {
-      allow read: if isAuth();
-      allow update: if isAuth() && request.auth.uid == userId;
+      // Users can only read their own data.
+      allow read: if isAuth() && request.auth.uid == userId;
+      
+      // Users can create their own user document upon signup.
       allow create: if isAuth() && request.auth.uid == userId;
+
+      // Users can only update their own profile data.
+      allow update: if isAuth() && request.auth.uid == userId &&
+                       request.resource.data.keys().hasOnly(['name', 'avatar', 'skills', 'currentOrganizationId', 'organizationIds']);
     }
 
+    // --- Organization Rules ---
     match /organizations/{orgId} {
-      allow read: if isAuth() && isOrgMember(orgId, request.auth.uid);
-      
-      allow create: if isAuth() &&
-                       request.resource.data.ownerId == request.auth.uid &&
-                       request.resource.data.members[request.auth.uid].role == 'Owner';
-      
-      allow update: if isAuth() && isOrgAdmin(orgId, request.auth.uid) &&
-                       request.resource.data.ownerId == resource.data.ownerId &&
-                       (getOrgRole(orgId, resource.data.ownerId) == 'Owner' ||
-                        request.resource.data.members[resource.data.ownerId].role == 'Owner');
+      allow read: if isAuth() && isOrgMember(orgId);
+      allow create: if isAuth(); // Any authenticated user can create an org
+      allow update: if isAuth() && isOrgOwner(orgId); // Only owner can update org details
+      allow delete: if isAuth() && isOrgOwner(orgId); // Only owner can delete
     }
     
-    match /tasks/{taskId} {
-      function taskOrgId() {
-        return resource.data.organizationId;
-      }
-      
-      function incomingTaskOrgId() {
-        // Use this for create operations where `resource` doesn't exist yet.
-        return request.resource.data.organizationId;
-      }
-
-      allow read: if isAuth() && isOrgMember(taskOrgId(), request.auth.uid) &&
-                     (resource.data.isPrivate == false || 
-                      resource.data.creatorId == request.auth.uid || 
-                      resource.data.assigneeId == request.auth.uid);
-                      
-      allow create: if isAuth() && isOrgMember(incomingTaskOrgId(), request.auth.uid) &&
-                       request.resource.data.creatorId == request.auth.uid;
-                       
-      allow update, delete: if isAuth() && isOrgMember(taskOrgId(), request.auth.uid);
-    }
-    
+    // --- Team Rules ---
     match /teams/{teamId} {
-       function teamOrgId() {
-        return resource.data.organizationId;
-      }
-      
-      function incomingTeamOrgId() {
-        return request.resource.data.organizationId;
-      }
-      
-      allow read: if isAuth() && isOrgMember(teamOrgId(), request.auth.uid);
-      
-      allow create: if isAuth() && isOrgAdmin(incomingTeamOrgId(), request.auth.uid);
-      allow update, delete: if isAuth() && isOrgAdmin(teamOrgId(), request.auth.uid);
-    }
-
-    match /taskTemplates/{templateId} {
-      function templateOrgId() {
-        return resource.data.organizationId;
-      }
-      
-      allow read, write: if isAuth() && isOrgMember(templateOrgId(), request.auth.uid);
-    }
-
-    match /invites/{inviteId} {
-      allow read: if isAuth(); 
-      
-      allow create: if isAuth() && 
-                       isOrgAdmin(request.resource.data.organizationId, request.auth.uid) &&
-                       request.resource.data.inviterId == request.auth.uid &&
-                       request.resource.data.status == 'pending';
-                       
-      allow update: if isAuth() &&
-                       request.resource.data.status == 'accepted' &&
-                       resource.data.status == 'pending' &&
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow read: if isAuth() && isOrgMember(request.resource.data.organizationId);
+      allow create, update: if isAuth() && isOrgAdmin(request.resource.data.organizationId);
+      allow delete: if isAuth() && isOrgAdmin(request.resource.data.organizationId);
     }
     
+    // --- Task Rules ---
+    match /tasks/{taskId} {
+      // Allow read if the user can view the task based on privacy settings
+      allow read: if isAuth() && canViewTask(resource.data);
+
+      // Allow create if user is a member of the organization
+      allow create: if isAuth() && isOrgMember(request.resource.data.organizationId) &&
+                       request.resource.data.creatorId == request.auth.uid; // Must be creator
+                       
+      // Allow update if user is an admin, or the assignee/creator of the task
+      allow update: if isAuth() && isOrgMember(resource.data.organizationId) &&
+                       (isOrgAdmin(resource.data.organizationId) || resource.data.creatorId == request.auth.uid || resource.data.assigneeId == request.auth.uid);
+
+      // Allow delete only by org admins
+      allow delete: if isAuth() && isOrgAdmin(resource.data.organizationId);
+    }
+
+    // --- Task Template Rules ---
+    match /taskTemplates/{templateId} {
+      allow read, create: if isAuth() && isOrgMember(request.resource.data.organizationId);
+      allow update, delete: if isAuth() && isOrgAdmin(request.resource.data.organizationId);
+    }
+
+    // --- Invite Rules ---
+    match /invites/{inviteId} {
+      allow read: if isAuth(); // Anyone with the link can read to get org details
+      allow create: if isAuth() && 
+                      isOrgAdmin(request.resource.data.organizationId) && 
+                      request.resource.data.inviterId == request.auth.uid;
+      allow update: if isAuth() && isOrgMember(resource.data.organizationId) == false; // Allow user to accept invite if not yet a member
+      allow delete: if isAuth() && isOrgAdmin(get(/databases/$(database)/documents/invites/$(inviteId)).data.organizationId);
+    }
+    
+    // --- Notification Rules ---
     match /notifications/{notificationId} {
-        allow read, write: if isAuth() && resource.data.userId == request.auth.uid;
+        allow read, update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+        allow create: if isAuth(); // Server-side logic handles creation
     }
   }
 }
