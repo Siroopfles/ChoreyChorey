@@ -3,13 +3,16 @@
 import type { User, Status, Task, Team } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection } from '@dnd-kit/core';
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
-import { useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const TaskColumn = ({ title, tasks, users, currentUser, teams }: { title: Status; tasks: Task[]; users: User[], currentUser: User | null, teams: Team[] }) => {
+  const { setNodeRef } = useDroppable({
+    id: title,
+  });
+
   return (
     <div className="flex flex-col w-[320px] shrink-0">
       <div className="flex items-center gap-2 px-1 pb-2">
@@ -19,12 +22,11 @@ const TaskColumn = ({ title, tasks, users, currentUser, teams }: { title: Status
         </span>
       </div>
        <SortableContext id={title} items={tasks} strategy={verticalListSortingStrategy}>
-        <div className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
-            {tasks.length > 0 ? (
-            tasks.map((task) => <SortableTaskCard key={task.id} task={task} users={users} currentUser={currentUser} teams={teams} />)
-            ) : (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80">
-                Geen taken hier.
+        <div ref={setNodeRef} className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
+            {tasks.map((task) => <SortableTaskCard key={task.id} task={task} users={users} currentUser={currentUser} teams={teams} />)}
+            {tasks.length === 0 && (
+            <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80 pointer-events-none">
+                Sleep een taak hierheen.
             </div>
             )}
         </div>
@@ -69,15 +71,15 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    if (activeId === overId) {
-      return;
-    }
-
     const activeContainer = active.data.current?.sortable.containerId as Status;
     const overContainer = (over.data.current?.sortable.containerId || over.id) as Status;
     
     if (!activeContainer || !overContainer || !columns.includes(overContainer)) {
       return;
+    }
+    
+    if (activeId === overId && activeContainer === overContainer) {
+        return;
     }
 
     const activeTask = tasks.find(t => t.id === activeId);
@@ -106,7 +108,7 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
       const oldIndex = itemsInColumn.findIndex((t) => t.id === activeId);
       const newIndex = itemsInColumn.findIndex((t) => t.id === overId);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const reorderedTasks = arrayMove(itemsInColumn, oldIndex, newIndex);
         const tasksToUpdate = reorderedTasks.map((task, index) => ({
             id: task.id,
