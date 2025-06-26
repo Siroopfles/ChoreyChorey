@@ -14,12 +14,13 @@ import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
 import DashboardView from '@/components/chorey/dashboard-view';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
 import CalendarView from '@/components/chorey/calendar-view';
+import TaskColumns from '@/components/chorey/task-columns';
 
 export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
   const { user: currentUser, teams } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('board');
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -69,7 +70,7 @@ export default function DashboardPage() {
           <TabsTrigger value="gantt">Gantt</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="flex-1 mt-4 overflow-hidden">
-          <p>Board Placeholder</p>
+          <TaskColumns tasks={filteredTasks} users={users} currentUser={currentUser} teams={teams} />
         </TabsContent>
         <TabsContent value="dashboard" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<DashboardViewSkeleton />}>
