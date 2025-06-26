@@ -21,6 +21,7 @@ export const PERMISSIONS = {
   DELETE_TASK: 'DELETE_TASK',
   ASSIGN_TASK: 'ASSIGN_TASK',
   VIEW_ALL_TASKS: 'VIEW_ALL_TASKS',
+  VIEW_AUDIT_LOG: 'VIEW_AUDIT_LOG',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -41,6 +42,7 @@ export const ROLES: Record<string, { name: string; permissions: Permission[] }> 
       PERMISSIONS.DELETE_TASK,
       PERMISSIONS.ASSIGN_TASK,
       PERMISSIONS.VIEW_ALL_TASKS,
+      PERMISSIONS.VIEW_AUDIT_LOG,
     ],
   },
   Member: {

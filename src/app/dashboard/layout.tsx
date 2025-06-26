@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -15,6 +15,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import AppHeader from '@/components/chorey/app-header';
 import CommandBar from '@/components/chorey/command-bar';
@@ -27,6 +28,7 @@ import Link from 'next/link';
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
     const { users, viewedUser, setViewedUser, isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
+    const { currentUserRole } = useAuth();
     const pathname = usePathname();
 
     const navItems = [
@@ -37,6 +39,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates' },
         { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
+    ];
+    
+    const adminNavItems = [
+        { href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }
     ];
 
     useEffect(() => {
@@ -72,6 +78,21 @@ function AppShell({ children }: { children: React.ReactNode }) {
                                 </Link>
                             </SidebarMenuItem>
                         ))}
+                         {(currentUserRole === 'Owner' || currentUserRole === 'Admin') && (
+                            <>
+                                <SidebarSeparator className="my-2" />
+                                {adminNavItems.map((item) => (
+                                    <SidebarMenuItem key={item.href}>
+                                        <Link href={item.href} passHref>
+                                            <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                                <item.icon />
+                                                <span>{item.label}</span>
+                                            </SidebarMenuButton>
+                                        </Link>
+                                    </SidebarMenuItem>
+                                ))}
+                            </>
+                        )}
                     </SidebarMenu>
                     <div className="flex-1 overflow-y-auto mt-4">
                         <Leaderboard users={users} />
