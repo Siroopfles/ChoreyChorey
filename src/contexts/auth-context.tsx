@@ -24,6 +24,7 @@ import { auth, db, googleProvider } from '@/lib/firebase';
 import type { User, Organization, Team, RoleName } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
+import { useDebug } from './debug-context';
 
 type AuthContextType = {
     authUser: FirebaseUser | null;
@@ -53,9 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [teams, setTeams] = useState<Team[]>([]);
     const router = useRouter();
     const { toast } = useToast();
+    const { isDebugMode } = useDebug();
 
     const handleError = (error: any, context: string) => {
         console.error(`Error in ${context}:`, error);
+        if (isDebugMode) {
+            console.log(`[DEBUG] Full error object in ${context}:`, error);
+        }
         toast({
             title: `Fout bij ${context}`,
             description: error.message,
@@ -64,39 +69,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const fetchUserAndOrgData = useCallback(async (firebaseUser: FirebaseUser) => {
+        if (isDebugMode) console.log('[DEBUG] AuthContext: Running fetchUserAndOrgData for', firebaseUser.uid);
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
 
         if (!userDoc.exists()) {
-            console.warn("No user document found for existing auth user. This may happen briefly during signup.");
+            if (isDebugMode) console.warn('[DEBUG] AuthContext: No user document found for UID:', firebaseUser.uid);
             return;
         }
 
         const userData = { id: userDoc.id, ...userDoc.data() } as User;
         setUser(userData);
+        if (isDebugMode) console.log('[DEBUG] AuthContext: User data set:', userData);
 
         if (userData.organizationIds && userData.organizationIds.length > 0) {
+            if (isDebugMode) console.log('[DEBUG] AuthContext: Fetching organizations with IDs:', userData.organizationIds);
             const orgsQuery = query(collection(db, 'organizations'), where('__name__', 'in', userData.organizationIds));
             const orgsSnapshot = await getDocs(orgsQuery);
             const userOrgs = orgsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
             setOrganizations(userOrgs);
+            if (isDebugMode) console.log('[DEBUG] AuthContext: Organizations set:', userOrgs);
 
             let currentOrg = null;
             if (userData.currentOrganizationId && userOrgs.some(o => o.id === userData.currentOrganizationId)) {
                 currentOrg = userOrgs.find(o => o.id === userData.currentOrganizationId) || null;
             } else if (userOrgs.length > 0) {
                 currentOrg = userOrgs[0];
+                if (isDebugMode) console.log(`[DEBUG] AuthContext: No current org set, defaulting to first one (${currentOrg.id}) and updating user doc.`);
                 await updateDoc(userDocRef, { currentOrganizationId: currentOrg.id });
             }
             
             setCurrentOrganization(currentOrg);
+            if (isDebugMode) console.log('[DEBUG] AuthContext: Current organization set:', currentOrg);
             
             if (currentOrg) {
-                 // Self-healing: Ensure the organization owner has the 'Owner' role.
-                 // This handles legacy data where the `members` map might be missing or incomplete.
                  let orgNeedsUpdate = false;
                  let members = currentOrg.members || {};
                  if (!currentOrg.members || !members[currentOrg.ownerId]) {
+                    if (isDebugMode) console.warn(`[DEBUG] AuthContext: Self-healing org. Owner (${currentOrg.ownerId}) missing role. Adding 'Owner' role.`);
                     members[currentOrg.ownerId] = { role: 'Owner' };
                     orgNeedsUpdate = true;
                  }
@@ -107,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         await updateDoc(orgRef, { members });
                         currentOrg.members = members; // Update local copy
                         setOrganizations(prevOrgs => prevOrgs.map(o => o.id === currentOrg!.id ? currentOrg! : o));
+                        if (isDebugMode) console.log('[DEBUG] AuthContext: Org data self-healed and updated in Firestore.');
                     } catch (e) {
                         handleError(e, 'corrigeren van organisatierol');
                     }
@@ -114,26 +125,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                  const role = (currentOrg.members || {})[firebaseUser.uid]?.role || null;
                  setCurrentUserRole(role);
+                 if (isDebugMode) console.log('[DEBUG] AuthContext: User role set to:', role);
 
                  const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrg.id));
                  const teamsSnapshot = await getDocs(teamsQuery);
                  const orgTeams = teamsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
                  setTeams(orgTeams);
+                 if (isDebugMode) console.log('[DEBUG] AuthContext: Teams set:', orgTeams);
             } else {
+                 if (isDebugMode) console.log('[DEBUG] AuthContext: No current organization, clearing teams and role.');
                  setTeams([]);
                  setCurrentUserRole(null);
             }
 
         } else {
+            if (isDebugMode) console.log('[DEBUG] AuthContext: User has no organizations.');
             setOrganizations([]);
             setCurrentOrganization(null);
             setCurrentUserRole(null);
             setTeams([]);
         }
-    }, []);
+    }, [isDebugMode]);
     
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (isDebugMode) console.log('[DEBUG] AuthContext: Auth state changed. User:', firebaseUser?.uid || 'null');
             setLoading(true);
             if (firebaseUser) {
                 setAuthUser(firebaseUser);
@@ -150,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         return () => unsubscribe();
-    }, [fetchUserAndOrgData]);
+    }, [fetchUserAndOrgData, isDebugMode]);
 
     const loginWithEmail = async (email: string, pass: string) => {
         try {
@@ -286,7 +302,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         teams,
     };
 
-    return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

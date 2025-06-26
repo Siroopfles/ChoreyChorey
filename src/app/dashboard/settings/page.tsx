@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -6,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import ProfileSettings from '@/components/chorey/settings/profile-settings';
 import OrganizationSettings from '@/components/chorey/settings/organization-settings';
 import DangerZone from '@/components/chorey/settings/danger-zone';
+import DebugSettings from '@/components/chorey/settings/debug-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
@@ -37,6 +37,8 @@ export default function SettingsPage() {
           />
         </>
       )}
+
+      <DebugSettings />
     </div>
   );
 }
