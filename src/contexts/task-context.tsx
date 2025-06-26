@@ -33,7 +33,7 @@ type TaskContextType = {
   users: User[];
   templates: TaskTemplate[];
   loading: boolean;
-  addTask: (taskData: Partial<TaskFormValues> & { title: string }) => void;
+  addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments'>>) => void;
   cloneTask: (taskId: string) => void;
@@ -261,10 +261,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const addTask = async (taskData: Partial<TaskFormValues> & { title: string }) => {
+  const addTask = async (taskData: Partial<TaskFormValues> & { title: string }): Promise<boolean> => {
     if (!authUser || !currentOrganization) {
       toast({ title: 'Geen organisatie geselecteerd', description: 'Selecteer een organisatie voordat je een taak toevoegt.', variant: 'destructive' });
-      return;
+      return false;
     };
     try {
         const history = [addHistoryEntry(authUser.uid, 'Aangemaakt')];
@@ -303,8 +303,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 docRef.id
             );
         }
+        return true;
     } catch (e) {
         handleError(e, 'opslaan van taak');
+        return false;
     }
   };
   

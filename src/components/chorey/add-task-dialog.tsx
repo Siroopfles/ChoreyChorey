@@ -3,7 +3,7 @@
 
 import type { User, TaskFormValues, TaskTemplateFormValues } from '@/lib/types';
 import { taskFormSchema } from '@/lib/types';
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskFormFields } from './task-form-fields';
+import { Loader2 } from 'lucide-react';
 
 type AddTaskDialogProps = {
   users: User[];
@@ -50,6 +51,7 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
   const { toast } = useToast();
   const { addTask } = useTasks();
   const { teams } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -74,14 +76,18 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
     }
   }, [open, template, form]);
 
-  function onSubmit(data: TaskFormValues) {
-    addTask(data);
-    toast({
-      title: 'Taak Aangemaakt!',
-      description: `De taak "${data.title}" is succesvol aangemaakt.`,
-    });
-    onOpenChange(false);
-    form.reset(defaultFormValues);
+  async function onSubmit(data: TaskFormValues) {
+    setIsSubmitting(true);
+    const success = await addTask(data);
+    if (success) {
+      toast({
+        title: 'Taak Aangemaakt!',
+        description: `De taak "${data.title}" is succesvol aangemaakt.`,
+      });
+      onOpenChange(false);
+      form.reset(defaultFormValues);
+    }
+    setIsSubmitting(false);
   }
 
   return (
@@ -98,10 +104,13 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
                 <TaskFormFields users={users} teams={teams} />
               </ScrollArea>
               <DialogFooter className="pt-4">
-                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                   Annuleren
                 </Button>
-                <Button type="submit">Taak Aanmaken</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Taak Aanmaken
+                </Button>
               </DialogFooter>
             </form>
           </Form>
