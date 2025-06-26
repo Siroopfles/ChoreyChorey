@@ -1,8 +1,8 @@
 
 'use client';
 
-import type { User, Label, Team } from '@/lib/types';
-import { ALL_LABELS } from '@/lib/types';
+import type { User, Label, Team, Priority } from '@/lib/types';
+import { ALL_LABELS, ALL_PRIORITIES } from '@/lib/types';
 import { useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,12 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle } from 'lucide-react';
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage } from '@/app/actions/ai.actions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk } from '@/app/actions/ai.actions';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { RichTextEditor } from '../ui/rich-text-editor';
@@ -40,6 +40,10 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
   const [pointsSuggestion, setPointsSuggestion] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isSuggestingPriority, setIsSuggestingPriority] = useState(false);
+  const [prioritySuggestion, setPrioritySuggestion] = useState('');
+  const [isIdentifyingRisk, setIsIdentifyingRisk] = useState(false);
+  const [riskAnalysis, setRiskAnalysis] = useState<{ hasRisk: boolean; riskLevel: string; analysis: string; } | null>(null);
 
   const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
     control: form.control,
@@ -96,6 +100,43 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
     }
     setIsSuggestingPoints(false);
   };
+  
+  const onSuggestPriority = async () => {
+    const title = form.getValues('title');
+    const description = form.getValues('description');
+     if (!title) {
+        toast({ title: 'Titel vereist', description: 'Voer een titel in om een prioriteit te kunnen genereren.', variant: 'destructive' });
+        return;
+    }
+    setIsSuggestingPriority(true);
+    setPrioritySuggestion('');
+    const result = await handleSuggestPriority({ title, description });
+    if (result.error) {
+        toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
+    } else if (result.suggestion) {
+        form.setValue('priority', result.suggestion.priority);
+        setPrioritySuggestion(result.suggestion.reasoning);
+    }
+    setIsSuggestingPriority(false);
+  };
+  
+  const onIdentifyRisk = async () => {
+    const title = form.getValues('title');
+    const description = form.getValues('description');
+     if (!title) {
+        toast({ title: 'Titel vereist', description: 'Voer een titel in om een risico-analyse te kunnen doen.', variant: 'destructive' });
+        return;
+    }
+    setIsIdentifyingRisk(true);
+    setRiskAnalysis(null);
+    const result = await handleIdentifyRisk({ title, description });
+    if (result.error) {
+        toast({ title: 'Fout bij analyse', description: result.error, variant: 'destructive' });
+    } else if (result.analysis) {
+        setRiskAnalysis(result.analysis);
+    }
+    setIsIdentifyingRisk(false);
+  };
 
   const onGenerateImage = async () => {
     const title = form.getValues('title');
@@ -151,6 +192,20 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
           </FormItem>
         )}
       />
+
+      <div className="space-y-2">
+         <Button type="button" variant="outline" size="sm" onClick={onIdentifyRisk} disabled={isIdentifyingRisk}>
+            {isIdentifyingRisk ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <AlertTriangle className="mr-2 h-4 w-4"/>}
+            Analyseer Risico (AI)
+        </Button>
+         {riskAnalysis && (
+            <Alert variant={riskAnalysis.hasRisk ? 'destructive' : 'default'}>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>{riskAnalysis.hasRisk ? `Risico Gedetecteerd (Niveau: ${riskAnalysis.riskLevel})` : "Geen Significant Risico Gedetecteerd"}</AlertTitle>
+              <AlertDescription>{riskAnalysis.analysis}</AlertDescription>
+            </Alert>
+          )}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
@@ -234,19 +289,22 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Prioriteit</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer een prioriteit" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Laag">Laag</SelectItem>
-                  <SelectItem value="Midden">Midden</SelectItem>
-                  <SelectItem value="Hoog">Hoog</SelectItem>
-                  <SelectItem value="Urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
+               <div className="flex items-center gap-2">
+                <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecteer een prioriteit" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {ALL_PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Button type="button" variant="outline" size="icon" onClick={onSuggestPriority} disabled={isSuggestingPriority}>
+                    {isSuggestingPriority ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
+                </Button>
+              </div>
+              {prioritySuggestion && <Alert className="mt-2"><AlertDescription>{prioritySuggestion}</AlertDescription></Alert>}
               <FormMessage />
             </FormItem>
           )}

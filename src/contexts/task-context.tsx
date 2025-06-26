@@ -20,7 +20,7 @@ import {
   arrayUnion,
   getDocs,
 } from 'firebase/firestore';
-import { addDays, addMonths, addWeeks, isBefore, startOfMonth, getDay, setDate } from 'date-fns';
+import { addDays, addHours, addMonths, addWeeks, isAfter, isBefore, startOfMonth, getDay, setDate } from 'date-fns';
 import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
@@ -56,6 +56,7 @@ type TaskContextType = {
   clearFilters: () => void;
   notifications: Notification[];
   markNotificationsAsRead: () => void;
+  snoozeNotification: (notificationId: string) => void;
   viewedUser: User | null;
   setViewedUser: (user: User | null) => void;
   isAddTaskDialogOpen: boolean;
@@ -245,6 +246,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 id: doc.id,
                 ...data,
                 createdAt: (data.createdAt as Timestamp).toDate(),
+                snoozedUntil: (data.snoozedUntil as Timestamp)?.toDate(),
             } as Notification;
         }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setNotifications(notificationsData);
@@ -283,6 +285,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         await batch.commit();
     } catch(e) {
         handleError(e, 'bijwerken van notificaties');
+    }
+  };
+
+  const snoozeNotification = async (notificationId: string) => {
+    try {
+      const notifRef = doc(db, 'notifications', notificationId);
+      const snoozeUntil = addHours(new Date(), 1);
+      await updateDoc(notifRef, { snoozedUntil: Timestamp.fromDate(snoozeUntil) });
+    } catch (e) {
+      handleError(e, 'snoozen van notificatie');
     }
   };
 
@@ -804,6 +816,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       clearFilters,
       notifications,
       markNotificationsAsRead,
+      snoozeNotification,
       viewedUser,
       setViewedUser,
       isAddTaskDialogOpen,

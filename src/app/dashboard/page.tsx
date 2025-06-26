@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { FileDown } from 'lucide-react';
+import { FileDown, Download } from 'lucide-react';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import TaskColumns from '@/components/chorey/task-columns';
 import GanttView from '@/components/chorey/gantt-view';
 import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
 import TaskListView from '@/components/chorey/task-list-view';
+import Papa from 'papaparse';
 
 export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
@@ -42,6 +43,36 @@ export default function DashboardPage() {
     });
   }, [tasks, searchTerm, filters]);
 
+  const handleExport = () => {
+    const dataToExport = filteredTasks.map(task => {
+        const assignee = users.find(u => u.id === task.assigneeId);
+        return {
+            ID: task.id,
+            Titel: task.title,
+            Omschrijving: task.description,
+            Status: task.status,
+            Prioriteit: task.priority,
+            Labels: task.labels.join(', '),
+            ToegewezenAan: assignee ? assignee.name : 'N/A',
+            Einddatum: task.dueDate ? task.dueDate.toISOString().split('T')[0] : 'N/A',
+            Aanmaakdatum: task.createdAt.toISOString().split('T')[0],
+        };
+    });
+
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `chorey_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   if (loading) {
     return <TaskColumnsSkeleton />;
   }
@@ -62,6 +93,10 @@ export default function DashboardPage() {
             <Button variant="outline" onClick={() => setIsImporting(true)}>
                 <FileDown className="mr-2 h-4 w-4" />
                 Importeer Taken
+            </Button>
+             <Button variant="outline" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Exporteer naar CSV
             </Button>
         </div>
       </div>

@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle } from 'lucide-react';
+import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTasks } from '@/contexts/task-context';
 import { Badge } from '@/components/ui/badge';
@@ -23,14 +23,23 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
+import { isAfter } from 'date-fns';
 
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();
-  const { notifications, markNotificationsAsRead, setIsAddTaskDialogOpen } = useTasks();
+  const { notifications, markNotificationsAsRead, snoozeNotification, setIsAddTaskDialogOpen } = useTasks();
   const { user, logout, organizations, currentOrganization, switchOrganization } = useAuth();
-  const unreadCount = notifications.filter(n => !n.read).length;
   const router = useRouter();
+
+  const displayedNotifications = useMemo(() => {
+    return notifications.filter(n => !n.snoozedUntil || isAfter(new Date(), n.snoozedUntil));
+  }, [notifications]);
+
+  const unreadCount = useMemo(() => {
+    return displayedNotifications.filter(n => !n.read).length;
+  }, [displayedNotifications]);
   
   const handleSwitch = async (orgId: string) => {
     await switchOrganization(orgId);
@@ -100,11 +109,22 @@ export default function AppHeader() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                  <div className="max-h-80 overflow-y-auto">
-                    {notifications.length > 0 ? (
-                        notifications.map(n => (
-                            <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-1 whitespace-normal">
+                    {displayedNotifications.length > 0 ? (
+                        displayedNotifications.map(n => (
+                            <DropdownMenuItem key={n.id} className="group flex flex-col items-start gap-1 whitespace-normal" onSelect={(e) => e.preventDefault()}>
                                 <p className={cn("text-sm", !n.read ? 'font-semibold' : 'text-muted-foreground')}>{n.message}</p>
-                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(n.createdAt, { addSuffix: true, locale: nl })}</p>
+                                <div className="w-full flex justify-between items-center">
+                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(n.createdAt, { addSuffix: true, locale: nl })}</p>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-auto p-1 opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                                        onClick={() => snoozeNotification(n.id)}
+                                    >
+                                        <Timer className="mr-1 h-3 w-3" />
+                                        Snooze
+                                    </Button>
+                                </div>
                             </DropdownMenuItem>
                         ))
                     ) : (

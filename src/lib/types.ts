@@ -206,6 +206,7 @@ export type Notification = {
   taskId?: string;
   read: boolean;
   createdAt: Date;
+  snoozedUntil?: Date;
 };
 
 export const taskFormSchema = z.object({

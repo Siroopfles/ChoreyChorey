@@ -12,7 +12,9 @@ import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
-import type { MultiSpeakerTextToSpeechInput } from '@/ai/schemas';
+import { suggestPriority } from '@/ai/flows/suggest-priority';
+import { identifyRisk } from '@/ai/flows/identify-risk';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -129,6 +131,24 @@ export async function handleMultiSpeakerTextToSpeech(input: MultiSpeakerTextToSp
     try {
         const result = await multiSpeakerTextToSpeech(input);
         return { audioDataUri: result.audioDataUri };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function handleSuggestPriority(input: SuggestPriorityInput) {
+    try {
+        const suggestion = await suggestPriority(input);
+        return { suggestion };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function handleIdentifyRisk(input: IdentifyRiskInput) {
+    try {
+        const analysis = await identifyRisk(input);
+        return { analysis };
     } catch (e: any) {
         return { error: e.message };
     }

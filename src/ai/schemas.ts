@@ -1,5 +1,6 @@
 
 import { z } from 'genkit';
+import { ALL_PRIORITIES } from '@/lib/types';
 
 // From suggest-story-points.ts
 export const SuggestStoryPointsInputSchema = z.object({
@@ -112,3 +113,30 @@ export const MultiSpeakerTextToSpeechOutputSchema = z.object({
   audioDataUri: z.string().describe("A data URI of the generated multi-speaker audio. Expected format: 'data:audio/wav;base64,<encoded_data>'."),
 });
 export type MultiSpeakerTextToSpeechOutput = z.infer<typeof MultiSpeakerTextToSpeechOutputSchema>;
+
+// From suggest-priority.ts
+export const SuggestPriorityInputSchema = z.object({
+  title: z.string().describe('The title of the task.'),
+  description: z.string().optional().describe('The description of the task.'),
+});
+export type SuggestPriorityInput = z.infer<typeof SuggestPriorityInputSchema>;
+
+export const SuggestPriorityOutputSchema = z.object({
+  priority: z.enum(ALL_PRIORITIES),
+  reasoning: z.string().describe('A brief explanation for the suggested priority value.'),
+});
+export type SuggestPriorityOutput = z.infer<typeof SuggestPriorityOutputSchema>;
+
+// From identify-risk.ts
+export const IdentifyRiskInputSchema = z.object({
+  title: z.string().describe('The title of the task.'),
+  description: z.string().optional().describe('The description of the task.'),
+});
+export type IdentifyRiskInput = z.infer<typeof IdentifyRiskInputSchema>;
+
+export const IdentifyRiskOutputSchema = z.object({
+  hasRisk: z.boolean().describe('Whether a significant risk has been identified.'),
+  riskLevel: z.enum(['Laag', 'Midden', 'Hoog']).describe('The identified risk level.'),
+  analysis: z.string().describe('A brief analysis of the potential risks.'),
+});
+export type IdentifyRiskOutput = z.infer<typeof IdentifyRiskOutputSchema>;

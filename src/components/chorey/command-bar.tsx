@@ -1,18 +1,62 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Search, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Loader2, Mic } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { handleProcessCommand } from '@/app/actions/ai.actions';
+import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
+
+// Declare the SpeechRecognition types for browsers that support it
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 export default function CommandBar() {
     const [command, setCommand] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isListening, setIsListening] = useState(false);
     const { user, currentOrganization } = useAuth();
     const { toast } = useToast();
+    const recognitionRef = useRef<any>(null);
+
+
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognitionRef.current = new SpeechRecognition();
+            const recognition = recognitionRef.current;
+            recognition.continuous = false;
+            recognition.lang = 'nl-NL';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = (event: any) => {
+                const transcript = event.results[0][0].transcript;
+                setCommand(transcript);
+            };
+
+            recognition.onerror = (event: any) => {
+                toast({
+                    title: 'Fout bij spraakherkenning',
+                    description: event.error,
+                    variant: 'destructive',
+                });
+                setIsListening(false);
+            };
+            
+            recognition.onend = () => {
+                setIsListening(false);
+            };
+
+        }
+    }, [toast]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -39,21 +83,52 @@ export default function CommandBar() {
         setIsLoading(false);
     };
 
+    const toggleListening = () => {
+        if (!recognitionRef.current) {
+            toast({
+                title: 'Browser niet ondersteund',
+                description: 'Spraakherkenning wordt niet ondersteund in je browser.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        if (isListening) {
+            recognitionRef.current.stop();
+        } else {
+            recognitionRef.current.start();
+        }
+        setIsListening(!isListening);
+    };
+
     return (
         <form onSubmit={handleSubmit} className="relative">
-            {isLoading ? (
-                <Loader2 className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground animate-spin" />
-            ) : (
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            )}
+             <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
+                {isLoading ? (
+                    <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                ) : (
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                )}
+             </div>
             <Input
                 type="search"
                 placeholder="Zoek, maak of wijzig een taak..."
-                className="pl-8 w-full bg-sidebar-accent border-sidebar-border"
+                className="pl-8 pr-10 w-full bg-sidebar-accent border-sidebar-border"
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 disabled={isLoading || !user || !currentOrganization}
             />
+            <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={toggleListening}
+                disabled={isLoading}
+                className={cn("absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7", isListening && "text-destructive")}
+            >
+                <Mic className="h-4 w-4" />
+                <span className="sr-only">Spraakherkenning</span>
+            </Button>
         </form>
     );
 }
