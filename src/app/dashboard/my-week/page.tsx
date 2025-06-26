@@ -10,8 +10,8 @@ import TaskCard from '@/components/chorey/task-card';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 
 export default function MyWeekPage() {
-    const { tasks, users, loading: tasksLoading, teams } = useTasks();
-    const { user, loading: authLoading } = useAuth();
+    const { tasks, users, loading: tasksLoading } = useTasks();
+    const { user, loading: authLoading, teams } = useAuth();
 
     const weekTasks = useMemo(() => {
         const today = startOfToday();
