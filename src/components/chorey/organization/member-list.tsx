@@ -1,7 +1,8 @@
+
 'use client';
 
 import type { User as UserType, RoleName } from '@/lib/types';
-import { DEFAULT_ROLES } from '@/lib/types';
+import { DEFAULT_ROLES, statusStyles } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
 import { updateUserRoleInOrganization } from '@/app/actions/organization.actions';
 import { useToast } from '@/hooks/use-toast';
@@ -12,13 +13,6 @@ import { Button } from '@/components/ui/button';
 import { MoreVertical, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-
-const statusStyles: Record<string, { dot: string; label: string }> = {
-    Online: { dot: 'bg-green-500', label: 'Online' },
-    Afwezig: { dot: 'bg-yellow-500', label: 'Afwezig' },
-    'In vergadering': { dot: 'bg-red-500', label: 'In vergadering' },
-    Offline: { dot: 'bg-gray-400', label: 'Offline' },
-};
 
 export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
     const { currentOrganization, user: currentUser, currentUserRole } = useAuth();

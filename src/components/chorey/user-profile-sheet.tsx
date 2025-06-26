@@ -2,7 +2,7 @@
 'use client';
 
 import type { User, Task, Priority } from '@/lib/types';
-import { ACHIEVEMENTS } from '@/lib/types';
+import { ACHIEVEMENTS, statusStyles } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import {
   Sheet,
@@ -41,14 +41,6 @@ const achievementIcons: Record<string, React.ElementType> = {
     'community_helper': Users,
     'appreciated': Heart,
 };
-
-const statusStyles: Record<string, { dot: string; label: string }> = {
-    Online: { dot: 'bg-green-500', label: 'Online' },
-    Afwezig: { dot: 'bg-yellow-500', label: 'Afwezig' },
-    'In vergadering': { dot: 'bg-red-500', label: 'In vergadering' },
-    Offline: { dot: 'bg-gray-400', label: 'Offline' },
-};
-
 
 function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {
   const { currentOrganization } = useAuth();
@@ -227,13 +219,22 @@ export default function UserProfileSheet({
             <div className="flex items-start justify-between">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <Avatar className="h-16 w-16 border-2 border-primary">
-                            <AvatarImage src={user.avatar} alt={user.name} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className={cn("absolute bottom-0 right-0 block h-4 w-4 rounded-full ring-2 ring-background", statusStyle.dot)} />
-                    </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                            <Avatar className="h-16 w-16 border-2 border-primary">
+                                <AvatarImage src={user.avatar} alt={user.name} />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className={cn("absolute bottom-0 right-0 block h-4 w-4 rounded-full ring-2 ring-background", statusStyle.dot)} />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{statusStyle.label}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                     <div>
                         <SheetTitle className="text-2xl">{user.name}</SheetTitle>
                         <SheetDescription>

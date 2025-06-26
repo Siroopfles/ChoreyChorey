@@ -16,6 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -29,15 +30,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { isAfter } from 'date-fns';
-import { USER_STATUSES } from '@/lib/types';
+import { USER_STATUSES, statusStyles } from '@/lib/types';
 import { CreateOrganizationDialog } from './organization/create-organization-dialog';
-
-const statusStyles: Record<string, { dot: string, label: string }> = {
-  Online: { dot: 'bg-green-500', label: 'Online' },
-  Afwezig: { dot: 'bg-yellow-500', label: 'Afwezig' },
-  'In vergadering': { dot: 'bg-red-500', label: 'In vergadering' },
-  Offline: { dot: 'bg-gray-400', label: 'Offline' },
-};
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();
@@ -167,23 +161,32 @@ export default function AppHeader() {
           </Button>
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full relative">
-                <Avatar className="h-8 w-8">
-                  {user ? (
-                    <>
-                      <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="woman smiling" />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </>
-                  ) : (
-                    <AvatarFallback>
-                      <UserIcon className="h-5 w-5" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <span className={cn("absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background", currentStatusStyle.dot)} />
-              </Button>
-            </DropdownMenuTrigger>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full relative">
+                      <Avatar className="h-8 w-8">
+                        {user ? (
+                          <>
+                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="woman smiling" />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </>
+                        ) : (
+                          <AvatarFallback>
+                            <UserIcon className="h-5 w-5" />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <span className={cn("absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background", currentStatusStyle.dot)} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Status: {currentStatusStyle.label}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Mijn Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
