@@ -82,7 +82,7 @@ export const roadmapData = {
       { id: 45, title: "AI Predictive Analysis & Risk Detection", description: "Waarschuwt proactief voor projectvertragingen.", completed: false },
       { id: 46, title: "AI-Generated Reports", description: "Maak rapporten op basis van een prompt in natuurlijke taal.", completed: false },
       { id: 48, title: "AI-Suggested Optimal Workflow Paths", description: "Stelt de meest efficiënte status-volgorde voor per taaktype.", completed: false },
-      { id: 50, title: "Automatische Detectie van Dubbele Taken", description: "Signaleert mogelijke duplicaten bij aanmaak.", completed: false },
+      { id: 50, title: "Automatische Detectie van Dubbele Taken", description: "Signaleert mogelijke duplicaten bij aanmaak.", completed: true },
       { id: 51, title: "AI-Powered Sentiment Analyse", description: "Analyseert de toon van de communicatie in comments.", completed: false },
       { id: 53, title: "AI Anomaly Detection", description: "Detecteert ongebruikelijke patronen in de voortgang of tijdregistratie.", completed: false },
     ],

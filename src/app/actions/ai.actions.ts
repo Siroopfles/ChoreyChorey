@@ -16,7 +16,8 @@ import { suggestPriority } from '@/ai/flows/suggest-priority';
 import { identifyRisk } from '@/ai/flows/identify-risk';
 import { suggestLabels } from '@/ai/flows/suggest-labels-flow';
 import { meetingToTasks } from '@/ai/flows/meeting-to-tasks-flow';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput } from '@/ai/schemas';
+import { findDuplicateTask } from '@/ai/flows/find-duplicate-task-flow';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -169,6 +170,15 @@ export async function handleMeetingToTasks(input: Omit<MeetingToTasksInput, 'cur
     try {
         const result = await meetingToTasks(input);
         return { summary: result };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function handleFindDuplicateTask(input: FindDuplicateTaskInput) {
+    try {
+        const result = await findDuplicateTask(input);
+        return { result };
     } catch (e: any) {
         return { error: e.message };
     }

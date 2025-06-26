@@ -107,6 +107,7 @@ export const searchTasks = ai.defineTool(
       z.object({
         id: z.string(),
         title: z.string(),
+        description: z.string().optional(),
         status: z.string(),
         priority: z.string(),
         assigneeIds: z.array(z.string()),
@@ -144,6 +145,7 @@ export const searchTasks = ai.defineTool(
     return tasks.map(task => ({
       id: task.id,
       title: task.title,
+      description: task.description,
       status: task.status,
       priority: task.priority,
       assigneeIds: task.assigneeIds,

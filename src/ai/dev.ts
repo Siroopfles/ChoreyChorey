@@ -12,3 +12,4 @@ import '@/ai/flows/suggest-priority.ts';
 import '@/ai/flows/identify-risk.ts';
 import '@/ai/flows/suggest-labels-flow.ts';
 import '@/ai/flows/meeting-to-tasks-flow.ts';
+import '@/ai/flows/find-duplicate-task-flow.ts';

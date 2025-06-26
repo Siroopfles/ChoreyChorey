@@ -163,3 +163,19 @@ export type MeetingToTasksInput = z.infer<typeof MeetingToTasksInputSchema>;
 
 export const MeetingToTasksOutputSchema = z.string().describe('A natural language summary of the tasks that were created.');
 export type MeetingToTasksOutput = z.infer<typeof MeetingToTasksOutputSchema>;
+
+// From find-duplicate-task-flow.ts
+export const FindDuplicateTaskInputSchema = z.object({
+  organizationId: z.string().describe('The ID of the organization to search within.'),
+  title: z.string().describe('The title of the task being checked.'),
+  description: z.string().optional().describe('The description of the task being checked.'),
+});
+export type FindDuplicateTaskInput = z.infer<typeof FindDuplicateTaskInputSchema>;
+
+export const FindDuplicateTaskOutputSchema = z.object({
+  isDuplicate: z.boolean().describe('Whether a likely duplicate was found.'),
+  duplicateTaskId: z.string().optional().describe('The ID of the likely duplicate task, if found.'),
+  duplicateTaskTitle: z.string().optional().describe('The title of the likely duplicate task, if found.'),
+  reasoning: z.string().describe('A brief explanation of why the task is or is not considered a duplicate.'),
+});
+export type FindDuplicateTaskOutput = z.infer<typeof FindDuplicateTaskOutputSchema>;

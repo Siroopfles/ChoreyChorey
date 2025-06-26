@@ -20,11 +20,13 @@ import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Lo
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels } from '@/app/actions/ai.actions';
+import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels, handleFindDuplicateTask } from '@/app/actions/ai.actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { RichTextEditor } from '../ui/rich-text-editor';
+import { useAuth } from '@/contexts/auth-context';
+import type { FindDuplicateTaskOutput } from '@/ai/schemas';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -34,6 +36,7 @@ type TaskFormFieldsProps = {
 export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
+  const { currentOrganization } = useAuth();
   const status = form.watch('status');
 
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
@@ -45,6 +48,8 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
   const [isIdentifyingRisk, setIsIdentifyingRisk] = useState(false);
   const [riskAnalysis, setRiskAnalysis] = useState<{ hasRisk: boolean; riskLevel: string; analysis: string; } | null>(null);
   const [isSuggestingLabels, setIsSuggestingLabels] = useState(false);
+  const [isCheckingForDuplicates, setIsCheckingForDuplicates] = useState(false);
+  const [duplicateResult, setDuplicateResult] = useState<FindDuplicateTaskOutput | null>(null);
 
   const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
     control: form.control,
@@ -193,6 +198,31 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
     setIsSuggestingLabels(false);
   };
 
+  const onCheckForDuplicates = async () => {
+    const title = form.getValues('title');
+    if (!title || !currentOrganization) {
+      toast({ title: 'Titel vereist', description: 'Voer een titel in om op duplicaten te controleren.', variant: 'destructive' });
+      return;
+    }
+    setIsCheckingForDuplicates(true);
+    setDuplicateResult(null);
+
+    const description = form.getValues('description');
+    const result = await handleFindDuplicateTask({
+      organizationId: currentOrganization.id,
+      title,
+      description
+    });
+    
+    if (result.error) {
+      toast({ title: 'Fout bij controleren', description: result.error, variant: 'destructive' });
+    } else if (result.result) {
+      setDuplicateResult(result.result);
+    }
+    
+    setIsCheckingForDuplicates(false);
+  };
+
   return (
     <div className="space-y-4">
       <FormField
@@ -208,6 +238,25 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
           </FormItem>
         )}
       />
+
+       <div className="space-y-2">
+        <Button type="button" variant="outline" size="sm" onClick={onCheckForDuplicates} disabled={isCheckingForDuplicates}>
+            {isCheckingForDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
+            Controleer op Duplicaten (AI)
+        </Button>
+         {duplicateResult && (
+            <Alert variant={duplicateResult.isDuplicate ? 'destructive' : 'default'}>
+              <Bot className="h-4 w-4" />
+              <AlertTitle>
+                {duplicateResult.isDuplicate 
+                  ? `Mogelijk Duplicaat Gevonden: "${duplicateResult.duplicateTaskTitle}"` 
+                  : "Geen Duplicaat Gevonden"}
+              </AlertTitle>
+              <AlertDescription>{duplicateResult.reasoning}</AlertDescription>
+            </Alert>
+          )}
+      </div>
+
       <FormField
         control={form.control}
         name="description"
