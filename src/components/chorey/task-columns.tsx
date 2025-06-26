@@ -62,61 +62,58 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
-    if (!over) return;
+    if (!over) {
+      return;
+    }
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    if (activeId === overId) {
+      return;
+    }
+
+    const activeContainer = active.data.current?.sortable.containerId as Status;
+    const overContainer = (over.data.current?.sortable.containerId || over.id) as Status;
     
-    const activeId = active.id as string;
-    const overId = over.id as string;
+    if (!activeContainer || !overContainer || !columns.includes(overContainer)) {
+      return;
+    }
 
     const activeTask = tasks.find(t => t.id === activeId);
     if (!activeTask) return;
 
-    const activeContainer = active.data.current?.sortable.containerId as Status;
-    
-    // Determine the container we are dropping into.
-    // `over.data.current?.sortable.containerId` is set if we drop over another item.
-    // `over.id` is the container id if we drop on the container itself.
-    const overContainer = (over.data.current?.sortable.containerId || over.id) as Status;
-
-    if (!activeContainer || !overContainer || !columns.includes(overContainer)) {
-        return; // Something is wrong, bail.
-    }
-
-    // Blocked task logic
-    const isBlocked = activeTask.blockedBy?.some(blockerId => {
+    // Handle moving to a NEW column
+    if (activeContainer !== overContainer) {
+      const isBlocked = activeTask.blockedBy?.some(blockerId => {
         const blockerTask = tasks.find(t => t.id === blockerId);
         return blockerTask && blockerTask.status !== 'Voltooid';
-    });
+      });
 
-    if (isBlocked && activeContainer !== overContainer && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
+      if (isBlocked && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
         toast({
-            title: 'Taak Geblokkeerd',
-            description: 'Deze taak kan niet worden gestart omdat een van de afhankelijke taken nog niet is voltooid.',
-            variant: 'destructive',
+          title: 'Taak Geblokkeerd',
+          description: 'Deze taak kan niet worden gestart omdat een van de afhankelijke taken nog niet is voltooid.',
+          variant: 'destructive',
         });
         return;
-    }
+      }
+      
+      updateTask(activeId, { status: overContainer, order: Date.now() });
 
-    if (activeContainer === overContainer) {
-        // Reordering within the same column
-        if (activeId === overId) return; // Dropped on itself
+    } else { // Handle reordering WITHIN the same column
+      const itemsInColumn = tasksByStatus(activeContainer);
+      const oldIndex = itemsInColumn.findIndex((t) => t.id === activeId);
+      const newIndex = itemsInColumn.findIndex((t) => t.id === overId);
 
-        const tasksInColumn = tasksByStatus(activeContainer);
-        const oldIndex = tasksInColumn.findIndex(t => t.id === activeId);
-        // If dropping on the column itself, overId will be the containerId, so findIndex will be -1
-        // We only reorder if dropping on another task
-        const newIndex = tasksInColumn.findIndex(t => t.id === overId);
-        
-        if (oldIndex !== -1 && newIndex !== -1) {
-            const reorderedTasks = arrayMove(tasksInColumn, oldIndex, newIndex);
-            const tasksToUpdate = reorderedTasks.map((task, index) => ({
-                id: task.id,
-                order: index
-            }));
-            reorderTasks(tasksToUpdate);
-        }
-    } else {
-        // Moving to a different column
-        updateTask(activeId, { status: overContainer, order: Date.now() });
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedTasks = arrayMove(itemsInColumn, oldIndex, newIndex);
+        const tasksToUpdate = reorderedTasks.map((task, index) => ({
+            id: task.id,
+            order: index
+        }));
+        reorderTasks(tasksToUpdate);
+      }
     }
   }
 
