@@ -82,7 +82,7 @@ export default function DashboardPage() {
 
   return (
     <>
-    <Tabs defaultValue="board" className="w-full">
+    <Tabs defaultValue="calendar" className="w-full">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <TabsList className="grid w-full grid-cols-4 md:w-fit">
           <TabsTrigger value="board">
