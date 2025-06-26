@@ -72,6 +72,7 @@ export type User = {
   organizationIds?: string[];
   currentOrganizationId?: string | null;
   skills?: string[];
+  endorsements?: Record<string, string[]>; // Map of skill to array of user IDs
 };
 
 export const ACHIEVEMENTS = {

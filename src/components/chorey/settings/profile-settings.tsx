@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User, Bot, Tags, Check, X } from 'lucide-react';
+import { Loader2, User, Bot, Tags, Check, X, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/app/actions/user.actions';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
@@ -29,10 +29,12 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfileSettings({ user }: { user: UserType }) {
-  const { refreshUser } = useAuth();
+  const { refreshUser, users } = useAuth();
   const { toast } = useToast();
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
+
+  const fullUserData = users.find(u => u.id === user.id) || user;
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -156,19 +158,28 @@ export default function ProfileSettings({ user }: { user: UserType }) {
                     </PopoverContent>
                   </Popover>
                   <div className="pt-1 h-fit min-h-[22px]">
-                    {field.value?.map((skill: string) => (
-                      <Badge variant="secondary" key={skill} className="mr-1 mb-1">
-                        {skill}
-                        <button
-                          type="button"
-                          className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => profileForm.setValue('skills', field.value?.filter((s: string) => s !== skill))}
-                        >
-                          <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                        </button>
-                      </Badge>
-                    ))}
+                    {field.value?.map((skill: string) => {
+                      const endorsementCount = fullUserData.endorsements?.[skill]?.length || 0;
+                      return (
+                        <Badge variant="secondary" key={skill} className="mr-1 mb-1">
+                          {skill}
+                          {endorsementCount > 0 && (
+                            <span className="flex items-center ml-1.5 pl-1.5 border-l border-muted-foreground/30">
+                              <Star className="h-3 w-3 mr-1 text-amber-500"/>
+                              {endorsementCount}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => profileForm.setValue('skills', field.value?.filter((s: string) => s !== skill))}
+                          >
+                            <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                          </button>
+                        </Badge>
+                      )
+                    })}
                   </div>
                   <FormMessage />
                 </FormItem>

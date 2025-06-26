@@ -23,6 +23,8 @@ import { useAuth } from '@/contexts/auth-context';
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { KudosDialog } from './kudos-dialog';
+import { toggleSkillEndorsement } from '@/app/actions/user.actions';
+import { useToast } from '@/hooks/use-toast';
 
 
 const priorityBorderColors: Record<Priority, string> = {
@@ -102,21 +104,79 @@ function Achievements({ user }: { user: User }) {
     )
 }
 
-function UserSkills({ user }: { user: User }) {
+function UserSkills({ user, isOwnProfile }: { user: User, isOwnProfile: boolean }) {
+    const { user: currentUser, users: allUsers, refreshUser } = useAuth();
+    const { toast } = useToast();
+
     if (!user.skills || user.skills.length === 0) {
         return null;
     }
 
+    const handleEndorse = async (skill: string) => {
+        if (!currentUser || isOwnProfile) return;
+        
+        const result = await toggleSkillEndorsement(user.id, skill, currentUser.id);
+        if (result.error) {
+            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
+        } else {
+            // No toast on success, the UI update is enough feedback
+            await refreshUser(); // Refresh all user data to see changes
+        }
+    };
+
     return (
         <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-2">VAARDIGHEDEN</h4>
-            <div className="flex flex-wrap gap-2">
-                {user.skills.map(skill => (
-                    <Badge key={skill} variant="secondary" className="flex items-center gap-1.5">
-                       <Star className="h-3 w-3 text-amber-500" />
-                       {skill}
-                    </Badge>
-                ))}
+            <div className="flex flex-col gap-4">
+                {user.skills.map(skill => {
+                    const endorsers = (user.endorsements?.[skill] || []).map(id => allUsers.find(u => u.id === id)).filter(Boolean) as User[];
+                    const currentUserHasEndorsed = endorsers.some(e => e.id === currentUser?.id);
+
+                    return (
+                        <div key={skill} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="flex items-center gap-1.5">
+                                   <Star className="h-3 w-3 text-amber-500" />
+                                   {skill}
+                                </Badge>
+                                {endorsers.length > 0 && (
+                                     <TooltipProvider>
+                                        <div className="flex -space-x-1">
+                                            {endorsers.slice(0, 5).map(endorser => (
+                                                <Tooltip key={endorser.id}>
+                                                    <TooltipTrigger asChild>
+                                                        <Avatar className="h-5 w-5 border-2 border-background">
+                                                            <AvatarImage src={endorser.avatar} />
+                                                            <AvatarFallback>{endorser.name.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>{endorser.name}</TooltipContent>
+                                                </Tooltip>
+                                            ))}
+                                            {endorsers.length > 5 && (
+                                                <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center text-xs font-bold border-2 border-background">
+                                                    +{endorsers.length - 5}
+                                                </div>
+                                            )}
+                                        </div>
+                                     </TooltipProvider>
+                                )}
+                            </div>
+                            {!isOwnProfile && currentUser && (
+                                <Button size="sm" variant={currentUserHasEndorsed ? "default" : "outline"} onClick={() => handleEndorse(skill)}>
+                                    <Star className={cn("mr-2 h-4 w-4", currentUserHasEndorsed && "fill-current")} />
+                                    {endorsers.length}
+                                </Button>
+                            )}
+                            {isOwnProfile && (
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                    <Star className="mr-2 h-4 w-4 text-amber-500" />
+                                    {endorsers.length}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     )
@@ -170,7 +230,7 @@ export default function UserProfileSheet({
           <div className="space-y-4 py-4">
               <UserStats user={user} userTasks={userTasks} />
               <Achievements user={user} />
-              <UserSkills user={user} />
+              <UserSkills user={user} isOwnProfile={isOwnProfile} />
           </div>
 
           <Separator />

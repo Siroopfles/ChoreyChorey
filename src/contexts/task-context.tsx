@@ -114,9 +114,8 @@ const calculateNextDueDate = (currentDueDate: Date | undefined, recurring: Recur
 
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { authUser, user, currentOrganization } = useAuth();
+  const { authUser, user, currentOrganization, users } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,7 +161,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!currentOrganization) {
       setTasks([]);
-      setUsers([]);
       setTemplates([]);
       setLoading(false);
       return;
@@ -215,12 +213,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }, (error: FirestoreError) => handleError(error, 'laden van taken'));
 
-    const qUsers = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrganization.id));
-    const unsubscribeUsers = onSnapshot(qUsers, (snapshot) => {
-        const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
-        setUsers(usersData);
-    }, (error: FirestoreError) => handleError(error, 'laden van gebruikers'));
-
     const qTemplates = query(collection(db, 'taskTemplates'), where("organizationId", "==", currentOrganization.id));
     const unsubscribeTemplates = onSnapshot(qTemplates, (snapshot) => {
         const templatesData = snapshot.docs.map(doc => ({
@@ -234,7 +226,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     return () => {
         unsubscribeTasks();
-        unsubscribeUsers();
         unsubscribeTemplates();
     };
   }, [authUser, currentOrganization, toast]);

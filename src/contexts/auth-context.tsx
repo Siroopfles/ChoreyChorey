@@ -19,7 +19,7 @@ import {
     type User as FirebaseUser,
     getAdditionalUserInfo,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import type { User, Organization, Team, RoleName } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +39,7 @@ type AuthContextType = {
     currentOrganization: Organization | null;
     currentUserRole: RoleName | null;
     switchOrganization: (orgId: string) => Promise<void>;
+    users: User[];
     teams: Team[];
 };
 
@@ -51,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
     const [currentUserRole, setCurrentUserRole] = useState<RoleName | null>(null);
+    const [users, setUsers] = useState<User[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const router = useRouter();
     const { toast } = useToast();
@@ -127,14 +129,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                  setCurrentUserRole(role);
                  if (isDebugMode) console.log('[DEBUG] AuthContext: User role set to:', role);
 
-                 const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrg.id));
-                 const teamsSnapshot = await getDocs(teamsQuery);
-                 const orgTeams = teamsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
-                 setTeams(orgTeams);
-                 if (isDebugMode) console.log('[DEBUG] AuthContext: Teams set:', orgTeams);
+                const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrg.id));
+                const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrg.id));
+
+                onSnapshot(usersQuery, snapshot => setUsers(snapshot.docs.map(d => ({...d.data(), id: d.id} as User))));
+                onSnapshot(teamsQuery, snapshot => setTeams(snapshot.docs.map(d => ({...d.data(), id: d.id} as Team))));
+
             } else {
                  if (isDebugMode) console.log('[DEBUG] AuthContext: No current organization, clearing teams and role.');
                  setTeams([]);
+                 setUsers([]);
                  setCurrentUserRole(null);
             }
 
@@ -144,8 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCurrentOrganization(null);
             setCurrentUserRole(null);
             setTeams([]);
+            setUsers([]);
         }
-    }, [isDebugMode, toast]);
+    }, [isDebugMode]);
     
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -161,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setCurrentOrganization(null);
                 setCurrentUserRole(null);
                 setTeams([]);
+                setUsers([]);
             }
             setLoading(false);
         });
@@ -299,6 +305,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentOrganization,
         currentUserRole,
         switchOrganization,
+        users,
         teams,
     };
 

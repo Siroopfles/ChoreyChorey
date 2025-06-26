@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 
 export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills'>>) {
@@ -11,6 +11,47 @@ export async function updateUserProfile(userId: string, data: Partial<Pick<User,
         return { success: true };
     } catch (error: any) {
         console.error("Error updating user profile:", error);
+        return { error: error.message };
+    }
+}
+
+export async function toggleSkillEndorsement(targetUserId: string, skill: string, endorserId: string) {
+    if (targetUserId === endorserId) {
+        return { error: 'Je kunt je eigen vaardigheden niet onderschrijven.' };
+    }
+    
+    try {
+        const targetUserRef = doc(db, 'users', targetUserId);
+        
+        await runTransaction(db, async (transaction) => {
+            const targetUserDoc = await transaction.get(targetUserRef);
+            if (!targetUserDoc.exists()) {
+                throw new Error("Doelgebruiker niet gevonden.");
+            }
+
+            const targetUserData = targetUserDoc.data() as User;
+            const endorsements = targetUserData.endorsements || {};
+            const skillEndorsers = endorsements[skill] || [];
+
+            const endorserUserRef = doc(db, 'users', endorserId);
+            const endorserUserDoc = await transaction.get(endorserUserRef);
+            if (!endorserUserDoc.exists()) {
+                throw new Error("Onderschrijver niet gevonden.");
+            }
+
+            const fieldPath = `endorsements.${skill}`;
+            if (skillEndorsers.includes(endorserId)) {
+                // User has already endorsed, so retract endorsement
+                transaction.update(targetUserRef, { [fieldPath]: arrayRemove(endorserId) });
+            } else {
+                // User has not endorsed, so add endorsement
+                transaction.update(targetUserRef, { [fieldPath]: arrayUnion(endorserId) });
+            }
+        });
+        
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error toggling skill endorsement:", error);
         return { error: error.message };
     }
 }
