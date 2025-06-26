@@ -6,17 +6,19 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Loader2, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { addDoc, collection } from 'firebase/firestore';
+import { Switch } from '@/components/ui/switch';
 
 const teamSchema = z.object({
     name: z.string().min(2, 'Teamnaam moet minimaal 2 karakters bevatten.'),
     program: z.string().optional(),
+    isSensitive: z.boolean().optional(),
 });
 type TeamFormValues = z.infer<typeof teamSchema>;
 
@@ -27,7 +29,7 @@ export function CreateTeamDialog({ organizationId }: { organizationId: string })
 
     const form = useForm<TeamFormValues>({
         resolver: zodResolver(teamSchema),
-        defaultValues: { name: '', program: '' },
+        defaultValues: { name: '', program: '', isSensitive: false },
     });
 
     const onSubmit = async (data: TeamFormValues) => {
@@ -38,6 +40,7 @@ export function CreateTeamDialog({ organizationId }: { organizationId: string })
                 program: data.program || null,
                 organizationId,
                 memberIds: [],
+                isSensitive: data.isSensitive ?? false,
             });
             toast({ title: 'Gelukt!', description: `Team "${data.name}" is aangemaakt.` });
             setOpen(false);
@@ -86,6 +89,26 @@ export function CreateTeamDialog({ organizationId }: { organizationId: string })
                                         <Input placeholder="bijv. Product Innovatie" {...field} />
                                     </FormControl>
                                     <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="isSensitive"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5">
+                                    <FormLabel>Gevoelig Team</FormLabel>
+                                    <FormDescription>
+                                        Taken in dit team zijn enkel zichtbaar voor leden met speciale permissies.
+                                    </FormDescription>
+                                </div>
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
                                 </FormItem>
                             )}
                         />

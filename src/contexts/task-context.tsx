@@ -118,7 +118,7 @@ const calculateNextDueDate = (currentDueDate: Date | undefined, recurring: Recur
 
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { authUser, user, currentOrganization, users, currentUserPermissions } = useAuth();
+  const { authUser, user, currentOrganization, users, currentUserPermissions, teams } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -220,8 +220,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
       // Mask sensitive data
       const canViewSensitive = currentUserPermissions.includes(PERMISSIONS.VIEW_SENSITIVE_DATA);
+      const teamsMap = new Map(teams.map(t => [t.id, t]));
       processedTasks = processedTasks.map(task => {
-          if (task.isSensitive && !canViewSensitive) {
+          const teamIsSensitive = task.teamId ? teamsMap.get(task.teamId)?.isSensitive : false;
+          if ((task.isSensitive || teamIsSensitive) && !canViewSensitive) {
               return {
                   ...task,
                   title: '[Gevoelige Taak]',
@@ -251,7 +253,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         unsubscribeTasks();
         unsubscribeTemplates();
     };
-  }, [authUser, currentOrganization, toast, currentUserPermissions]);
+  }, [authUser, currentOrganization, toast, currentUserPermissions, teams]);
 
 
   useEffect(() => {

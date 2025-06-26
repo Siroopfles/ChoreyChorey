@@ -170,7 +170,7 @@ export const roadmapData = {
     ],
     "Veiligheid, Compliance & Beheer": [
       { id: 1093, title: "Geavanceerd Rechtenbeheer (RBAC)", description: "Definieer rollen (Eigenaar, Beheerder, Lid) met specifieke permissies.", completed: true },
-      { id: 67, title: "Data Masking voor gevoelige taken", description: "Verberg gevoelige informatie in taken voor niet-geautoriseerde gebruikers.", completed: true },
+      { id: 67, title: "Data Masking voor gevoelige taken/projecten", description: "Verberg gevoelige informatie door taken of hele teams als 'gevoelig' te markeren.", completed: true },
       { id: 68, title: "Verplichte 2FA voor bepaalde rollen", description: "Forceer Two-Factor Authentication.", completed: false },
       { id: 69, title: "API Rate Limiting & Key Management", description: "Beheer API-toegang.", completed: false },
       { id: 70, title: "Sessie Management", description: "Zie en beëindig actieve login-sessies.", completed: false },

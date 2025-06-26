@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users } from 'lucide-react';
+import { Users, EyeOff } from 'lucide-react';
 import type { Team, User } from '@/lib/types';
 import { ManageMembersPopover } from './manage-members-popover';
 
@@ -18,7 +18,22 @@ export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] 
         <Card>
             <CardHeader className="flex flex-row items-start justify-between">
                 <div>
-                    <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary"/>{team.name}</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-primary"/>
+                        {team.name}
+                        {team.isSensitive && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Dit is een gevoelig team.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                    </CardTitle>
                     <CardDescription>{members.length} {members.length === 1 ? 'lid' : 'leden'}</CardDescription>
                 </div>
                 <ManageMembersPopover team={team} usersInOrg={usersInOrg} />
