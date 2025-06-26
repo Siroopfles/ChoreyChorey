@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, Suspense } from 'react';
@@ -22,10 +21,11 @@ import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
 import TaskListView from '@/components/chorey/task-list-view';
 import Papa from 'papaparse';
 import { ChoreOfTheWeekCard } from '@/components/chorey/chore-of-the-week-card';
+import { GettingStartedGuide } from '@/components/chorey/getting-started-guide';
 
 export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
-  const { user: currentUser, teams } = useAuth();
+  const { user: currentUser, teams, currentOrganization } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
@@ -49,6 +49,11 @@ export default function DashboardPage() {
   const choreOfTheWeek = useMemo(() => filteredTasks.find(t => t.isChoreOfTheWeek), [filteredTasks]);
   const regularTasks = useMemo(() => filteredTasks.filter(t => !t.isChoreOfTheWeek), [filteredTasks]);
   const helpNeededTasks = useMemo(() => regularTasks.filter(t => t.helpNeeded), [regularTasks]);
+
+  const showGettingStarted = useMemo(() => {
+    return currentOrganization && users.length === 1 && currentUser?.id === currentOrganization.ownerId;
+  }, [currentOrganization, users, currentUser]);
+
 
   const handleExport = () => {
     const dataToExport = filteredTasks.map(task => {
@@ -86,6 +91,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full gap-4">
+      {showGettingStarted && <GettingStartedGuide />}
       {choreOfTheWeek && <ChoreOfTheWeekCard task={choreOfTheWeek} users={users} />}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">

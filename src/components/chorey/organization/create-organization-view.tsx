@@ -22,7 +22,12 @@ const orgCreationSchema = z.object({
 });
 type OrgCreationFormValues = z.infer<typeof orgCreationSchema>;
 
-export function CreateOrganizationView() {
+interface CreateOrganizationViewProps {
+  onCreated?: () => void;
+  inDialog?: boolean;
+}
+
+export function CreateOrganizationView({ onCreated, inDialog = false }: CreateOrganizationViewProps) {
     const { user, refreshUser } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,6 +77,9 @@ export function CreateOrganizationView() {
             });
             toast({ title: 'Gelukt!', description: `Organisatie "${data.name}" is aangemaakt.` });
             await refreshUser();
+            if (onCreated) {
+              onCreated();
+            }
         } catch (error: any) {
             console.error("Error creating organization:", error);
             toast({ title: 'Fout', description: error.message, variant: 'destructive' });
@@ -79,6 +87,45 @@ export function CreateOrganizationView() {
             setIsSubmitting(false);
         }
     };
+    
+    const Wrapper = inDialog ? 'div' : Card;
+    const ContentWrapper = inDialog ? 'div' : CardContent;
+    
+    const viewContent = (
+      <>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Building className="h-5 w-5"/> Maak een nieuwe organisatie</CardTitle>
+          <CardDescription>Geef je werkruimte een naam, bijvoorbeeld "Mijn Familie" of "Marketing Team".</CardDescription>
+        </CardHeader>
+        <ContentWrapper>
+          <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Naam van de organisatie</FormLabel>
+                              <FormControl>
+                                  <Input placeholder="bijv. Ons Gezin" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Organisatie Aanmaken
+                  </Button>
+              </form>
+          </Form>
+        </ContentWrapper>
+      </>
+    );
+
+    if (inDialog) {
+      return viewContent;
+    }
 
     return (
         <div className="flex flex-col items-center justify-center min-h-full p-4 text-center">
@@ -88,35 +135,9 @@ export function CreateOrganizationView() {
                 Een organisatie is een werkruimte voor je team, familie of project. Hierin beheer je taken en leden.
             </p>
 
-            <Card className="w-full max-w-md mt-8 text-left">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Building className="h-5 w-5"/> Maak een nieuwe organisatie</CardTitle>
-                    <CardDescription>Geef je werkruimte een naam, bijvoorbeeld "Mijn Familie" of "Marketing Team".</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Naam van de organisatie</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="bijv. Ons Gezin" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Organisatie Aanmaken
-                            </Button>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+            <Wrapper className="w-full max-w-md mt-8 text-left">
+              {viewContent}
+            </Wrapper>
 
              <Alert className="w-full max-w-md mt-6 text-left">
                 <Users className="h-4 w-4"/>
