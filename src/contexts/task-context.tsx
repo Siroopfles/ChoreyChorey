@@ -22,7 +22,7 @@ import {
 } from 'firebase/firestore';
 import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
 import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
-import { ACHIEVEMENTS } from '@/lib/types';
+import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
@@ -118,7 +118,7 @@ const calculateNextDueDate = (currentDueDate: Date | undefined, recurring: Recur
 
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { authUser, user, currentOrganization, users } = useAuth();
+  const { authUser, user, currentOrganization, users, currentUserPermissions } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -173,7 +173,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     const qTasks = query(collection(db, 'tasks'), where("organizationId", "==", currentOrganization.id));
     const unsubscribeTasks = onSnapshot(qTasks, (snapshot) => {
-      const tasksData = snapshot.docs.map(doc => {
+      let tasksData = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -190,6 +190,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           comments: (data.comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate() })),
           history: (data.history || []).map((h: any) => ({ ...h, timestamp: (h.timestamp as Timestamp)?.toDate() })),
           isPrivate: data.isPrivate || false,
+          isSensitive: data.isSensitive || false,
           createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
           dueDate: (data.dueDate as Timestamp)?.toDate(),
           completedAt: (data.completedAt as Timestamp)?.toDate(),
@@ -207,14 +208,31 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           reviewerId: data.reviewerId || null,
           isChoreOfTheWeek: data.isChoreOfTheWeek || false,
         } as Task;
-      }).filter(task => {
+      });
+      
+      let processedTasks = tasksData.filter(task => {
         if (!authUser) return false;
         if (task.isPrivate && !task.assigneeIds.includes(authUser.uid) && task.creatorId !== authUser.uid) {
             return false;
         }
         return true;
       });
-      setTasks(tasksData);
+
+      // Mask sensitive data
+      const canViewSensitive = currentUserPermissions.includes(PERMISSIONS.VIEW_SENSITIVE_DATA);
+      processedTasks = processedTasks.map(task => {
+          if (task.isSensitive && !canViewSensitive) {
+              return {
+                  ...task,
+                  title: '[Gevoelige Taak]',
+                  description: 'U heeft geen permissie om de details van deze taak te zien.',
+                  subtasks: task.subtasks.map(st => ({...st, text: '[Verborgen]'})),
+              }
+          }
+          return task;
+      });
+      
+      setTasks(processedTasks);
       setLoading(false);
     }, (error: FirestoreError) => handleError(error, 'laden van taken'));
 
@@ -233,7 +251,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         unsubscribeTasks();
         unsubscribeTemplates();
     };
-  }, [authUser, currentOrganization, toast]);
+  }, [authUser, currentOrganization, toast, currentUserPermissions]);
 
 
   useEffect(() => {
@@ -347,6 +365,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           dueDate: taskData.dueDate || null,
           priority: taskData.priority || 'Midden',
           isPrivate: taskData.isPrivate || false,
+          isSensitive: taskData.isSensitive || false,
           labels: (taskData.labels as Label[]) || [],
           status: 'Te Doen' as Status,
           createdAt: new Date(),

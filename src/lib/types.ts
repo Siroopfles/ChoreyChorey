@@ -38,6 +38,7 @@ export const PERMISSIONS = {
   ASSIGN_TASK: 'ASSIGN_TASK',
   VIEW_ALL_TASKS: 'VIEW_ALL_TASKS',
   VIEW_AUDIT_LOG: 'VIEW_AUDIT_LOG',
+  VIEW_SENSITIVE_DATA: 'VIEW_SENSITIVE_DATA',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -53,6 +54,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.ASSIGN_TASK]: { name: 'Taken Toewijzen', description: 'Kan taken toewijzen aan leden van de organisatie.' },
   [PERMISSIONS.VIEW_ALL_TASKS]: { name: 'Alle Taken Zien', description: 'Kan alle niet-privé taken binnen de organisatie bekijken.' },
   [PERMISSIONS.VIEW_AUDIT_LOG]: { name: 'Audit Log Bekijken', description: 'Heeft toegang tot de audit log met alle acties binnen de organisatie.' },
+  [PERMISSIONS.VIEW_SENSITIVE_DATA]: { name: 'Gevoelige Data Zien', description: 'Kan de inhoud van taken zien die als "gevoelig" zijn gemarkeerd.' },
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
@@ -73,6 +75,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.ASSIGN_TASK,
       PERMISSIONS.VIEW_ALL_TASKS,
       PERMISSIONS.VIEW_AUDIT_LOG,
+      PERMISSIONS.VIEW_SENSITIVE_DATA,
     ],
   },
   Member: {
@@ -227,6 +230,7 @@ export type Task = {
   comments: Comment[];
   history: HistoryEntry[];
   isPrivate: boolean;
+  isSensitive?: boolean;
   createdAt: Date;
   completedAt?: Date;
   order: number;
@@ -275,6 +279,7 @@ export const taskFormSchema = z.object({
       url: z.string().url('Voer een geldige URL in.'),
     })).optional(),
   isPrivate: z.boolean().default(false),
+  isSensitive: z.boolean().default(false),
   storyPoints: z.coerce.number().optional(),
   blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
   dependencyConfig: z.record(z.string(), z.object({ lag: z.coerce.number(), unit: z.enum(['days', 'hours']) })).optional(),

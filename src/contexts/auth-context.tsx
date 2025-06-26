@@ -21,7 +21,8 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
-import type { User, Organization, Team, RoleName, UserStatus } from '@/lib/types';
+import type { User, Organization, Team, RoleName, UserStatus, Permission } from '@/lib/types';
+import { DEFAULT_ROLES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user.actions';
@@ -39,6 +40,7 @@ type AuthContextType = {
     organizations: Organization[];
     currentOrganization: Organization | null;
     currentUserRole: RoleName | null;
+    currentUserPermissions: Permission[];
     switchOrganization: (orgId: string) => Promise<void>;
     users: User[];
     teams: Team[];
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
     const [currentUserRole, setCurrentUserRole] = useState<RoleName | null>(null);
+    const [currentUserPermissions, setCurrentUserPermissions] = useState<Permission[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const router = useRouter();
@@ -131,6 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                  setCurrentUserRole(role);
                  if (isDebugMode) console.log('[DEBUG] AuthContext: User role set to:', role);
 
+                const allRoles = { ...DEFAULT_ROLES, ...(currentOrg.settings?.customization?.customRoles || {}) };
+                const permissions = role ? allRoles[role]?.permissions || [] : [];
+                setCurrentUserPermissions(permissions);
+                 if (isDebugMode) console.log('[DEBUG] AuthContext: User permissions set:', permissions);
+
+
                 const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrg.id));
                 const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrg.id));
 
@@ -142,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                  setTeams([]);
                  setUsers([]);
                  setCurrentUserRole(null);
+                 setCurrentUserPermissions([]);
             }
 
         } else {
@@ -149,6 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setOrganizations([]);
             setCurrentOrganization(null);
             setCurrentUserRole(null);
+            setCurrentUserPermissions([]);
             setTeams([]);
             setUsers([]);
         }
@@ -167,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setOrganizations([]);
                 setCurrentOrganization(null);
                 setCurrentUserRole(null);
+                setCurrentUserPermissions([]);
                 setTeams([]);
                 setUsers([]);
             }
@@ -321,6 +333,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organizations,
         currentOrganization,
         currentUserRole,
+        currentUserPermissions,
         switchOrganization,
         users,
         teams,

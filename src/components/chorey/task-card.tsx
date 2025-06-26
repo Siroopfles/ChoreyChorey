@@ -97,7 +97,7 @@ const statusConfig: Record<string, { icon?: JSX.Element; color: string }> = {
 };
 
 const Highlight = ({ text, highlight }: { text: string, highlight: string }) => {
-    if (!highlight.trim()) {
+    if (!highlight.trim() || text.startsWith('[')) { // Don't highlight masked tasks
       return <>{text}</>;
     }
     const regex = new RegExp(`(${highlight})`, 'gi');
@@ -307,6 +307,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                 <CardTitle className="text-sm font-semibold font-body leading-snug pt-1 flex items-center gap-1.5">
                 {task.isChoreOfTheWeek && <Star className="h-3 w-3 text-yellow-500 fill-yellow-400 shrink-0" />}
                 {task.recurring && <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />}
+                {task.isSensitive && <EyeOff className="h-3 w-3 text-muted-foreground shrink-0" />}
                 <span className="flex-1">
                     <Highlight text={task.title} highlight={searchTerm} />
                 </span>
