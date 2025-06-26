@@ -247,6 +247,7 @@ export type Task = {
   rating?: number | null;
   reviewerId?: string | null;
   isChoreOfTheWeek?: boolean;
+  helpNeeded?: boolean;
 };
 
 export type Notification = {
@@ -281,6 +282,7 @@ export const taskFormSchema = z.object({
     })).optional(),
   isPrivate: z.boolean().default(false),
   isSensitive: z.boolean().default(false),
+  helpNeeded: z.boolean().default(false),
   storyPoints: z.coerce.number().optional(),
   blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
   dependencyConfig: z.record(z.string(), z.object({ lag: z.coerce.number(), unit: z.enum(['days', 'hours']) })).optional(),

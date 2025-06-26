@@ -55,6 +55,7 @@ import {
   Divide,
   Eye,
   Crosshair,
+  HandHeart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -305,9 +306,21 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
             <CardHeader className="p-3 pb-2 pl-9">
             <div className="flex justify-between items-start gap-2">
                 <CardTitle className="text-sm font-semibold font-body leading-snug pt-1 flex items-center gap-1.5">
-                {task.isChoreOfTheWeek && <Star className="h-3 w-3 text-yellow-500 fill-yellow-400 shrink-0" />}
+                {task.isChoreOfTheWeek && <Star className="h-4 w-4 text-yellow-500 fill-yellow-400 shrink-0" />}
                 {task.recurring && <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />}
-                {task.isSensitive && <EyeOff className="h-3 w-3 text-muted-foreground shrink-0" />}
+                {task.isSensitive && <EyeOff className="h-4 w-4 text-muted-foreground shrink-0" />}
+                {task.helpNeeded && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HandHeart className="h-4 w-4 text-cyan-500 shrink-0" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Hulp gezocht voor deze taak</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <span className="flex-1">
                     <Highlight text={task.title} highlight={searchTerm} />
                 </span>
@@ -324,6 +337,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         <Crosshair className="mr-2 h-4 w-4" />
                         Focus
                       </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updateTask(task.id, { helpNeeded: !task.helpNeeded })}>
+                        <HandHeart className="mr-2 h-4 w-4" />
+                        <span>{task.helpNeeded ? 'Hulp niet meer nodig' : 'Vraag om hulp'}</span>
                     </DropdownMenuItem>
                     {showTimeTracking && (
                         <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)}>

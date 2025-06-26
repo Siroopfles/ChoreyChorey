@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Task, User } from '@/lib/types';
@@ -15,6 +16,7 @@ import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { HandHeart } from 'lucide-react';
 
 export default function TaskListView({ tasks, users }: { tasks: Task[], users: User[] }) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -22,6 +24,16 @@ export default function TaskListView({ tasks, users }: { tasks: Task[], users: U
   const handleRowClick = (task: Task) => {
     setEditingTask(task);
   };
+
+  if (tasks.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-[400px]">
+        <HandHeart className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="text-2xl font-bold tracking-tight mt-4">Geen taken gevonden</h3>
+        <p className="text-sm text-muted-foreground">Er zijn geen taken die aan de huidige criteria voldoen.</p>
+      </div>
+    );
+  }
 
   return (
     <>

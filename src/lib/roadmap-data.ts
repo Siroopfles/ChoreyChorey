@@ -98,7 +98,7 @@ export const roadmapData = {
       { id: 34, title: "'Virtuele 'Team Room'", description: "Een 2D/isometrische ruimte waar avatars van teamleden zijn.", completed: true },
       { id: 35, title: "User-Generated Content Challenges", description: "Bv. 'maak de beste taak-template'.", completed: false },
       { id: 36, title: "Project Post-Mortem Badges", description: "Badges voor succesvol afgeronde projecten.", completed: false },
-      { id: 58, title: "'Help Wanted' Board", description: "Vraag om hulp bij specifieke taken.", completed: false },
+      { id: 58, title: "'Help Wanted' Board", description: "Vraag om hulp bij specifieke taken.", completed: true },
       { id: 59, title: "Team-Based Challenges & Competities", description: "Stel doelen voor teams met een beloning.", completed: false },
       { id: 60, title: "Skill Endorsements", description: "Gebruikers kunnen elkaars vaardigheden onderschrijven.", completed: true },
       { id: 61, title: "Ideeënbus & Feature Request Voting", description: "Laat gebruikers meebeslissen over de toekomst van Chorey.", completed: false },

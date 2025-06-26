@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { FileDown, Download, FileText } from 'lucide-react';
+import { FileDown, Download, FileText, HandHeart } from 'lucide-react';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,7 @@ export default function DashboardPage() {
 
   const choreOfTheWeek = useMemo(() => filteredTasks.find(t => t.isChoreOfTheWeek), [filteredTasks]);
   const regularTasks = useMemo(() => filteredTasks.filter(t => !t.isChoreOfTheWeek), [filteredTasks]);
+  const helpNeededTasks = useMemo(() => regularTasks.filter(t => t.helpNeeded), [regularTasks]);
 
   const handleExport = () => {
     const dataToExport = filteredTasks.map(task => {
@@ -116,6 +117,11 @@ export default function DashboardPage() {
         <TabsList>
           <TabsTrigger value="board">Bord</TabsTrigger>
           <TabsTrigger value="list">Lijst</TabsTrigger>
+          <TabsTrigger value="help">
+            <HandHeart className="mr-2 h-4 w-4"/>
+            Hulp Gezocht
+            {helpNeededTasks.length > 0 && <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primary rounded-full">{helpNeededTasks.length}</span>}
+          </TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="calendar">Kalender</TabsTrigger>
           <TabsTrigger value="gantt">Gantt</TabsTrigger>
@@ -125,6 +131,9 @@ export default function DashboardPage() {
         </TabsContent>
         <TabsContent value="list" className="flex-1 mt-4 overflow-y-auto">
           <TaskListView tasks={regularTasks} users={users} />
+        </TabsContent>
+        <TabsContent value="help" className="flex-1 mt-4 overflow-y-auto">
+          <TaskListView tasks={helpNeededTasks} users={users} />
         </TabsContent>
         <TabsContent value="dashboard" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<DashboardViewSkeleton />}>

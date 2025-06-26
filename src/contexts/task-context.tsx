@@ -207,6 +207,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           rating: data.rating || null,
           reviewerId: data.reviewerId || null,
           isChoreOfTheWeek: data.isChoreOfTheWeek || false,
+          helpNeeded: data.helpNeeded || false,
         } as Task;
       });
       
@@ -388,6 +389,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           completedAt: null,
           rating: null,
           reviewerId: taskData.reviewerId ?? null,
+          helpNeeded: taskData.helpNeeded || false,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
