@@ -53,6 +53,7 @@ import {
   EyeOff,
   Star,
   Divide,
+  Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -116,6 +117,7 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 
 const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps) => {
   const assignees = useMemo(() => task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
+  const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
   const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask } = useTasks();
@@ -542,6 +544,26 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         </div>
                       )}
                     </div>
+                    {reviewer && (
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                type="button"
+                                className="rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex items-center gap-1"
+                                onClick={(e) => { e.stopPropagation(); setViewedUser(reviewer); }}
+                                >
+                                <Eye className="h-3 w-3 text-status-in-review" />
+                                <Avatar className="h-6 w-6 border-2 border-background">
+                                    <AvatarImage src={reviewer.avatar} alt={reviewer.name} />
+                                    <AvatarFallback>{reviewer.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Reviewer: {reviewer.name}</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                     {team && (
                         <div className="flex items-center gap-1">
                             <Users className="h-3 w-3" />

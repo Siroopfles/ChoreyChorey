@@ -34,6 +34,7 @@ type TaskFormFieldsProps = {
 export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
+  const status = form.watch('status');
 
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
@@ -333,6 +334,34 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
             </FormItem>
           )}
         />
+        {status === 'In Review' && (
+           <FormField
+              control={form.control}
+              name="reviewerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reviewer</FormLabel>
+                  <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder="Selecteer een reviewer" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Geen reviewer</SelectItem>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        )}
         <FormField
           control={form.control}
           name="dueDate"

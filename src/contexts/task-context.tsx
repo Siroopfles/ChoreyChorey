@@ -19,7 +19,7 @@ import {
   arrayUnion,
   getDocs,
 } from 'firebase/firestore';
-import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter } from 'date-fns';
+import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
 import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
@@ -201,6 +201,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           timeLogged: data.timeLogged || 0,
           activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
           rating: data.rating || null,
+          reviewerId: data.reviewerId || null,
         } as Task;
       }).filter(task => {
         if (!authUser) return false;
@@ -344,6 +345,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           activeTimerStartedAt: null,
           completedAt: null,
           rating: null,
+          reviewerId: taskData.reviewerId ?? null,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -532,18 +534,28 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
 
-        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeIds', 'priority', 'dueDate', 'title', 'teamId'];
+        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeIds', 'priority', 'dueDate', 'title', 'teamId', 'reviewerId'];
         fieldsToTrack.forEach(field => {
             if (updates[field] !== undefined && JSON.stringify(updates[field]) !== JSON.stringify(taskToUpdate[field])) {
-                const oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');
-                const newValue = field === 'dueDate' ? (updates[field] ? (updates[field] as Date).toLocaleDateString() : 'geen') : (updates[field] || 'leeg');
+                let oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');
+                let newValue = field === 'dueDate' ? (updates[field] ? (updates[field] as Date).toLocaleDateString() : 'geen') : (updates[field] || 'leeg');
                 
                 let details = `van "${oldValue}" naar "${newValue}"`;
+
+                const getUserNames = (ids: string[]) => (ids || []).map(id => users.find(u => u.id === id)?.name || 'Onbekend').join(', ') || 'niemand';
+
                 if (field === 'assigneeIds') {
-                    const oldAssignees = taskToUpdate.assigneeIds.map(id => users.find(u => u.id === id)?.name || 'Onbekend').join(', ') || 'niemand';
-                    const newAssignees = (updates.assigneeIds || []).map(id => users.find(u => u.id === id)?.name || 'Onbekend').join(', ') || 'niemand';
+                    const oldAssignees = getUserNames(taskToUpdate.assigneeIds);
+                    const newAssignees = getUserNames(updates.assigneeIds || []);
                     details = `van ${oldAssignees} naar ${newAssignees}`;
                 }
+
+                if (field === 'reviewerId') {
+                    const oldReviewer = taskToUpdate.reviewerId ? users.find(u => u.id === taskToUpdate.reviewerId)?.name || 'Onbekend' : 'niemand';
+                    const newReviewer = updates.reviewerId ? users.find(u => u.id === updates.reviewerId)?.name || 'Onbekend' : 'niemand';
+                    details = `van ${oldReviewer} naar ${newReviewer}`;
+                }
+                
                 newHistory.push(addHistoryEntry(authUser.uid, `Veld '${field}' gewijzigd`, details));
             }
         });
@@ -553,6 +565,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
              addedAssignees.forEach(assigneeId => {
                  createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId);
              });
+        }
+        
+        if (updates.reviewerId && updates.reviewerId !== taskToUpdate.reviewerId) {
+            createNotification(updates.reviewerId, `Je bent gevraagd om een review te doen voor: "${taskToUpdate.title}"`, taskId);
         }
 
         if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== authUser.uid) {

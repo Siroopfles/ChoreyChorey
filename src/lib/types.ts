@@ -200,6 +200,7 @@ export type Task = {
   timeLogged?: number; // in seconds
   activeTimerStartedAt?: Date | null;
   rating?: number | null;
+  reviewerId?: string | null;
 };
 
 export type Notification = {
@@ -236,6 +237,7 @@ export const taskFormSchema = z.object({
   dependencyConfig: z.record(z.string(), z.object({ lag: z.coerce.number(), unit: z.enum(['days', 'hours']) })).optional(),
   recurring: recurringSchema.optional(),
   imageDataUri: z.string().optional(),
+  reviewerId: z.string().optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
