@@ -120,7 +120,7 @@ export const roadmapData = {
       { id: 40, title: "Multi-Window / Tab Support", description: "Ondersteuning voor meerdere vensters in de webapp.", completed: false },
       { id: 41, title: "'Mijn Week' view", description: "Een persoonlijke, automatische planning.", completed: true },
       { id: 42, title: "Gebruikersstatus & Aanwezigheid", description: "Online, Afwezig, In een meeting, etc.", completed: true },
-      { id: 43, title: "Snelheid van Interface-animaties instelbaar", description: "Pas de snelheid van animaties aan.", completed: false },
+      { id: 43, title: "Snelheid van Interface-animaties instelbaar", description: "Pas de snelheid van animaties aan.", completed: true },
       { id: 44, title: "Drag & Drop Taakcreatie vanuit bestanden", description: "Sleep bestanden om taken aan te maken.", completed: false },
       { id: 45, title: "Visuele Workflow Editor", description: "Bouw workflows met een drag-and-drop interface.", completed: false },
       { id: 46, title: "Geavanceerde Zoekfilters Opslaan", description: "Sla complexe filtersets op voor hergebruik.", completed: false },

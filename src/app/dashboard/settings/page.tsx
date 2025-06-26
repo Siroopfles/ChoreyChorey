@@ -10,6 +10,7 @@ import DebugSettings from '@/components/chorey/settings/debug-settings';
 import WorkflowSettings from '@/components/chorey/settings/workflow-settings';
 import FeatureToggleSettings from '@/components/chorey/settings/feature-toggle-settings';
 import BrandingSettings from '@/components/chorey/settings/branding-settings';
+import AnimationSettings from '@/components/chorey/settings/animation-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
@@ -31,6 +32,7 @@ export default function SettingsPage() {
       </div>
       
       <ProfileSettings user={user} />
+      <AnimationSettings />
 
       {currentOrganization && (
         <>

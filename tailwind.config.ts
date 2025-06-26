@@ -91,7 +91,7 @@ const config: Config = {
         },
         'accordion-up': {
           from: {
-            height: '0',
+            height: 'var(--radix-accordion-content-height)',
           },
           to: {
             height: '0',
@@ -99,8 +99,8 @@ const config: Config = {
         },
       },
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+        'accordion-down': 'accordion-down calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'accordion-up': 'accordion-up calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
       },
     },
   },
