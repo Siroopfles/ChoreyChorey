@@ -213,6 +213,7 @@ export type Notification = {
   createdAt: Date;
   snoozedUntil?: Date;
   archived?: boolean;
+  organizationId: string;
 };
 
 export const subtaskSchema = z.object({

@@ -77,7 +77,7 @@ export const roadmapData = {
       { id: 26, title: "AI Burnout Voorspelling", description: "Signaleert risico op basis van werkpatronen.", completed: false },
       { id: 27, title: "AI-Powered Onboarding Pad", description: "Genereert een persoonlijk inwerktraject voor nieuwe gebruikers.", completed: false },
       { id: 28, title: "AI Leercurve Analyse", description: "Voorspelt hoe snel een team productief wordt met een nieuwe technologie.", completed: false },
-      { id: 29, title: "AI-suggested 'Next Best Action' voor een taak.", completed: false },
+      { id: 29, title: "'AI-suggested 'Next Best Action' voor een taak.", completed: false },
       { id: 45, title: "AI Predictive Analysis & Risk Detection", description: "Waarschuwt proactief voor projectvertragingen.", completed: false },
       { id: 46, title: "AI-Generated Reports", description: "Maak rapporten op basis van een prompt in natuurlijke taal.", completed: false },
       { id: 48, title: "AI-Suggested Optimal Workflow Paths", description: "Stelt de meest efficiënte status-volgorde voor per taaktype.", completed: false },
