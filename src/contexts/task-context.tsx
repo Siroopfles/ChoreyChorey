@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -234,9 +235,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
 
   useEffect(() => {
-    if (!db || !authUser) return;
+    if (!db || !authUser || !currentOrganization) {
+      setNotifications([]);
+      return;
+    };
     
-    const q = query(collection(db, "notifications"), where("userId", "==", authUser.uid));
+    const q = query(collection(db, "notifications"), where("userId", "==", authUser.uid), where("organizationId", "==", currentOrganization.id));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const notificationsData = snapshot.docs.map(doc => {
             const data = doc.data();
@@ -252,16 +256,17 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
 
     return () => unsubscribe();
-  }, [authUser, toast]);
+  }, [authUser, currentOrganization, toast]);
 
 
-  const createNotification = async (userId: string, message: string, taskId: string) => {
+  const createNotification = async (userId: string, message: string, taskId: string, organizationId: string) => {
       if (!authUser || userId === authUser.uid) return;
       try {
           await addDoc(collection(db, 'notifications'), {
               userId,
               message,
               taskId,
+              organizationId,
               read: false,
               createdAt: new Date(),
           });
@@ -368,7 +373,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
               createNotification(
                   assigneeId,
                   `${user?.name} heeft je toegewezen aan: "${firestoreTask.title}"`,
-                  docRef.id
+                  docRef.id,
+                  currentOrganization.id
               );
             });
         }
@@ -539,7 +545,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
-    if (!authUser) return;
+    if (!authUser || !currentOrganization) return;
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskToUpdate = tasks.find(t => t.id === taskId);
@@ -577,16 +583,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (updates.assigneeIds) {
              const addedAssignees = updates.assigneeIds.filter(id => !taskToUpdate.assigneeIds.includes(id));
              addedAssignees.forEach(assigneeId => {
-                 createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId);
+                 createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId, currentOrganization.id);
              });
         }
         
         if (updates.reviewerId && updates.reviewerId !== taskToUpdate.reviewerId) {
-            createNotification(updates.reviewerId, `Je bent gevraagd om een review te doen voor: "${taskToUpdate.title}"`, taskId);
+            createNotification(updates.reviewerId, `Je bent gevraagd om een review te doen voor: "${taskToUpdate.title}"`, taskId, currentOrganization.id);
         }
 
         if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== authUser.uid) {
-             await createNotification(taskToUpdate.creatorId, `${user?.name} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId);
+             await createNotification(taskToUpdate.creatorId, `${user?.name} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId, currentOrganization.id);
         }
 
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
@@ -632,7 +638,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                             createNotification(
                                 assigneeId,
                                 `Nieuwe herhalende taak: "${newTaskData.title}"`,
-                                docRef.id
+                                docRef.id,
+                                currentOrganization.id
                             );
                         })
                     }
@@ -729,7 +736,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const addComment = async (taskId: string, text: string) => {
-    if (!user) {
+    if (!user || !currentOrganization) {
         handleError({ message: 'Je moet ingelogd zijn om te reageren.' }, 'reageren op taak');
         return;
     }
@@ -757,7 +764,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             createNotification(
                 assigneeId,
                 `${user.name} heeft gereageerd op: "${taskData.title}"`,
-                taskId
+                taskId,
+                currentOrganization.id
             );
           }
         })
@@ -766,7 +774,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
              await createNotification(
                 taskData.creatorId,
                 `${user.name} heeft gereageerd op: "${taskData.title}"`,
-                taskId
+                taskId,
+                currentOrganization.id
             );
         }
 
@@ -816,7 +825,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
-    if(taskIds.length === 0 || !authUser) return;
+    if(taskIds.length === 0 || !authUser || !currentOrganization) return;
     try {
         const batch = writeBatch(db);
         let finalUpdates: Partial<Task> = { ...updates };
@@ -831,7 +840,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                         createNotification(
                             assigneeId,
                             `Je bent toegewezen aan taak: "${task.title}"`,
-                            taskId
+                            taskId,
+                            currentOrganization.id
                         );
                     }
                 });
