@@ -133,7 +133,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    if (user && !currentOrganization && !pathname.startsWith('/dashboard/organization') && !pathname.startsWith('/invite/')) {
+    if (user && !currentOrganization && !pathname.startsWith('/dashboard/organization') && !pathname.startsWith('/invite/') && !pathname.startsWith('/dashboard/focus')) {
       router.push('/dashboard/organization');
     }
 
@@ -149,6 +149,11 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   
   // Allow access to invite page without an organization
   if (pathname.startsWith('/invite/')) {
+      return <>{children}</>;
+  }
+  
+  // Allow access to focus mode without the main AppShell
+  if (pathname.startsWith('/dashboard/focus')) {
       return <>{children}</>;
   }
 

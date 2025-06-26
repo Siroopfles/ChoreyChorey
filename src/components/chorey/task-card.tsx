@@ -1,3 +1,4 @@
+
 'use client';
 import type { Task, User, Team } from '@/lib/types';
 import { ALL_STATUSES } from '@/lib/types';
@@ -54,6 +55,7 @@ import {
   Star,
   Divide,
   Eye,
+  Crosshair,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -67,6 +69,7 @@ import { useToast } from '@/hooks/use-toast';
 import { handleTextToSpeech } from '@/app/actions/ai.actions';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Link from 'next/link';
 
 
 type TaskCardProps = {
@@ -306,6 +309,12 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/focus/${task.id}`}>
+                        <Crosshair className="mr-2 h-4 w-4" />
+                        Focus
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)}>
                       {task.activeTimerStartedAt ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
                       <span>{task.activeTimerStartedAt ? 'Stop Timer' : 'Start Timer'}</span>

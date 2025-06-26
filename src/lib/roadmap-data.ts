@@ -1,3 +1,4 @@
+
 export const roadmapData = {
     "Fundamenteel Taakbeheer (Basis)": [
       { id: 1001, title: "Taakcreatie & Eigenschappen", description: "Prioriteit, labels, toewijzing en deadlines.", completed: true },
@@ -124,7 +125,7 @@ export const roadmapData = {
       { id: 45, title: "Visuele Workflow Editor", description: "Bouw workflows met een drag-and-drop interface.", completed: false },
       { id: 46, title: "Geavanceerde Zoekfilters Opslaan", description: "Sla complexe filtersets op voor hergebruik.", completed: false },
       { id: 47, title: "White-labeling / Custom Branding", description: "Pas het platform aan met eigen logo en kleuren.", completed: false },
-      { id: 48, title: "Focus Mode", description: "Een afleidingsvrije interface om te focussen op de huidige taak.", completed: false },
+      { id: 48, title: "Focus Mode", description: "Een afleidingsvrije interface om te focussen op de huidige taak.", completed: true },
       { id: 49, title: "Toegankelijkheidsverbeteringen (A11y)", description: "Volledige ondersteuning voor screenreaders en toetsenbordnavigatie.", completed: false },
       { id: 69, title: "Offline Modus (PWA)", description: "Werk offline en synchroniseer later.", completed: false },
       { id: 70, title: "Dedicated Mobile Companion App", description: "Native app voor iOS en Android.", completed: false },
