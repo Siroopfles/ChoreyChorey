@@ -4,6 +4,7 @@ export type Organization = {
   id: string;
   name: string;
   ownerId: string;
+  memberIds: string[];
 };
 
 export type Team = {

@@ -50,6 +50,7 @@ export function CreateOrganizationView() {
                 const newOrgData: Omit<Organization, 'id'> = {
                     name: data.name,
                     ownerId: user.id,
+                    memberIds: [user.id],
                 };
                 transaction.set(newOrgRef, newOrgData);
                 

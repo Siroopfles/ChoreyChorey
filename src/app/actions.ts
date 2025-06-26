@@ -204,12 +204,17 @@ export async function acceptOrganizationInvite(inviteId: string, userId: string)
             }
 
             const organizationId = inviteDoc.data().organizationId;
+            const organizationRef = doc(db, 'organizations', organizationId);
 
             transaction.update(userRef, {
                 organizationIds: arrayUnion(organizationId),
                 currentOrganizationId: organizationId,
             });
             
+            transaction.update(organizationRef, {
+                memberIds: arrayUnion(userId)
+            });
+
             transaction.update(inviteRef, {
                 status: 'accepted'
             });
@@ -268,6 +273,7 @@ export async function leaveOrganization(organizationId: string, userId: string) 
         }
         
         await updateDoc(userRef, updateData);
+        await updateDoc(orgRef, { memberIds: arrayRemove(userId) });
 
         return { success: true };
     } catch (error: any) {
