@@ -23,7 +23,7 @@ const roadmapData = {
      { id: 14, title: "Task Review & Approval Workflow", description: "Een formele goedkeuringsstap voor voltooide taken.", completed: true },
      { id: 16, title: "Effort Estimation (Story Points)", description: "Schat de complexiteit in plaats van de tijd.", completed: true },
      { id: 13, title: "Gantt Chart View (Webdashboard)", description: "Visuele tijdlijn-weergave van projecten.", completed: false },
-     { id: 15, title: "Actieve Tijdregistratie", description: "`/task timer start/stop` voor precieze tijdsmeting.", completed: false },
+     { id: 15, title: "Actieve Tijdregistratie", description: "`/task timer start/stop` voor precieze tijdsmeting.", completed: true },
      { id: 17, title: "Workload Capacity Planning", description: "Visualiseer de werkdruk per teamlid.", completed: false },
      { id: 18, title: "Skills & Competency Matrix", description: "Tag gebruikers met vaardigheden voor betere taaktoewijzing.", completed: false },
   ],

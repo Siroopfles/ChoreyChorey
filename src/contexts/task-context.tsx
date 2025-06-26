@@ -291,6 +291,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           organizationId: currentOrganization.id,
           imageDataUri: taskData.imageDataUri || undefined,
           thanked: false,
+          timeLogged: 0,
+          activeTimerStartedAt: null,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -326,6 +328,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           order: Date.now(),
           organizationId: currentOrganization.id,
           thanked: false,
+          timeLogged: 0,
+          activeTimerStartedAt: null,
         };
         
         delete (clonedTask as any).id; 
