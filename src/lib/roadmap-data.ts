@@ -26,7 +26,7 @@ export const roadmapData = {
       { id: 5, title: "Taak Ratings", description: "Geef een voltooide taak 1-5 sterren voor kwaliteitsmeting.", completed: true },
       { id: 6, title: "Taak Checklist Templates", description: "Opslaan en hergebruiken van sets subtaken.", completed: true },
       { id: 7, title: "'Blokkerende' status", description: "Maakt visueel duidelijk dat een taak geblokkeerd is en waarom.", completed: true },
-      { id: 9, title: "Taak Splitsen", description: "Splits een te grote taak in twee of meer aparte taken.", completed: false },
+      { id: 9, title: "Taak Splitsen", description: "Splits een te grote taak in twee of meer aparte taken.", completed: true },
     ],
     "Geavanceerd Project- & Resource Management": [
       { id: 1022, title: "Task Review & Approval Workflow", description: "Formele goedkeuringsstap ('In Review') voor voltooide taken.", completed: true },
@@ -302,3 +302,5 @@ export const roadmapData = {
       { id: 156, title: "Voorspellende Resource Allocatie", description: "AI voorspelt toekomstige knelpunten en stelt verschuivingen voor.", completed: false },
     ]
   }
+```
+

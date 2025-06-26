@@ -1,4 +1,3 @@
-
 'use client';
 import type { Task, User, Team } from '@/lib/types';
 import { ALL_STATUSES } from '@/lib/types';
@@ -53,6 +52,7 @@ import {
   RefreshCw,
   EyeOff,
   Star,
+  Divide,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -118,7 +118,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const assignees = useMemo(() => task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask } = useTasks();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
@@ -290,6 +290,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     <DropdownMenuItem onClick={() => cloneTask(task.id)}>
                     <Copy className="mr-2 h-4 w-4" />
                     Klonen
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => splitTask(task.id)} disabled={task.subtasks.length < 2}>
+                      <Divide className="mr-2 h-4 w-4" />
+                      Splitsen
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleCopyId}>
                     <ClipboardCopy className="mr-2 h-4 w-4" />

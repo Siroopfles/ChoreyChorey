@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -38,6 +37,7 @@ type TaskContextType = {
   rateTask: (taskId: string, rating: number) => Promise<void>;
   bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments'>>) => void;
   cloneTask: (taskId: string) => void;
+  splitTask: (taskId: string) => Promise<void>;
   deleteTaskPermanently: (taskId: string) => void;
   toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
   toggleTaskTimer: (taskId: string) => void;
@@ -397,6 +397,70 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         handleError(e, 'klonen van taak');
     }
   }
+
+  const splitTask = async (taskId: string) => {
+    if (!authUser) return;
+    try {
+        const taskRef = doc(db, 'tasks', taskId);
+        const taskDoc = await getDoc(taskRef);
+
+        if (!taskDoc.exists()) {
+            throw new Error("Taak niet gevonden.");
+        }
+
+        const originalTask = taskDoc.data();
+        if (!originalTask.subtasks || originalTask.subtasks.length < 2) {
+            toast({
+                title: 'Niet mogelijk',
+                description: 'Een taak moet minimaal 2 subtaken hebben om te kunnen splitsen.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        const splitIndex = Math.ceil(originalTask.subtasks.length / 2);
+        const originalSubtasks = originalTask.subtasks.slice(0, splitIndex);
+        const newSubtasks = originalTask.subtasks.slice(splitIndex);
+
+        const newTaskData: any = {
+            ...originalTask,
+            title: `[SPLITSING] ${originalTask.title}`,
+            subtasks: newSubtasks,
+            createdAt: new Date(),
+            order: (originalTask.order || Date.now()) + 1, // Ensure it appears after the original
+            history: [addHistoryEntry(authUser.uid, 'Aangemaakt door splitsing', `van taak ${taskId}`)],
+            // Reset fields that shouldn't be copied
+            comments: [],
+            completedAt: null,
+            thanked: false,
+            timeLogged: 0,
+            activeTimerStartedAt: null,
+            rating: null,
+        };
+
+        const batch = writeBatch(db);
+
+        // Update original task
+        batch.update(taskRef, {
+            subtasks: originalSubtasks,
+            history: arrayUnion(addHistoryEntry(authUser.uid, 'Taak gesplitst', `${newSubtasks.length} subtaken verplaatst naar nieuwe taak.`))
+        });
+        
+        // Create new task
+        const newTaskRef = doc(collection(db, 'tasks'));
+        batch.set(newTaskRef, newTaskData);
+
+        await batch.commit();
+
+        toast({
+            title: 'Taak gesplitst!',
+            description: `Een nieuwe taak is aangemaakt met de overige subtaken.`,
+        });
+
+    } catch (e) {
+        handleError(e, 'splitsen van taak');
+    }
+  };
 
   const deleteTaskPermanently = async (taskId: string) => {
     try {
@@ -885,6 +949,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       toggleTaskSelection,
       bulkUpdateTasks,
       cloneTask,
+      splitTask,
       deleteTaskPermanently,
       filters,
       setFilters,
