@@ -30,7 +30,8 @@ const CreateTaskDataSchema = z.object({
   priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional().describe('The priority of the task.'),
   assigneeId: z.string().optional().describe('The ID of the user the task is assigned to.'),
   labels: z.array(z.string()).optional().describe('A list of labels for the task.'),
-  dueDate: z.string().optional().describe("The due date in 'YYYY-MM-DD' format."),
+  dueDate: z.string().optional().describe("The due date and time in 'YYYY-MM-DDTHH:mm:ss' ISO 8601 format. The AI should convert natural language dates like 'tomorrow at 10am' into this format."),
+  isPrivate: z.boolean().optional().describe('Whether the task is private to the creator and assignee. Should be true for personal reminders.'),
 });
 
 export const createTask = ai.defineTool(
@@ -47,7 +48,7 @@ export const createTask = ai.defineTool(
     }),
   },
   async ({ organizationId, creatorId, taskData }) => {
-    const firestoreTask = {
+    const firestoreTask: any = {
       ...taskData,
       status: 'Te Doen' as Status,
       creatorId: creatorId,
@@ -56,7 +57,29 @@ export const createTask = ai.defineTool(
       organizationId: organizationId,
       dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null,
       history: [addHistoryEntry(creatorId, 'Aangemaakt', `via AI commando.`)],
+      isPrivate: taskData.isPrivate ?? false,
+      // Add defaults for fields not in schema to avoid Firestore errors
+      subtasks: [],
+      attachments: [],
+      comments: [],
+      teamId: null,
+      completedAt: null,
+      storyPoints: null,
+      blockedBy: [],
+      recurring: null,
+      imageDataUri: null,
+      thanked: false,
+      timeLogged: 0,
+      activeTimerStartedAt: null,
     };
+
+    // Firestore doesn't like 'undefined' values from optional Zod fields
+    Object.keys(firestoreTask).forEach(key => {
+        if (firestoreTask[key] === undefined) {
+            delete firestoreTask[key];
+        }
+    });
+    
     const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
     return { taskId: docRef.id };
   }

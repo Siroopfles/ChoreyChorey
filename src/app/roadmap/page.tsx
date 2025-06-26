@@ -19,7 +19,7 @@ const roadmapData = {
     { id: 12, title: "Geavanceerde Terugkerende Taken", description: "Complexe patronen (bv. 'elke 3e donderdag van de maand').", completed: true },
     { id: 14, title: "Handmatige Taakvolgorde", description: "Sleep taken in de gewenste volgorde binnen een lijst.", completed: true },
     { id: 13, title: "Recycle Bin / Prullenbak", description: "Herstel per ongeluk verwijderde taken binnen een bepaalde periode.", completed: true },
-    { id: 11, title: "Persoonlijke Herinneringen (/remindme)", description: "Vraag de bot om je ergens aan te herinneren.", completed: false },
+    { id: 11, title: "Persoonlijke Herinneringen (/remindme)", description: "Vraag de bot om je ergens aan te herinneren.", completed: true },
     { id: 15, title: "Custom Fields", description: "Voeg eigen velden toe aan taken (bv. 'Klant ID', 'Locatie').", completed: false },
     { id: 16, title: "Rich Text Editor", description: "Opmaakmogelijkheden (vet, cursief, lijsten) in beschrijvingen en comments.", completed: false },
     { id: 17, title: "Batch Bewerken van Subtaken", description: "Meerdere subtaken tegelijk aanpassen.", completed: false },
