@@ -1,4 +1,3 @@
-
 export const roadmapData = {
     "Fundamenteel Taakbeheer (Basis)": [
       { id: 1001, title: "Taakcreatie & Eigenschappen", description: "Prioriteit, labels, toewijzing en deadlines.", completed: true },
@@ -72,7 +71,7 @@ export const roadmapData = {
       { id: 20, title: "AI Team Composition Suggester", description: "Stelt het ideale team voor een nieuw project voor.", completed: false },
       { id: 21, title: "AI Communicatie 'Health' Score", description: "Analyseert reactietijden, sentiment etc.", completed: false },
       { id: 22, title: "AI Goal Setting Assistant", description: "Helpt bij het formuleren van SMART-doelen.", completed: false },
-      { id: 23, title: "AI-powered 'Vergadering naar Taken'", description: "Analyseert transcript en stelt actiepunten voor.", completed: true },
+      { id: 23, title: "'Vergadering naar Taken' (AI)", description: "Analyseert transcript en stelt actiepunten voor.", completed: true },
       { id: 24, title: "AI voor Automatische Tagging", description: "Suggereert labels op basis van taakinhoud.", completed: true },
       { id: 25, title: "AI Kennisconflictdetectie", description: "Signaleert tegenstrijdige informatie in taken/docs.", completed: false },
       { id: 26, title: "AI Burnout Voorspelling", description: "Signaleert risico op basis van werkpatronen.", completed: false },
