@@ -57,7 +57,9 @@ type TaskContextType = {
   setFilters: (newFilters: Partial<Filters>) => void;
   clearFilters: () => void;
   notifications: Notification[];
-  markNotificationsAsRead: () => void;
+  markAllNotificationsAsRead: () => void;
+  markSingleNotificationAsRead: (notificationId: string) => void;
+  archiveNotification: (notificationId: string) => void;
   snoozeNotification: (notificationId: string) => void;
   viewedUser: User | null;
   setViewedUser: (user: User | null) => void;
@@ -244,7 +246,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 createdAt: (data.createdAt as Timestamp).toDate(),
                 snoozedUntil: (data.snoozedUntil as Timestamp)?.toDate(),
             } as Notification;
-        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }).filter(n => !n.archived)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setNotifications(notificationsData);
     }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
 
@@ -267,7 +270,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
   };
   
-  const markNotificationsAsRead = async () => {
+  const markAllNotificationsAsRead = async () => {
     if (!authUser) return;
     try {
         const batch = writeBatch(db);
@@ -281,6 +284,25 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         await batch.commit();
     } catch(e) {
         handleError(e, 'bijwerken van notificaties');
+    }
+  };
+
+  const markSingleNotificationAsRead = async (notificationId: string) => {
+    try {
+        const notifRef = doc(db, 'notifications', notificationId);
+        await updateDoc(notifRef, { read: true });
+    } catch (e) {
+        handleError(e, 'bijwerken van notificatie');
+    }
+  };
+
+  const archiveNotification = async (notificationId: string) => {
+    try {
+        const notifRef = doc(db, 'notifications', notificationId);
+        await updateDoc(notifRef, { archived: true });
+        toast({ title: 'Notificatie gearchiveerd.' });
+    } catch (e) {
+        handleError(e, 'archiveren van notificatie');
     }
   };
 
@@ -996,7 +1018,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setFilters,
       clearFilters,
       notifications,
-      markNotificationsAsRead,
+      markAllNotificationsAsRead,
+      markSingleNotificationAsRead,
+      archiveNotification,
       snoozeNotification,
       viewedUser,
       setViewedUser,

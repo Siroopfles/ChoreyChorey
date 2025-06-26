@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -32,6 +32,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const navItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { href: '/dashboard/my-week', icon: CalendarDays, label: 'Mijn Week' },
+        { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates' },
         { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },

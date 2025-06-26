@@ -29,7 +29,7 @@ import { isAfter } from 'date-fns';
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();
-  const { notifications, markNotificationsAsRead, snoozeNotification, setIsAddTaskDialogOpen } = useTasks();
+  const { notifications, markAllNotificationsAsRead, snoozeNotification, setIsAddTaskDialogOpen } = useTasks();
   const { user, logout, organizations, currentOrganization, switchOrganization } = useAuth();
   const router = useRouter();
 
@@ -102,7 +102,7 @@ export default function AppHeader() {
                 <DropdownMenuLabel className="flex justify-between items-center">
                     <span className="font-bold">Notificaties</span>
                     {unreadCount > 0 && (
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={markNotificationsAsRead}>
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={markAllNotificationsAsRead}>
                             Markeer als gelezen
                         </Button>
                     )}
