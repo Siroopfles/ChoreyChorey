@@ -16,14 +16,14 @@ const roadmapData = {
     { id: 8, title: "Historie & Logging", description: "Volledige taakgeschiedenis en auditlog.", completed: true },
     { id: 9, title: "Taak Klonen", description: "Dupliceer taken efficiënt.", completed: true },
     { id: 10, title: "Bulk Taakoperaties", description: "Bewerk meerdere taken tegelijk in het webdashboard.", completed: true },
-    { id: 12, title: "Geavanceerde Terugkerende Taken", description: "Complexe patronen (bv. 'elke 3e donderdag van de maand').", completed: true },
-    { id: 14, title: "Handmatige Taakvolgorde", description: "Sleep taken in de gewenste volgorde binnen een lijst.", completed: true },
-    { id: 13, title: "Recycle Bin / Prullenbak", description: "Herstel per ongeluk verwijderde taken binnen een bepaalde periode.", completed: true },
     { id: 11, title: "Persoonlijke Herinneringen (/remindme)", description: "Vraag de bot om je ergens aan te herinneren.", completed: true },
-    { id: 16, title: "Rich Text Editor", description: "Opmaakmogelijkheden (vet, cursief, lijsten) in beschrijvingen en comments.", completed: true },
+    { id: 12, title: "Geavanceerde Terugkerende Taken", description: "Complexe patronen (bv. 'elke 3e donderdag van de maand').", completed: true },
+    { id: 13, title: "Handmatige Taakvolgorde", description: "Sleep taken in de gewenste volgorde binnen een lijst.", completed: true },
+    { id: 14, title: "Rich Text Editor", description: "Opmaakmogelijkheden (vet, cursief, lijsten) in beschrijvingen en comments.", completed: true },
+    { id: 18, title: "Recycle Bin / Prullenbak", description: "Herstel per ongeluk verwijderde taken binnen een bepaalde periode.", completed: true },
     { id: 15, title: "Custom Fields", description: "Voeg eigen velden toe aan taken (bv. 'Klant ID', 'Locatie').", completed: false },
-    { id: 17, title: "Batch Bewerken van Subtaken", description: "Meerdere subtaken tegelijk aanpassen.", completed: false },
-    { id: 18, title: "Taak-specifieke Notificaties", description: "Stel notificaties per taak in.", completed: false },
+    { id: 16, title: "Batch Bewerken van Subtaken", description: "Meerdere subtaken tegelijk aanpassen.", completed: false },
+    { id: 17, title: "Taak-specifieke Notificaties", description: "Stel notificaties per taak in.", completed: false },
     { id: 19, title: "Private Comments", description: "Plaats opmerkingen die alleen zichtbaar zijn voor specifieke rollen of gebruikers.", completed: false },
     { id: 20, title: "Mind Map View", description: "Creëer en visualiseer taken in een mindmap-structuur.", completed: false },
     { id: 21, title: "Taak Spiegelen/Koppelen", description: "Een taak in meerdere projecten laten verschijnen, waarbij updates synchroniseren.", completed: false },
@@ -131,19 +131,17 @@ export default function RoadmapPage() {
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Chorey Roadmap</h1>
-                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Een overzicht van wat we hebben gebouwd en wat de toekomst brengt. We werken constant aan het verbeteren van ons platform.
-                </p>
-              </div>
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Chorey Roadmap</h1>
+              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+                Een overzicht van wat we hebben gebouwd en wat de toekomst brengt. We werken constant aan het verbeteren van ons platform.
+              </p>
             </div>
             <div className="mx-auto grid max-w-7xl gap-12 py-12">
               {Object.entries(roadmapData).map(([category, features]) => (
                 <div key={category} className="space-y-6">
                   <h2 className="text-3xl font-bold tracking-tight">{category}</h2>
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {features.map((item) => (
+                    {features.sort((a, b) => a.id - b.id).map((item) => (
                       <Card key={item.id} className={cn("flex flex-col", item.completed && "bg-background/60 border-green-500/40")}>
                         <CardHeader className="flex flex-row items-start justify-between gap-4">
                           <CardTitle className={cn("text-lg", item.completed && "text-muted-foreground")}>{item.title}</CardTitle>

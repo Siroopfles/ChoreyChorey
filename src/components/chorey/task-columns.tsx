@@ -53,7 +53,7 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
     })
   );
 
-  const columns: Status[] = ["Te Doen", "In Uitvoering", "In Review", "Voltooid"];
+  const columns: Status[] = ["Te Doen", "In Uitvoering", "In Review", "Voltooid", "Geannuleerd"];
 
   const tasksByStatus = (status: Status) => {
     return filteredTasks

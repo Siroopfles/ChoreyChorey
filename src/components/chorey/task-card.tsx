@@ -50,6 +50,7 @@ import {
   Heart,
   Timer,
   TimerOff,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -301,15 +302,21 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     </DropdownMenuSub>
                     <DropdownMenuSeparator />
                     {task.status === 'Geannuleerd' ? (
-                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => deleteTaskPermanently(task.id)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Permanent verwijderen
-                    </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem onClick={() => updateTask(task.id, { status: 'Te Doen' })}>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Herstellen
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => deleteTaskPermanently(task.id)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Permanent verwijderen
+                        </DropdownMenuItem>
+                      </>
                     ) : (
-                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => updateTask(task.id, { status: 'Geannuleerd' })}>
+                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => updateTask(task.id, { status: 'Geannuleerd' })}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Annuleren
-                    </DropdownMenuItem>
+                      </DropdownMenuItem>
                     )}
                 </DropdownMenuContent>
                 </DropdownMenu>

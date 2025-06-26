@@ -529,6 +529,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             finalUpdates.history = arrayUnion(...newHistory);
         }
 
+        if (updates.status && updates.status !== taskToUpdate.status) {
+            finalUpdates.order = Date.now();
+        }
+
         Object.keys(finalUpdates).forEach(key => {
           if (finalUpdates[key] === undefined) {
             finalUpdates[key] = null;
@@ -572,7 +576,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             text,
             createdAt: new Date(),
         };
-        const historyEntry = addHistoryEntry(user.id, 'Reactie toegevoegd', `"${text}"`);
+        const historyEntry = addHistoryEntry(user.id, 'Reactie toegevoegd', `"${text.replace(/<[^>]*>?/gm, '')}"`);
         
         await updateDoc(taskRef, {
             comments: arrayUnion({ ...newComment, id: crypto.randomUUID() }),
