@@ -6,7 +6,7 @@ import { Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { handleProcessCommand } from '@/app/actions';
+import { handleProcessCommand } from '@/app/actions/ai.actions';
 
 export default function CommandBar() {
     const [command, setCommand] = useState('');

@@ -22,7 +22,7 @@ import { MessageSquare, History, ClipboardCopy, Bot, Loader2, Speaker } from 'lu
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
-import { handleSummarizeComments, handleMultiSpeakerTextToSpeech } from '@/app/actions';
+import { handleSummarizeComments, handleMultiSpeakerTextToSpeech } from '@/app/actions/ai.actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';

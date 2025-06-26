@@ -22,7 +22,7 @@ import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Lo
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage } from '@/app/actions';
+import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage } from '@/app/actions/ai.actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
 

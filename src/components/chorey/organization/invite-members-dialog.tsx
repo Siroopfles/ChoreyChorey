@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Loader2, Mail, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createOrganizationInvite } from '@/app/actions';
+import { createOrganizationInvite } from '@/app/actions/organization.actions';
 import { useAuth } from '@/contexts/auth-context';
 import { Input } from '@/components/ui/input';
 

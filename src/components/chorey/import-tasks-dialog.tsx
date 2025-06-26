@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, TableProperties } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { handleImportTasks } from '@/app/actions';
+import { handleImportTasks } from '@/app/actions/task.actions';
 
 type ImportTasksDialogProps = {
     open: boolean;

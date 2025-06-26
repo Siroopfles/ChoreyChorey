@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserRoleInOrganization } from '@/app/actions';
+import { updateUserRoleInOrganization } from '@/app/actions/organization.actions';
 
 function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
     const { currentOrganization, user: currentUser, currentUserRole } = useAuth();

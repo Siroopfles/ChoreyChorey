@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { handleSuggestAssignee } from '@/app/actions';
+import { handleSuggestAssignee } from '@/app/actions/ai.actions';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import type { SuggestTaskAssigneeOutput } from '@/ai/schemas';

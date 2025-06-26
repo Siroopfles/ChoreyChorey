@@ -60,7 +60,7 @@ import { useState, useEffect, useMemo } from 'react';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { handleTextToSpeech } from '@/app/actions';
+import { handleTextToSpeech } from '@/app/actions/ai.actions';
 import Image from 'next/image';
 
 
