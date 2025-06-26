@@ -11,13 +11,16 @@ import type { Status, Task } from '@/lib/types';
 
 // Helper to add history entries
 const addHistoryEntry = (userId: string | null, action: string, details?: string) => {
-    return {
+    const entry: any = {
         id: crypto.randomUUID(),
         userId: userId || 'system',
         timestamp: new Date(),
         action,
-        details,
     };
+    if (details) {
+        entry.details = details;
+    }
+    return entry;
 };
 
 // Schema for creating a task

@@ -114,13 +114,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const addHistoryEntry = (userId: string | null, action: string, details?: string): HistoryEntry => {
-    return {
+    const entry: any = {
         id: crypto.randomUUID(),
         userId: userId || 'system',
         timestamp: new Date(),
         action,
-        details,
     };
+    if (details) {
+        entry.details = details;
+    }
+    return entry;
   };
 
   useEffect(() => {
