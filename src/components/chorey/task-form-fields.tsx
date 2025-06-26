@@ -20,7 +20,7 @@ import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Lo
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk } from '@/app/actions/ai.actions';
+import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels } from '@/app/actions/ai.actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -43,6 +43,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
   const [prioritySuggestion, setPrioritySuggestion] = useState('');
   const [isIdentifyingRisk, setIsIdentifyingRisk] = useState(false);
   const [riskAnalysis, setRiskAnalysis] = useState<{ hasRisk: boolean; riskLevel: string; analysis: string; } | null>(null);
+  const [isSuggestingLabels, setIsSuggestingLabels] = useState(false);
 
   const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
     control: form.control,
@@ -169,6 +170,26 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
         toast({ title: 'Fout bij genereren afbeelding', description: error.message, variant: 'destructive' });
     }
     setIsGeneratingImage(false);
+  };
+  
+  const onSuggestLabels = async () => {
+    const title = form.getValues('title');
+    const description = form.getValues('description');
+    if (!title) {
+        toast({ title: 'Titel vereist', description: 'Voer een titel in om labels te kunnen genereren.', variant: 'destructive' });
+        return;
+    }
+    setIsSuggestingLabels(true);
+    const result = await handleSuggestLabels({ title, description });
+    if (result.error) {
+        toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
+    } else if (result.labels) {
+        const currentLabels = form.getValues('labels') || [];
+        const newLabels = Array.from(new Set([...currentLabels, ...result.labels]));
+        form.setValue('labels', newLabels);
+        toast({ title: 'Labels voorgesteld!', description: `${result.labels.length} nieuwe label(s) voorgesteld door AI.` });
+    }
+    setIsSuggestingLabels(false);
   };
 
   return (
@@ -367,44 +388,49 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Labels</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
-                      <Tags className="mr-2 h-4 w-4" />
-                      {field.value?.length > 0 ? `${field.value.length} geselecteerd` : 'Selecteer labels'}
+                <div className="flex items-center gap-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
+                            <Tags className="mr-2 h-4 w-4" />
+                            {field.value?.length > 0 ? `${field.value.length} geselecteerd` : 'Selecteer labels'}
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                            <CommandInput placeholder="Zoek label..." />
+                            <CommandList>
+                            <CommandEmpty>Geen label gevonden.</CommandEmpty>
+                            <CommandGroup>
+                                {ALL_LABELS.map((label) => {
+                                const isSelected = field.value?.includes(label);
+                                return (
+                                    <CommandItem
+                                    key={label}
+                                    onSelect={() => {
+                                        if (isSelected) {
+                                        field.onChange(field.value?.filter((l) => l !== label));
+                                        } else {
+                                        field.onChange([...(field.value || []), label]);
+                                        }
+                                    }}
+                                    >
+                                    <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                                    {label}
+                                    </CommandItem>
+                                );
+                                })}
+                            </CommandGroup>
+                            </CommandList>
+                        </Command>
+                        </PopoverContent>
+                    </Popover>
+                    <Button type="button" variant="outline" size="icon" onClick={onSuggestLabels} disabled={isSuggestingLabels}>
+                        {isSuggestingLabels ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
                     </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder="Zoek label..." />
-                    <CommandList>
-                      <CommandEmpty>Geen label gevonden.</CommandEmpty>
-                      <CommandGroup>
-                        {ALL_LABELS.map((label) => {
-                          const isSelected = field.value?.includes(label);
-                          return (
-                            <CommandItem
-                              key={label}
-                              onSelect={() => {
-                                if (isSelected) {
-                                  field.onChange(field.value?.filter((l) => l !== label));
-                                } else {
-                                  field.onChange([...(field.value || []), label]);
-                                }
-                              }}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
-                              {label}
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                </div>
               <div className="pt-1 h-fit min-h-[22px]">
                 {field.value?.map((label: string) => (
                   <Badge variant="secondary" key={label} className="mr-1 mb-1">

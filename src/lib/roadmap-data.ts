@@ -73,7 +73,7 @@ export const roadmapData = {
       { id: 21, title: "AI Communicatie 'Health' Score", description: "Analyseert reactietijden, sentiment etc.", completed: false },
       { id: 22, title: "AI Goal Setting Assistant", description: "Helpt bij het formuleren van SMART-doelen.", completed: false },
       { id: 23, title: "AI-powered 'Vergadering naar Taken'", description: "Analyseert transcript en stelt actiepunten voor.", completed: false },
-      { id: 24, title: "AI voor Automatische Tagging", description: "Suggereert labels op basis van taakinhoud.", completed: false },
+      { id: 24, title: "AI voor Automatische Tagging", description: "Suggereert labels op basis van taakinhoud.", completed: true },
       { id: 25, title: "AI Kennisconflictdetectie", description: "Signaleert tegenstrijdige informatie in taken/docs.", completed: false },
       { id: 26, title: "AI Burnout Voorspelling", description: "Signaleert risico op basis van werkpatronen.", completed: false },
       { id: 27, title: "AI-Powered Onboarding Pad", description: "Genereert een persoonlijk inwerktraject voor nieuwe gebruikers.", completed: false },
@@ -302,5 +302,3 @@ export const roadmapData = {
       { id: 156, title: "Voorspellende Resource Allocatie", description: "AI voorspelt toekomstige knelpunten en stelt verschuivingen voor.", completed: false },
     ]
   }
-
-    

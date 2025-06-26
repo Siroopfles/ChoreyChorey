@@ -127,6 +127,18 @@ export const SuggestPriorityOutputSchema = z.object({
 });
 export type SuggestPriorityOutput = z.infer<typeof SuggestPriorityOutputSchema>;
 
+// From suggest-labels-flow.ts
+export const SuggestLabelsInputSchema = z.object({
+  title: z.string().describe('The title of the task.'),
+  description: z.string().optional().describe('The description of the task.'),
+});
+export type SuggestLabelsInput = z.infer<typeof SuggestLabelsInputSchema>;
+
+export const SuggestLabelsOutputSchema = z.object({
+  labels: z.array(z.string()).describe('A list of suggested labels from the predefined list.'),
+});
+export type SuggestLabelsOutput = z.infer<typeof SuggestLabelsOutputSchema>;
+
 // From identify-risk.ts
 export const IdentifyRiskInputSchema = z.object({
   title: z.string().describe('The title of the task.'),

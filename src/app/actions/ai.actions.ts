@@ -14,7 +14,8 @@ import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
 import { suggestPriority } from '@/ai/flows/suggest-priority';
 import { identifyRisk } from '@/ai/flows/identify-risk';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput } from '@/ai/schemas';
+import { suggestLabels } from '@/ai/flows/suggest-labels-flow';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -149,6 +150,15 @@ export async function handleIdentifyRisk(input: IdentifyRiskInput) {
     try {
         const analysis = await identifyRisk(input);
         return { analysis };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function handleSuggestLabels(input: SuggestLabelsInput) {
+    try {
+        const result = await suggestLabels(input);
+        return { labels: result.labels };
     } catch (e: any) {
         return { error: e.message };
     }

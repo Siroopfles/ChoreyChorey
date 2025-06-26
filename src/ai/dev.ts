@@ -10,3 +10,4 @@ import '@/ai/flows/text-to-speech-flow.ts';
 import '@/ai/flows/multi-speaker-tts-flow.ts';
 import '@/ai/flows/suggest-priority.ts';
 import '@/ai/flows/identify-risk.ts';
+import '@/ai/flows/suggest-labels-flow.ts';
