@@ -126,7 +126,7 @@ export const roadmapData = {
       { id: 46, title: "Geavanceerde Zoekfilters Opslaan", description: "Sla complexe filtersets op voor hergebruik.", completed: false },
       { id: 47, title: "White-labeling / Custom Branding", description: "Pas het platform aan met eigen logo en kleuren.", completed: true },
       { id: 48, title: "Focus Mode", description: "Een afleidingsvrije interface om te focussen op de huidige taak.", completed: true },
-      { id: 49, title: "Toegankelijkheidsverbeteringen (A11y)", description: "Volledige ondersteuning voor screenreaders en toetsenbordnavigatie.", completed: false },
+      { id: 49, title: "Toegankelijkheidsverbeteringen (A11y)", description: "Volledige ondersteuning voor screenreaders en toetsenbordnavigatie.", completed: true },
       { id: 69, title: "Offline Modus (PWA)", description: "Werk offline en synchroniseer later.", completed: false },
       { id: 70, title: "Dedicated Mobile Companion App", description: "Native app voor iOS en Android.", completed: false },
       { id: 71, title: "Meertalige Interface", description: "Ondersteuning voor meerdere talen.", completed: false },

@@ -272,18 +272,34 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
     setIsEditDialogOpen(true);
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // We only want to trigger the dialog if the card itself is the target of the keydown event
+    if (e.target !== e.currentTarget) {
+      return;
+    }
+    
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); // Prevent scrolling on space
+      setIsEditDialogOpen(true);
+    }
+  }
+
   return (
     <div className="relative">
        <div className="absolute top-2 left-2 z-10">
             <Checkbox
                 checked={isSelected}
                 onCheckedChange={() => toggleTaskSelection(task.id)}
-                aria-label={`Select task ${task.title}`}
+                aria-label={`Selecteer taak: ${task.title}`}
                 className='bg-background/80 hover:bg-background'
             />
         </div>
       <Card 
         onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label={`Open taakdetails voor: ${task.title}`}
         className={cn(
             'group/task-card hover:shadow-lg transition-shadow duration-200 bg-card border-l-4 overflow-hidden cursor-pointer', 
             statusInfo.color,
@@ -327,7 +343,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                 </CardTitle>
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" aria-label={`Meer acties voor taak ${task.title}`}>
                     <MoreVertical className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
@@ -686,7 +702,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         )}
                     </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 ml-1" onClick={onTextToSpeech} disabled={isSynthesizing}>
+                <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 ml-1" onClick={onTextToSpeech} disabled={isSynthesizing} aria-label={`Lees taaktitel voor: ${task.title}`}>
                 {isSynthesizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Volume2 className="h-3 w-3" />}
                 </Button>
             </CardFooter>
