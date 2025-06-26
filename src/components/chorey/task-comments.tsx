@@ -114,57 +114,59 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
 
   return (
     <div className="flex-1 flex flex-col gap-4 min-h-0">
-        <ScrollArea className="flex-1 pr-2 space-y-4">
-            {sortedComments.length > 1 && (
-                <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing || isReadingAloud} className="flex-1">
-                    {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                    Samenvatten
-                </Button>
-                <Button variant="outline" size="sm" onClick={onReadAloud} disabled={isReadingAloud || isSummarizing} className="flex-1">
-                    {isReadingAloud ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Speaker className="mr-2 h-4 w-4" />}
-                    Voorlezen
-                </Button>
-                </div>
-            )}
-            {summary && (
-                <Alert>
-                    <Bot className="h-4 w-4" />
-                    <AlertTitle>AI Samenvatting</AlertTitle>
-                    <AlertDescription>{summary}</AlertDescription>
-                </Alert>
-            )}
-            {audioSrc && (
-                <div className="mt-2">
-                    <audio controls autoPlay src={audioSrc} className="w-full h-10">
-                        Your browser does not support the audio element.
-                    </audio>
-                </div>
-            )}
-            {audioError && (
-                <Alert variant="destructive" className="mt-2">
-                    <AlertTitle>Fout bij voorlezen</AlertTitle>
-                    <AlertDescription>{audioError}</AlertDescription>
-                </Alert>
-            )}
-            {sortedComments.length > 0 ? (
-                sortedComments.map(comment => (
-                    <CommentItem key={comment.id} comment={comment} user={users.find(u => u.id === comment.userId)} />
-                ))
-            ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">Nog geen reacties.</p>
-            )}
-        </ScrollArea>
-        <div className="flex flex-col gap-2 mt-auto pt-4 border-t">
-            <RichTextEditor
-              value={newComment}
-              onChange={setNewComment}
-              placeholder="Voeg een reactie toe..."
-            />
-            <Button onClick={handleAddComment} disabled={!newComment.replace(/<[^>]*>/g, '').trim()} className="self-end">
-                Plaats
-            </Button>
+      <ScrollArea className="flex-1 pr-2">
+        <div className="space-y-4">
+          {sortedComments.length > 1 && (
+              <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing || isReadingAloud} className="flex-1">
+                  {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                  Samenvatten
+              </Button>
+              <Button variant="outline" size="sm" onClick={onReadAloud} disabled={isReadingAloud || isSummarizing} className="flex-1">
+                  {isReadingAloud ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Speaker className="mr-2 h-4 w-4" />}
+                  Voorlezen
+              </Button>
+              </div>
+          )}
+          {summary && (
+              <Alert>
+                  <Bot className="h-4 w-4" />
+                  <AlertTitle>AI Samenvatting</AlertTitle>
+                  <AlertDescription>{summary}</AlertDescription>
+              </Alert>
+          )}
+          {audioSrc && (
+              <div className="mt-2">
+                  <audio controls autoPlay src={audioSrc} className="w-full h-10">
+                      Your browser does not support the audio element.
+                  </audio>
+              </div>
+          )}
+          {audioError && (
+              <Alert variant="destructive" className="mt-2">
+                  <AlertTitle>Fout bij voorlezen</AlertTitle>
+                  <AlertDescription>{audioError}</AlertDescription>
+              </Alert>
+          )}
+          {sortedComments.length > 0 ? (
+              sortedComments.map(comment => (
+                  <CommentItem key={comment.id} comment={comment} user={users.find(u => u.id === comment.userId)} />
+              ))
+          ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nog geen reacties.</p>
+          )}
         </div>
+      </ScrollArea>
+      <div className="flex flex-col gap-2 mt-auto pt-4 border-t">
+          <RichTextEditor
+            value={newComment}
+            onChange={setNewComment}
+            placeholder="Voeg een reactie toe..."
+          />
+          <Button onClick={handleAddComment} disabled={!newComment.replace(/<[^>]*>/g, '').trim()} className="self-end">
+              Plaats
+          </Button>
+      </div>
     </div>
   );
 }
