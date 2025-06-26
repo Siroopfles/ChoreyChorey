@@ -15,6 +15,7 @@ import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
 import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
 import { useAuth } from '@/contexts/auth-context';
 import type { User } from '@/lib/types';
+import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 
 const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
   ssr: false,
@@ -27,7 +28,7 @@ const GanttView = dynamic(() => import('@/components/chorey/gantt-view'), {
 });
 
 export default function DashboardPage() {
-  const { tasks, users, searchTerm, filters } = useTasks();
+  const { tasks, users, searchTerm, filters, loading } = useTasks();
   const { user: currentUser, teams } = useAuth();
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
@@ -74,6 +75,10 @@ export default function DashboardPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  if (loading) {
+      return <TaskColumnsSkeleton />;
+  }
 
   return (
     <>
