@@ -289,16 +289,16 @@ export const roadmapData = {
     "Ontwikkelaars & IT": [
       { id: 146, title: "API Versioning & Deprecation Management", description: "Beheer API-versies.", completed: false },
       { id: 147, title: "'Shadow IT' Detectie", description: "Analyseert API-verkeer om ongeautoriseerde tools te vinden.", completed: false },
-      { id: 148, title: "Automatische Documentatie Generator", description: "Analyseert taken en maakt documentatie.", completed: false },
+      { id: 148, title: "Automatische Documentatie Generator", description: "Analyseert taken met een 'code'-tag en maakt een wiki-pagina.", completed: false },
     ],
     "Diverse & Innovatief": [
       { id: 149, title: "Printbare Project Samenvattingen/Rapporten", description: "Geoptimaliseerd voor PDF/print.", completed: false },
       { id: 150, title: "Carbon Footprint Tracking per Project", description: "Schatting van de ecologische impact.", completed: false },
       { id: 151, title: "Gebruikerssegmentatie voor Gerichte In-App Communicatie", description: "Stuur gerichte berichten.", completed: false },
-      { id: 152, title: "'No-Code' Mobiele App Bouwer", description: "Bouw mobiele apps voor specifieke workflows.", completed: false },
+      { id: 152, title: "'No-Code' Mobiele App Bouwer voor specifieke workflows", description: "bv. een app voor alleen inspecties.", completed: false },
       { id: 153, title: "'Failure Mode and Effects Analysis' (FMEA) Template & Register", description: "Template voor FMEA.", completed: false },
       { id: 154, title: "Taak Prioriteringsmatrix", description: "Eisenhower, MoSCoW, etc. als ingebouwde view.", completed: false },
-      { id: 155, title: "'Focus Playlist' Generator", description: "AI stelt Spotify playlist voor.", completed: false },
-      { id: 156, title: "Voorspellende Resource Allocatie", description: "AI voorspelt knelpunten en stelt verschuivingen voor.", completed: false },
+      { id: 155, title: "'Focus Playlist' Generator op basis van taaktype", description: "AI stelt Spotify playlist voor.", completed: false },
+      { id: 156, title: "Voorspellende Resource Allocatie", description: "AI voorspelt toekomstige knelpunten en stelt verschuivingen voor.", completed: false },
     ]
   };

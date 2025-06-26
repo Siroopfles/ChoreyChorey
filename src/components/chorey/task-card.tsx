@@ -322,11 +322,32 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                 </DropdownMenu>
             </div>
             {isBlocked && (
-                    <div className="flex items-center gap-1.5 text-xs text-red-500 mt-1 font-semibold">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1.5 text-xs text-red-500 mt-1 font-semibold cursor-help">
                         <LinkIcon className="h-3 w-3" />
                         <span>Geblokkeerd</span>
-                    </div>
-                )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="p-1">
+                        <p className="font-semibold mb-1">Geblokkeerd door:</p>
+                        <ul className="list-disc list-inside text-xs space-y-1">
+                          {task.blockedBy
+                            ?.map(blockerId => allTasks.find(t => t.id === blockerId))
+                            .filter((t): t is Task => !!t)
+                            .map(blockerTask => (
+                              <li key={blockerTask.id} className={cn(blockerTask.status === 'Voltooid' && 'line-through text-muted-foreground')}>
+                                {blockerTask.title} ({blockerTask.status})
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+            )}
             </CardHeader>
             <CardContent className="p-3 pt-1 pl-9">
             <div className="flex flex-wrap gap-1 mb-2">
