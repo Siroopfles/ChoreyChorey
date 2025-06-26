@@ -28,7 +28,6 @@ import {
   CheckCircle2,
   MoreVertical,
   Trash2,
-  Edit,
   User as UserIcon,
   Calendar as CalendarIcon,
   Lock,
@@ -214,6 +213,18 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Don't open dialog if clicking on an interactive element or selecting text
+    if (target.closest('button, a, [role="checkbox"]') || window.getSelection()?.toString()) {
+      return;
+    }
+    // Also check for Radix UI triggers which might not be buttons
+    if(target.closest('[data-state="open"], [data-state="closed"]')) {
+        return;
+    }
+    setIsEditDialogOpen(true);
+  }
 
   return (
     <div className="relative">
@@ -226,8 +237,9 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
             />
         </div>
       <Card 
+        onClick={handleCardClick}
         className={cn(
-            'group/task-card hover:shadow-lg transition-shadow duration-200 bg-card border-l-4 overflow-hidden', 
+            'group/task-card hover:shadow-lg transition-shadow duration-200 bg-card border-l-4 overflow-hidden cursor-pointer', 
             statusInfo.color,
             isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
             isDragging && 'opacity-50',
@@ -260,10 +272,6 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Bewerken
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)}>
                       {task.activeTimerStartedAt ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
                       <span>{task.activeTimerStartedAt ? 'Stop Timer' : 'Start Timer'}</span>

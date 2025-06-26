@@ -18,6 +18,7 @@ import CalendarView from '@/components/chorey/calendar-view';
 import TaskColumns from '@/components/chorey/task-columns';
 import GanttView from '@/components/chorey/gantt-view';
 import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
+import TaskListView from '@/components/chorey/task-list-view';
 
 export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
@@ -68,12 +69,16 @@ export default function DashboardPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
         <TabsList>
           <TabsTrigger value="board">Bord</TabsTrigger>
+          <TabsTrigger value="list">Lijst</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="calendar">Kalender</TabsTrigger>
           <TabsTrigger value="gantt">Gantt</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="flex-1 mt-4 overflow-hidden">
           <TaskColumns tasks={filteredTasks} users={users} currentUser={currentUser} teams={teams} />
+        </TabsContent>
+        <TabsContent value="list" className="flex-1 mt-4 overflow-y-auto">
+          <TaskListView tasks={filteredTasks} users={users} />
         </TabsContent>
         <TabsContent value="dashboard" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<DashboardViewSkeleton />}>
