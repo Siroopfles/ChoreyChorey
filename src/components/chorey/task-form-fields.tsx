@@ -41,6 +41,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
 
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
   const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+  const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
 
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
@@ -531,25 +532,27 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
             </FormItem>
           )}
         />
-        <FormField
-            control={form.control}
-            name="storyPoints"
-            render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Story Points</FormLabel>
-                    <div className="flex items-center gap-2">
-                        <FormControl>
-                            <Input type="number" placeholder="bijv. 5" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
-                        </FormControl>
-                        <Button type="button" variant="outline" size="icon" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints}>
-                            {isSuggestingPoints ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
-                        </Button>
-                    </div>
-                    {pointsSuggestion && <Alert className="mt-2"><AlertDescription>{pointsSuggestion}</AlertDescription></Alert>}
-                    <FormMessage />
-                </FormItem>
-            )}
-        />
+        {showStoryPoints && (
+            <FormField
+                control={form.control}
+                name="storyPoints"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Story Points</FormLabel>
+                        <div className="flex items-center gap-2">
+                            <FormControl>
+                                <Input type="number" placeholder="bijv. 5" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
+                            </FormControl>
+                            <Button type="button" variant="outline" size="icon" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints}>
+                                {isSuggestingPoints ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
+                            </Button>
+                        </div>
+                        {pointsSuggestion && <Alert className="mt-2"><AlertDescription>{pointsSuggestion}</AlertDescription></Alert>}
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
         <div className="col-span-1 md:col-span-2">
            <FormField
               control={form.control}

@@ -28,7 +28,7 @@ import Link from 'next/link';
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
     const { users, viewedUser, setViewedUser, isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
-    const { currentUserRole } = useAuth();
+    const { currentUserRole, currentOrganization } = useAuth();
     const pathname = usePathname();
 
     const navItems = [
@@ -94,9 +94,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
                             </>
                         )}
                     </SidebarMenu>
-                    <div className="flex-1 overflow-y-auto mt-4">
-                        <Leaderboard users={users} />
-                    </div>
+                    {currentOrganization?.settings?.features?.gamification !== false && (
+                        <div className="flex-1 overflow-y-auto mt-4">
+                            <Leaderboard users={users} />
+                        </div>
+                    )}
                 </SidebarContent>
             </Sidebar>
 

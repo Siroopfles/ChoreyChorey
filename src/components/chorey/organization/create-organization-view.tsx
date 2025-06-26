@@ -54,6 +54,11 @@ export function CreateOrganizationView() {
                             statuses: ['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Geannuleerd'],
                             labels: ['Keuken', 'Woonkamer', 'Badkamer', 'Slaapkamer', 'Algemeen', 'Kantoor'],
                             priorities: ['Laag', 'Midden', 'Hoog', 'Urgent'],
+                        },
+                        features: {
+                            gamification: true,
+                            storyPoints: true,
+                            timeTracking: true,
                         }
                     }
                 };

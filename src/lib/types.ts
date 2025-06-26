@@ -6,6 +6,11 @@ export type OrganizationSettings = {
     statuses: string[];
     labels: string[];
     priorities: string[];
+  },
+  features?: {
+    gamification: boolean;
+    storyPoints: boolean;
+    timeTracking: boolean;
   }
 }
 

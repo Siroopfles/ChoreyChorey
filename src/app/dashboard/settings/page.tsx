@@ -7,7 +7,8 @@ import ProfileSettings from '@/components/chorey/settings/profile-settings';
 import OrganizationSettings from '@/components/chorey/settings/organization-settings';
 import DangerZone from '@/components/chorey/settings/danger-zone';
 import DebugSettings from '@/components/chorey/settings/debug-settings';
-import CustomizationSettings from '@/components/chorey/settings/customization-settings';
+import WorkflowSettings from '@/components/chorey/settings/workflow-settings';
+import FeatureToggleSettings from '@/components/chorey/settings/feature-toggle-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
@@ -33,7 +34,8 @@ export default function SettingsPage() {
       {currentOrganization && (
         <>
           {isOwnerOrAdmin && <OrganizationSettings organization={currentOrganization} />}
-          {isOwnerOrAdmin && <CustomizationSettings organization={currentOrganization} />}
+          {isOwnerOrAdmin && <WorkflowSettings organization={currentOrganization} />}
+          {isOwnerOrAdmin && <FeatureToggleSettings organization={currentOrganization} />}
           <DangerZone
             organization={currentOrganization}
             isOwner={currentUserRole === 'Owner'}

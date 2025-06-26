@@ -131,6 +131,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
 
   const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
   
+  const showGamification = currentOrganization?.settings?.features?.gamification !== false;
+  const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
+  const showTimeTracking = currentOrganization?.settings?.features?.timeTracking !== false;
+
   const team = teams.find((t) => t.id === task.teamId);
 
   const isPrivilegedUser = useMemo(() => currentUser && (task.creatorId === currentUser.id || task.assigneeIds.includes(currentUser.id)), [currentUser, task.creatorId, task.assigneeIds]);
@@ -140,7 +144,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const completedSubtasks = visibleSubtasks.filter((s) => s.completed).length;
   const totalSubtasks = visibleSubtasks.length;
   const subtaskProgress = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
-  const points = calculatePoints(task.priority, task.storyPoints);
+  const points = showGamification ? calculatePoints(task.priority, task.storyPoints) : 0;
   const isSelected = selectedTaskIds.includes(task.id);
   const [liveTime, setLiveTime] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -182,7 +186,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
-    if (task.activeTimerStartedAt) {
+    if (showTimeTracking && task.activeTimerStartedAt) {
         const updateLiveTime = () => {
             const elapsed = Math.floor((new Date().getTime() - (task.activeTimerStartedAt as Date).getTime()) / 1000);
             setLiveTime(elapsed);
@@ -193,7 +197,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
         setLiveTime(0);
     }
     return () => clearInterval(interval);
-  }, [task.activeTimerStartedAt]);
+  }, [task.activeTimerStartedAt, showTimeTracking]);
 
   const totalTimeLogged = (task.timeLogged || 0) + liveTime;
   
@@ -219,8 +223,8 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const { isOverdue, isDueToday, isDueSoon } = dateStatus;
 
   const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id);
-  const canThank = currentUser && task.status === 'Voltooid' && task.assigneeIds.length > 0 && !task.assigneeIds.includes(currentUser.id);
-  const canRate = currentUser && task.status === 'Voltooid' && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id) && !task.rating;
+  const canThank = showGamification && currentUser && task.status === 'Voltooid' && task.assigneeIds.length > 0 && !task.assigneeIds.includes(currentUser.id);
+  const canRate = showGamification && currentUser && task.status === 'Voltooid' && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id) && !task.rating;
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(task.id);
@@ -318,10 +322,12 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         Focus
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)}>
-                      {task.activeTimerStartedAt ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
-                      <span>{task.activeTimerStartedAt ? 'Stop Timer' : 'Start Timer'}</span>
-                    </DropdownMenuItem>
+                    {showTimeTracking && (
+                        <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)}>
+                        {task.activeTimerStartedAt ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
+                        <span>{task.activeTimerStartedAt ? 'Stop Timer' : 'Start Timer'}</span>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => cloneTask(task.id)}>
                     <Copy className="mr-2 h-4 w-4" />
                     Klonen
@@ -453,7 +459,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                 </div>
             )}
 
-            {task.rating && (
+            {showGamification && task.rating && (
                 <div className="mt-2 pt-2 border-t">
                     <p className="text-xs font-medium text-muted-foreground mb-1">Beoordeling:</p>
                     <div className="flex items-center">
@@ -612,16 +618,18 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     <PriorityIcon className="h-3 w-3" />
                     <span>{task.priority}</span>
                     </div>
-                    {(totalTimeLogged > 0 || task.activeTimerStartedAt) && (
+                    {showTimeTracking && (totalTimeLogged > 0 || task.activeTimerStartedAt) && (
                       <div className={cn("flex items-center gap-1", task.activeTimerStartedAt && "text-primary animate-pulse font-semibold")}>
                           <Timer className="h-3 w-3" />
                           <span>{formatTime(totalTimeLogged)}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-1 font-medium text-amber-600">
-                        <Trophy className="h-3 w-3" />
-                        <span>{points}</span>
-                    </div>
+                    {showGamification && (
+                        <div className="flex items-center gap-1 font-medium text-amber-600">
+                            <Trophy className="h-3 w-3" />
+                            <span>{points}</span>
+                        </div>
+                    )}
                     {task.comments?.length > 0 && (
                     <div className="flex items-center gap-1">
                         <MessageSquare className="h-3 w-3" />
@@ -632,7 +640,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         <Clock className="h-3 w-3" />
                         <span>{formatDistanceToNow(task.createdAt, { locale: nl, addSuffix: true })}</span>
                     </div>
-                    {task.storyPoints !== undefined && task.storyPoints !== null && (
+                    {showStoryPoints && task.storyPoints !== undefined && task.storyPoints !== null && (
                         <div className="flex items-center gap-1 font-medium">
                             <Database className="h-3 w-3" />
                             <span>{task.storyPoints}</span>

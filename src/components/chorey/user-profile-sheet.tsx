@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, Task, Priority } from '@/lib/types';
@@ -42,19 +43,23 @@ const achievementIcons: Record<string, React.ElementType> = {
 };
 
 function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {
+  const { currentOrganization } = useAuth();
+  const showGamification = currentOrganization?.settings?.features?.gamification !== false;
   const completedTasks = userTasks.filter(t => t.status === 'Voltooid').length;
 
   return (
     <div className="grid grid-cols-2 gap-4">
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Totaal Punten</CardTitle>
-                <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{user.points.toLocaleString()}</div>
-            </CardContent>
-        </Card>
+        {showGamification && (
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Totaal Punten</CardTitle>
+                    <Trophy className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{user.points.toLocaleString()}</div>
+                </CardContent>
+            </Card>
+        )}
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Taken Voltooid</CardTitle>
@@ -69,7 +74,10 @@ function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {
 }
 
 function Achievements({ user }: { user: User }) {
-    if (!user.achievements || user.achievements.length === 0) {
+    const { currentOrganization } = useAuth();
+    const showGamification = currentOrganization?.settings?.features?.gamification !== false;
+    
+    if (!showGamification || !user.achievements || user.achievements.length === 0) {
         return null;
     }
     
@@ -193,12 +201,13 @@ export default function UserProfileSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const { tasks } = useTasks();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, currentOrganization } = useAuth();
   const [isKudosDialogOpen, setIsKudosDialogOpen] = useState(false);
   
   const userTasks = tasks.filter(task => task.assigneeIds.includes(user.id));
   const currentTasks = userTasks.filter(t => t.status === 'Te Doen' || t.status === 'In Uitvoering' || t.status === 'In Review');
   const isOwnProfile = currentUser?.id === user.id;
+  const showGamification = currentOrganization?.settings?.features?.gamification !== false;
 
   return (
     <>
@@ -218,7 +227,7 @@ export default function UserProfileSheet({
                     </SheetDescription>
                   </div>
               </div>
-               {!isOwnProfile && (
+               {!isOwnProfile && showGamification && (
                 <Button variant="outline" size="sm" onClick={() => setIsKudosDialogOpen(true)}>
                   <HandHeart className="mr-2 h-4 w-4" />
                   Geef Kudos
@@ -257,7 +266,7 @@ export default function UserProfileSheet({
           </div>
         </SheetContent>
       </Sheet>
-      {!isOwnProfile && (
+      {!isOwnProfile && showGamification && (
         <KudosDialog
             open={isKudosDialogOpen}
             onOpenChange={setIsKudosDialogOpen}
