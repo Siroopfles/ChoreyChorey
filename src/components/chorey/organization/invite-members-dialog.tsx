@@ -51,12 +51,12 @@ export function InviteMembersDialog({ organizationId }: { organizationId: string
             <DialogTrigger asChild>
                 <Button variant="outline">
                     <Mail className="mr-2 h-4 w-4" />
-                    Nodig Leden Uit
+                    DEBUG: Nodig Leden Uit
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Leden Uitnodigen</DialogTitle>
+                    <DialogTitle>DEBUG: Leden Uitnodigen</DialogTitle>
                     <DialogDescription>
                         {inviteLink ? 'Deel deze link met de personen die je wilt uitnodigen.' : 'Genereer een unieke link om nieuwe leden uit te nodigen voor je organisatie.'}
                     </DialogDescription>
