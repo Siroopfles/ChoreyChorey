@@ -71,6 +71,10 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
           labels: template.labels,
           subtasks: template.subtasks,
           storyPoints: template.storyPoints,
+          recurring: template.recurring,
+          attachments: template.attachments,
+          isPrivate: template.isPrivate,
+          isSensitive: template.isSensitive,
         });
       } else {
         form.reset(defaultFormValues);

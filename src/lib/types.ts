@@ -304,7 +304,14 @@ export const taskTemplateSchema = z.object({
   priority: z.string().min(1, 'Prioriteit is verplicht.'),
   labels: z.array(z.string()).optional().default([]),
   subtasks: z.array(z.object({ text: z.string().min(1) })).optional().default([]),
+  attachments: z.array(z.object({
+    name: z.string().min(1),
+    url: z.string().url(),
+  })).optional().default([]),
   storyPoints: z.coerce.number().optional(),
+  recurring: recurringSchema.optional(),
+  isPrivate: z.boolean().optional(),
+  isSensitive: z.boolean().optional(),
 });
 export type TaskTemplateFormValues = z.infer<typeof taskTemplateSchema>;
 
