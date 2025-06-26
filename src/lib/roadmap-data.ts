@@ -36,7 +36,7 @@ export const roadmapData = {
       { id: 1027, title: "Skills & Competency Matrix", description: "Tag gebruikers met vaardigheden voor betere toewijzing.", completed: true },
       { id: 10, title: "Programma Management", description: "Groepeer projecten in programma's met eigen doelen/KPI's.", completed: true },
       { id: 11, title: "Scenario Planning / \"What-if\" Analyse", description: "Simuleer impact van resource-wijzigingen.", completed: false },
-      { id: 12, title: "Gantt Chart Snapshots & Versiebeheer", description: "Vergelijk de planning met eerdere versies.", completed: false },
+      { id: 12, title: "Gantt Chart Snapshots & Versiebeheer", description: "Vergelijk de planning met eerdere versies.", completed: true },
       { id: 13, title: "Headcount Planning", description: "Plan toekomstige personeelsbehoefte op projectniveau.", completed: false },
       { id: 14, title: "Resource Vervanging", description: "Snel alle taken van persoon A overzetten naar persoon B.", completed: false },
       { id: 15, title: "RACI Matrix Generator", description: "Genereer een Responsible, Accountable, Consulted, Informed matrix.", completed: false },
@@ -130,7 +130,7 @@ export const roadmapData = {
       { id: 69, title: "Offline Modus (PWA)", description: "Werk offline en synchroniseer later.", completed: false },
       { id: 70, title: "Dedicated Mobile Companion App", description: "Native app voor iOS en Android.", completed: false },
       { id: 71, title: "Meertalige Interface", description: "Ondersteuning voor meerdere talen.", completed: false },
-      { id: 73, title: "In-App Onboarding & Feature Tours", description: "Interactieve gidsen voor nieuwe features.", completed: false },
+      { id: 73, title: "In-App Onboarding & Feature Tours", description: "Interactieve gidsen voor nieuwe features.", completed: true },
     ],
     "Integraties & API": [
       { id: 1079, title: "Data Export (CSV)", description: "Exporteer taken naar CSV.", completed: true },
