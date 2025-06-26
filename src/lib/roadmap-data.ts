@@ -34,7 +34,7 @@ export const roadmapData = {
       { id: 1024, title: "Gantt Chart View", description: "Visuele tijdlijn-weergave van projecten.", completed: true },
       { id: 1025, title: "Actieve Tijdregistratie", description: "Start/stop een timer per taak voor precieze tijdsmeting.", completed: true },
       { id: 1027, title: "Skills & Competency Matrix", description: "Tag gebruikers met vaardigheden voor betere toewijzing.", completed: true },
-      { id: 10, title: "Programma Management", description: "Groepeer projecten in programma's met eigen doelen/KPI's.", completed: false },
+      { id: 10, title: "Programma Management", description: "Groepeer projecten in programma's met eigen doelen/KPI's.", completed: true },
       { id: 11, title: "Scenario Planning / \"What-if\" Analyse", description: "Simuleer impact van resource-wijzigingen.", completed: false },
       { id: 12, title: "Gantt Chart Snapshots & Versiebeheer", description: "Vergelijk de planning met eerdere versies.", completed: false },
       { id: 13, title: "Headcount Planning", description: "Plan toekomstige personeelsbehoefte op projectniveau.", completed: false },
