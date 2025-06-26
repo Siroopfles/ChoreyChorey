@@ -15,7 +15,8 @@ import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
 import { suggestPriority } from '@/ai/flows/suggest-priority';
 import { identifyRisk } from '@/ai/flows/identify-risk';
 import { suggestLabels } from '@/ai/flows/suggest-labels-flow';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput } from '@/ai/schemas';
+import { meetingToTasks } from '@/ai/flows/meeting-to-tasks-flow';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -159,6 +160,15 @@ export async function handleSuggestLabels(input: SuggestLabelsInput) {
     try {
         const result = await suggestLabels(input);
         return { labels: result.labels };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function handleMeetingToTasks(input: Omit<MeetingToTasksInput, 'currentDate'>) {
+    try {
+        const result = await meetingToTasks(input);
+        return { summary: result };
     } catch (e: any) {
         return { error: e.message };
     }

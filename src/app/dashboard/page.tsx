@@ -5,12 +5,13 @@ import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { FileDown, Download } from 'lucide-react';
+import { FileDown, Download, FileText } from 'lucide-react';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
 import type { Task, User, Label, Priority, Team } from '@/lib/types';
 import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
+import MeetingImportDialog from '@/components/chorey/meeting-import-dialog';
 import DashboardView from '@/components/chorey/dashboard-view';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
 import CalendarView from '@/components/chorey/calendar-view';
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
   const { user: currentUser, teams } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
+  const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
 
   const filteredTasks = useMemo(() => {
@@ -89,6 +91,10 @@ export default function DashboardPage() {
           <FilterBar />
         </div>
         <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsMeetingImporting(true)}>
+                <FileText className="mr-2 h-4 w-4" />
+                Importeer uit Notulen
+            </Button>
             <Button variant="outline" onClick={() => setIsImporting(true)}>
                 <FileDown className="mr-2 h-4 w-4" />
                 Importeer Taken
@@ -129,6 +135,7 @@ export default function DashboardPage() {
         </TabsContent>
       </Tabs>
       <ImportTasksDialog open={isImporting} onOpenChange={setIsImporting} />
+      <MeetingImportDialog open={isMeetingImporting} onOpenChange={setIsMeetingImporting} />
     </div>
   );
 }

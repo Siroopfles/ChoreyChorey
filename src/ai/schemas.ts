@@ -1,4 +1,3 @@
-
 import { z } from 'genkit';
 import { ALL_PRIORITIES } from '@/lib/types';
 
@@ -152,3 +151,15 @@ export const IdentifyRiskOutputSchema = z.object({
   analysis: z.string().describe('A brief analysis of the potential risks.'),
 });
 export type IdentifyRiskOutput = z.infer<typeof IdentifyRiskOutputSchema>;
+
+// From meeting-to-tasks-flow.ts
+export const MeetingToTasksInputSchema = z.object({
+  notes: z.string().describe('The raw text notes from a meeting.'),
+  organizationId: z.string().describe('The ID of the organization where tasks should be created.'),
+  creatorId: z.string().describe('The ID of the user initiating the process.'),
+  currentDate: z.string().describe('The current date in YYYY-MM-DD format, for interpreting relative dates like "tomorrow".'),
+});
+export type MeetingToTasksInput = z.infer<typeof MeetingToTasksInputSchema>;
+
+export const MeetingToTasksOutputSchema = z.string().describe('A natural language summary of the tasks that were created.');
+export type MeetingToTasksOutput = z.infer<typeof MeetingToTasksOutputSchema>;

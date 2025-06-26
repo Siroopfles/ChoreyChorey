@@ -16,7 +16,6 @@ export const roadmapData = {
       { id: 1013, title: "Recycle Bin / Prullenbak", description: "Herstel geannuleerde taken vanuit de 'Geannuleerd' kolom.", completed: true },
       { id: 1014, title: "Geavanceerde Terugkerende Taken", description: "Complexe herhalingspatronen (bv. 'elke 3e donderdag van de maand').", completed: true },
       { id: 1015, title: "Persoonlijke Herinneringen (/remindme)", description: "Vraag de bot om je ergens aan te herinneren.", completed: true },
-      { id: 8, title: "Multi-assign", description: "Meerdere personen verantwoordelijk maken voor één taak.", completed: true },
     ],
     "Fundamenteel Taakbeheer (Verdieping)": [
       { id: 1, title: "Conditionele Custom Fields", description: "Veld Y tonen als veld X waarde Z heeft.", completed: false },
@@ -26,6 +25,7 @@ export const roadmapData = {
       { id: 5, title: "Taak Ratings", description: "Geef een voltooide taak 1-5 sterren voor kwaliteitsmeting.", completed: true },
       { id: 6, title: "Taak Checklist Templates", description: "Opslaan en hergebruiken van sets subtaken.", completed: true },
       { id: 7, title: "'Blokkerende' status", description: "Maakt visueel duidelijk dat een taak geblokkeerd is en waarom.", completed: true },
+      { id: 8, title: "Multi-assign", description: "Meerdere personen verantwoordelijk maken voor één taak.", completed: true },
       { id: 9, title: "Taak Splitsen", description: "Splits een te grote taak in twee of meer aparte taken.", completed: true },
     ],
     "Geavanceerd Project- & Resource Management": [
@@ -72,7 +72,7 @@ export const roadmapData = {
       { id: 20, title: "AI Team Composition Suggester", description: "Stelt het ideale team voor een nieuw project voor.", completed: false },
       { id: 21, title: "AI Communicatie 'Health' Score", description: "Analyseert reactietijden, sentiment etc.", completed: false },
       { id: 22, title: "AI Goal Setting Assistant", description: "Helpt bij het formuleren van SMART-doelen.", completed: false },
-      { id: 23, title: "AI-powered 'Vergadering naar Taken'", description: "Analyseert transcript en stelt actiepunten voor.", completed: false },
+      { id: 23, title: "AI-powered 'Vergadering naar Taken'", description: "Analyseert transcript en stelt actiepunten voor.", completed: true },
       { id: 24, title: "AI voor Automatische Tagging", description: "Suggereert labels op basis van taakinhoud.", completed: true },
       { id: 25, title: "AI Kennisconflictdetectie", description: "Signaleert tegenstrijdige informatie in taken/docs.", completed: false },
       { id: 26, title: "AI Burnout Voorspelling", description: "Signaleert risico op basis van werkpatronen.", completed: false },
@@ -302,3 +302,5 @@ export const roadmapData = {
       { id: 156, title: "Voorspellende Resource Allocatie", description: "AI voorspelt toekomstige knelpunten en stelt verschuivingen voor.", completed: false },
     ]
   }
+
+    
