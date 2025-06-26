@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCurrentOrganization(currentOrg);
             
             if (currentOrg) {
-                 const role = currentOrg.members[firebaseUser.uid]?.role || null;
+                 const role = (currentOrg.members || {})[firebaseUser.uid]?.role || null;
                  setCurrentUserRole(role);
 
                  const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrg.id));
