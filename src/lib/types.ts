@@ -6,6 +6,7 @@ export type OrganizationSettings = {
     statuses: string[];
     labels: string[];
     priorities: string[];
+    customRoles?: Record<string, { name: string; permissions: Permission[] }>;
   },
   features?: {
     gamification: boolean;
@@ -54,7 +55,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.VIEW_AUDIT_LOG]: { name: 'Audit Log Bekijken', description: 'Heeft toegang tot de audit log met alle acties binnen de organisatie.' },
 };
 
-export const ROLES: Record<string, { name: string; permissions: Permission[] }> = {
+export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
   Owner: {
     name: 'Eigenaar',
     permissions: Object.values(PERMISSIONS),
@@ -83,7 +84,7 @@ export const ROLES: Record<string, { name: string; permissions: Permission[] }> 
     ],
   },
 };
-export type RoleName = keyof typeof ROLES;
+export type RoleName = string;
 
 
 export type Team = {

@@ -2,7 +2,7 @@
 'use client';
 
 import type { User as UserType, RoleName } from '@/lib/types';
-import { ROLES } from '@/lib/types';
+import { DEFAULT_ROLES } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
 import { updateUserRoleInOrganization } from '@/app/actions/organization.actions';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,11 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
     const { toast } = useToast();
 
     if (!currentOrganization) return null;
+
+    const allRoles = {
+        ...DEFAULT_ROLES,
+        ...(currentOrganization.settings?.customization?.customRoles || {})
+    };
     
     const canManageRoles = currentUserRole === 'Owner' || currentUserRole === 'Admin';
     
@@ -42,7 +47,8 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
             <CardContent>
                 <div className="space-y-4">
                     {usersInOrg.map(member => {
-                        const role = (currentOrganization.members || {})[member.id]?.role;
+                        const roleId = (currentOrganization.members || {})[member.id]?.role;
+                        const roleName = roleId ? allRoles[roleId]?.name : 'Geen rol';
                         const isOwner = member.id === currentOrganization.ownerId;
                         return (
                             <div key={member.id} className="flex items-center justify-between">
@@ -53,7 +59,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
                                     </Avatar>
                                     <div>
                                         <p className="font-medium">{member.name}</p>
-                                        <p className="text-sm text-muted-foreground">{role ? ROLES[role]?.name : 'Geen rol'}</p>
+                                        <p className="text-sm text-muted-foreground">{roleName}</p>
                                     </div>
                                 </div>
                                 {canManageRoles && !isOwner && (
@@ -64,12 +70,15 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
-                                            {Object.keys(ROLES).map(roleKey => (
-                                                <DropdownMenuItem key={roleKey} onSelect={() => handleRoleChange(member.id, roleKey as RoleName)}>
-                                                    <Shield className="mr-2 h-4 w-4" />
-                                                    <span>Wijs rol '{ROLES[roleKey as RoleName].name}' toe</span>
-                                                </DropdownMenuItem>
-                                            ))}
+                                            {Object.entries(allRoles).map(([roleKey, roleDetails]) => {
+                                                if (roleKey === 'Owner') return null; // Can't assign Owner role
+                                                return (
+                                                    <DropdownMenuItem key={roleKey} onSelect={() => handleRoleChange(member.id, roleKey)}>
+                                                        <Shield className="mr-2 h-4 w-4" />
+                                                        <span>Wijs rol '{roleDetails.name}' toe</span>
+                                                    </DropdownMenuItem>
+                                                )
+                                            })}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 )}
