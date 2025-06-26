@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import type { User } from '@/lib/types';
+import type { User, UserStatus } from '@/lib/types';
 
 export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills'>>) {
     try {
@@ -103,6 +103,17 @@ export async function transferPoints(fromUserId: string, toUserId: string, amoun
         return { success: true, amount };
     } catch (error: any) {
         console.error("Error transferring points:", error);
+        return { error: error.message };
+    }
+}
+
+export async function updateUserStatus(userId: string, status: UserStatus) {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, { status });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error updating user status:", error);
         return { error: error.message };
     }
 }

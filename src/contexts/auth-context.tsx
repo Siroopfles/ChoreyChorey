@@ -21,9 +21,10 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
-import type { User, Organization, Team, RoleName } from '@/lib/types';
+import type { User, Organization, Team, RoleName, UserStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
+import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user.actions';
 import { useDebug } from './debug-context';
 
 type AuthContextType = {
@@ -41,6 +42,7 @@ type AuthContextType = {
     switchOrganization: (orgId: string) => Promise<void>;
     users: User[];
     teams: Team[];
+    updateUserStatus: (status: UserStatus) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -262,6 +264,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
+            if (user?.id) {
+              await updateUserStatusAction(user.id, { type: 'Offline' });
+            }
             await signOut(auth);
             router.push('/login');
         } catch (error) {
@@ -292,6 +297,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
     
+    const updateUserStatus = async (status: UserStatus) => {
+        if (!user) return;
+        try {
+            const result = await updateUserStatusAction(user.id, status);
+            if (result.error) throw new Error(result.error);
+            // Optimistic update for the current user's own state
+            setUser(prevUser => prevUser ? { ...prevUser, status } : null);
+        } catch (e) {
+            handleError(e, 'bijwerken van status');
+        }
+    };
+
     const value = {
         authUser,
         user,
@@ -307,6 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         switchOrganization,
         users,
         teams,
+        updateUserStatus,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

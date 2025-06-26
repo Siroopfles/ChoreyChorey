@@ -42,6 +42,14 @@ const achievementIcons: Record<string, React.ElementType> = {
     'appreciated': Heart,
 };
 
+const statusStyles: Record<string, { dot: string; label: string }> = {
+    Online: { dot: 'bg-green-500', label: 'Online' },
+    Afwezig: { dot: 'bg-yellow-500', label: 'Afwezig' },
+    'In vergadering': { dot: 'bg-red-500', label: 'In vergadering' },
+    Offline: { dot: 'bg-gray-400', label: 'Offline' },
+};
+
+
 function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {
   const { currentOrganization } = useAuth();
   const showGamification = currentOrganization?.settings?.features?.gamification !== false;
@@ -208,6 +216,8 @@ export default function UserProfileSheet({
   const currentTasks = userTasks.filter(t => t.status === 'Te Doen' || t.status === 'In Uitvoering' || t.status === 'In Review');
   const isOwnProfile = currentUser?.id === user.id;
   const showGamification = currentOrganization?.settings?.features?.gamification !== false;
+  const status = user.status?.type || 'Offline';
+  const statusStyle = statusStyles[status] || statusStyles.Offline;
 
   return (
     <>
@@ -215,17 +225,26 @@ export default function UserProfileSheet({
         <SheetContent className="flex flex-col sm:max-w-md">
           <SheetHeader className="text-left">
             <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16 border-2 border-primary">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <SheetTitle className="text-2xl">{user.name}</SheetTitle>
-                    <SheetDescription>
-                      Een gewaardeerd teamlid
-                    </SheetDescription>
-                  </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-4">
+                    <div className="relative">
+                        <Avatar className="h-16 w-16 border-2 border-primary">
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className={cn("absolute bottom-0 right-0 block h-4 w-4 rounded-full ring-2 ring-background", statusStyle.dot)} />
+                    </div>
+                    <div>
+                        <SheetTitle className="text-2xl">{user.name}</SheetTitle>
+                        <SheetDescription>
+                        Een gewaardeerd teamlid
+                        </SheetDescription>
+                    </div>
+                </div>
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className={cn("w-2 h-2 rounded-full", statusStyle.dot)} />
+                    <span>{statusStyle.label}</span>
+                </div>
               </div>
                {!isOwnProfile && showGamification && (
                 <Button variant="outline" size="sm" onClick={() => setIsKudosDialogOpen(true)}>

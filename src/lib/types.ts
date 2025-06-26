@@ -95,6 +95,17 @@ export type Team = {
   program?: string;
 };
 
+export const USER_STATUSES: { value: 'Online' | 'Afwezig' | 'In vergadering' | 'Offline'; label: string }[] = [
+  { value: 'Online', label: 'Online' },
+  { value: 'Afwezig', label: 'Afwezig' },
+  { value: 'In vergadering', label: 'In vergadering' },
+  { value: 'Offline', label: 'Offline' },
+];
+
+export type UserStatus = {
+  type: 'Online' | 'Afwezig' | 'In vergadering' | 'Offline';
+};
+
 export type User = {
   id: string;
   name: string;
@@ -106,6 +117,7 @@ export type User = {
   currentOrganizationId?: string | null;
   skills?: string[];
   endorsements?: Record<string, string[]>; // Map of skill to array of user IDs
+  status?: UserStatus;
 };
 
 export const ACHIEVEMENTS = {

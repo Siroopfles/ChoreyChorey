@@ -11,7 +11,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreVertical, Shield } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+const statusStyles: Record<string, { dot: string; label: string }> = {
+    Online: { dot: 'bg-green-500', label: 'Online' },
+    Afwezig: { dot: 'bg-yellow-500', label: 'Afwezig' },
+    'In vergadering': { dot: 'bg-red-500', label: 'In vergadering' },
+    Offline: { dot: 'bg-gray-400', label: 'Offline' },
+};
 
 export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
     const { currentOrganization, user: currentUser, currentUserRole } = useAuth();
@@ -50,13 +58,28 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
                         const roleId = (currentOrganization.members || {})[member.id]?.role;
                         const roleName = roleId ? allRoles[roleId]?.name : 'Geen rol';
                         const isOwner = member.id === currentOrganization.ownerId;
+                        const status = member.status?.type || 'Offline';
+                        const statusStyle = statusStyles[status] || statusStyles.Offline;
+
                         return (
                             <div key={member.id} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <Avatar>
-                                        <AvatarImage src={member.avatar} />
-                                        <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="relative">
+                                                    <Avatar>
+                                                        <AvatarImage src={member.avatar} />
+                                                        <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span className={cn("absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background", statusStyle.dot)} />
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{statusStyle.label}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                     <div>
                                         <p className="font-medium">{member.name}</p>
                                         <p className="text-sm text-muted-foreground">{roleName}</p>

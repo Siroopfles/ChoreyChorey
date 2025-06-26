@@ -11,6 +11,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer } from 'lucide-react';
@@ -25,12 +29,19 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { isAfter } from 'date-fns';
+import { USER_STATUSES } from '@/lib/types';
 
+const statusStyles: Record<string, { dot: string, label: string }> = {
+  Online: { dot: 'bg-green-500', label: 'Online' },
+  Afwezig: { dot: 'bg-yellow-500', label: 'Afwezig' },
+  'In vergadering': { dot: 'bg-red-500', label: 'In vergadering' },
+  Offline: { dot: 'bg-gray-400', label: 'Offline' },
+};
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();
   const { notifications, markAllNotificationsAsRead, snoozeNotification, setIsAddTaskDialogOpen } = useTasks();
-  const { user, logout, organizations, currentOrganization, switchOrganization } = useAuth();
+  const { user, logout, organizations, currentOrganization, switchOrganization, updateUserStatus } = useAuth();
   const router = useRouter();
 
   const displayedNotifications = useMemo(() => {
@@ -45,6 +56,9 @@ export default function AppHeader() {
     await switchOrganization(orgId);
     router.refresh();
   }
+
+  const currentStatus = user?.status?.type || 'Offline';
+  const currentStatusStyle = statusStyles[currentStatus] || statusStyles.Offline;
 
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-30">
@@ -147,7 +161,7 @@ export default function AppHeader() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-full relative">
               <Avatar className="h-8 w-8">
                 {user ? (
                   <>
@@ -160,11 +174,28 @@ export default function AppHeader() {
                   </AvatarFallback>
                 )}
               </Avatar>
+              <span className={cn("absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background", currentStatusStyle.dot)} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Mijn Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <div className={cn("w-2 h-2 rounded-full mr-2", currentStatusStyle.dot)} />
+                <span>Status: {currentStatusStyle.label}</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                  {USER_STATUSES.map(status => (
+                    <DropdownMenuItem key={status.value} onClick={() => updateUserStatus({ type: status.value })}>
+                       <div className={cn("w-2 h-2 rounded-full mr-2", (statusStyles[status.value] || statusStyles.Offline).dot)} />
+                       <span>{status.label}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
             <DropdownMenuItem asChild>
                <Link href="/dashboard/settings">
                  <UserIcon className="mr-2 h-4 w-4" />
