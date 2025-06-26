@@ -19,7 +19,7 @@ import {
   arrayUnion,
   getDocs,
 } from 'firebase/firestore';
-import { addDays, addHours, addMonths, addWeeks, isBefore, startOfMonth, getDay, setDate } from 'date-fns';
+import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter } from 'date-fns';
 import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { db } from '@/lib/firebase';
@@ -193,6 +193,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           order: data.order || 0,
           storyPoints: data.storyPoints,
           blockedBy: data.blockedBy || [],
+          dependencyConfig: data.dependencyConfig,
           recurring: data.recurring,
           organizationId: data.organizationId,
           imageDataUri: data.imageDataUri,
@@ -334,6 +335,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           order: Date.now(),
           storyPoints: taskData.storyPoints ?? null,
           blockedBy: taskData.blockedBy || [],
+          dependencyConfig: taskData.dependencyConfig || {},
           recurring: taskData.recurring ?? null,
           organizationId: currentOrganization.id,
           imageDataUri: taskData.imageDataUri ?? null,
@@ -384,6 +386,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           timeLogged: 0,
           activeTimerStartedAt: null,
           rating: null,
+          dependencyConfig: taskToClone.dependencyConfig || {},
         };
         
         delete (clonedTask as any).id; 

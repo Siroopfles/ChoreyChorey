@@ -22,7 +22,7 @@ export const roadmapData = {
       { id: 1, title: "Conditionele Custom Fields", description: "Veld Y tonen als veld X waarde Z heeft.", completed: false },
       { id: 2, title: "Terugkerende Subtaken", description: "Enkel een subtaak herhaalt, niet de hele taak.", completed: false },
       { id: 3, title: "Private Subtaken", description: "Alleen zichtbaar voor de toegewezene en projectmanager.", completed: true },
-      { id: 4, title: "Lead & Lag Time in Afhankelijkheden", description: "Start 2 dagen voor of na een andere taak eindigt.", completed: false },
+      { id: 4, title: "Lead & Lag Time in Afhankelijkheden", description: "Start 2 dagen voor of na een andere taak eindigt.", completed: true },
       { id: 5, title: "Taak Ratings", description: "Geef een voltooide taak 1-5 sterren voor kwaliteitsmeting.", completed: true },
       { id: 6, title: "Taak Checklist Templates", description: "Opslaan en hergebruiken van sets subtaken.", completed: true },
       { id: 7, title: "'Blokkerende' status", description: "Maakt visueel duidelijk dat een taak geblokkeerd is en waarom.", completed: true },
@@ -302,5 +302,3 @@ export const roadmapData = {
       { id: 156, title: "Voorspellende Resource Allocatie", description: "AI voorspelt toekomstige knelpunten en stelt verschuivingen voor.", completed: false },
     ]
   }
-```
-

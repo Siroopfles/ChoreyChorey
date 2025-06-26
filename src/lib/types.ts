@@ -192,6 +192,7 @@ export type Task = {
   order: number;
   storyPoints?: number;
   blockedBy?: string[];
+  dependencyConfig?: { [taskId: string]: { lag: number; unit: 'days' | 'hours' } };
   recurring?: Recurring;
   organizationId: string;
   imageDataUri?: string | null;
@@ -232,6 +233,7 @@ export const taskFormSchema = z.object({
   isPrivate: z.boolean().default(false),
   storyPoints: z.coerce.number().optional(),
   blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
+  dependencyConfig: z.record(z.string(), z.object({ lag: z.coerce.number(), unit: z.enum(['days', 'hours']) })).optional(),
   recurring: recurringSchema.optional(),
   imageDataUri: z.string().optional(),
 });

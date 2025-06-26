@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { format, formatDistanceToNow, isBefore, isToday, startOfDay, isWithinInterval, addDays } from 'date-fns';
+import { format, formatDistanceToNow, isBefore, isToday, startOfDay, isWithinInterval, addDays, isAfter, addHours } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import {
   Archive,
@@ -145,11 +145,32 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
 
   const isBlocked = useMemo(() => {
     if (!task.blockedBy || task.blockedBy.length === 0) return false;
+    
     return task.blockedBy.some(blockerId => {
       const blockerTask = allTasks.find(t => t.id === blockerId);
-      return blockerTask && blockerTask.status !== 'Voltooid';
+      if (!blockerTask) return false; // Blocker task not found, assume not blocked
+      
+      // If blocker is not complete, it's always blocking
+      if (blockerTask.status !== 'Voltooid') {
+          return true;
+      }
+      
+      // If blocker is complete, check for lag time
+      const dependencyConfig = task.dependencyConfig?.[blockerId];
+      if (dependencyConfig && blockerTask.completedAt) {
+          const { lag, unit } = dependencyConfig;
+          const addFn = unit === 'hours' ? addHours : addDays;
+          const unlockDate = addFn(blockerTask.completedAt, lag);
+          
+          // It's blocked if the unlock date is still in the future
+          return isAfter(unlockDate, new Date());
+      }
+      
+      // Default case: blocker is complete and no lag time, so it's not blocking.
+      return false;
     });
-  }, [task.blockedBy, allTasks]);
+  }, [task.blockedBy, task.dependencyConfig, allTasks]);
+
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
@@ -349,11 +370,16 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         <p className="font-semibold mb-1">Geblokkeerd door:</p>
                         <ul className="list-disc list-inside text-xs space-y-1">
                           {task.blockedBy
-                            ?.map(blockerId => allTasks.find(t => t.id === blockerId))
-                            .filter((t): t is Task => !!t)
-                            .map(blockerTask => (
-                              <li key={blockerTask.id} className={cn(blockerTask.status === 'Voltooid' && 'line-through text-muted-foreground')}>
+                            ?.map(blockerId => {
+                                const blockerTask = allTasks.find(t => t.id === blockerId)
+                                const depConfig = task.dependencyConfig?.[blockerId];
+                                return { blockerTask, depConfig }
+                            })
+                            .filter((item): item is { blockerTask: Task, depConfig: any } => !!item.blockerTask)
+                            .map(({ blockerTask, depConfig }) => (
+                              <li key={blockerTask.id} className={cn(blockerTask.status === 'Voltooid' && 'text-muted-foreground')}>
                                 {blockerTask.title} ({blockerTask.status})
+                                {depConfig && <span className="text-xs italic"> (Wachttijd: {depConfig.lag} {depConfig.unit === 'days' ? 'dagen' : 'uren'})</span>}
                               </li>
                             ))}
                         </ul>

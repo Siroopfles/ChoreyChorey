@@ -59,6 +59,18 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
     name: "blockedBy",
   });
 
+  const handleRemoveBlockedBy = (index: number) => {
+    const blockerId = form.getValues(`blockedBy.${index}`);
+    const currentConfig = form.getValues('dependencyConfig');
+    if (blockerId && currentConfig && currentConfig[blockerId]) {
+      const newConfig = { ...currentConfig };
+      delete newConfig[blockerId];
+      form.setValue('dependencyConfig', newConfig);
+    }
+    removeBlockedBy(index);
+  };
+
+
   const imageDataUri = form.watch('imageDataUri');
   const recurring = form.watch('recurring');
   const recurringFrequency = recurring?.frequency;
@@ -698,22 +710,53 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
       <Separator />
       
       <div>
-          <UiLabel>Geblokkeerd door (Taak ID)</UiLabel>
+          <UiLabel>Geblokkeerd door</UiLabel>
             <div className="space-y-2 mt-2">
-            {blockedByFields.map((field, index) => (
-              <div key={field.id} className="flex items-center gap-2">
-                <FormField
-                    control={form.control}
-                    name={`blockedBy.${index}`}
-                    render={({ field }) => (
-                        <Input {...field} value={field.value ?? ''} placeholder="Plak een taak ID..."/>
-                    )}
-                />
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeBlockedBy(index)}>
-                  <Trash2 className="h-4 w-4 text-destructive"/>
-                </Button>
-              </div>
-            ))}
+            {blockedByFields.map((field, index) => {
+              const blockerId = form.watch(`blockedBy.${index}`);
+              return (
+                <div key={field.id} className="flex flex-col gap-2 rounded-md border p-2">
+                  <div className="flex items-center gap-2">
+                    <FormField
+                        control={form.control}
+                        name={`blockedBy.${index}`}
+                        render={({ field }) => (
+                          <Input {...field} value={field.value ?? ''} placeholder="Plak een taak ID..."/>
+                        )}
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveBlockedBy(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive"/>
+                    </Button>
+                  </div>
+                   {blockerId && <div className="flex items-center gap-2 pl-1">
+                      <FormField
+                          control={form.control}
+                          name={`dependencyConfig.${blockerId}.lag`}
+                          render={({ field }) => (
+                             <Input type="number" placeholder="Wachttijd" {...field} value={field.value ?? ''} className="h-8 w-24" />
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name={`dependencyConfig.${blockerId}.unit`}
+                          render={({ field }) => (
+                              <Select onValueChange={field.onChange} value={field.value || 'days'}>
+                                  <FormControl>
+                                      <SelectTrigger className="h-8 w-28">
+                                          <SelectValue/>
+                                      </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      <SelectItem value="days">Dagen</SelectItem>
+                                      <SelectItem value="hours">Uren</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                          )}
+                      />
+                  </div>}
+                </div>
+              )
+            })}
             <Button type="button" variant="outline" size="sm" onClick={() => appendBlockedBy('')}>
               <LinkIcon className="mr-2 h-4 w-4" />
               Blocker toevoegen
