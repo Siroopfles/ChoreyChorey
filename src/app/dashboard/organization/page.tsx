@@ -50,7 +50,7 @@ function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
             <CardContent>
                 <div className="space-y-4">
                     {usersInOrg.map(member => {
-                        const role = currentOrganization.members[member.id]?.role;
+                        const role = (currentOrganization.members || {})[member.id]?.role;
                         const isOwner = member.id === currentOrganization.ownerId;
                         return (
                             <div key={member.id} className="flex items-center justify-between">
