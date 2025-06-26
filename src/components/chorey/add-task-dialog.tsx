@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, TaskFormValues, TaskTemplateFormValues } from '@/lib/types';
@@ -41,7 +40,7 @@ const defaultFormValues: TaskFormValues = {
   blockedBy: [],
   recurring: undefined,
   storyPoints: undefined,
-  assigneeId: undefined,
+  assigneeIds: [],
   teamId: undefined,
   dueDate: undefined,
   imageDataUri: undefined,

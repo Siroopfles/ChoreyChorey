@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,7 +33,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { Tags, Check } from 'lucide-react';
+import { Tags, Check, PlusCircle, Trash2 } from 'lucide-react';
+import { Label as UiLabel } from '@/components/ui/label';
 
 export function TemplateDialog({
   template,
@@ -57,6 +58,11 @@ export function TemplateDialog({
       subtasks: [],
       storyPoints: undefined,
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "subtasks",
   });
 
   const onSubmit = async (data: TaskTemplateFormValues) => {
@@ -210,6 +216,31 @@ export function TemplateDialog({
                 </FormItem>
               )}
             />
+
+             <div>
+                <UiLabel>Standaard Subtaken</UiLabel>
+                <div className="space-y-2 mt-2">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="flex items-center gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`subtasks.${index}.text`}
+                        render={({ field }) => (
+                            <Input {...field} placeholder="Beschrijf subtaak..."/>
+                        )}
+                      />
+                      <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive"/>
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" size="sm" onClick={() => append({ text: '' })}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Subtaak toevoegen
+                  </Button>
+                </div>
+              </div>
+
 
             <DialogFooter>
               <DialogClose asChild>

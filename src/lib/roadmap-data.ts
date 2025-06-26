@@ -16,6 +16,7 @@ export const roadmapData = {
       { id: 1013, title: "Recycle Bin / Prullenbak", description: "Herstel geannuleerde taken vanuit de 'Geannuleerd' kolom.", completed: true },
       { id: 1014, title: "Geavanceerde Terugkerende Taken", description: "Complexe herhalingspatronen (bv. 'elke 3e donderdag van de maand').", completed: true },
       { id: 1015, title: "Persoonlijke Herinneringen (/remindme)", description: "Vraag de bot om je ergens aan te herinneren.", completed: true },
+      { id: 8, title: "Multi-assign", description: "Meerdere personen verantwoordelijk maken voor één taak.", completed: true },
     ],
     "Fundamenteel Taakbeheer (Verdieping)": [
       { id: 1, title: "Conditionele Custom Fields", description: "Veld Y tonen als veld X waarde Z heeft.", completed: false },
@@ -23,9 +24,8 @@ export const roadmapData = {
       { id: 3, title: "Private Subtaken", description: "Alleen zichtbaar voor de toegewezene en projectmanager.", completed: false },
       { id: 4, title: "Lead & Lag Time in Afhankelijkheden", description: "Start 2 dagen voor of na een andere taak eindigt.", completed: false },
       { id: 5, title: "Taak Ratings", description: "Geef een voltooide taak 1-5 sterren voor kwaliteitsmeting.", completed: false },
-      { id: 6, title: "Taak Checklist Templates", description: "Opslaan en hergebruiken van sets subtaken.", completed: false },
+      { id: 6, title: "Taak Checklist Templates", description: "Opslaan en hergebruiken van sets subtaken.", completed: true },
       { id: 7, title: "'Blokkerende' status", description: "Maakt visueel duidelijk dat een taak geblokkeerd is en waarom.", completed: true },
-      { id: 8, title: "Multi-assign", description: "Meerdere personen verantwoordelijk maken voor één taak.", completed: true },
       { id: 9, title: "Taak Splitsen", description: "Splits een te grote taak in twee of meer aparte taken.", completed: false },
     ],
     "Geavanceerd Project- & Resource Management": [
@@ -224,7 +224,7 @@ export const roadmapData = {
       { id: 102, title: "Persoonlijke Goal Tracking", description: "Los van projecttaken.", completed: false },
       { id: 103, title: "Integratie met mindfulness-apps", description: "Headspace/Calm.", completed: false },
       { id: 104, title: "Werk-privé balans dashboard", description: "Analyse van werkuren.", completed: false },
-      { id: 105, title: "'Muziek voor Focus' integratie", description: "Spotify.", completed: false },
+      { id: 105, title: "Muziek voor Focus' integratie", description: "Spotify.", completed: false },
       { id: 106, title: "Dagelijkse 'Highlight Taak'", description: "Kies 1-3 belangrijkste taken.", completed: false },
     ],
     "Hyper-Automatisering & Interne Processen": [
