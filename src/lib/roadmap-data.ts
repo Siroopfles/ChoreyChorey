@@ -94,7 +94,7 @@ export const roadmapData = {
       { id: 30, title: "'Kudos' Tipping", description: "Geef een deel van je punten aan een collega als bedankje.", completed: true },
       { id: 31, title: "Mentorschap Programma", description: "Koppel ervaren gebruikers aan nieuwkomers.", completed: false },
       { id: 32, title: "Dynamische Leaderboards", description: "Op basis van specifieke tags, bv. \"Top Bug Fixer\".", completed: false },
-      { id: 33, title: "Community-driven 'Chore of the Week'", description: "Een uitdagende taak voor iedereen.", completed: false },
+      { id: 33, title: "Community-driven 'Chore of the Week'", description: "Een uitdagende taak voor iedereen.", completed: true },
       { id: 34, title: "'Virtuele 'Team Room'", description: "Een 2D/isometrische ruimte waar avatars van teamleden zijn.", completed: true },
       { id: 35, title: "User-Generated Content Challenges", description: "Bv. 'maak de beste taak-template'.", completed: false },
       { id: 36, title: "Project Post-Mortem Badges", description: "Badges voor succesvol afgeronde projecten.", completed: false },

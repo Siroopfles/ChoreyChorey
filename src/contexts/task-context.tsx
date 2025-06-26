@@ -49,6 +49,7 @@ type TaskContextType = {
   addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
   updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
   deleteTemplate: (templateId: string) => Promise<void>;
+  setChoreOfTheWeek: (taskId: string) => Promise<void>;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   selectedTaskIds: string[];
@@ -204,6 +205,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
           rating: data.rating || null,
           reviewerId: data.reviewerId || null,
+          isChoreOfTheWeek: data.isChoreOfTheWeek || false,
         } as Task;
       }).filter(task => {
         if (!authUser) return false;
@@ -996,6 +998,29 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setChoreOfTheWeek = async (taskId: string) => {
+    if (!authUser || !currentOrganization) return;
+    try {
+        const batch = writeBatch(db);
+        
+        // Find and unset the current chore of the week
+        const currentChore = tasks.find(t => t.isChoreOfTheWeek);
+        if (currentChore) {
+            const oldChoreRef = doc(db, 'tasks', currentChore.id);
+            batch.update(oldChoreRef, { isChoreOfTheWeek: false });
+        }
+
+        // Set the new chore of the week
+        const newChoreRef = doc(db, 'tasks', taskId);
+        batch.update(newChoreRef, { isChoreOfTheWeek: true });
+
+        await batch.commit();
+        toast({ title: 'Klus van de Week ingesteld!' });
+    } catch (e) {
+        handleError(e, 'instellen van Klus van de Week');
+    }
+  };
+
 
   return (
     <TaskContext.Provider value={{ 
@@ -1015,6 +1040,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       addTemplate,
       updateTemplate,
       deleteTemplate,
+      setChoreOfTheWeek,
       searchTerm, 
       setSearchTerm,
       selectedTaskIds,

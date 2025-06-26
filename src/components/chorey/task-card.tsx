@@ -123,8 +123,8 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
   const PriorityIcon = priorityConfig[task.priority as keyof typeof priorityConfig]?.icon || Equal;
   const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks } = useTasks();
-  const { currentOrganization } = useAuth();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek } = useTasks();
+  const { currentOrganization, currentUserRole } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
@@ -225,6 +225,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id);
   const canThank = showGamification && currentUser && task.status === 'Voltooid' && task.assigneeIds.length > 0 && !task.assigneeIds.includes(currentUser.id);
   const canRate = showGamification && currentUser && task.status === 'Voltooid' && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id) && !task.rating;
+  const canManageChoreOfWeek = currentUserRole === 'Owner' || currentUserRole === 'Admin';
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(task.id);
@@ -304,6 +305,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
             <CardHeader className="p-3 pb-2 pl-9">
             <div className="flex justify-between items-start gap-2">
                 <CardTitle className="text-sm font-semibold font-body leading-snug pt-1 flex items-center gap-1.5">
+                {task.isChoreOfTheWeek && <Star className="h-3 w-3 text-yellow-500 fill-yellow-400 shrink-0" />}
                 {task.recurring && <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />}
                 <span className="flex-1">
                     <Highlight text={task.title} highlight={searchTerm} />
@@ -327,6 +329,19 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         {task.activeTimerStartedAt ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
                         <span>{task.activeTimerStartedAt ? 'Stop Timer' : 'Start Timer'}</span>
                         </DropdownMenuItem>
+                    )}
+                    {canManageChoreOfWeek && (
+                      task.isChoreOfTheWeek ? (
+                        <DropdownMenuItem onClick={() => updateTask(task.id, { isChoreOfTheWeek: false })}>
+                          <Star className="mr-2 h-4 w-4" />
+                          Verwijder als Klus v/d Week
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => setChoreOfTheWeek(task.id)}>
+                          <Star className="mr-2 h-4 w-4" />
+                          Markeer als Klus v/d Week
+                        </DropdownMenuItem>
+                      )
                     )}
                     <DropdownMenuItem onClick={() => cloneTask(task.id)}>
                     <Copy className="mr-2 h-4 w-4" />

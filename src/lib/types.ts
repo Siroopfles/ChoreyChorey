@@ -241,6 +241,7 @@ export type Task = {
   activeTimerStartedAt?: Date | null;
   rating?: number | null;
   reviewerId?: string | null;
+  isChoreOfTheWeek?: boolean;
 };
 
 export type Notification = {

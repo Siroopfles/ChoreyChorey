@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, Suspense } from 'react';
@@ -20,6 +21,7 @@ import GanttView from '@/components/chorey/gantt-view';
 import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
 import TaskListView from '@/components/chorey/task-list-view';
 import Papa from 'papaparse';
+import { ChoreOfTheWeekCard } from '@/components/chorey/chore-of-the-week-card';
 
 export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
@@ -43,6 +45,9 @@ export default function DashboardPage() {
       return searchTermMatch && assigneeMatch && labelMatch && priorityMatch && teamMatch;
     });
   }, [tasks, searchTerm, filters]);
+
+  const choreOfTheWeek = useMemo(() => filteredTasks.find(t => t.isChoreOfTheWeek), [filteredTasks]);
+  const regularTasks = useMemo(() => filteredTasks.filter(t => !t.isChoreOfTheWeek), [filteredTasks]);
 
   const handleExport = () => {
     const dataToExport = filteredTasks.map(task => {
@@ -80,6 +85,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full gap-4">
+      {choreOfTheWeek && <ChoreOfTheWeekCard task={choreOfTheWeek} users={users} />}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Input
@@ -115,10 +121,10 @@ export default function DashboardPage() {
           <TabsTrigger value="gantt">Gantt</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="flex-1 mt-4 overflow-hidden">
-          <TaskColumns tasks={filteredTasks} users={users} currentUser={currentUser} teams={teams} />
+          <TaskColumns tasks={regularTasks} users={users} currentUser={currentUser} teams={teams} />
         </TabsContent>
         <TabsContent value="list" className="flex-1 mt-4 overflow-y-auto">
-          <TaskListView tasks={filteredTasks} users={users} />
+          <TaskListView tasks={regularTasks} users={users} />
         </TabsContent>
         <TabsContent value="dashboard" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<DashboardViewSkeleton />}>
