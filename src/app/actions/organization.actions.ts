@@ -24,25 +24,6 @@ export async function createOrganizationInvite(organizationId: string, inviterId
     }
 }
 
-export async function getInviteDetails(inviteId: string) {
-    try {
-        const inviteRef = doc(db, 'invites', inviteId);
-        const inviteDoc = await getDoc(inviteRef);
-
-        if (!inviteDoc.exists() || inviteDoc.data().status !== 'pending') {
-            return { error: 'Uitnodiging is ongeldig of al gebruikt.' };
-        }
-
-        return {
-            success: true,
-            invite: { id: inviteDoc.id, ...inviteDoc.data() } as Invite,
-        };
-
-    } catch(e: any) {
-        return { error: e.message };
-    }
-}
-
 export async function updateUserRoleInOrganization(organizationId: string, targetUserId: string, newRole: RoleName, currentUserId: string) {
     try {
         const orgRef = doc(db, 'organizations', organizationId);

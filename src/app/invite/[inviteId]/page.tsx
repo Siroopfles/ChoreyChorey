@@ -4,14 +4,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { getInviteDetails } from '@/app/actions/organization.actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import type { Invite } from '@/lib/types';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { runTransaction, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { runTransaction, doc, getDoc, arrayUnion } from 'firebase/firestore';
 
 
 export default function InvitePage() {
@@ -30,11 +29,17 @@ export default function InvitePage() {
         
         async function fetchInvite() {
             setLoading(true);
-            const result = await getInviteDetails(inviteId);
-            if (result.error) {
-                setError(result.error);
-            } else if (result.invite) {
-                setInvite(result.invite);
+            try {
+                const inviteRef = doc(db, 'invites', inviteId);
+                const inviteDoc = await getDoc(inviteRef);
+
+                if (!inviteDoc.exists() || inviteDoc.data().status !== 'pending') {
+                    setError('Uitnodiging is ongeldig of al gebruikt.');
+                } else {
+                    setInvite({ id: inviteDoc.id, ...inviteDoc.data() } as Invite);
+                }
+            } catch (e: any) {
+                 setError(e.message);
             }
             setLoading(false);
         }
@@ -47,27 +52,27 @@ export default function InvitePage() {
             return;
         }
         setIsAccepting(true);
+        setError(null);
         try {
             await runTransaction(db, async (transaction) => {
                 const inviteRef = doc(db, 'invites', inviteId);
                 const userRef = doc(db, 'users', user.id);
+                const organizationRef = doc(db, 'organizations', invite.organizationId);
 
                 const inviteDoc = await transaction.get(inviteRef);
                 if (!inviteDoc.exists() || inviteDoc.data().status !== 'pending') {
                     throw new Error("Uitnodiging is ongeldig of al gebruikt.");
                 }
 
-                const organizationId = inviteDoc.data().organizationId;
-                const organizationRef = doc(db, 'organizations', organizationId);
                 const memberPath = `members.${user.id}`;
-
-                transaction.update(userRef, {
-                    organizationIds: arrayUnion(organizationId),
-                    currentOrganizationId: organizationId,
-                });
                 
                 transaction.update(organizationRef, {
                     [memberPath]: { role: 'Member' }
+                });
+
+                transaction.update(userRef, {
+                    organizationIds: arrayUnion(invite.organizationId),
+                    currentOrganizationId: invite.organizationId,
                 });
 
                 transaction.update(inviteRef, {
