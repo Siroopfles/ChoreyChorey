@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -19,7 +18,6 @@ import {
 } from '@/components/ui/sidebar';
 import AppHeader from '@/components/chorey/app-header';
 import CommandBar from '@/components/chorey/command-bar';
-import Leaderboard from '@/components/chorey/leaderboard';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import UserProfileSheet from '@/components/chorey/user-profile-sheet';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
@@ -50,6 +48,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/my-week', icon: CalendarDays, label: 'Mijn Week' },
         { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
+        { href: '/dashboard/leaderboard', icon: Trophy, label: 'Scorebord' },
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates' },
         { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
@@ -109,11 +108,6 @@ function AppShell({ children }: { children: React.ReactNode }) {
                             </>
                         )}
                     </SidebarMenu>
-                    {currentOrganization?.settings?.features?.gamification !== false && (
-                        <div className="flex-1 overflow-y-auto mt-4">
-                            <Leaderboard users={users} tasks={tasks} />
-                        </div>
-                    )}
                 </SidebarContent>
             </Sidebar>
 
