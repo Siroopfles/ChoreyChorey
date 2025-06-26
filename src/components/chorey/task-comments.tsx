@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '../ui/rich-text-editor';
 
 const CommentItem = ({ comment, user }: { comment: CommentType; user?: User }) => {
   return (
@@ -27,7 +27,7 @@ const CommentItem = ({ comment, user }: { comment: CommentType; user?: User }) =
                 {formatDistanceToNow(comment.createdAt, { addSuffix: true, locale: nl })}
             </p>
         </div>
-        <p className="text-sm text-foreground/90">{comment.text}</p>
+        <div className="text-sm text-foreground/90 prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: comment.text }} />
       </div>
     </div>
   );
@@ -105,8 +105,9 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
   };
 
   const handleAddComment = () => {
-    if (newComment.trim()) {
-      addComment(taskId, newComment.trim());
+    const plainText = newComment.replace(/<[^>]*>/g, '').trim();
+    if (plainText) {
+      addComment(taskId, newComment);
       setNewComment('');
     }
   };
@@ -154,14 +155,13 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
                 <p className="text-sm text-muted-foreground text-center py-4">Nog geen reacties.</p>
             )}
         </ScrollArea>
-        <div className="flex items-start gap-3 mt-auto pt-4 border-t">
-            <Textarea 
-                placeholder="Voeg een reactie toe..." 
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                rows={2}
+        <div className="flex flex-col gap-2 mt-auto pt-4 border-t">
+            <RichTextEditor
+              value={newComment}
+              onChange={setNewComment}
+              placeholder="Voeg een reactie toe..."
             />
-            <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+            <Button onClick={handleAddComment} disabled={!newComment.replace(/<[^>]*>/g, '').trim()} className="self-end">
                 Plaats
             </Button>
         </div>

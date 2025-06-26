@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Label as UiLabel } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,6 +25,7 @@ import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImag
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { RichTextEditor } from '../ui/rich-text-editor';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -141,7 +141,11 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
           <FormItem>
             <FormLabel>Omschrijving</FormLabel>
             <FormControl>
-              <Textarea placeholder="Voeg een meer gedetailleerde omschrijving toe..." className="resize-none" {...field} value={field.value ?? ''} />
+              <RichTextEditor
+                placeholder="Voeg een meer gedetailleerde omschrijving toe..."
+                value={field.value ?? ''}
+                onChange={field.onChange}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
