@@ -1,4 +1,3 @@
-
 'use client';
 import type { Task, User, Team } from '@/lib/types';
 import { ALL_STATUSES } from '@/lib/types';
@@ -63,6 +62,7 @@ import { calculatePoints } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { handleTextToSpeech } from '@/app/actions/ai.actions';
 import Image from 'next/image';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 type TaskCardProps = {
@@ -112,7 +112,7 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 
 
 const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps) => {
-  const assignee = users.find((user) => user.id === task.assigneeId);
+  const assignees = useMemo(() => task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
   const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer } = useTasks();
@@ -180,8 +180,8 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
 
   const { isOverdue, isDueToday, isDueSoon } = dateStatus;
 
-  const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && task.assigneeId !== currentUser.id;
-  const canThank = currentUser && task.status === 'Voltooid' && task.assigneeId && task.assigneeId !== currentUser.id;
+  const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id);
+  const canThank = currentUser && task.status === 'Voltooid' && task.assigneeIds.length > 0 && !task.assigneeIds.includes(currentUser.id);
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(task.id);
@@ -357,7 +357,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     disabled={task.thanked}
                 >
                     <Heart className="mr-2 h-4 w-4 text-pink-500" />
-                    {task.thanked ? 'Bedankt!' : `Bedank ${assignee?.name}`}
+                    {task.thanked ? 'Bedankt!' : `Bedank team`}
                 </Button>
             )}
 
@@ -417,26 +417,38 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
             </CardContent>
             <CardFooter className="p-3 pt-2 flex justify-between items-center text-xs text-muted-foreground pl-9">
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 w-full items-center">
-                    {assignee ? (
-                    <button
-                        type="button"
-                        className="flex items-center gap-2 rounded-full hover:bg-accent p-0.5 -ml-1"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if(assignee) setViewedUser(assignee);
-                        }}
-                        aria-label={`View profile of ${assignee.name}`}
-                    >
-                        <Avatar className="h-5 w-5">
-                        <AvatarImage src={assignee.avatar} alt={assignee.name} data-ai-hint="person face" />
-                        <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                    </button>
-                    ) : (
-                    <div className="h-5 w-5 flex items-center justify-center">
-                        <UserIcon className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center -space-x-2">
+                      {assignees.length > 0 ? (
+                        assignees.slice(0, 3).map(assignee => (
+                          <TooltipProvider key={assignee.id}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                  onClick={(e) => { e.stopPropagation(); setViewedUser(assignee); }}
+                                >
+                                  <Avatar className="h-6 w-6 border-2 border-background">
+                                    <AvatarImage src={assignee.avatar} alt={assignee.name} />
+                                    <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>{assignee.name}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ))
+                      ) : (
+                        <div className="h-6 w-6 flex items-center justify-center">
+                          <UserIcon className="h-4 w-4 text-gray-400" />
+                        </div>
+                      )}
+                      {assignees.length > 3 && (
+                        <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold border-2 border-background">
+                          +{assignees.length - 3}
+                        </div>
+                      )}
                     </div>
-                    )}
                     {team && (
                         <div className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
@@ -473,7 +485,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                         <Clock className="h-3 w-3" />
                         <span>{formatDistanceToNow(task.createdAt, { locale: nl, addSuffix: true })}</span>
                     </div>
-                    {task.storyPoints !== undefined && (
+                    {task.storyPoints !== undefined && task.storyPoints !== null && (
                         <div className="flex items-center gap-1 font-medium">
                             <Database className="h-3 w-3" />
                             <span>{task.storyPoints}</span>

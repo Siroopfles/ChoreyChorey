@@ -15,6 +15,7 @@ export const roadmapData = {
       { id: 1012, title: "Rich Text Editor", description: "Opmaakmogelijkheden (vet, cursief, lijsten) in beschrijvingen en comments.", completed: true },
       { id: 1013, title: "Recycle Bin / Prullenbak", description: "Herstel geannuleerde taken vanuit de 'Geannuleerd' kolom.", completed: true },
       { id: 1014, title: "Geavanceerde Terugkerende Taken", description: "Complexe herhalingspatronen (bv. 'elke 3e donderdag van de maand').", completed: true },
+      { id: 1015, title: "Persoonlijke Herinneringen (/remindme)", description: "Vraag de bot om je ergens aan te herinneren.", completed: true },
     ],
     "Fundamenteel Taakbeheer (Verdieping)": [
       { id: 1, title: "Conditionele Custom Fields", description: "Veld Y tonen als veld X waarde Z heeft.", completed: false },
@@ -24,7 +25,7 @@ export const roadmapData = {
       { id: 5, title: "Taak Ratings", description: "Geef een voltooide taak 1-5 sterren voor kwaliteitsmeting.", completed: false },
       { id: 6, title: "Taak Checklist Templates", description: "Opslaan en hergebruiken van sets subtaken.", completed: false },
       { id: 7, title: "'Blokkerende' status", description: "Maakt visueel duidelijk dat een taak geblokkeerd is en waarom.", completed: true },
-      { id: 8, title: "Multi-assign", description: "Meerdere personen verantwoordelijk maken voor één taak.", completed: false },
+      { id: 8, title: "Multi-assign", description: "Meerdere personen verantwoordelijk maken voor één taak.", completed: true },
       { id: 9, title: "Taak Splitsen", description: "Splits een te grote taak in twee of meer aparte taken.", completed: false },
     ],
     "Geavanceerd Project- & Resource Management": [
@@ -66,6 +67,8 @@ export const roadmapData = {
       { id: 1047, title: "AI-Powered Risico-Identificatie", description: "Analyseert taakteksten op potentiële risicowoorden.", completed: true },
       { id: 1049, title: "AI Voice-to-Task & Voice Control", description: "Dicteer taken en commando's via spraak.", completed: true },
       { id: 1052, title: "AI-Suggested Taakprioritering", description: "Geeft een voorzet voor de prioriteit op basis van inhoud en context.", completed: true },
+      { id: 1051, title: "AI-Powered Image Generation", description: "Genereer een omslagfoto voor een taak op basis van de titel.", completed: true },
+      { id: 1050, title: "AI Multi-Speaker Text-to-Speech", description: "Zet een discussie om in een gesprek met meerdere stemmen.", completed: true },
       { id: 20, title: "AI Team Composition Suggester", description: "Stelt het ideale team voor een nieuw project voor.", completed: false },
       { id: 21, title: "AI Communicatie 'Health' Score", description: "Analyseert reactietijden, sentiment etc.", completed: false },
       { id: 22, title: "AI Goal Setting Assistant", description: "Helpt bij het formuleren van SMART-doelen.", completed: false },
@@ -131,6 +134,7 @@ export const roadmapData = {
     ],
     "Integraties & API": [
       { id: 1079, title: "Data Export (CSV)", description: "Exporteer taken naar CSV.", completed: true },
+      { id: 1080, title: "Data Import (CSV)", description: "Importeer taken vanuit een CSV-bestand.", completed: true },
       { id: 50, title: "Native Automation Builder", description: "Ingebouwde 'Zapier'-light.", completed: false },
       { id: 51, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket.", completed: false },
       { id: 52, title: "Figma / Adobe XD / Sketch Integratie", description: "Koppel design-bestanden aan taken.", completed: false },
@@ -161,7 +165,7 @@ export const roadmapData = {
       { id: 65, title: "Ingebouwde Aankondigingen-module voor beheerders", description: "Stuur aankondigingen naar alle gebruikers.", completed: false },
       { id: 66, title: "'Leesbevestiging' voor belangrijke comments of updates", description: "Zie wie een belangrijke update heeft gelezen.", completed: false },
       { id: 89, title: "Dagelijks Overzicht", description: "Configureerbaar kanaal voor dagelijkse updates.", completed: false },
-      { id: 91, title: "Verbeterde @mentions en Taakdiscussies", description: "Rijkere discussies met threads.", completed: false },
+      { id: 91, title: "Verbeterde @mentions en Taakdiscussies", description: "Rijkere discussies met threads.", completed: true },
       { id: 92, title: "Notificatie Digest", description: "Ontvang een samenvatting (dagelijks/wekelijks) van alle updates.", completed: false },
     ],
     "Veiligheid, Compliance & Beheer": [

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useTasks } from "@/contexts/task-context";
@@ -61,13 +60,13 @@ export default function BulkActionBar() {
                         {users.map(user => (
                             <DropdownMenuItem 
                                 key={user.id}
-                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { assigneeId: user.id })}
+                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { assigneeIds: [user.id] })}
                             >
                                 {user.name}
                             </DropdownMenuItem>
                         ))}
                          <DropdownMenuItem 
-                            onSelect={() => bulkUpdateTasks(selectedTaskIds, { assigneeId: null })}
+                            onSelect={() => bulkUpdateTasks(selectedTaskIds, { assigneeIds: [] })}
                         >
                             Niemand
                         </DropdownMenuItem>

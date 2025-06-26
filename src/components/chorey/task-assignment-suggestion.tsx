@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -38,7 +37,7 @@ export function TaskAssignmentSuggestion({ users }: TaskAssignmentSuggestionProp
       setSuggestion(result.suggestion);
       const suggestedUser = users.find(u => u.name === result.suggestion?.suggestedAssignee);
       if(suggestedUser) {
-        form.setValue('assigneeId', suggestedUser.id);
+        form.setValue('assigneeIds', [suggestedUser.id]);
       }
     }
     setLoading(false);

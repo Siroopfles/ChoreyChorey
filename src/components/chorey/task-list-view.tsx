@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Task, User } from '@/lib/types';
@@ -39,20 +38,21 @@ export default function TaskListView({ tasks, users }: { tasks: Task[], users: U
           </TableHeader>
           <TableBody>
             {tasks.map((task) => {
-              const assignee = users.find(u => u.id === task.assigneeId);
+              const assignees = task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[];
               return (
                 <TableRow key={task.id} onClick={() => handleRowClick(task)} className="cursor-pointer">
                   <TableCell className="font-medium">{task.title}</TableCell>
                   <TableCell><Badge variant="outline">{task.status}</Badge></TableCell>
                   <TableCell>{task.priority}</TableCell>
                   <TableCell>
-                    {assignee ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={assignee.avatar} alt={assignee.name} />
-                          <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span>{assignee.name}</span>
+                    {assignees.length > 0 ? (
+                      <div className="flex items-center -space-x-2">
+                        {assignees.map(assignee => (
+                          <Avatar key={assignee.id} className="h-6 w-6 border-2 border-background">
+                            <AvatarImage src={assignee.avatar} alt={assignee.name} />
+                            <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        ))}
                       </div>
                     ) : (
                       <span className="text-muted-foreground">Niemand</span>

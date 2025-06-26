@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export type Organization = {
@@ -178,7 +177,7 @@ export type Task = {
   status: Status;
   priority: Priority;
   dueDate?: Date;
-  assigneeId: string | null;
+  assigneeIds: string[];
   creatorId: string | null;
   teamId?: string | null;
   labels: Label[];
@@ -213,7 +212,7 @@ export type Notification = {
 export const taskFormSchema = z.object({
   title: z.string().min(3, 'Titel moet minimaal 3 karakters lang zijn.'),
   description: z.string().optional(),
-  assigneeId: z.string().optional(),
+  assigneeIds: z.array(z.string()).optional(),
   teamId: z.string().optional(),
   dueDate: z.date().optional(),
   priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).default('Midden'),

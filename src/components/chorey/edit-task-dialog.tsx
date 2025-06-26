@@ -43,7 +43,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     defaultValues: {
       title: task.title,
       description: task.description,
-      assigneeId: task.assigneeId || undefined,
+      assigneeIds: task.assigneeIds || [],
       teamId: task.teamId || undefined,
       dueDate: task.dueDate,
       priority: task.priority,
@@ -62,7 +62,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     form.reset({
       title: task.title,
       description: task.description,
-      assigneeId: task.assigneeId || undefined,
+      assigneeIds: task.assigneeIds || [],
       teamId: task.teamId || undefined,
       dueDate: task.dueDate,
       priority: task.priority,

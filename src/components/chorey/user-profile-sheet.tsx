@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, Task, Priority } from '@/lib/types';
@@ -129,7 +128,7 @@ export default function UserProfileSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const { tasks } = useTasks();
-  const userTasks = tasks.filter(task => task.assigneeId === user.id);
+  const userTasks = tasks.filter(task => task.assigneeIds.includes(user.id));
   const currentTasks = userTasks.filter(t => t.status === 'Te Doen' || t.status === 'In Uitvoering' || t.status === 'In Review');
 
   return (

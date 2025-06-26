@@ -1,4 +1,3 @@
-
 'use client';
 import { useTasks } from "@/contexts/task-context";
 import { useAuth } from "@/contexts/auth-context";

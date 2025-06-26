@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A set of AI tools for interacting with tasks in Firestore.
@@ -28,7 +27,7 @@ const CreateTaskDataSchema = z.object({
   title: z.string().describe('The title of the task.'),
   description: z.string().optional().describe('The detailed description of the task.'),
   priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional().describe('The priority of the task.'),
-  assigneeId: z.string().optional().describe('The ID of the user the task is assigned to.'),
+  assigneeIds: z.array(z.string()).optional().describe('The IDs of the users the task is assigned to.'),
   labels: z.array(z.string()).optional().describe('A list of labels for the task.'),
   dueDate: z.string().optional().describe("The due date and time in 'YYYY-MM-DDTHH:mm:ss' ISO 8601 format. The AI should convert natural language dates like 'tomorrow at 10am' into this format."),
   isPrivate: z.boolean().optional().describe('Whether the task is private to the creator and assignee. Should be true for personal reminders.'),
@@ -58,6 +57,7 @@ export const createTask = ai.defineTool(
       dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null,
       history: [addHistoryEntry(creatorId, 'Aangemaakt', `via AI commando.`)],
       isPrivate: taskData.isPrivate ?? false,
+      assigneeIds: taskData.assigneeIds ?? [],
       // Add defaults for fields not in schema to avoid Firestore errors
       subtasks: [],
       attachments: [],
@@ -89,7 +89,7 @@ export const createTask = ai.defineTool(
 const TaskSearchFiltersSchema = z.object({
   status: z.enum(['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Gearchiveerd', 'Geannuleerd']).optional(),
   priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional(),
-  assigneeId: z.string().optional().describe('Filter by the ID of the assigned user.'),
+  assigneeId: z.string().optional().describe('Filter by the ID of an assigned user.'),
   labels: z.array(z.string()).optional().describe('Filter by a list of labels.'),
   term: z.string().optional().describe('A search term to match in the title or description.'),
 });
@@ -109,7 +109,7 @@ export const searchTasks = ai.defineTool(
         title: z.string(),
         status: z.string(),
         priority: z.string(),
-        assigneeId: z.string().nullable(),
+        assigneeIds: z.array(z.string()),
         dueDate: z.string().nullable(),
       })
     ),
@@ -124,7 +124,7 @@ export const searchTasks = ai.defineTool(
       q = query(q, where('priority', '==', filters.priority));
     }
     if (filters.assigneeId) {
-      q = query(q, where('assigneeId', '==', filters.assigneeId));
+      q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
     }
     if (filters.labels && filters.labels.length > 0) {
       q = query(q, where('labels', 'array-contains-any', filters.labels));
@@ -146,7 +146,7 @@ export const searchTasks = ai.defineTool(
       title: task.title,
       status: task.status,
       priority: task.priority,
-      assigneeId: task.assigneeId,
+      assigneeIds: task.assigneeIds,
       dueDate: task.dueDate ? task.dueDate.toISOString().split('T')[0] : null,
     }));
   }
@@ -158,7 +158,7 @@ const TaskUpdateDataSchema = z.object({
     description: z.string().optional(),
     status: z.enum(['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Gearchiveerd', 'Geannuleerd']).optional(),
     priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional(),
-    assigneeId: z.string().optional(),
+    assigneeIds: z.array(z.string()).optional().describe("Replace the current list of assignee IDs with this new list."),
     add_subtask: z.string().optional().describe("A subtask description to add to the task.")
 });
 

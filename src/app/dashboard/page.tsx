@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, Suspense } from 'react';
@@ -34,7 +33,7 @@ export default function DashboardPage() {
           (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
         : true;
 
-      const assigneeMatch = filters.assigneeId ? task.assigneeId === filters.assigneeId : true;
+      const assigneeMatch = filters.assigneeId ? task.assigneeIds.includes(filters.assigneeId) : true;
       const labelMatch = filters.labels.length > 0 ? task.labels.every(label => task.labels.includes(label as Label)) : true;
       const priorityMatch = filters.priority ? task.priority === filters.priority : true;
       const teamMatch = filters.teamId ? task.teamId === filters.teamId : true;
@@ -45,7 +44,7 @@ export default function DashboardPage() {
 
   const handleExport = () => {
     const dataToExport = filteredTasks.map(task => {
-        const assignee = users.find(u => u.id === task.assigneeId);
+        const assignees = task.assigneeIds.map(id => users.find(u => u.id === id)?.name).filter(Boolean);
         return {
             ID: task.id,
             Titel: task.title,
@@ -53,7 +52,7 @@ export default function DashboardPage() {
             Status: task.status,
             Prioriteit: task.priority,
             Labels: task.labels.join(', '),
-            ToegewezenAan: assignee ? assignee.name : 'N/A',
+            ToegewezenAan: assignees.join(', ') || 'N/A',
             Einddatum: task.dueDate ? task.dueDate.toISOString().split('T')[0] : 'N/A',
             Aanmaakdatum: task.createdAt.toISOString().split('T')[0],
         };

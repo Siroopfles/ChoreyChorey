@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -177,7 +176,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           description: data.description || '',
           status: data.status || 'Te Doen',
           priority: data.priority || 'Midden',
-          assigneeId: data.assigneeId || null,
+          assigneeIds: data.assigneeIds || [],
           creatorId: data.creatorId || null,
           teamId: data.teamId || null,
           labels: data.labels || [],
@@ -201,7 +200,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         } as Task;
       }).filter(task => {
         if (!authUser) return false;
-        if (task.isPrivate && task.assigneeId !== authUser.uid && task.creatorId !== authUser.uid) {
+        if (task.isPrivate && !task.assigneeIds.includes(authUser.uid) && task.creatorId !== authUser.uid) {
             return false;
         }
         return true;
@@ -316,7 +315,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const firestoreTask: Omit<Task, 'id'> = {
           title: taskData.title,
           description: taskData.description || '',
-          assigneeId: taskData.assigneeId || null,
+          assigneeIds: taskData.assigneeIds || [],
           creatorId: authUser.uid,
           teamId: taskData.teamId || null,
           dueDate: taskData.dueDate || null,
@@ -342,12 +341,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
-        if (firestoreTask.assigneeId) {
-            await createNotification(
-                firestoreTask.assigneeId,
-                `${user?.name} heeft je toegewezen aan: "${firestoreTask.title}"`,
-                docRef.id
-            );
+        if (firestoreTask.assigneeIds.length > 0) {
+            firestoreTask.assigneeIds.forEach(assigneeId => {
+              createNotification(
+                  assigneeId,
+                  `${user?.name} heeft je toegewezen aan: "${firestoreTask.title}"`,
+                  docRef.id
+              );
+            });
         }
         return true;
     } catch (e) {
@@ -415,7 +416,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const achievementsToGrant: string[] = [];
 
     if (type === 'completed' && completedTask) {
-        const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeId', '==', userId), where('status', '==', 'Voltooid'));
+        const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeIds', 'array-contains', userId), where('status', '==', 'Voltooid'));
         const completedTasksSnapshot = await getDocs(completedTasksQuery);
         const totalCompleted = completedTasksSnapshot.size;
 
@@ -459,24 +460,27 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
 
-        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeId', 'priority', 'dueDate', 'title', 'teamId'];
+        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeIds', 'priority', 'dueDate', 'title', 'teamId'];
         fieldsToTrack.forEach(field => {
-            if (updates[field] !== undefined && updates[field] !== taskToUpdate[field]) {
+            if (updates[field] !== undefined && JSON.stringify(updates[field]) !== JSON.stringify(taskToUpdate[field])) {
                 const oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');
                 const newValue = field === 'dueDate' ? (updates[field] ? (updates[field] as Date).toLocaleDateString() : 'geen') : (updates[field] || 'leeg');
                 
                 let details = `van "${oldValue}" naar "${newValue}"`;
-                if (field === 'assigneeId') {
-                    const oldAssignee = users.find(u => u.id === taskToUpdate.assigneeId)?.name || 'niemand';
-                    const newAssignee = users.find(u => u.id === updates.assigneeId)?.name || 'niemand';
-                    details = `van ${oldAssignee} naar ${newAssignee}`;
+                if (field === 'assigneeIds') {
+                    const oldAssignees = taskToUpdate.assigneeIds.map(id => users.find(u => u.id === id)?.name || 'Onbekend').join(', ') || 'niemand';
+                    const newAssignees = (updates.assigneeIds || []).map(id => users.find(u => u.id === id)?.name || 'Onbekend').join(', ') || 'niemand';
+                    details = `van ${oldAssignees} naar ${newAssignees}`;
                 }
                 newHistory.push(addHistoryEntry(authUser.uid, `Veld '${field}' gewijzigd`, details));
             }
         });
         
-        if (updates.assigneeId && updates.assigneeId !== taskToUpdate.assigneeId) {
-             await createNotification(updates.assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId);
+        if (updates.assigneeIds) {
+             const addedAssignees = updates.assigneeIds.filter(id => !taskToUpdate.assigneeIds.includes(id));
+             addedAssignees.forEach(assigneeId => {
+                 createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId);
+             });
         }
 
         if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== authUser.uid) {
@@ -486,16 +490,17 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
             finalUpdates.completedAt = new Date();
             
-            if(taskToUpdate.assigneeId) {
+            if(taskToUpdate.assigneeIds.length > 0) {
                 const points = calculatePoints(taskToUpdate.priority, taskToUpdate.storyPoints);
-                const userRef = doc(db, 'users', taskToUpdate.assigneeId);
-                await updateDoc(userRef, { points: increment(points) });
-                toast({
-                    title: 'Goed werk!',
-                    description: `${users.find(u=>u.id === taskToUpdate.assigneeId)?.name} heeft ${points} punten verdiend.`,
+                taskToUpdate.assigneeIds.forEach(async (assigneeId) => {
+                    const userRef = doc(db, 'users', assigneeId);
+                    await updateDoc(userRef, { points: increment(points) });
+                    toast({
+                        title: 'Goed werk!',
+                        description: `${users.find(u=>u.id === assigneeId)?.name} heeft ${points} punten verdiend.`,
+                    });
+                    await checkAndGrantAchievements(assigneeId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
                 });
-                
-                await checkAndGrantAchievements(taskToUpdate.assigneeId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
             }
 
             if (taskToUpdate.recurring) {
@@ -520,12 +525,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
                     const docRef = await addDoc(collection(db, 'tasks'), newTaskData);
 
-                    if (newTaskData.assigneeId) {
-                        await createNotification(
-                            newTaskData.assigneeId,
-                            `Nieuwe herhalende taak: "${newTaskData.title}"`,
-                            docRef.id
-                        );
+                    if (newTaskData.assigneeIds.length > 0) {
+                        newTaskData.assigneeIds.forEach(assigneeId => {
+                            createNotification(
+                                assigneeId,
+                                `Nieuwe herhalende taak: "${newTaskData.title}"`,
+                                docRef.id
+                            );
+                        })
                     }
                     
                     toast({
@@ -597,14 +604,17 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             history: arrayUnion(historyEntry)
         });
         
-        if (taskData.assigneeId && taskData.assigneeId !== user.id) {
-            await createNotification(
-                taskData.assigneeId,
+        taskData.assigneeIds.forEach(assigneeId => {
+          if (assigneeId !== user.id) {
+            createNotification(
+                assigneeId,
                 `${user.name} heeft gereageerd op: "${taskData.title}"`,
                 taskId
             );
-        }
-        if (taskData.creatorId && taskData.creatorId !== user.id && taskData.creatorId !== taskData.assigneeId) {
+          }
+        })
+        
+        if (taskData.creatorId && taskData.creatorId !== user.id && !taskData.assigneeIds.includes(taskData.creatorId)) {
              await createNotification(
                 taskData.creatorId,
                 `${user.name} heeft gereageerd op: "${taskData.title}"`,
@@ -620,18 +630,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const thankForTask = async (taskId: string) => {
     if (!user) return;
     const task = tasks.find(t => t.id === taskId);
-    if (!task || !task.assigneeId || task.thanked) return;
+    if (!task || task.assigneeIds.length === 0 || task.thanked) return;
 
     try {
         const batch = writeBatch(db);
         
-        // Add points to assignee
+        // Add points to assignees
         const points = 5; // Bonus points for being thanked
-        const assigneeRef = doc(db, 'users', task.assigneeId);
-        batch.update(assigneeRef, { points: increment(points) });
+        task.assigneeIds.forEach(assigneeId => {
+          const assigneeRef = doc(db, 'users', assigneeId);
+          batch.update(assigneeRef, { points: increment(points) });
+        });
         
         // Mark task as thanked and add history
-        const historyEntry = addHistoryEntry(user.id, 'Bedankje gegeven', `aan ${users.find(u => u.id === task.assigneeId)?.name}`);
+        const assigneesNames = task.assigneeIds.map(id => users.find(u => u.id === id)?.name || 'Onbekend').join(', ');
+        const historyEntry = addHistoryEntry(user.id, 'Bedankje gegeven', `aan ${assigneesNames}`);
         const taskRef = doc(db, 'tasks', taskId);
         batch.update(taskRef, { 
             thanked: true,
@@ -640,11 +653,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
         await batch.commit();
 
-        await checkAndGrantAchievements(task.assigneeId, 'thanked');
+        task.assigneeIds.forEach(assigneeId => {
+            checkAndGrantAchievements(assigneeId, 'thanked');
+        });
         
         toast({
             title: 'Bedankt!',
-            description: `${users.find(u => u.id === task.assigneeId)?.name} heeft ${points} bonuspunten ontvangen.`,
+            description: `${assigneesNames} heeft ${points} bonuspunten ontvangen.`,
         });
 
     } catch (e) {
@@ -662,18 +677,24 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             const task = tasks.find(t => t.id === taskId);
             if (!task) return;
 
-            if (updates.assigneeId && task.assigneeId !== updates.assigneeId) {
-                await createNotification(
-                    updates.assigneeId,
-                    `Je bent toegewezen aan taak: "${task.title}"`,
-                    taskId
-                );
+            if (updates.assigneeIds) {
+                updates.assigneeIds.forEach(assigneeId => {
+                    if (!task.assigneeIds.includes(assigneeId)) {
+                        createNotification(
+                            assigneeId,
+                            `Je bent toegewezen aan taak: "${task.title}"`,
+                            taskId
+                        );
+                    }
+                });
             }
-             if (updates.status === 'Voltooid' && task.status !== 'Voltooid' && task.assigneeId) {
+             if (updates.status === 'Voltooid' && task.status !== 'Voltooid' && task.assigneeIds.length > 0) {
                 const points = calculatePoints(task.priority, task.storyPoints);
-                const userRef = doc(db, 'users', task.assigneeId);
-                batch.update(userRef, { points: increment(points) });
-                await checkAndGrantAchievements(task.assigneeId, 'completed', {...task, status: 'Voltooid'});
+                task.assigneeIds.forEach(assigneeId => {
+                    const userRef = doc(db, 'users', assigneeId);
+                    batch.update(userRef, { points: increment(points) });
+                    checkAndGrantAchievements(assigneeId, 'completed', {...task, status: 'Voltooid'});
+                })
             }
         });
 
