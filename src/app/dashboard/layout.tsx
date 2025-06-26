@@ -25,6 +25,20 @@ import UserProfileSheet from '@/components/chorey/user-profile-sheet';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import Link from 'next/link';
 
+const BrandingStyle = () => {
+  const { currentOrganization } = useAuth();
+  const primaryColor = currentOrganization?.settings?.branding?.primaryColor;
+
+  if (!primaryColor) {
+    return null;
+  }
+
+  const css = `:root { --primary: ${primaryColor}; }`;
+
+  return <style dangerouslySetInnerHTML={{ __html: css }} />;
+};
+
+
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
     const { users, viewedUser, setViewedUser, isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
@@ -59,10 +73,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider>
+            <BrandingStyle />
             <Sidebar>
                 <SidebarHeader className="p-4 border-b border-sidebar-border">
                     <Link href="/dashboard">
-                        <h1 className="text-2xl font-bold text-sidebar-primary">Chorey</h1>
+                        <h1 className="text-2xl font-bold text-sidebar-primary">{currentOrganization?.name || 'Chorey'}</h1>
                     </Link>
                 </SidebarHeader>
                 <SidebarContent className="p-4 flex flex-col">

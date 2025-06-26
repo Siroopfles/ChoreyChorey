@@ -91,69 +91,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (userData.organizationIds && userData.organizationIds.length > 0) {
             if (isDebugMode) console.log('[DEBUG] AuthContext: Fetching organizations with IDs:', userData.organizationIds);
+            
             const orgsQuery = query(collection(db, 'organizations'), where('__name__', 'in', userData.organizationIds));
-            const orgsSnapshot = await getDocs(orgsQuery);
-            const userOrgs = orgsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
-            setOrganizations(userOrgs);
-            if (isDebugMode) console.log('[DEBUG] AuthContext: Organizations set:', userOrgs);
-
-            let currentOrg = null;
-            if (userData.currentOrganizationId && userOrgs.some(o => o.id === userData.currentOrganizationId)) {
-                currentOrg = userOrgs.find(o => o.id === userData.currentOrganizationId) || null;
-            } else if (userOrgs.length > 0) {
-                currentOrg = userOrgs[0];
-                if (isDebugMode) console.log(`[DEBUG] AuthContext: No current org set, defaulting to first one (${currentOrg.id}) and updating user doc.`);
-                await updateDoc(userDocRef, { currentOrganizationId: currentOrg.id });
-            }
             
-            setCurrentOrganization(currentOrg);
-            if (isDebugMode) console.log('[DEBUG] AuthContext: Current organization set:', currentOrg);
-            
-            if (currentOrg) {
-                 let orgNeedsUpdate = false;
-                 let members = currentOrg.members || {};
-                 if (!currentOrg.members || !members[currentOrg.ownerId]) {
-                    if (isDebugMode) console.warn(`[DEBUG] AuthContext: Self-healing org. Owner (${currentOrg.ownerId}) missing role. Adding 'Owner' role.`);
-                    members[currentOrg.ownerId] = { role: 'Owner' };
-                    orgNeedsUpdate = true;
-                 }
-                 
-                 if (orgNeedsUpdate) {
-                    try {
-                        const orgRef = doc(db, 'organizations', currentOrg.id);
-                        await updateDoc(orgRef, { members });
-                        currentOrg.members = members; // Update local copy
-                        setOrganizations(prevOrgs => prevOrgs.map(o => o.id === currentOrg!.id ? currentOrg! : o));
-                        if (isDebugMode) console.log('[DEBUG] AuthContext: Org data self-healed and updated in Firestore.');
-                    } catch (e) {
-                        handleError(e, 'corrigeren van organisatierol');
-                    }
-                 }
+            // Using onSnapshot to listen for real-time updates to organizations
+            const unsubscribeOrgs = onSnapshot(orgsQuery, (orgsSnapshot) => {
+                const userOrgs = orgsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
+                setOrganizations(userOrgs);
+                if (isDebugMode) console.log('[DEBUG] AuthContext: Organizations updated:', userOrgs);
 
-                 const role = (currentOrg.members || {})[firebaseUser.uid]?.role || null;
-                 setCurrentUserRole(role);
-                 if (isDebugMode) console.log('[DEBUG] AuthContext: User role set to:', role);
+                let currentOrg = null;
+                const currentOrgStillExists = userOrgs.some(o => o.id === userData.currentOrganizationId);
 
-                const allRoles = { ...DEFAULT_ROLES, ...(currentOrg.settings?.customization?.customRoles || {}) };
-                const permissions = role ? allRoles[role]?.permissions || [] : [];
-                setCurrentUserPermissions(permissions);
-                 if (isDebugMode) console.log('[DEBUG] AuthContext: User permissions set:', permissions);
+                if (userData.currentOrganizationId && currentOrgStillExists) {
+                    currentOrg = userOrgs.find(o => o.id === userData.currentOrganizationId) || null;
+                } else if (userOrgs.length > 0) {
+                    currentOrg = userOrgs[0];
+                    if (isDebugMode) console.log(`[DEBUG] AuthContext: No/invalid current org set, defaulting to first one (${currentOrg.id}) and updating user doc.`);
+                    updateDoc(userDocRef, { currentOrganizationId: currentOrg.id });
+                }
+                
+                setCurrentOrganization(currentOrg);
+                if (isDebugMode) console.log('[DEBUG] AuthContext: Current organization updated:', currentOrg);
 
+                if (currentOrg) {
+                    const role = (currentOrg.members || {})[firebaseUser.uid]?.role || null;
+                    setCurrentUserRole(role);
+                    if (isDebugMode) console.log('[DEBUG] AuthContext: User role set to:', role);
 
-                const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrg.id));
-                const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrg.id));
+                    const allRoles = { ...DEFAULT_ROLES, ...(currentOrg.settings?.customization?.customRoles || {}) };
+                    const permissions = role ? allRoles[role]?.permissions || [] : [];
+                    setCurrentUserPermissions(permissions);
+                    if (isDebugMode) console.log('[DEBUG] AuthContext: User permissions set:', permissions);
+                } else {
+                    if (isDebugMode) console.log('[DEBUG] AuthContext: No current organization, clearing role and permissions.');
+                     setCurrentUserRole(null);
+                     setCurrentUserPermissions([]);
+                }
+            }, (error) => handleError(error, 'laden van organisaties'));
 
-                onSnapshot(usersQuery, snapshot => setUsers(snapshot.docs.map(d => ({...d.data(), id: d.id} as User))));
-                onSnapshot(teamsQuery, snapshot => setTeams(snapshot.docs.map(d => ({...d.data(), id: d.id} as Team))));
-
-            } else {
-                 if (isDebugMode) console.log('[DEBUG] AuthContext: No current organization, clearing teams and role.');
-                 setTeams([]);
-                 setUsers([]);
-                 setCurrentUserRole(null);
-                 setCurrentUserPermissions([]);
-            }
-
+            return unsubscribeOrgs; // Return the listener cleanup function
         } else {
             if (isDebugMode) console.log('[DEBUG] AuthContext: User has no organizations.');
             setOrganizations([]);
@@ -162,16 +139,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCurrentUserPermissions([]);
             setTeams([]);
             setUsers([]);
+            return () => {}; // Return an empty cleanup function
         }
     }, [isDebugMode]);
     
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        let unsubscribeFromOrgs: (() => void) | undefined;
+        let unsubscribeFromUsers: (() => void) | undefined;
+        let unsubscribeFromTeams: (() => void) | undefined;
+
+        const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
             if (isDebugMode) console.log('[DEBUG] AuthContext: Auth state changed. User:', firebaseUser?.uid || 'null');
+            
+            // Clean up previous listeners
+            unsubscribeFromOrgs?.();
+            unsubscribeFromUsers?.();
+            unsubscribeFromTeams?.();
+
             setLoading(true);
             if (firebaseUser) {
                 setAuthUser(firebaseUser);
-                await fetchUserAndOrgData(firebaseUser);
+                unsubscribeFromOrgs = await fetchUserAndOrgData(firebaseUser);
             } else {
                 setAuthUser(null);
                 setUser(null);
@@ -185,8 +173,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribeAuth();
+            unsubscribeFromOrgs?.();
+            unsubscribeFromUsers?.();
+            unsubscribeFromTeams?.();
+        };
     }, [fetchUserAndOrgData, isDebugMode]);
+
+
+    useEffect(() => {
+        if (currentOrganization) {
+            const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrganization.id));
+            const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrganization.id));
+
+            const unsubscribeUsers = onSnapshot(usersQuery, snapshot => setUsers(snapshot.docs.map(d => ({...d.data(), id: d.id} as User))));
+            const unsubscribeTeams = onSnapshot(teamsQuery, snapshot => setTeams(snapshot.docs.map(d => ({...d.data(), id: d.id} as Team))));
+            
+            return () => {
+                unsubscribeUsers();
+                unsubscribeTeams();
+            };
+        }
+    }, [currentOrganization]);
+
 
     const loginWithEmail = async (email: string, pass: string) => {
         try {
@@ -289,10 +299,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshUser = useCallback(async () => {
         if (auth.currentUser) {
             setLoading(true);
+            // This will trigger a re-fetch via the onAuthStateChanged listener's logic
+            // To ensure it's fresh, we directly call it.
             await fetchUserAndOrgData(auth.currentUser);
             setLoading(false);
         }
     }, [fetchUserAndOrgData]);
+
 
     const switchOrganization = async (orgId: string) => {
         if (!user || orgId === currentOrganization?.id) return;
@@ -300,7 +313,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(true);
             const userRef = doc(db, 'users', user.id);
             await updateDoc(userRef, { currentOrganizationId: orgId });
-            await refreshUser();
+            // The onSnapshot listener will handle the state update automatically
             toast({ title: "Organisatie gewisseld" });
         } catch(e) {
             handleError(e, 'wisselen van organisatie');

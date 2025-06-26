@@ -12,6 +12,10 @@ export type OrganizationSettings = {
     gamification: boolean;
     storyPoints: boolean;
     timeTracking: boolean;
+  },
+  branding?: {
+    primaryColor?: string;
+    logoUrl?: string;
   }
 }
 
