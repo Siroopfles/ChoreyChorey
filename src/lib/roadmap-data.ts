@@ -91,7 +91,7 @@ export const roadmapData = {
       { id: 1055, title: "Achievements & Badges", description: "Ontgrendelbare prestaties voor mijlpalen.", completed: true },
       { id: 1056, title: "Leaderboards", description: "Scoreborden per team/organisatie.", completed: true },
       { id: 1057, title: "Karma- & Bedanksysteem", description: "Stimuleer positieve interactie door collega's te bedanken.", completed: true },
-      { id: 30, title: "'Kudos' Tipping", description: "Geef een deel van je punten aan een collega als bedankje.", completed: false },
+      { id: 30, title: "'Kudos' Tipping", description: "Geef een deel van je punten aan een collega als bedankje.", completed: true },
       { id: 31, title: "Mentorschap Programma", description: "Koppel ervaren gebruikers aan nieuwkomers.", completed: false },
       { id: 32, title: "Dynamische Leaderboards", description: "Op basis van specifieke tags, bv. \"Top Bug Fixer\".", completed: false },
       { id: 33, title: "Community-driven 'Chore of the Week'", description: "Een uitdagende taak voor iedereen.", completed: false },
@@ -302,5 +302,5 @@ export const roadmapData = {
       { id: 156, title: "Voorspellende Resource Allocatie", description: "AI voorspelt toekomstige knelpunten en stelt verschuivingen voor.", completed: false },
     ]
   }
-
-    
+}
+```

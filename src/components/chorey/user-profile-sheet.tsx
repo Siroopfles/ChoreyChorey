@@ -13,12 +13,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Trophy, Award, Rocket, Users, Heart, Star } from 'lucide-react';
+import { CheckCircle, Trophy, Award, Rocket, Users, Heart, Star, HandHeart } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/auth-context';
+import { useState } from 'react';
+import { Button } from '../ui/button';
+import { KudosDialog } from './kudos-dialog';
+
 
 const priorityBorderColors: Record<Priority, string> = {
   'Urgent': 'border-chart-1',
@@ -128,56 +133,77 @@ export default function UserProfileSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const { tasks } = useTasks();
+  const { user: currentUser } = useAuth();
+  const [isKudosDialogOpen, setIsKudosDialogOpen] = useState(false);
+  
   const userTasks = tasks.filter(task => task.assigneeIds.includes(user.id));
   const currentTasks = userTasks.filter(t => t.status === 'Te Doen' || t.status === 'In Uitvoering' || t.status === 'In Review');
+  const isOwnProfile = currentUser?.id === user.id;
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="flex flex-col sm:max-w-md">
-        <SheetHeader className="text-left">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border-2 border-primary">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <SheetTitle className="text-2xl">{user.name}</SheetTitle>
-              <SheetDescription>
-                Een gewaardeerd teamlid
-              </SheetDescription>
+    <>
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent className="flex flex-col sm:max-w-md">
+          <SheetHeader className="text-left">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16 border-2 border-primary">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <SheetTitle className="text-2xl">{user.name}</SheetTitle>
+                    <SheetDescription>
+                      Een gewaardeerd teamlid
+                    </SheetDescription>
+                  </div>
+              </div>
+               {!isOwnProfile && (
+                <Button variant="outline" size="sm" onClick={() => setIsKudosDialogOpen(true)}>
+                  <HandHeart className="mr-2 h-4 w-4" />
+                  Geef Kudos
+                </Button>
+              )}
             </div>
+          </SheetHeader>
+          
+          <div className="space-y-4 py-4">
+              <UserStats user={user} userTasks={userTasks} />
+              <Achievements user={user} />
+              <UserSkills user={user} />
           </div>
-        </SheetHeader>
-        
-        <div className="space-y-4 py-4">
-            <UserStats user={user} userTasks={userTasks} />
-            <Achievements user={user} />
-            <UserSkills user={user} />
-        </div>
 
-        <Separator />
+          <Separator />
 
-        <div className="flex-1 overflow-y-auto space-y-4 pt-4">
-             <h4 className="text-sm font-medium text-muted-foreground">HUIDIGE TAKEN ({currentTasks.length})</h4>
-            {currentTasks.length > 0 ? (
-                <div className="space-y-2">
-                    {currentTasks.map(task => (
-                        <div key={task.id} className={cn("flex flex-col rounded-md border p-3 border-l-4", priorityBorderColors[task.priority])}>
-                            <p className="font-semibold text-sm">{task.title}</p>
-                            <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-                               <span>Status: {task.status}</span>
-                               {task.dueDate && <span>Einddatum: {format(task.dueDate, 'd MMM', {locale: nl})}</span>}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center text-sm text-muted-foreground py-8">
-                    Geen actieve taken toegewezen.
-                </div>
-            )}
-        </div>
-      </SheetContent>
-    </Sheet>
+          <div className="flex-1 overflow-y-auto space-y-4 pt-4">
+              <h4 className="text-sm font-medium text-muted-foreground">HUIDIGE TAKEN ({currentTasks.length})</h4>
+              {currentTasks.length > 0 ? (
+                  <div className="space-y-2">
+                      {currentTasks.map(task => (
+                          <div key={task.id} className={cn("flex flex-col rounded-md border p-3 border-l-4", priorityBorderColors[task.priority])}>
+                              <p className="font-semibold text-sm">{task.title}</p>
+                              <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                                <span>Status: {task.status}</span>
+                                {task.dueDate && <span>Einddatum: {format(task.dueDate, 'd MMM', {locale: nl})}</span>}
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              ) : (
+                  <div className="text-center text-sm text-muted-foreground py-8">
+                      Geen actieve taken toegewezen.
+                  </div>
+              )}
+          </div>
+        </SheetContent>
+      </Sheet>
+      {!isOwnProfile && (
+        <KudosDialog
+            open={isKudosDialogOpen}
+            onOpenChange={setIsKudosDialogOpen}
+            recipient={user}
+        />
+      )}
+    </>
   );
 }
