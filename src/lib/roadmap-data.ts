@@ -301,6 +301,4 @@ export const roadmapData = {
       { id: 155, title: "'Focus Playlist' Generator op basis van taaktype", description: "AI stelt Spotify playlist voor.", completed: false },
       { id: 156, title: "Voorspellende Resource Allocatie", description: "AI voorspelt toekomstige knelpunten en stelt verschuivingen voor.", completed: false },
     ]
-  }
-}
-```
+  };
