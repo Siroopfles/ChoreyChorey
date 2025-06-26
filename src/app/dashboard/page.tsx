@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, Suspense } from 'react';
@@ -15,6 +16,8 @@ import DashboardView from '@/components/chorey/dashboard-view';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
 import CalendarView from '@/components/chorey/calendar-view';
 import TaskColumns from '@/components/chorey/task-columns';
+import GanttView from '@/components/chorey/gantt-view';
+import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
 
 export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
@@ -81,7 +84,9 @@ export default function DashboardPage() {
           <CalendarView tasks={filteredTasks} users={users} />
         </TabsContent>
         <TabsContent value="gantt" className="flex-1 mt-4 overflow-y-auto">
-          <p>Gantt Placeholder</p>
+           <Suspense fallback={<GanttViewSkeleton />}>
+              <GanttView tasks={filteredTasks} />
+           </Suspense>
         </TabsContent>
       </Tabs>
       <ImportTasksDialog open={isImporting} onOpenChange={setIsImporting} />
