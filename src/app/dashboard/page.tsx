@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, Suspense } from 'react';
@@ -14,12 +13,13 @@ import type { Task, User, Label, Priority, Team } from '@/lib/types';
 import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
 import DashboardView from '@/components/chorey/dashboard-view';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
+import CalendarView from '@/components/chorey/calendar-view';
 
 export default function DashboardPage() {
   const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
   const { user: currentUser, teams } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard'); // Default to dashboard for testing
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -77,7 +77,7 @@ export default function DashboardPage() {
            </Suspense>
         </TabsContent>
         <TabsContent value="calendar" className="flex-1 mt-4 overflow-y-auto">
-          <p>Calendar Placeholder</p>
+          <CalendarView tasks={filteredTasks} users={users} />
         </TabsContent>
         <TabsContent value="gantt" className="flex-1 mt-4 overflow-y-auto">
           <p>Gantt Placeholder</p>
