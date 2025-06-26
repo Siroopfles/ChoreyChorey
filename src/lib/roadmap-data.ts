@@ -18,7 +18,7 @@ export const roadmapData = {
     ],
     "Fundamenteel Taakbeheer (Verdieping)": [
       { id: 1, title: "Conditionele Custom Fields", description: "Veld Y tonen als veld X waarde Z heeft.", completed: true },
-      { id: 2, title: "Terugkerende Subtaken", description: "Enkel een subtaak herhaalt, niet de hele taak.", completed: false },
+      { id: 2, title: "Terugkerende Subtaken", description: "Enkel een subtaak herhaalt, niet de hele taak.", completed: true },
       { id: 3, title: "Private Subtaken", description: "Alleen zichtbaar voor de toegewezene en projectmanager.", completed: true },
       { id: 4, title: "Lead & Lag Time in Afhankelijkheden", description: "Start 2 dagen voor of na een andere taak eindigt.", completed: true },
       { id: 5, title: "Taak Ratings", description: "Geef een voltooide taak 1-5 sterren voor kwaliteitsmeting.", completed: true },

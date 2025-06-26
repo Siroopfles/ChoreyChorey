@@ -487,20 +487,36 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     <AccordionContent className="pt-2 pb-0">
                     <div className="space-y-2">
                         {visibleSubtasks.map(subtask => (
-                        <div key={subtask.id} className="flex items-center gap-3">
-                            <Checkbox
-                            id={`subtask-${subtask.id}`}
-                            checked={subtask.completed}
-                            onCheckedChange={() => toggleSubtaskCompletion(task.id, subtask.id)}
-                            />
-                            <label
-                            htmlFor={`subtask-${subtask.id}`}
-                            className={cn("text-sm leading-none cursor-pointer flex items-center gap-1.5", subtask.completed && "line-through text-muted-foreground")}
-                            >
-                            {subtask.isPrivate && <Lock className="h-3 w-3 text-muted-foreground" />}
-                            {subtask.text}
-                            </label>
-                        </div>
+                          <div key={subtask.id} className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                id={`subtask-${subtask.id}`}
+                                checked={subtask.completed}
+                                onCheckedChange={() => toggleSubtaskCompletion(task.id, subtask.id)}
+                              />
+                              <label
+                                htmlFor={`subtask-${subtask.id}`}
+                                className={cn("text-sm leading-none cursor-pointer flex items-center gap-1.5", subtask.completed && "line-through text-muted-foreground")}
+                              >
+                                {subtask.isPrivate && <Lock className="h-3 w-3 text-muted-foreground" />}
+                                {subtask.text}
+                              </label>
+                            </div>
+                            {subtask.completed && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleSubtaskCompletion(task.id, subtask.id);
+                                    }}
+                                    title="Reset subtaak"
+                                >
+                                    <RefreshCw className="h-3 w-3" />
+                                </Button>
+                            )}
+                          </div>
                         ))}
                          {hiddenSubtasksCount > 0 && (
                             <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
