@@ -23,7 +23,7 @@ export const roadmapData = {
       { id: 2, title: "Terugkerende Subtaken", description: "Enkel een subtaak herhaalt, niet de hele taak.", completed: false },
       { id: 3, title: "Private Subtaken", description: "Alleen zichtbaar voor de toegewezene en projectmanager.", completed: true },
       { id: 4, title: "Lead & Lag Time in Afhankelijkheden", description: "Start 2 dagen voor of na een andere taak eindigt.", completed: false },
-      { id: 5, title: "Taak Ratings", description: "Geef een voltooide taak 1-5 sterren voor kwaliteitsmeting.", completed: false },
+      { id: 5, title: "Taak Ratings", description: "Geef een voltooide taak 1-5 sterren voor kwaliteitsmeting.", completed: true },
       { id: 6, title: "Taak Checklist Templates", description: "Opslaan en hergebruiken van sets subtaken.", completed: true },
       { id: 7, title: "'Blokkerende' status", description: "Maakt visueel duidelijk dat een taak geblokkeerd is en waarom.", completed: true },
       { id: 9, title: "Taak Splitsen", description: "Splits een te grote taak in twee of meer aparte taken.", completed: false },
@@ -230,9 +230,9 @@ export const roadmapData = {
     "Hyper-Automatisering & Interne Processen": [
       { id: 107, title: "HR Onboarding & Offboarding Workflow Automation", description: "Automatisch taken aanmaken voor IT, HR, etc.", completed: false },
       { id: 108, title: "IT Servicedesk & Hardware Request Workflows", description: "Workflows voor IT-verzoeken.", completed: false },
-      { id: 109, title: "Automatische Taak-specifieke Communicatiekanalen", description: "Genereert een Slack-kanaal per taak.", completed: false },
+      { id: 109, title: "Automatische Taak-specifieke Communicatiekanalen", description: "Genereert een Slack-kanaal per taak met tag 'urgent'.", completed: false },
       { id: 110, title: "A/B Testing Framework voor Workflows", description: "Test welke workflow-variant efficiënter is.", completed: false },
-      { id: 111, title: "'Office Hours' Planning", description: "Voor experts om hun beschikbaarheid aan te bieden.", completed: false },
+      { id: 111, title: "'Office Hours' Planning", description: "Voor experts om hun beschikbaarheid voor vragen aan te bieden.", completed: false },
       { id: 112, title: "Besluitvormings-frameworks Templates", description: "DACI, RAPID.", completed: false },
     ],
     "Compliance, Legal & Security (Verdieping)": [
@@ -251,17 +251,17 @@ export const roadmapData = {
     ],
     "Hardware, IoT & Fysieke Wereld": [
       { id: 123, title: "NFC/QR Code Taakinteractie", description: "Scan een code om een taak te starten/stoppen/voltooien.", completed: false },
-      { id: 124, title: "Smart Speaker Integratie", description: "Google Assistant, Alexa.", completed: false },
-      { id: 125, title: "Geofencing voor Automatische Taakupdates", description: "Triggert taakstatus op basis van locatie.", completed: false },
+      { id: 124, title: "Smart Speaker Integratie", description: "Google Assistant, Alexa voor taakupdates en -creatie.", completed: false },
+      { id: 125, title: "Geofencing voor Automatische Taakupdates", description: "bv. 'Aangekomen op locatie X' triggert taakstatus.", completed: false },
     ],
     "Educatie, Training & LMS-functionaliteit": [
       { id: 126, title: "Leerpaden & Trainingsprojecten", description: "Definieer een reeks taken/docs als een 'cursus'.", completed: false },
       { id: 127, title: "Vaardigheidstoetsing & Certificering", description: "Koppel een 'quiz' aan een taak om een skill te valideren.", completed: false },
     ],
     "Marketplace & Ecosysteem": [
-      { id: 128, title: "Template Marketplace", description: "Community-gedreven marktplaats voor templates.", completed: false },
+      { id: 128, title: "Template Marketplace", description: "Community-gedreven marktplaats voor project- en taaktemplates.", completed: false },
       { id: 129, title: "Custom Widget Marketplace", description: "Ontwikkelaars kunnen dashboard-widgets bouwen en delen/verkopen.", completed: false },
-      { id: 130, title: "Interne Valuta voor Resource-uitwisseling", description: "Teams kunnen 'credits' gebruiken om resources te 'lenen'.", completed: false },
+      { id: 130, title: "Interne Valuta voor Resource-uitwisseling", description: "Teams kunnen 'credits' gebruiken om resources van elkaar te 'lenen'.", completed: false },
     ],
     "Next-Gen UI & Visualisatie": [
       { id: 131, title: "VR/AR Project Visualisatie", description: "'The Project Room' om data in 3D te zien.", completed: false },

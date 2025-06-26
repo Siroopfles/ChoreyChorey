@@ -94,6 +94,7 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
                 teamId: null,
                 timeLogged: 0,
                 activeTimerStartedAt: null,
+                rating: null,
             };
 
             const taskRef = doc(collection(db, 'tasks'));

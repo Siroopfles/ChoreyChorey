@@ -1,3 +1,4 @@
+
 'use client';
 import type { Task, User, Team } from '@/lib/types';
 import { ALL_STATUSES } from '@/lib/types';
@@ -51,6 +52,7 @@ import {
   TimerOff,
   RefreshCw,
   EyeOff,
+  Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -116,7 +118,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const assignees = useMemo(() => task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
   const PriorityIcon = priorityConfig[task.priority].icon;
   const statusInfo = statusConfig[task.status];
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask } = useTasks();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
@@ -133,6 +135,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const points = calculatePoints(task.priority, task.storyPoints);
   const isSelected = selectedTaskIds.includes(task.id);
   const [liveTime, setLiveTime] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
 
   const [dateStatus, setDateStatus] = useState({
     isOverdue: false,
@@ -188,6 +191,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
 
   const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id);
   const canThank = currentUser && task.status === 'Voltooid' && task.assigneeIds.length > 0 && !task.assigneeIds.includes(currentUser.id);
+  const canRate = currentUser && task.status === 'Voltooid' && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id) && !task.rating;
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(task.id);
@@ -387,6 +391,31 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                     {task.thanked ? 'Bedankt!' : `Bedank team`}
                 </Button>
             )}
+
+            {canRate && (
+                <div className="mt-2 pt-2 border-t">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Beoordeel deze taak:</p>
+                    <div className="flex items-center" onMouseLeave={() => setHoverRating(0)}>
+                        {[1, 2, 3, 4, 5].map(star => (
+                            <button key={star} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); rateTask(task.id, star); }}>
+                                <Star className={cn('h-5 w-5', (hoverRating || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {task.rating && (
+                <div className="mt-2 pt-2 border-t">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Beoordeling:</p>
+                    <div className="flex items-center">
+                        {[1, 2, 3, 4, 5].map(star => (
+                            <Star key={star} className={cn('h-5 w-5', task.rating! >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
 
             {task.attachments.length > 0 && (
                 <div className="mb-2 space-y-1 pt-2 mt-2 border-t">

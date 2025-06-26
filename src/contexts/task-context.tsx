@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -34,6 +35,7 @@ type TaskContextType = {
   loading: boolean;
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
+  rateTask: (taskId: string, rating: number) => Promise<void>;
   bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments'>>) => void;
   cloneTask: (taskId: string) => void;
   deleteTaskPermanently: (taskId: string) => void;
@@ -197,6 +199,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           thanked: data.thanked || false,
           timeLogged: data.timeLogged || 0,
           activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
+          rating: data.rating || null,
         } as Task;
       }).filter(task => {
         if (!authUser) return false;
@@ -338,6 +341,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           timeLogged: 0,
           activeTimerStartedAt: null,
           completedAt: null,
+          rating: null,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -379,6 +383,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           thanked: false,
           timeLogged: 0,
           activeTimerStartedAt: null,
+          rating: null,
         };
         
         delete (clonedTask as any).id; 
@@ -564,6 +569,52 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     } catch (e) {
         handleError(e, `bijwerken van taak`);
+    }
+  };
+
+  const rateTask = async (taskId: string, rating: number) => {
+    if (!user) return;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // Authorization check
+    const canRate = task.creatorId === user.id && !task.assigneeIds.includes(user.id);
+    if (!canRate) {
+        toast({ title: 'Niet toegestaan', description: 'Alleen de maker van de taak kan een beoordeling geven, tenzij ze de taak zelf hebben uitgevoerd.', variant: 'destructive' });
+        return;
+    }
+
+    if (task.rating) {
+        toast({ title: 'Al beoordeeld', description: 'Deze taak heeft al een beoordeling.', variant: 'destructive' });
+        return;
+    }
+
+    try {
+        const batch = writeBatch(db);
+        const taskRef = doc(db, 'tasks', taskId);
+
+        const historyEntry = addHistoryEntry(user.id, 'Taak beoordeeld', `Gaf een beoordeling van ${rating} sterren.`);
+        batch.update(taskRef, {
+            rating: rating,
+            history: arrayUnion(historyEntry)
+        });
+
+        const bonusPoints = rating;
+        if (task.assigneeIds.length > 0) {
+            task.assigneeIds.forEach(assigneeId => {
+                const userRef = doc(db, 'users', assigneeId);
+                batch.update(userRef, { points: increment(bonusPoints) });
+            });
+        }
+        
+        await batch.commit();
+
+        toast({
+            title: 'Taak beoordeeld!',
+            description: `De toegewezen teamleden hebben ${bonusPoints} bonuspunten ontvangen.`
+        });
+    } catch (e) {
+        handleError(e, 'beoordelen van taak');
     }
   };
 
@@ -818,6 +869,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       loading,
       addTask, 
       updateTask, 
+      rateTask,
       toggleSubtaskCompletion,
       toggleTaskTimer,
       reorderTasks,

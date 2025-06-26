@@ -198,6 +198,7 @@ export type Task = {
   thanked?: boolean;
   timeLogged?: number; // in seconds
   activeTimerStartedAt?: Date | null;
+  rating?: number | null;
 };
 
 export type Notification = {
