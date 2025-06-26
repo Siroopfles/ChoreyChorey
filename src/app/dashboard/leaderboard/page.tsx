@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -30,7 +31,7 @@ export default function LeaderboardPage() {
   const { currentOrganization, loading: authLoading } = useAuth();
   const [selectedTag, setSelectedTag] = useState<string>('Algemeen');
 
-  const allLabels = currentOrganization?.settings?.customization?.labels || [];
+  const allLabels = useMemo(() => currentOrganization?.settings?.customization?.labels || [], [currentOrganization]);
 
   const { sortedUsers, maxPoints } = useMemo(() => {
     let usersWithPoints: (User & { dynamicPoints: number; tasksCompleted: number })[];
@@ -69,7 +70,7 @@ export default function LeaderboardPage() {
       }));
     }
     
-    const sorted = usersWithPoints.sort((a, b) => b.dynamicPoints - a.dynamicPoints);
+    const sorted = [...usersWithPoints].sort((a, b) => b.dynamicPoints - a.dynamicPoints);
     const max = sorted.length > 0 ? sorted[0].dynamicPoints : 0;
 
     return { sortedUsers: sorted, maxPoints: max > 0 ? max : 1 };
