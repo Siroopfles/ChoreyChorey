@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Loader2, Mail, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createOrganizationInvite } from '@/app/actions/organization.actions';
 import { useAuth } from '@/contexts/auth-context';
 import { Input } from '@/components/ui/input';
+import { db } from '@/lib/firebase';
+import { collection, doc, setDoc } from 'firebase/firestore';
+import type { Invite } from '@/lib/types';
 
 export function InviteMembersDialog({ organizationId }: { organizationId: string }) {
     const { user } = useAuth();
@@ -21,14 +23,21 @@ export function InviteMembersDialog({ organizationId }: { organizationId: string
     const handleCreateInvite = async () => {
         if (!user) return;
         setIsLoading(true);
-        const result = await createOrganizationInvite(organizationId, user.id);
-        setIsLoading(false);
-
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        } else if (result.inviteId) {
-            const link = `${window.location.origin}/invite/${result.inviteId}`;
+        try {
+            const newInviteRef = doc(collection(db, 'invites'));
+            const newInvite: Omit<Invite, 'id'> = {
+                organizationId,
+                inviterId: user.id,
+                status: 'pending',
+                createdAt: new Date(),
+            };
+            await setDoc(newInviteRef, newInvite);
+            const link = `${window.location.origin}/invite/${newInviteRef.id}`;
             setInviteLink(link);
+        } catch (error: any) {
+            toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+        } finally {
+            setIsLoading(false);
         }
     };
     
@@ -51,12 +60,12 @@ export function InviteMembersDialog({ organizationId }: { organizationId: string
             <DialogTrigger asChild>
                 <Button variant="outline">
                     <Mail className="mr-2 h-4 w-4" />
-                    DEBUG: Nodig Leden Uit
+                    Nodig Leden Uit
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>DEBUG: Leden Uitnodigen</DialogTitle>
+                    <DialogTitle>Leden Uitnodigen</DialogTitle>
                     <DialogDescription>
                         {inviteLink ? 'Deel deze link met de personen die je wilt uitnodigen.' : 'Genereer een unieke link om nieuwe leden uit te nodigen voor je organisatie.'}
                     </DialogDescription>
