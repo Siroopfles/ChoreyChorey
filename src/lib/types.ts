@@ -41,6 +41,19 @@ export const PERMISSIONS = {
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
 
+export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, description: string }> = {
+  [PERMISSIONS.MANAGE_ORGANIZATION]: { name: 'Organisatie Beheren', description: 'Kan de naam, workflow en feature instellingen van de organisatie aanpassen.' },
+  [PERMISSIONS.MANAGE_ROLES]: { name: 'Rollen Beheren', description: 'Kan de rollen van andere leden aanpassen (behalve de eigenaar).' },
+  [PERMISSIONS.MANAGE_MEMBERS]: { name: 'Leden Beheren', description: 'Kan leden uitnodigen voor en verwijderen uit de organisatie.' },
+  [PERMISSIONS.MANAGE_TEAMS]: { name: 'Teams Beheren', description: 'Kan teams aanmaken en de leden van teams beheren.' },
+  [PERMISSIONS.CREATE_TASK]: { name: 'Taken Aanmaken', description: 'Kan nieuwe taken aanmaken binnen de organisatie.' },
+  [PERMISSIONS.EDIT_TASK]: { name: 'Taken Bewerken', description: 'Kan de details van bestaande taken aanpassen.' },
+  [PERMISSIONS.DELETE_TASK]: { name: 'Taken Verwijderen', description: 'Kan taken annuleren of permanent verwijderen.' },
+  [PERMISSIONS.ASSIGN_TASK]: { name: 'Taken Toewijzen', description: 'Kan taken toewijzen aan leden van de organisatie.' },
+  [PERMISSIONS.VIEW_ALL_TASKS]: { name: 'Alle Taken Zien', description: 'Kan alle niet-privé taken binnen de organisatie bekijken.' },
+  [PERMISSIONS.VIEW_AUDIT_LOG]: { name: 'Audit Log Bekijken', description: 'Heeft toegang tot de audit log met alle acties binnen de organisatie.' },
+};
+
 export const ROLES: Record<string, { name: string; permissions: Permission[] }> = {
   Owner: {
     name: 'Eigenaar',

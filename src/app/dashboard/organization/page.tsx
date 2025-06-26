@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 import type { Team } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { CreateOrganizationView } from '@/components/chorey/organization/create-organization-view';
@@ -13,6 +13,8 @@ import { CreateTeamDialog } from '@/components/chorey/organization/create-team-d
 import { TeamCard } from '@/components/chorey/organization/team-card';
 import { InviteMembersDialog } from '@/components/chorey/organization/invite-members-dialog';
 import { MemberList } from '@/components/chorey/organization/member-list';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 
 export default function OrganizationPage() {
@@ -61,16 +63,22 @@ export default function OrganizationPage() {
         );
     }
     
-    const canManageMembers = currentUserRole === 'Owner' || currentUserRole === 'Admin';
-    const canManageTeams = currentUserRole === 'Owner' || currentUserRole === 'Admin';
+    const canManageOrg = currentUserRole === 'Owner' || currentUserRole === 'Admin';
 
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h1 className="font-semibold text-lg md:text-2xl">Beheer voor {currentOrganization.name}</h1>
                 <div className="flex items-center gap-2">
-                    {canManageMembers && <InviteMembersDialog organizationId={currentOrganization.id} />}
-                    {canManageTeams && <CreateTeamDialog organizationId={currentOrganization.id} />}
+                    {canManageOrg && (
+                      <Button asChild variant="outline">
+                        <Link href="/dashboard/organization/roles">
+                          <Shield className="mr-2 h-4 w-4" /> Rollen & Permissies
+                        </Link>
+                      </Button>
+                    )}
+                    {canManageOrg && <InviteMembersDialog organizationId={currentOrganization.id} />}
+                    {canManageOrg && <CreateTeamDialog organizationId={currentOrganization.id} />}
                 </div>
             </div>
 
@@ -97,7 +105,7 @@ export default function OrganizationPage() {
                                 <CardDescription>Maak je eerste team aan om leden te organiseren.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {canManageTeams && <CreateTeamDialog organizationId={currentOrganization.id} />}
+                                {canManageOrg && <CreateTeamDialog organizationId={currentOrganization.id} />}
                             </CardContent>
                         </Card>
                     )}
