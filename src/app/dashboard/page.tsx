@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CalendarView from '@/components/chorey/calendar-view';
 import FilterBar from '@/components/chorey/filter-bar';
 import DashboardViewSkeleton from '@/components/chorey/dashboard-view-skeleton';
-import TaskColumns from '@/components/chorey/task-columns';
+// import TaskColumns from '@/components/chorey/task-columns';
 import { LayoutGrid, CalendarDays, LayoutDashboard, Download, GanttChart, FileImport } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMemo, useState } from 'react';
@@ -17,15 +17,15 @@ import { useAuth } from '@/contexts/auth-context';
 import type { User } from '@/lib/types';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 
-const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
-  ssr: false,
-  loading: () => <DashboardViewSkeleton />,
-});
+// const DashboardView = dynamic(() => import('@/components/chorey/dashboard-view'), {
+//   ssr: false,
+//   loading: () => <DashboardViewSkeleton />,
+// });
 
-const GanttView = dynamic(() => import('@/components/chorey/gantt-view'), {
-  ssr: false,
-  loading: () => <GanttViewSkeleton />,
-});
+// const GanttView = dynamic(() => import('@/components/chorey/gantt-view'), {
+//   ssr: false,
+//   loading: () => <GanttViewSkeleton />,
+// });
 
 export default function DashboardPage() {
   const { tasks, users, searchTerm, filters, loading } = useTasks();
@@ -115,7 +115,7 @@ export default function DashboardPage() {
         </div>
       </div>
       <TabsContent value="board">
-        <TaskColumns users={users} tasks={filteredTasks} currentUser={currentUser} teams={teams} />
+        <div>Bord is tijdelijk uitgeschakeld voor debugging.</div>
       </TabsContent>
       <TabsContent value="calendar">
         <div className="rounded-lg border bg-card">
@@ -123,10 +123,10 @@ export default function DashboardPage() {
         </div>
       </TabsContent>
       <TabsContent value="dashboard">
-        <DashboardView tasks={tasks} users={users} />
+        <div>Dashboard is tijdelijk uitgeschakeld voor debugging.</div>
       </TabsContent>
        <TabsContent value="gantt">
-          <GanttView tasks={filteredTasks} />
+          <div>Gantt is tijdelijk uitgeschakeld voor debugging.</div>
       </TabsContent>
     </Tabs>
     <ImportTasksDialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen} />
