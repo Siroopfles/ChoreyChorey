@@ -23,7 +23,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } fro
 import { auth, db, googleProvider } from '@/lib/firebase';
 import type { User, Organization, Team, RoleName } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { handleGenerateAvatar } from '@/app/actions';
+import { handleGenerateAvatar } from '@/app/actions/ai.actions';
 
 type AuthContextType = {
     authUser: FirebaseUser | null;
@@ -92,6 +92,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCurrentOrganization(currentOrg);
             
             if (currentOrg) {
+                 // Self-healing: Ensure the organization owner has the 'Owner' role.
+                 // This handles legacy data where the `members` map might be missing or incomplete.
+                 let orgNeedsUpdate = false;
+                 let members = currentOrg.members || {};
+                 if (!currentOrg.members || !members[currentOrg.ownerId]) {
+                    members[currentOrg.ownerId] = { role: 'Owner' };
+                    orgNeedsUpdate = true;
+                 }
+                 
+                 if (orgNeedsUpdate) {
+                    try {
+                        const orgRef = doc(db, 'organizations', currentOrg.id);
+                        await updateDoc(orgRef, { members });
+                        currentOrg.members = members; // Update local copy
+                        setOrganizations(prevOrgs => prevOrgs.map(o => o.id === currentOrg!.id ? currentOrg! : o));
+                    } catch (e) {
+                        handleError(e, 'corrigeren van organisatierol');
+                    }
+                 }
+
                  const role = (currentOrg.members || {})[firebaseUser.uid]?.role || null;
                  setCurrentUserRole(role);
 
@@ -148,9 +168,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             let avatarUrl = `https://placehold.co/100x100.png`;
             try {
-                const avatarResult = await handleGenerateAvatar(name);
-                if (avatarResult.avatarDataUri) {
-                    avatarUrl = avatarResult.avatarDataUri;
+                const { avatarDataUri } = await handleGenerateAvatar(name);
+                if (avatarDataUri) {
+                    avatarUrl = avatarDataUri;
                 }
             } catch (aiError) {
                 console.error("Failed to generate AI avatar, using placeholder.", aiError);
@@ -187,9 +207,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const firebaseUser = userCredential.user;
                 let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                 try {
-                    const avatarResult = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
-                    if (avatarResult.avatarDataUri) {
-                        avatarUrl = avatarResult.avatarDataUri;
+                    const { avatarDataUri } = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                    if (avatarDataUri) {
+                        avatarUrl = avatarDataUri;
                     }
                 } catch (aiError) {
                     console.error("Failed to generate AI avatar, using placeholder.", aiError);
