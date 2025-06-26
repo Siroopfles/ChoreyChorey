@@ -3,7 +3,7 @@
 import type { User, Status, Task, Team } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, closestCenter } from '@dnd-kit/core';
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useMemo } from 'react';
@@ -71,23 +71,23 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
     if (!activeTask) return;
 
     const activeContainer = active.data.current?.sortable.containerId as Status;
-    let overContainer = over.data.current?.sortable.containerId as Status;
+    
+    // Determine the container we are dropping into.
+    // `over.data.current?.sortable.containerId` is set if we drop over another item.
+    // `over.id` is the container id if we drop on the container itself.
+    const overContainer = (over.data.current?.sortable.containerId || over.id) as Status;
 
-    if(!overContainer) {
-        // This case handles dropping on a column directly, not on another card
-        if (columns.includes(over.id as Status)) {
-            overContainer = over.id as Status;
-        } else {
-            return;
-        }
+    if (!activeContainer || !overContainer || !columns.includes(overContainer)) {
+        return; // Something is wrong, bail.
     }
 
+    // Blocked task logic
     const isBlocked = activeTask.blockedBy?.some(blockerId => {
         const blockerTask = tasks.find(t => t.id === blockerId);
         return blockerTask && blockerTask.status !== 'Voltooid';
     });
 
-    if (isBlocked && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
+    if (isBlocked && activeContainer !== overContainer && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
         toast({
             title: 'Taak Geblokkeerd',
             description: 'Deze taak kan niet worden gestart omdat een van de afhankelijke taken nog niet is voltooid.',
@@ -96,23 +96,27 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
         return;
     }
 
-    if (activeContainer !== overContainer) {
-      // Task is moved to a different column
-      updateTask(activeId, { status: overContainer, order: Date.now() });
-    } else if (activeId !== overId) {
-      // Task is reordered within the same column
-      const tasksInColumn = tasksByStatus(activeContainer);
-      const oldIndex = tasksInColumn.findIndex(t => t.id === activeId);
-      const newIndex = tasksInColumn.findIndex(t => t.id === overId);
-      
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const reorderedTasks = arrayMove(tasksInColumn, oldIndex, newIndex);
-        const tasksToUpdate = reorderedTasks.map((task, index) => ({
-            id: task.id,
-            order: index
-        }));
-        reorderTasks(tasksToUpdate);
-      }
+    if (activeContainer === overContainer) {
+        // Reordering within the same column
+        if (activeId === overId) return; // Dropped on itself
+
+        const tasksInColumn = tasksByStatus(activeContainer);
+        const oldIndex = tasksInColumn.findIndex(t => t.id === activeId);
+        // If dropping on the column itself, overId will be the containerId, so findIndex will be -1
+        // We only reorder if dropping on another task
+        const newIndex = tasksInColumn.findIndex(t => t.id === overId);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+            const reorderedTasks = arrayMove(tasksInColumn, oldIndex, newIndex);
+            const tasksToUpdate = reorderedTasks.map((task, index) => ({
+                id: task.id,
+                order: index
+            }));
+            reorderTasks(tasksToUpdate);
+        }
+    } else {
+        // Moving to a different column
+        updateTask(activeId, { status: overContainer, order: Date.now() });
     }
   }
 
@@ -120,7 +124,7 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
      <DndContext 
       sensors={sensors} 
       onDragEnd={handleDragEnd} 
-      collisionDetection={closestCenter}
+      collisionDetection={rectIntersection}
     >
         <ScrollArea className="w-full">
         <div className="flex gap-6 pb-4">
