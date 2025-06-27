@@ -6,6 +6,8 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { RoleManagement } from '@/components/chorey/organization/role-management';
+import { ReassignTasksCard } from '@/components/chorey/organization/reassign-tasks-card';
+import { Separator } from '@/components/ui/separator';
 
 export default function RolesAndPermissionsPage() {
     const { currentUserRole, loading: authLoading } = useAuth();
@@ -40,6 +42,10 @@ export default function RolesAndPermissionsPage() {
             </div>
             
             <RoleManagement />
+
+            <Separator />
+            
+            <ReassignTasksCard />
         </div>
     );
 }

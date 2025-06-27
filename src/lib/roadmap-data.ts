@@ -38,7 +38,7 @@ export const roadmapData = {
       { id: 11, title: "Scenario Planning / \"What-if\" Analyse", description: "Simuleer impact van resource-wijzigingen.", completed: false },
       { id: 12, title: "Gantt Chart Snapshots & Versiebeheer", description: "Vergelijk de planning met eerdere versies.", completed: true },
       { id: 13, title: "Headcount Planning", description: "Plan toekomstige personeelsbehoefte op projectniveau.", completed: false },
-      { id: 14, title: "Resource Vervanging", description: "Snel alle taken van persoon A overzetten naar persoon B.", completed: false },
+      { id: 14, title: "Resource Vervanging", description: "Snel alle taken van persoon A overzetten naar persoon B.", completed: true },
       { id: 15, title: "RACI Matrix Generator", description: "Genereer een Responsible, Accountable, Consulted, Informed matrix.", completed: false },
       { id: 16, title: "Automatische Resource Leveling", description: "Verschuif taken automatisch om overbelasting te voorkomen.", completed: false },
       { id: 17, title: "Team-specifieke Werkuren en Feestdagen", description: "Definieer werkuren en vrije dagen per team.", completed: false },

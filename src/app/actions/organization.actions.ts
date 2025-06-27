@@ -166,3 +166,74 @@ export async function deleteOrganization(organizationId: string, userId: string)
         return { error: error.message };
     }
 }
+
+
+export async function reassignTasks(organizationId: string, fromUserId: string, toUserId: string, currentUserId: string) {
+    if (fromUserId === toUserId) {
+        return { error: "Je kunt geen taken naar dezelfde gebruiker toewijzen." };
+    }
+    
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
+        
+        const orgData = orgDoc.data() as Organization;
+        const currentUserRole = (orgData.members || {})[currentUserId]?.role;
+
+        if (currentUserRole !== 'Owner' && currentUserRole !== 'Admin') {
+            throw new Error("Je hebt geen permissie om taken opnieuw toe te wijzen.");
+        }
+        
+        const tasksQuery = query(
+            collection(db, 'tasks'), 
+            where('organizationId', '==', organizationId),
+            where('assigneeIds', 'array-contains', fromUserId)
+        );
+
+        const tasksSnapshot = await getDocs(tasksQuery);
+        
+        if (tasksSnapshot.empty) {
+            return { success: true, message: "Geen taken gevonden om opnieuw toe te wijzen voor deze gebruiker." };
+        }
+
+        const batch = writeBatch(db);
+        const usersRef = collection(db, 'users');
+        const fromUserDoc = await getDoc(doc(usersRef, fromUserId));
+        const toUserDoc = await getDoc(doc(usersRef, toUserId));
+        const currentUserDoc = await getDoc(doc(usersRef, currentUserId));
+
+        const fromUserName = fromUserDoc.data()?.name || 'Onbekende Gebruiker';
+        const toUserName = toUserDoc.data()?.name || 'Onbekende Gebruiker';
+        const currentUserName = currentUserDoc.data()?.name || 'Een Beheerder';
+        
+        const addHistoryEntryForReassignment = () => ({
+            id: crypto.randomUUID(),
+            userId: currentUserId,
+            timestamp: new Date(),
+            action: 'Taak opnieuw toegewezen',
+            details: `Bulk-actie door ${currentUserName}: van ${fromUserName} naar ${toUserName}.`,
+        });
+
+        tasksSnapshot.forEach(taskDoc => {
+            const taskRef = doc(db, 'tasks', taskDoc.id);
+            const historyEntry = addHistoryEntryForReassignment();
+            
+            const currentAssignees = taskDoc.data().assigneeIds || [];
+            const newAssignees = [...new Set([...currentAssignees.filter((id: string) => id !== fromUserId), toUserId])];
+            
+            batch.update(taskRef, {
+                assigneeIds: newAssignees,
+                history: arrayUnion(historyEntry)
+            });
+        });
+
+        await batch.commit();
+
+        return { success: true, message: `${tasksSnapshot.size} taken zijn opnieuw toegewezen van ${fromUserName} naar ${toUserName}.` };
+
+    } catch (error: any) {
+        console.error("Error reassigning tasks:", error);
+        return { error: error.message };
+    }
+}
