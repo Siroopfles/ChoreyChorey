@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { oauth2Client } from '@/lib/google-auth';
+import { getGoogleAuthClient } from '@/lib/google-auth';
 
 const renderResponse = (success: boolean, error?: string, refreshToken?: string | null) => {
     const message = JSON.stringify({
@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        const oauth2Client = getGoogleAuthClient();
         const { tokens } = await oauth2Client.getToken(code);
         
         if (tokens.refresh_token) {

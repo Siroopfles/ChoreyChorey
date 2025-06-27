@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import type { User, UserStatus } from '@/lib/types';
 import { authenticator } from 'otplib';
-import { oauth2Client, scopes } from '@/lib/google-auth';
+import { getGoogleAuthClient, scopes } from '@/lib/google-auth';
 
 export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken'>>) {
     try {
@@ -107,6 +107,7 @@ export async function purchaseTheme(userId: string, color: string, cost: number)
 // --- Google Calendar Actions ---
 
 export async function generateGoogleAuthUrl(userId: string) {
+    const oauth2Client = getGoogleAuthClient();
     const url = oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: scopes,

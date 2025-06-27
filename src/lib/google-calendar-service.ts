@@ -3,7 +3,7 @@
 import { google } from 'googleapis';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { oauth2Client } from '@/lib/google-auth';
+import { getGoogleAuthClient } from '@/lib/google-auth';
 import type { Task, User } from '@/lib/types';
 import { format, addHours } from 'date-fns';
 
@@ -22,19 +22,15 @@ async function getAuthenticatedClient(userId: string) {
         return null; // User has not connected their calendar
     }
     
-    const client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-        process.env.NEXT_PUBLIC_BASE_URL + '/api/oauth/google/callback'
-    );
-
+    const client = getGoogleAuthClient();
     client.setCredentials({ refresh_token: refreshToken });
     
     // Check if the access token is expired and refresh it if necessary
     const expiryDate = client.credentials.expiry_date || 0;
     if (Date.now() >= expiryDate) {
         try {
-            await client.refreshAccessToken();
+            const { credentials } = await client.refreshAccessToken();
+            client.setCredentials(credentials);
         } catch (error) {
             console.error('Failed to refresh Google access token for user:', userId, error);
             // Optionally, clear the refresh token if it's invalid
