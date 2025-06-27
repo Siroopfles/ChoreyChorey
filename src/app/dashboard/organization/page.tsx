@@ -2,7 +2,6 @@
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Shield, UserCheck, Plus, Briefcase, Users, Edit } from 'lucide-react';
 import type { Team } from '@/lib/types';
@@ -20,8 +19,7 @@ import { TeamDialog } from '@/components/chorey/organization/team-dialog';
 import { ManageMembersPopover } from '@/components/chorey/organization/manage-members-popover';
 
 export default function OrganizationPage() {
-    const { currentOrganization, loading: authLoading, currentUserPermissions, projects, teams } = useAuth();
-    const { users: usersInOrg } = useTasks();
+    const { currentOrganization, loading: authLoading, currentUserPermissions, projects, teams, users: usersInOrg } = useAuth();
 
     if (authLoading) {
         return (
