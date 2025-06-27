@@ -3,7 +3,7 @@
 
 import type { User, TaskFormValues, TaskTemplateFormValues } from '@/lib/types';
 import { taskFormSchema } from '@/lib/types';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState, useMemo } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
   
   const defaultPriority = currentOrganization?.settings?.customization?.priorities?.[1] || 'Midden';
 
-  const defaultFormValues: TaskFormValues = {
+  const defaultFormValues = useMemo(() => ({
     title: '',
     description: '',
     priority: defaultPriority,
@@ -53,7 +53,7 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
     projectId: undefined,
     dueDate: undefined,
     imageDataUri: undefined,
-  };
+  }), [defaultPriority]);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
