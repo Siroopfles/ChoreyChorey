@@ -26,6 +26,7 @@ import { addTeamChallenge as addTeamChallengeAction, updateTeamChallenge as upda
 import * as TaskActions from '@/app/actions/task.actions';
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/gamification.actions';
 import { addHours } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 
 type TaskContextType = {
@@ -64,8 +65,7 @@ type TaskContextType = {
   markSingleNotificationAsRead: (notificationId: string) => void;
   archiveNotification: (notificationId: string) => void;
   snoozeNotification: (notificationId: string) => void;
-  viewedUser: User | null;
-  setViewedUser: (user: User | null) => void;
+  navigateToUserProfile: (userId: string) => void;
   isAddTaskDialogOpen: boolean;
   setIsAddTaskDialogOpen: (open: boolean) => void;
   personalGoals: PersonalGoal[];
@@ -99,14 +99,18 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null });
-  const [viewedUser, setViewedUser] = useState<User | null>(null);
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const setFilters = (newFilters: Partial<Filters>) => { setRawFilters(prev => ({...prev, ...newFilters})); };
   const clearFilters = () => { setRawFilters({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null }); setSearchTerm(''); };
   const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.projectId ? 1 : 0) + (filters.teamId ? 1 : 0);
   const toggleTaskSelection = (taskId: string) => { setSelectedTaskIds(prev => prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]); };
+  
+  const navigateToUserProfile = (userId: string) => {
+    router.push(`/dashboard/profile/${userId}`);
+  };
 
   const handleError = (error: any, context: string) => {
     console.error(`Error in ${context}:`, error);
@@ -392,7 +396,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setSearchTerm, selectedTaskIds, setSelectedTaskIds, toggleTaskSelection, bulkUpdateTasks,
       cloneTask, splitTask, deleteTaskPermanently, filters, setFilters, clearFilters,
       activeFilterCount, notifications, markAllNotificationsAsRead, markSingleNotificationAsRead,
-      archiveNotification, snoozeNotification, viewedUser, setViewedUser, isAddTaskDialogOpen,
+      archiveNotification, snoozeNotification, navigateToUserProfile, isAddTaskDialogOpen,
       setIsAddTaskDialogOpen, personalGoals, addPersonalGoal, updatePersonalGoal,
       deletePersonalGoal, toggleMilestoneCompletion, ideas, addIdea, toggleIdeaUpvote,
       updateIdeaStatus, teamChallenges, addTeamChallenge, updateTeamChallenge,

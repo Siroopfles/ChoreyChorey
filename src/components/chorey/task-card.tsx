@@ -130,7 +130,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
   const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
   const PriorityIcon = priorityConfig[task.priority as keyof typeof priorityConfig]?.icon || Equal;
   const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, navigateToUserProfile, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask } = useTasks();
   const { currentOrganization, currentUserRole } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -634,7 +634,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                                 <button
                                   type="button"
                                   className="rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                  onClick={(e) => { e.stopPropagation(); setViewedUser(assignee); }}
+                                  onClick={(e) => { e.stopPropagation(); navigateToUserProfile(assignee.id); }}
                                 >
                                   <Avatar className="h-6 w-6 border-2 border-background">
                                     <AvatarImage src={assignee.avatar} alt={assignee.name} />
@@ -664,7 +664,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                                 <button
                                 type="button"
                                 className="rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex items-center gap-1"
-                                onClick={(e) => { e.stopPropagation(); setViewedUser(reviewer); }}
+                                onClick={(e) => { e.stopPropagation(); navigateToUserProfile(reviewer.id); }}
                                 >
                                 <Eye className="h-3 w-3 text-status-in-review" />
                                 <Avatar className="h-6 w-6 border-2 border-background">

@@ -13,10 +13,12 @@ import { Button } from '@/components/ui/button';
 import { MoreVertical, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useRouter } from 'next/navigation';
 
 export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
     const { currentOrganization, user: currentUser, currentUserPermissions } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
 
     if (!currentOrganization) return null;
 
@@ -56,7 +58,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
 
                         return (
                             <div key={member.id} className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
+                                <button className="flex items-center gap-3 text-left w-full" onClick={() => router.push(`/dashboard/profile/${member.id}`)}>
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
@@ -77,7 +79,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
                                         <p className="font-medium">{member.name}</p>
                                         <p className="text-sm text-muted-foreground">{roleName}</p>
                                     </div>
-                                </div>
+                                </button>
                                 {canManageRoles && !isOwner && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>

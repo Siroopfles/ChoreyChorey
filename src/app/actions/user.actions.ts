@@ -7,7 +7,7 @@ import type { User, UserStatus } from '@/lib/types';
 import { authenticator } from 'otplib';
 import { getGoogleAuthClient, scopes } from '@/lib/google-auth';
 
-export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken'>>) {
+export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken' | 'bio' | 'timezone' | 'website' | 'location'>>) {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, data);

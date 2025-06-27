@@ -20,7 +20,6 @@ import {
 import AppHeader from '@/components/chorey/app-header';
 import CommandBar from '@/components/chorey/command-bar';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
-import UserProfileSheet from '@/components/chorey/user-profile-sheet';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import Link from 'next/link';
 import AnnouncementBanner from '@/components/chorey/announcement-banner';
@@ -54,7 +53,7 @@ const UserCosmeticStyle = () => {
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
-    const { tasks, viewedUser, setViewedUser, isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
+    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
     const { currentUserRole, currentOrganization, users } = useAuth();
     const pathname = usePathname();
     const announcement = currentOrganization?.settings?.announcement;
@@ -87,7 +86,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     ];
 
     const adminNavItems = [
-        { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
+        { href: '/dashboard/settings/organization', icon: Settings, label: 'Instellingen' },
         { href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }
     ];
 
@@ -169,7 +168,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                                 {adminNavItems.map((item) => (
                                     <SidebarMenuItem key={item.href}>
                                         <Link href={item.href} passHref>
-                                            <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                            <SidebarMenuButton tooltip={item.label} isActive={pathname.startsWith(item.href)}>
                                                 <item.icon />
                                                 <span>{item.label}</span>
                                             </SidebarMenuButton>
@@ -190,14 +189,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                 </main>
                 <BulkActionBar />
             </SidebarInset>
-
-            {viewedUser && (
-                <UserProfileSheet
-                    user={viewedUser}
-                    isOpen={!!viewedUser}
-                    onOpenChange={(isOpen) => !isOpen && setViewedUser(null)}
-                />
-            )}
+            
             <AddTaskDialog users={users} open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
         </SidebarProvider>
     );

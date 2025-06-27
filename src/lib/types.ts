@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export type GitHubLink = {
@@ -38,6 +39,11 @@ export type OrganizationSettings = {
     owner: string;
     repos: string[];
   };
+  limits?: {
+    maxMembers?: number;
+    maxTasks?: number;
+    maxProjects?: number;
+  }
 }
 
 export type Organization = {
@@ -192,9 +198,13 @@ export type UserStatus = {
 export type User = {
   id: string;
   name: string;
+  email: string;
   avatar: string;
   points: number;
-  email: string;
+  bio?: string;
+  timezone?: string;
+  website?: string;
+  location?: string;
   achievements: string[]; // Achievement IDs
   organizationIds?: string[];
   currentOrganizationId?: string | null;

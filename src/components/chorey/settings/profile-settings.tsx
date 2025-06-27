@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User, Bot, Tags, Check, X, Star, Bell } from 'lucide-react';
+import { Loader2, User, Bot, Tags, Check, X, Star, Bell, Globe, MapPin, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/app/actions/user.actions';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
@@ -28,6 +29,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const profileSchema = z.object({
   name: z.string().min(2, 'Naam moet minimaal 2 karakters bevatten.'),
   skills: z.array(z.string()).optional(),
+  bio: z.string().optional(),
+  timezone: z.string().optional(),
+  website: z.string().url('Voer een geldige URL in.').or(z.literal('')).optional(),
+  location: z.string().optional(),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
@@ -44,12 +49,16 @@ export default function ProfileSettings({ user }: { user: UserType }) {
     values: {
       name: user.name,
       skills: user.skills || [],
+      bio: user.bio || '',
+      timezone: user.timezone || '',
+      website: user.website || '',
+      location: user.location || '',
     },
   });
 
   const onSubmitProfile = async (data: ProfileFormValues) => {
     setIsSubmittingProfile(true);
-    const result = await updateUserProfile(user.id, { name: data.name, skills: data.skills });
+    const result = await updateUserProfile(user.id, data);
     setIsSubmittingProfile(false);
 
     if (result.error) {
@@ -147,6 +156,54 @@ export default function ProfileSettings({ user }: { user: UserType }) {
                 <FormLabel>E-mailadres</FormLabel>
                 <Input value={user.email} disabled />
               </FormItem>
+               <FormField
+                control={profileForm.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Vertel iets over jezelf..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <FormField
+                  control={profileForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><MapPin/>Locatie</FormLabel>
+                      <FormControl><Input placeholder="bijv. Amsterdam" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={profileForm.control}
+                  name="timezone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tijdzone</FormLabel>
+                      <FormControl><Input placeholder="bijv. Europe/Amsterdam" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+               <FormField
+                  control={profileForm.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><Globe/>Website</FormLabel>
+                      <FormControl><Input placeholder="https://jouw-website.nl" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <FormField
                 control={profileForm.control}
                 name="skills"

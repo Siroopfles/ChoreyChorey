@@ -1,73 +1,70 @@
 
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { User, Building, ArrowRight } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
-import ProfileSettings from '@/components/chorey/settings/profile-settings';
-import OrganizationSettings from '@/components/chorey/settings/organization-settings';
-import DangerZone from '@/components/chorey/settings/danger-zone';
-import DebugSettings from '@/components/chorey/settings/debug-settings';
-import WorkflowSettings from '@/components/chorey/settings/workflow-settings';
-import FeatureToggleSettings from '@/components/chorey/settings/feature-toggle-settings';
-import BrandingSettings from '@/components/chorey/settings/branding-settings';
-import AnimationSettings from '@/components/chorey/settings/animation-settings';
-import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
-import SessionManagement from '@/components/chorey/settings/session-management';
-import TwoFactorAuthSettings from '@/components/chorey/settings/two-factor-auth-settings';
-import WebhookSettings from '@/components/chorey/settings/webhook-settings';
-import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
-import { PERMISSIONS } from '@/lib/types';
-import GoogleCalendarSettings from '@/components/chorey/settings/google-calendar-settings';
-import SlackSettings from '@/components/chorey/settings/slack-settings';
-import GitHubSettings from '@/components/chorey/settings/github-settings';
 
 export default function SettingsPage() {
-  const { user, loading: authLoading, currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
+    const { user, loading: authLoading, currentUserRole } = useAuth();
+    
+    if (authLoading || !user) {
+        return (
+          <div className="flex h-full w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        );
+    }
 
-  if (authLoading || !user) {
+    const isOwnerOrAdmin = currentUserRole === 'Owner' || currentUserRole === 'Admin';
+
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+        <div className="space-y-6">
+            <h1 className="font-semibold text-lg md:text-2xl">Instellingen</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="hover:border-primary/50 transition-colors">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                            <User className="h-6 w-6 text-primary" />
+                            Profiel & Account
+                        </CardTitle>
+                        <CardDescription>
+                            Beheer uw persoonlijke gegevens, avatar, vaardigheden, beveiliging en notificaties.
+                        </CardDescription>
+                    </CardHeader>
+                    <div className="p-6 pt-0">
+                         <Button asChild>
+                            <Link href="/dashboard/settings/profile">
+                                Profielinstellingen <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </div>
+                </Card>
+
+                {isOwnerOrAdmin && (
+                    <Card className="hover:border-primary/50 transition-colors">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-3">
+                                <Building className="h-6 w-6 text-primary" />
+                                Organisatie
+                            </CardTitle>
+                            <CardDescription>
+                                Beheer workflow, branding, integraties, limieten en andere instellingen voor de hele organisatie.
+                            </CardDescription>
+                        </CardHeader>
+                         <div className="p-6 pt-0">
+                            <Button asChild>
+                                <Link href="/dashboard/settings/organization">
+                                    Organisatie-instellingen <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </div>
+                    </Card>
+                )}
+            </div>
+        </div>
     );
-  }
-
-  const isOwnerOrAdmin = currentUserRole === 'Owner' || currentUserRole === 'Admin';
-  const canManageApiKeys = currentUserPermissions.includes(PERMISSIONS.MANAGE_API_KEYS);
-  const canManageIntegrations = currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS);
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center">
-        <h1 className="font-semibold text-lg md:text-2xl">Instellingen</h1>
-      </div>
-      
-      <ProfileSettings user={user} />
-      <TwoFactorAuthSettings user={user} />
-      <AnimationSettings />
-      <SessionManagement />
-      <GoogleCalendarSettings />
-
-      {currentOrganization && (
-        <>
-          {isOwnerOrAdmin && <OrganizationSettings organization={currentOrganization} />}
-          {isOwnerOrAdmin && <AnnouncementSettings organization={currentOrganization} />}
-          {isOwnerOrAdmin && <BrandingSettings organization={currentOrganization} />}
-          {canManageIntegrations && <SlackSettings organization={currentOrganization} />}
-          {canManageIntegrations && <GitHubSettings organization={currentOrganization} />}
-          {isOwnerOrAdmin && <WebhookSettings />}
-          {canManageApiKeys && <ApiKeySettings />}
-          {isOwnerOrAdmin && <WorkflowSettings organization={currentOrganization} />}
-          {isOwnerOrAdmin && <FeatureToggleSettings organization={currentOrganization} />}
-          <DangerZone
-            organization={currentOrganization}
-            isOwner={currentUserRole === 'Owner'}
-          />
-        </>
-      )}
-
-      <DebugSettings />
-    </div>
-  );
 }
