@@ -77,10 +77,10 @@ export const roadmapPhases: Phase[] = [
       { id: 3006, title: "Cloud Storage Integraties", description: "Koppel bestanden direct vanuit Google Drive, OneDrive en Dropbox.", completed: true },
       { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek project- of gebruikersadres.", completed: false },
       { id: 3008, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket issues en merge requests.", completed: true },
-      { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden en prototypes als live-previews toe aan taken.", completed: false },
+      { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden en prototypes als live-previews toe aan taken.", completed: true },
       { id: 3010, title: "Outlook Calendar Integratie", description: "Synchroniseer deadlines met je Outlook agenda.", completed: true },
-      { id: 3011, title: "Discord Integratie", description: "Ontvang notificaties in een Discord kanaal en beheer taken met slash-commando's.", completed: false },
-      { id: 3012, title: "Toggl/Clockify Integratie", description: "Start en stop de timer in Chorey en synchroniseer de tijdregistratie met uw favoriete tool.", completed: false },
+      { id: 3011, title: "Discord Integratie", description: "Ontvang notificaties in een Discord kanaal en beheer taken met slash-commando's.", completed: true },
+      { id: 3012, title: "Toggl/Clockify Integratie", description: "Start en stop de timer in Chorey en synchroniseer de tijdregistratie met uw favoriete tool.", completed: true },
       { id: 3013, title: "Browser Extensie (Chrome/Firefox)", description: "Maak een taak aan van de huidige webpagina met één klik.", completed: false },
       { id: 3014, title: "Jira / Linear Two-Way Sync", description: "Houd taken in Chorey en issues in Jira of Linear gesynchroniseerd.", completed: false },
     ]
