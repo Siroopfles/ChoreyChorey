@@ -29,6 +29,8 @@ import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
 import type { FindDuplicateTaskOutput } from '@/ai/schemas';
 import { GitHubLinker } from './github-linker';
+import { getAttachmentSource } from '@/lib/utils';
+import { AttachmentIcon } from './attachment-icons';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -922,76 +924,39 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
       <Separator />
 
       <div>
-        <UiLabel>Subtaken</UiLabel>
+        <UiLabel>Bijlagen</UiLabel>
         <div className="space-y-2 mt-2">
-          {subtaskFields.map((field, index) => {
-            const isPrivate = form.watch(`subtasks.${index}.isPrivate`);
-            return (
+          {attachmentFields.map((field, index) => {
+             const urlValue = form.watch(`attachments.${index}.url`);
+             const source = getAttachmentSource(urlValue);
+             return (
                 <div key={field.id} className="flex items-center gap-2">
-                <FormField
-                    control={form.control}
-                    name={`subtasks.${index}.text`}
-                    render={({ field }) => (
-                        <Input {...field} placeholder="Beschrijf subtaak..."/>
-                    )}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => form.setValue(`subtasks.${index}.isPrivate`, !isPrivate)}
-                  title={isPrivate ? "Maak publiek" : "Maak privé"}
-                >
-                  {isPrivate ? <Lock className="h-4 w-4 text-primary" /> : <Unlock className="h-4 w-4 text-muted-foreground" />}
-                </Button>
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
-                    <Trash2 className="h-4 w-4 text-destructive"/>
-                </Button>
+                    <div className="p-2 bg-muted rounded-md">
+                        <AttachmentIcon source={source} />
+                    </div>
+                    <FormField
+                        control={form.control}
+                        name={`attachments.${index}.name`}
+                        render={({ field }) => (
+                            <Input {...field} placeholder="Naam bijlage" className="w-1/3"/>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name={`attachments.${index}.url`}
+                        render={({ field }) => (
+                            <Input {...field} placeholder="https://..."/>
+                        )}
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive"/>
+                    </Button>
                 </div>
-            )
+             )
           })}
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={() => appendSubtask({ text: '', isPrivate: false })}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Subtaak toevoegen
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={onSuggestSubtasks} disabled={isSuggestingSubtasks}>
-                {isSuggestingSubtasks ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                Genereer (AI)
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div>
-        <UiLabel>Links (Bijlagen)</UiLabel>
-        <div className="space-y-2 mt-2">
-          {attachmentFields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-2">
-              <FormField
-                control={form.control}
-                name={`attachments.${index}.name`}
-                render={({ field }) => (
-                    <Input {...field} placeholder="Naam bijlage" className="w-1/3"/>
-                )}
-              />
-                <FormField
-                control={form.control}
-                name={`attachments.${index}.url`}
-                render={({ field }) => (
-                    <Input {...field} placeholder="https://..."/>
-                )}
-              />
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(index)}>
-                <Trash2 className="h-4 w-4 text-destructive"/>
-              </Button>
-            </div>
-          ))}
           <Button type="button" variant="outline" size="sm" onClick={() => appendAttachment({ name: '', url: '' })}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Link toevoegen
+            Bijlage toevoegen
           </Button>
         </div>
       </div>

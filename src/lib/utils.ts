@@ -21,3 +21,14 @@ export const calculatePoints = (priority: Priority, storyPoints?: number): numbe
 
     return finalPoints;
 };
+
+export type AttachmentSource = 'google-drive' | 'onedrive' | 'dropbox' | 'figma' | 'generic-link';
+
+export function getAttachmentSource(url: string | undefined): AttachmentSource {
+    if (!url) return 'generic-link';
+    if (url.includes('drive.google.com')) return 'google-drive';
+    if (url.includes('dropbox.com')) return 'dropbox';
+    if (url.includes('onedrive.live.com') || url.includes('1drv.ms')) return 'onedrive';
+    if (url.includes('figma.com')) return 'figma';
+    return 'generic-link';
+}

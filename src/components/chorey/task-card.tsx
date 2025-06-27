@@ -75,6 +75,8 @@ import { handleTextToSpeech } from '@/app/actions/ai.actions';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
+import { getAttachmentSource } from '@/lib/utils';
+import { AttachmentIcon } from './attachment-icons';
 
 
 type TaskCardProps = {
@@ -535,19 +537,28 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
 
 
             {task.attachments.length > 0 && (
-                <div className="mb-2 space-y-1 pt-2 mt-2 border-t">
+                <div className="mb-2 space-y-2 pt-2 mt-2 border-t">
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground">Bijlagen</h4>
                     {task.attachments.map((attachment) => (
-                        <a
-                        key={attachment.id}
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="flex items-center gap-2 text-xs text-muted-foreground hover:underline mt-1"
-                        >
-                        <Paperclip className="h-3 w-3" />
-                        <span className="truncate">{attachment.name}</span>
-                        </a>
+                        <TooltipProvider key={attachment.id}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <a
+                                        href={attachment.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={e => e.stopPropagation()}
+                                        className="flex items-center gap-2 text-sm text-foreground hover:bg-muted p-1 rounded-md"
+                                    >
+                                        <AttachmentIcon source={getAttachmentSource(attachment.url)} />
+                                        <span className="truncate">{attachment.name}</span>
+                                    </a>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{attachment.url}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     ))}
                 </div>
             )}
