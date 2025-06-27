@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FilePieChart, BarChart3, Settings2, Users as UsersIcon, ListChecks, ArrowUpNarrowWide, Hash, Database, Trophy } from 'lucide-react';
+import { FilePieChart, BarChart, Settings2, Users as UsersIcon, ListChecks, ArrowUpNarrowWide, Hash, Database, Trophy } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import type { Task, User } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils';
@@ -29,7 +29,7 @@ type ReportData = {
 }[];
 
 const chartOptions: { value: 'bar' | 'pie'; label: string; icon: React.ElementType }[] = [
-    { value: 'bar', label: 'Staafdiagram', icon: BarChart3 },
+    { value: 'bar', label: 'Staafdiagram', icon: BarChart },
     { value: 'pie', label: 'Cirkeldiagram', icon: FilePieChart }
 ];
 
@@ -129,7 +129,7 @@ export default function ReportsPage() {
 
         return (
              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={reportData}>
+                <RechartsBarChart data={reportData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} interval={0} />
                     <YAxis />
@@ -137,7 +137,7 @@ export default function ReportsPage() {
                     <Bar dataKey="value" name={config.metric}>
                          {reportData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                     </Bar>
-                </BarChart>
+                </RechartsBarChart>
             </ResponsiveContainer>
         );
     };
@@ -203,7 +203,7 @@ export default function ReportsPage() {
                         <Input id="report-name" value={config.name} onChange={e => setConfig({...config, name: e.target.value})} />
                     </div>
                      <Button onClick={handleGenerateReport} disabled={loading}>
-                        <BarChart3 className="mr-2 h-4 w-4" />
+                        <BarChart className="mr-2 h-4 w-4" />
                         Genereer Rapport
                     </Button>
                 </CardFooter>

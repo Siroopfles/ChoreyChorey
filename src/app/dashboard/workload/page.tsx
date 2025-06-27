@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Loader2, GitGraph, CalendarIcon, Bot, BarChart3 } from 'lucide-react';
+import { Loader2, GitGraph, CalendarIcon, Bot, BarChart } from 'lucide-react';
 import { handleLevelWorkload } from '@/app/actions/ai.actions';
 import { getWorkloadData, type GetWorkloadDataOutput } from '@/app/actions/workload.actions';
 import { DateRange } from 'react-day-picker';
@@ -16,7 +17,7 @@ import { addDays, format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useTheme } from 'next-themes';
 
 const CAPACITY_THRESHOLD = 8;
@@ -134,7 +135,7 @@ export default function WorkloadPage() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><BarChart3/> Team Werkdruk Visualisatie</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><BarChart/> Team Werkdruk Visualisatie</CardTitle>
                      <div className="grid gap-2">
                         <Popover>
                             <PopoverTrigger asChild>
@@ -181,7 +182,7 @@ export default function WorkloadPage() {
                         </div>
                     ) : (
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={chartData}>
+                            <RechartsBarChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="date" />
                                 <YAxis />
@@ -191,7 +192,7 @@ export default function WorkloadPage() {
                                 {allUserNames.map(name => (
                                     <Bar key={name} dataKey={name} stackId="a" fill={userColors[name] || '#8884d8'} />
                                 ))}
-                            </BarChart>
+                            </RechartsBarChart>
                         </ResponsiveContainer>
                     )}
                  </CardContent>
