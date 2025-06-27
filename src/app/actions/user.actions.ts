@@ -6,8 +6,9 @@ import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, 
 import type { User, UserStatus } from '@/lib/types';
 import { authenticator } from 'otplib';
 import { getGoogleAuthClient, scopes } from '@/lib/google-auth';
+import { getMicrosoftAuthClient, scopes as microsoftScopes, redirectUri as microsoftRedirectUri } from '@/lib/microsoft-graph-auth';
 
-export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken' | 'bio' | 'timezone' | 'website' | 'location'>>) {
+export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken' | 'microsoftRefreshToken' | 'bio' | 'timezone' | 'website' | 'location'>>) {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, data);
@@ -130,6 +131,36 @@ export async function disconnectGoogleCalendar(userId: string) {
     }
 }
 
+// --- Microsoft Calendar Actions ---
+
+export async function generateMicrosoftAuthUrl(userId: string) {
+    const msalClient = getMicrosoftAuthClient();
+    try {
+        const authCodeUrlParameters = {
+            scopes: microsoftScopes,
+            redirectUri: microsoftRedirectUri,
+            state: userId, // Pass userId to identify the user in the callback
+        };
+        const url = await msalClient.getAuthCodeUrl(authCodeUrlParameters);
+        return { url };
+    } catch (error) {
+        console.error("Error generating Microsoft auth URL:", error);
+        return { error: (error as Error).message };
+    }
+}
+
+export async function disconnectMicrosoftCalendar(userId: string) {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            microsoftRefreshToken: null,
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error disconnecting Microsoft Calendar:", error);
+        return { error: error.message };
+    }
+}
 
 // --- Two-Factor Authentication Actions ---
 

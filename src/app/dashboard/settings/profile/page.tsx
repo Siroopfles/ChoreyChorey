@@ -7,6 +7,7 @@ import ProfileSettings from '@/components/chorey/settings/profile-settings';
 import SessionManagement from '@/components/chorey/settings/session-management';
 import TwoFactorAuthSettings from '@/components/chorey/settings/two-factor-auth-settings';
 import GoogleCalendarSettings from '@/components/chorey/settings/google-calendar-settings';
+import MicrosoftCalendarSettings from '@/components/chorey/settings/microsoft-calendar-settings';
 import AnimationSettings from '@/components/chorey/settings/animation-settings';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ export default function ProfileSettingsPage() {
       <AnimationSettings />
       <SessionManagement />
       <GoogleCalendarSettings />
+      <MicrosoftCalendarSettings />
     </div>
   );
 }

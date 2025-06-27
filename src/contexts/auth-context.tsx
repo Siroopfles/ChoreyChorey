@@ -118,6 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             twoFactorRecoveryCodes: rawData.twoFactorRecoveryCodes,
             notificationSettings: rawData.notificationSettings,
             lastDigestSentAt: (rawData.lastDigestSentAt as Timestamp | null)?.toDate() ?? undefined,
+            googleRefreshToken: rawData.googleRefreshToken,
+            microsoftRefreshToken: rawData.microsoftRefreshToken,
         };
         setUser(userData);
 

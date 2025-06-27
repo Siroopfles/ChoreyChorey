@@ -233,6 +233,7 @@ export type User = {
   };
   lastDigestSentAt?: Date;
   googleRefreshToken?: string | null;
+  microsoftRefreshToken?: string | null;
 };
 
 export type Session = {
@@ -380,6 +381,7 @@ export type Task = {
   isChoreOfTheWeek?: boolean;
   helpNeeded?: boolean;
   googleEventId?: string | null;
+  microsoftEventId?: string | null;
   githubLinks?: GitHubLink[];
 };
 

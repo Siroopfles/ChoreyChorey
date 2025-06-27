@@ -11,6 +11,7 @@ import { triggerWebhooks } from '@/lib/webhook-service';
 import Papa from 'papaparse';
 import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar-service';
+import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/microsoft-graph-service';
 
 // --- Internal Helper Functions ---
 
@@ -230,16 +231,24 @@ export async function createTaskAction(organizationId: string, creatorId: string
         }
         await triggerWebhooks(organizationId, 'task.created', { ...firestoreTask, id: docRef.id });
 
-        // Google Calendar Sync
         if (taskData.dueDate) {
+            // Google Calendar Sync
             try {
                 const eventId = await createCalendarEvent(creatorId, { ...firestoreTask, id: docRef.id });
                 if (eventId) {
                     await updateDoc(docRef, { googleEventId: eventId });
                 }
             } catch (e) {
-                console.error("Google Calendar event creation failed, but task was created in Chorey:", e);
-                // Don't throw, task creation shouldn't fail because of this
+                console.error("Google Calendar event creation failed:", e);
+            }
+             // Microsoft Calendar Sync
+            try {
+                const eventId = await createMicrosoftCalendarEvent(creatorId, { ...firestoreTask, id: docRef.id });
+                if (eventId) {
+                    await updateDoc(docRef, { microsoftEventId: eventId });
+                }
+            } catch (e) {
+                console.error("Microsoft Calendar event creation failed:", e);
             }
         }
         return { success: true };
@@ -345,9 +354,10 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         const updatedTask = { ...taskToUpdate, ...finalUpdates, id: taskId };
         await triggerWebhooks(organizationId, 'task.updated', updatedTask);
 
+        const dueDateChanged = 'dueDate' in updates;
+
         // Google Calendar Sync
         try {
-            const dueDateChanged = 'dueDate' in updates;
             if (dueDateChanged) {
                 if (updates.dueDate && updatedTask.googleEventId) { // Date changed, event exists -> update
                     await updateCalendarEvent(userId, updatedTask);
@@ -359,11 +369,29 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                     await updateDoc(taskRef, { googleEventId: null });
                 }
             } else if (('title' in updates || 'description' in updates) && updatedTask.googleEventId) {
-                // Other details changed, update event if it exists
                 await updateCalendarEvent(userId, updatedTask);
             }
         } catch (e) {
             console.error("Google Calendar event update failed:", e);
+        }
+
+         // Microsoft Calendar Sync
+        try {
+            if (dueDateChanged) {
+                if (updates.dueDate && updatedTask.microsoftEventId) { // Date changed, event exists -> update
+                    await updateMicrosoftCalendarEvent(userId, updatedTask);
+                } else if (updates.dueDate && !updatedTask.microsoftEventId) { // Date added, no event -> create
+                    const eventId = await createMicrosoftCalendarEvent(userId, updatedTask);
+                    if (eventId) await updateDoc(taskRef, { microsoftEventId: eventId });
+                } else if (!updates.dueDate && updatedTask.microsoftEventId) { // Date removed, event exists -> delete
+                    await deleteMicrosoftCalendarEvent(userId, updatedTask.microsoftEventId);
+                    await updateDoc(taskRef, { microsoftEventId: null });
+                }
+            } else if (('title' in updates || 'description' in updates) && updatedTask.microsoftEventId) {
+                await updateMicrosoftCalendarEvent(userId, updatedTask);
+            }
+        } catch (e) {
+            console.error("Microsoft Calendar event update failed:", e);
         }
         
         return { success: true, updatedTask };
@@ -399,6 +427,7 @@ export async function cloneTaskAction(taskId: string, userId: string, organizati
           consultedUserIds: taskToClone.consultedUserIds || [],
           informedUserIds: taskToClone.informedUserIds || [],
           googleEventId: null, // Don't clone the calendar event
+          microsoftEventId: null,
         };
         
         delete (clonedTask as any).id; 
@@ -470,6 +499,15 @@ export async function deleteTaskPermanentlyAction(taskId: string, organizationId
                 await deleteCalendarEvent(taskData.creatorId, taskData.googleEventId);
             } catch (e) {
                 console.error("Google Calendar event deletion failed:", e);
+            }
+        }
+
+        // Microsoft Calendar Sync
+        if (taskData.microsoftEventId && taskData.creatorId) {
+            try {
+                await deleteMicrosoftCalendarEvent(taskData.creatorId, taskData.microsoftEventId);
+            } catch (e) {
+                console.error("Microsoft Calendar event deletion failed:", e);
             }
         }
         
