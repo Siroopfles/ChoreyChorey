@@ -1,69 +1,110 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isOrgOwner(orgId) {
-      return get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
+    
+    // Helper function to check if a user is a member of an organization
+    function isOrgMember(orgId) {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([orgId]);
     }
     
+    // Helper function to check if the user has Owner or Admin role in an organization
     function isOrgAdmin(orgId) {
-      // Use .get() to safely access role, prevents error if member doesn't exist
-      return get(/databases/$(database)/documents/organizations/$(orgId)).data.members.get(request.auth.uid, {}).role == 'Admin';
+        if (request.auth == null) {
+          return false;
+        }
+        let orgDoc = get(/databases/$(database)/documents/organizations/$(orgId));
+        // Check if the members map and the specific user entry exist before accessing role
+        return orgDoc.data.members != null &&
+               request.auth.uid in orgDoc.data.members &&
+               orgDoc.data.members[request.auth.uid].role in ['Owner', 'Admin'];
     }
 
-    function isOrgMember(orgId) {
-      return request.auth.uid in get(/databases/$(database)/documents/organizations/$(orgId)).data.members;
-    }
-
-    function isJoiningOrg(request, resource) {
-        // Is the user updating the members map?
-        let isModifyingMembers = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']);
-        // Is the user adding only themselves?
-        let isAddingSelf = request.resource.data.members.diff(resource.data.members).addedKeys().hasOnly([request.auth.uid]);
-        // Is the user not already a member?
-        let isNotAlreadyMember = !(request.auth.uid in resource.data.members);
-
-        return isModifyingMembers && isAddingSelf && isNotAlreadyMember;
-    }
-
+    // USERS
+    // Users can update their own document.
+    // Any authenticated user can read another user's profile (for avatars, names etc.)
     match /users/{userId} {
-      allow read;
-      allow create;
-      allow update: if request.auth.uid == userId;
+      allow read: if request.auth != null;
+      allow create, update: if request.auth.uid == userId;
     }
 
+    // ORGANIZATIONS
+    // Only members can read. Only admins/owners can write.
     match /organizations/{orgId} {
       allow read: if isOrgMember(orgId);
-      allow create: if request.auth.uid == request.resource.data.ownerId;
-      allow update: if isOrgOwner(orgId) || isOrgAdmin(orgId) || isJoiningOrg(request, resource);
-    }
-
-    match /invites/{inviteId} {
-      allow read;
-      allow create: if request.auth != null
-                    && request.resource.data.inviterId == request.auth.uid;
-      allow update: if request.auth != null
-                    && resource.data.status == 'pending'
-                    && request.resource.data.status == 'accepted';
+      allow update: if isOrgAdmin(orgId);
     }
     
-    match /teams/{teamId} {
-      // Team data contains organizationId
-      allow read, write: if isOrgMember(request.resource.data.organizationId);
-    }
-    
-    match /taskTemplates/{templateId} {
-      allow read, write: if isOrgMember(request.resource.data.organizationId);
-    }
-
+    // TASKS
+    // Members of an organization can read/write tasks.
+    // Public tasks within a public project are readable by anyone.
     match /tasks/{taskId} {
-      allow read, write: if isOrgMember(request.resource.data.organizationId);
+      function isTaskInPublicProject() {
+        let project = get(/databases/$(database)/documents/projects/$(resource.data.projectId));
+        return project.data.isPublic == true;
+      }
+      allow read: if (resource.data.isPrivate == false && (resource.data.isSensitive == false || isOrgAdmin(resource.data.organizationId)) && resource.data.projectId != null && isTaskInPublicProject()) || isOrgMember(resource.data.organizationId);
+      allow create: if isOrgMember(request.resource.data.organizationId);
+      allow update, delete: if isOrgMember(resource.data.organizationId);
+    }
+
+    // PROJECTS
+    // Public projects are readable by anyone.
+    // Otherwise, only org members can read, and admins can write.
+    match /projects/{projectId} {
+      allow read: if resource.data.isPublic == true || isOrgMember(resource.data.organizationId);
+      allow create, update, delete: if isOrgAdmin(request.resource.data.organizationId);
     }
     
+    // IDEAS
+    match /ideas/{ideaId} {
+        allow read, create: if isOrgMember(request.resource.data.organizationId);
+        // Allow members to update (specifically for upvoting), and admins to update anything.
+        allow update: if isOrgMember(resource.data.organizationId) && 
+                        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes']) || isOrgAdmin(resource.data.organizationId));
+        allow delete: if isOrgAdmin(resource.data.organizationId);
+    }
+    
+    // NOTIFICATIONS, SESSIONS, PERSONAL GOALS (User-specific)
+    // Users can only manage their own documents in these collections.
     match /notifications/{notificationId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null && (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
+    match /sessions/{sessionId} {
+      allow read, write: if request.auth != null && (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
+    match /personalGoals/{goalId} {
+      allow read, write: if request.auth != null && (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
+    
+    // INVITES
+    // Anyone can read an invite to check its validity. Only auth'd users can create/update (accept).
+    match /invites/{inviteId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+    }
+
+    // TEMPLATES, TEAMS, CHALLENGES
+    // Generic rule for org-specific collections that members can manage.
+    match /taskTemplates/{docId} {
+      allow read, write: if isOrgMember(request.resource.data.organizationId);
+    }
+     match /teams/{docId} {
+      allow read, write: if isOrgMember(request.resource.data.organizationId);
+    }
+     match /teamChallenges/{docId} {
+      allow read, write: if isOrgMember(request.resource.data.organizationId);
+    }
+
+    // SERVER-ONLY COLLECTIONS
+    // These are managed by backend/server actions, not directly by clients.
+    match /webhooks/{webhookId} {
+      allow read, write: if false;
+    }
+    match /apiKeys/{apiKeyId} {
+      allow read, write: if false;
     }
   }
 }
