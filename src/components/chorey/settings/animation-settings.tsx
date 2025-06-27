@@ -2,7 +2,6 @@
 
 import { useUIPreferences } from '@/contexts/ui-preferences-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Speed } from 'lucide-react';
 
@@ -21,7 +20,7 @@ export default function AnimationSettings() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Label htmlFor="animation-speed">Animatiesnelheid: {preferences.animationSpeed.toFixed(1)}x</Label>
+          <label className="text-sm font-medium" htmlFor="animation-speed">Animatiesnelheid: {preferences.animationSpeed.toFixed(1)}x</label>
           <Slider
             id="animation-speed"
             min={0}
