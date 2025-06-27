@@ -203,3 +203,26 @@ export type LevelWorkloadInput = z.infer<typeof LevelWorkloadInputSchema>;
 
 export const LevelWorkloadOutputSchema = z.string().describe('A natural language summary of the changes made to the workload.');
 export type LevelWorkloadOutput = z.infer<typeof LevelWorkloadOutputSchema>;
+
+// From suggest-headcount-flow.ts
+export const SuggestHeadcountInputSchema = z.object({
+  projectDescription: z.string().describe('A detailed description of the project, including its goals, scope, and key deliverables.'),
+  availableUsers: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    role: z.string().describe('The user\'s role in the organization, e.g., "Developer", "Designer", "Project Manager".'),
+    skills: z.array(z.string()).optional().describe('A list of the user\'s skills.'),
+  })).describe('A list of all available users in the organization with their roles and skills.'),
+});
+export type SuggestHeadcountInput = z.infer<typeof SuggestHeadcountInputSchema>;
+
+export const SuggestHeadcountOutputSchema = z.object({
+  suggestedRoles: z.array(z.object({
+    role: z.string().describe('The role required for the project.'),
+    count: z.number().describe('The number of people required for this role.'),
+    skills: z.array(z.string()).optional().describe('Specific skills recommended for this role on this project.'),
+  })).describe('A list of suggested roles and the required number of people for each.'),
+  reasoning: z.string().describe('A summary of the reasoning behind the headcount suggestion.'),
+  totalHeadcount: z.number().describe('The total number of people suggested for the project.'),
+});
+export type SuggestHeadcountOutput = z.infer<typeof SuggestHeadcountOutputSchema>;

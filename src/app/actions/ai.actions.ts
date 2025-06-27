@@ -1,8 +1,9 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import type { User } from '@/lib/types';
+import { collection, getDocs, query, where, Timestamp, getDoc, doc } from 'firebase/firestore';
+import type { User, Organization } from '@/lib/types';
+import { DEFAULT_ROLES } from '@/lib/types';
 import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
 import { processCommand } from '@/ai/flows/process-command';
@@ -19,7 +20,8 @@ import { meetingToTasks } from '@/ai/flows/meeting-to-tasks-flow';
 import { findDuplicateTask } from '@/ai/flows/find-duplicate-task-flow';
 import { generateNotificationDigest } from '@/ai/flows/notification-digest-flow';
 import { levelWorkload } from '@/ai/flows/level-workload-flow';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput, LevelWorkloadInput } from '@/ai/schemas';
+import { suggestHeadcount } from '@/ai/flows/suggest-headcount-flow';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput, LevelWorkloadInput, SuggestHeadcountInput, SuggestHeadcountOutput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -199,6 +201,37 @@ export async function handleLevelWorkload(input: LevelWorkloadInput) {
     try {
         const summary = await levelWorkload(input);
         return { summary };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function handleSuggestHeadcount(organizationId: string, projectDescription: string) {
+    try {
+        const orgUsersSnapshot = await getDocs(query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId)));
+        
+        const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+        if (!orgDoc.exists()) {
+            return { error: "Organisatie niet gevonden." };
+        }
+        const orgData = orgDoc.data() as Organization;
+        const orgMembers = orgData.members || {};
+        const allRoles = { ...DEFAULT_ROLES, ...(orgData.settings?.customization?.customRoles || {}) };
+
+        const availableUsers = orgUsersSnapshot.docs.map(doc => {
+            const userData = doc.data() as User;
+            const roleId = orgMembers[doc.id]?.role || 'Member';
+            const roleName = allRoles[roleId]?.name || roleId;
+            return {
+                id: doc.id,
+                name: userData.name,
+                role: roleName,
+                skills: userData.skills || []
+            }
+        });
+
+        const result = await suggestHeadcount({ projectDescription, availableUsers });
+        return { result };
     } catch (e: any) {
         return { error: e.message };
     }

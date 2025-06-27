@@ -37,7 +37,7 @@ export const roadmapData = {
       { id: 10, title: "Programma Management", description: "Groepeer projecten in programma's met eigen doelen/KPI's.", completed: true },
       { id: 11, title: "Scenario Planning / \"What-if\" Analyse", description: "Simuleer impact van resource-wijzigingen.", completed: false },
       { id: 12, title: "Gantt Chart Snapshots & Versiebeheer", description: "Vergelijk de planning met eerdere versies.", completed: true },
-      { id: 13, title: "Headcount Planning", description: "Plan toekomstige personeelsbehoefte op projectniveau.", completed: false },
+      { id: 13, title: "Headcount Planning", description: "Plan toekomstige personeelsbehoefte op projectniveau.", completed: true },
       { id: 14, title: "Resource Vervanging", description: "Snel alle taken van persoon A overzetten naar persoon B.", completed: true },
       { id: 15, title: "RACI Matrix Generator", description: "Genereer een Responsible, Accountable, Consulted, Informed matrix.", completed: true },
       { id: 16, title: "Automatische Resource Leveling", description: "Verschuif taken automatisch om overbelasting te voorkomen.", completed: true },
