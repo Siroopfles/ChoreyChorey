@@ -41,42 +41,34 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues: {
-      title: task.title,
-      description: task.description,
-      assigneeIds: task.assigneeIds || [],
-      projectId: task.projectId || undefined,
-      dueDate: task.dueDate,
-      priority: task.priority,
-      labels: task.labels,
-      subtasks: task.subtasks.map(({id, ...rest}) => rest),
-      attachments: task.attachments.map(({id, type, ...rest}) => rest),
-      isPrivate: task.isPrivate,
-      storyPoints: task.storyPoints,
-      blockedBy: task.blockedBy || [],
-      recurring: task.recurring,
-      imageDataUri: task.imageDataUri,
-    },
   });
 
   useEffect(() => {
-    form.reset({
-      title: task.title,
-      description: task.description,
-      assigneeIds: task.assigneeIds || [],
-      projectId: task.projectId || undefined,
-      dueDate: task.dueDate,
-      priority: task.priority,
-      labels: task.labels,
-      subtasks: task.subtasks.map(({id, ...rest}) => rest),
-      attachments: task.attachments.map(({id, type, ...rest}) => rest),
-      isPrivate: task.isPrivate,
-      storyPoints: task.storyPoints,
-      blockedBy: task.blockedBy || [],
-      recurring: task.recurring,
-      imageDataUri: task.imageDataUri,
-    });
-  }, [task, form, isOpen]);
+    if (task && isOpen) {
+      form.reset({
+        title: task.title,
+        description: task.description,
+        assigneeIds: task.assigneeIds || [],
+        projectId: task.projectId || undefined,
+        dueDate: task.dueDate,
+        priority: task.priority,
+        labels: task.labels,
+        subtasks: task.subtasks.map(({id, ...rest}) => rest),
+        attachments: task.attachments.map(({id, type, ...rest}) => rest),
+        isPrivate: task.isPrivate,
+        isSensitive: task.isSensitive,
+        helpNeeded: task.helpNeeded,
+        storyPoints: task.storyPoints,
+        blockedBy: task.blockedBy || [],
+        dependencyConfig: task.dependencyConfig || {},
+        recurring: task.recurring,
+        imageDataUri: task.imageDataUri,
+        reviewerId: task.reviewerId,
+        consultedUserIds: task.consultedUserIds || [],
+        informedUserIds: task.informedUserIds || [],
+      });
+    }
+  }, [task, isOpen, form]);
 
 
   function onSubmit(data: TaskFormValues) {

@@ -4,11 +4,13 @@
     "rules": "firestore.rules"
   },
   "hosting": {
-    "rewrites": [
-      {
-        "source": "/invite/**",
-        "destination": "/invite/[inviteId]"
-      }
-    ]
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "app": {}
   }
 }
+

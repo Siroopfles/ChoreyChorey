@@ -345,7 +345,7 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
               </Popover>
                <div className="pt-1 h-fit min-h-[22px]">
                 {field.value?.map((userId: string) => {
-                    const user = users.find(u => u.id === userId);
+                    const user = (users || []).find(u => u.id === userId);
                     if (!user) return null;
                     return (
                       <Badge variant="secondary" key={userId} className="mr-1 mb-1">
