@@ -73,7 +73,7 @@ export const roadmapPhases: Phase[] = [
       { id: 3002, title: "Slack Integratie", description: "Ontvang notificaties in Slack en maak taken aan vanuit een Slack-bericht.", completed: true },
       { id: 3003, title: "GitHub Integratie", description: "Koppel taken aan issues en pull requests. Synchroniseer statusupdates.", completed: true },
       { id: 3004, title: "Microsoft Teams Integratie", description: "Volledige functionaliteit binnen MS Teams, inclusief notificaties en taakcreatie.", completed: true },
-      { id: 3005, title: "Zapier / Make (Integromat) Integratie", description: "Verbind Chorey met duizenden andere apps via no-code platformen.", completed: false },
+      { id: 3005, title: "Zapier / Make (Integromat) Integratie", description: "Verbind Chorey met duizenden andere apps via no-code platformen.", completed: true },
       { id: 3006, title: "Cloud Storage Integraties", description: "Koppel bestanden direct vanuit Google Drive, OneDrive en Dropbox.", completed: true },
       { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek project- of gebruikersadres.", completed: true },
       { id: 3008, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket issues en merge requests.", completed: true },
