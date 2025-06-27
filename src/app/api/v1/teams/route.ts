@@ -23,7 +23,14 @@ export async function GET(request: NextRequest) {
     const { organizationId } = authResult;
 
     try {
-        const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', organizationId));
+        const { searchParams } = request.nextUrl;
+        const queryConstraints: any[] = [where('organizationId', '==', organizationId)];
+
+        if (searchParams.get('name')) {
+            queryConstraints.push(where('name', '==', searchParams.get('name')));
+        }
+
+        const teamsQuery = query(collection(db, 'teams'), ...queryConstraints);
         const snapshot = await getDocs(teamsQuery);
 
         const teams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

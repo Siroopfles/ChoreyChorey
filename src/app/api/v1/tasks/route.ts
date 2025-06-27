@@ -41,7 +41,23 @@ export async function GET(request: NextRequest) {
     const { organizationId } = authResult;
 
     try {
-        const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
+        const { searchParams } = request.nextUrl;
+        const queryConstraints: any[] = [where('organizationId', '==', organizationId)];
+        
+        if (searchParams.get('status')) {
+            queryConstraints.push(where('status', '==', searchParams.get('status')));
+        }
+        if (searchParams.get('priority')) {
+            queryConstraints.push(where('priority', '==', searchParams.get('priority')));
+        }
+        if (searchParams.get('assigneeId')) {
+            queryConstraints.push(where('assigneeIds', 'array-contains', searchParams.get('assigneeId')));
+        }
+         if (searchParams.get('projectId')) {
+            queryConstraints.push(where('projectId', '==', searchParams.get('projectId')));
+        }
+
+        const tasksQuery = query(collection(db, 'tasks'), ...queryConstraints);
         const snapshot = await getDocs(tasksQuery);
 
         const tasks = snapshot.docs.map(doc => {

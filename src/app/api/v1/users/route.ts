@@ -35,7 +35,14 @@ export async function GET(request: NextRequest) {
     const { organizationId } = authResult;
 
     try {
-        const usersQuery = query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId));
+        const { searchParams } = request.nextUrl;
+        const queryConstraints: any[] = [where('organizationIds', 'array-contains', organizationId)];
+
+        if (searchParams.get('email')) {
+            queryConstraints.push(where('email', '==', searchParams.get('email')));
+        }
+
+        const usersQuery = query(collection(db, 'users'), ...queryConstraints);
         const snapshot = await getDocs(usersQuery);
 
         const users = snapshot.docs.map(doc => {
