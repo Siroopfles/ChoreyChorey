@@ -117,7 +117,7 @@ export const roadmapData = {
       { id: 37, title: "Publiek Deelbare Dashboards", description: "Read-only link voor externen.", completed: true },
       { id: 38, title: "Horloge Companion App", description: "Apple Watch/Wear OS.", completed: false },
       { id: 39, title: "Globale Inbox", description: "Één plek voor alle @mentions, reviews, notificaties.", completed: true },
-      { id: 40, title: "Multi-Window / Tab Support", description: "Ondersteuning voor meerdere vensters in de webapp.", completed: false },
+      { id: 40, title: "Multi-Window / Tab Support", description: "Ondersteuning voor meerdere vensters in de webapp.", completed: true },
       { id: 41, title: "'Mijn Week' view", description: "Een persoonlijke, automatische planning.", completed: true },
       { id: 42, title: "Gebruikersstatus & Aanwezigheid", description: "Online, Afwezig, In een meeting, etc.", completed: true },
       { id: 43, title: "Snelheid van Interface-animaties instelbaar", description: "Pas de snelheid van animaties aan.", completed: true },
