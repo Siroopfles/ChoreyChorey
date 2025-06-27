@@ -158,8 +158,8 @@ export const roadmapData = {
     "Notificaties & Communicatie": [
       { id: 1088, title: "Flexibel Notificatiesysteem", description: "Notificaties voor @mentions en toewijzingen.", completed: true },
       { id: 1090, title: "Notificatie \"Snooze\" Functionaliteit", description: "Stel een notificatie uit.", completed: true },
-      { id: 62, title: "Push Notificaties met Actieknoppen", description: "Bv. 'Voltooien', 'Snooze'.", completed: false },
-      { id: 63, title: "'Mute' specifieke taak- of project-threads", description: "Stop notificaties voor een specifieke taak.", completed: false },
+      { id: 62, title: "Push Notificaties met Actieknoppen", description: "Bv. 'Voltooien', 'Snooze'.", completed: true },
+      { id: 63, title: "'Mute' specifieke taak- of project-threads", description: "Stop notificaties voor een specifieke taak.", completed: true },
       { id: 64, title: "Notificatie Prioriteit", description: "Alleen 'Urgent' @mentions sturen een push notificatie.", completed: false },
       { id: 65, title: "Ingebouwde Aankondigingen-module voor beheerders", description: "Stuur aankondigingen naar alle gebruikers.", completed: true },
       { id: 66, title: "'Leesbevestiging' voor belangrijke comments of updates", description: "Zie wie een belangrijke update heeft gelezen.", completed: false },
@@ -183,7 +183,7 @@ export const roadmapData = {
       { id: 99, title: "IP Whitelisting", description: "Beperk toegang tot specifieke IP-adressen.", completed: false },
     ],
     "Analytics & Reporting": [
-      { id: 73, title: "Custom Report Builder", description: "Drag-and-drop rapportagebouwer.", completed: false },
+      { id: 73, title: "Custom Report Builder", description: "Drag-and-drop rapportagebouwer.", completed: true },
       { id: 74, title: "Cycle & Lead Time Reports", description: "Voor Kanban/Agile teams.", completed: false },
       { id: 75, title: "Cost of Delay Analyse", description: "Analyseer de kosten van vertraging.", completed: false },
       { id: 76, title: "Gebruikersprestatie Dashboards", description: "Individueel en team.", completed: false },
