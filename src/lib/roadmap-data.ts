@@ -1,4 +1,5 @@
 
+
 export type Feature = {
   id: number;
   title: string;
@@ -60,42 +61,70 @@ export const roadmapPhases: Phase[] = [
       { id: 2017, title: "Notificatiecentrum", description: "Inbox met 'snooze' functionaliteit en configureerbare prioriteitsdrempels.", completed: true },
       { id: 2018, title: "RACI Matrix", description: "Genereer een Responsible, Accountable, Consulted, Informed matrix.", completed: true },
       { id: 2019, title: "Webhooks", description: "Stuur real-time updates naar externe systemen.", completed: true },
+      { id: 2020, title: "Exposed REST API v1", description: "Basis API voor het beheren van taken met gescoopte permissies.", completed: true },
+      { id: 2021, title: "Google Calendar Integratie", description: "Synchroniseer deadlines met je agenda via OAuth2.", completed: true },
     ]
   },
   {
     name: "Fase 3: Ecosysteem & Integraties (Gepland)",
     description: "Chorey verbinden met de tools die u al gebruikt. Deze fase richt zich op het openen van het platform en het bouwen van naadloze verbindingen met andere diensten.",
     features: [
-      { id: 3001, title: "Exposed REST API voor Ontwikkelaars", description: "Laat derden bouwen op Chorey.", completed: false },
-      { id: 3002, title: "Google Calendar Integratie", description: "Synchroniseer deadlines met je agenda.", completed: false },
-      { id: 3003, title: "GitHub Integratie", description: "Koppel taken aan issues en pull requests.", completed: false },
-      { id: 3004, title: "Microsoft Teams Integratie", description: "Volledige functionaliteit binnen MS Teams.", completed: false },
-      { id: 3005, title: "Zapier / Make (Integromat) Integratie", description: "Verbind Chorey met duizenden andere apps.", completed: false },
-      { id: 3006, title: "Cloud Storage Integraties", description: "Koppel bestanden direct vanuit Google Drive, OneDrive, Dropbox.", completed: false },
-      { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek projectadres.", completed: false },
-      { id: 3008, title: "Native Automation Builder", description: "Ingebouwde 'Zapier'-light voor het automatiseren van workflows.", completed: false },
-      { id: 3009, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket.", completed: false },
-      { id: 3010, title: "Figma / Adobe XD / Sketch Integratie", description: "Koppel design-bestanden aan taken.", completed: false },
-      { id: 3011, title: "CRM Integraties", description: "HubSpot, Salesforce.", completed: false },
-      { id: 3012, title: "Boekhoudsoftware Integraties", description: "QuickBooks, Xero.", completed: false },
+      { id: 3001, title: "Public API v2", description: "Uitbreiding van de API met meer endpoints (projecten, teams, gebruikers) en webhook management.", completed: false },
+      { id: 3002, title: "Slack Integratie", description: "Ontvang notificaties in Slack en maak taken aan vanuit een Slack-bericht.", completed: false },
+      { id: 3003, title: "GitHub Integratie", description: "Koppel taken aan issues en pull requests. Synchroniseer statusupdates.", completed: false },
+      { id: 3004, title: "Microsoft Teams Integratie", description: "Volledige functionaliteit binnen MS Teams, inclusief notificaties en taakcreatie.", completed: false },
+      { id: 3005, title: "Zapier / Make (Integromat) Integratie", description: "Verbind Chorey met duizenden andere apps via no-code platformen.", completed: false },
+      { id: 3006, title: "Cloud Storage Integraties", description: "Koppel bestanden direct vanuit Google Drive, OneDrive en Dropbox.", completed: false },
+      { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek project- of gebruikersadres.", completed: false },
+      { id: 3008, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket issues en merge requests.", completed: false },
+      { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden en prototypes als live-previews toe aan taken.", completed: false },
+      { id: 3010, title: "Outlook Calendar Integratie", description: "Synchroniseer deadlines met je Outlook agenda.", completed: false },
+      { id: 3011, title: "Discord Integratie", description: "Ontvang notificaties in een Discord kanaal en beheer taken met slash-commando's.", completed: false },
+      { id: 3012, title: "Toggl/Clockify Integratie", description: "Start en stop de timer in Chorey en synchroniseer de tijdregistratie met uw favoriete tool.", completed: false },
+      { id: 3013, title: "Browser Extensie (Chrome/Firefox)", description: "Maak een taak aan van de huidige webpagina met één klik.", completed: false },
+      { id: 3014, title: "Jira / Linear Two-Way Sync", description: "Houd taken in Chorey en issues in Jira of Linear gesynchroniseerd.", completed: false },
     ]
   },
-  {
+    {
     name: "Fase 4: Geavanceerde Enterprise & Innovatie (Toekomst)",
     description: "De horizon van Chorey. Hier verkennen we baanbrekende ideeën, enterprise-grade functies en manieren om de grenzen van productiviteit en samenwerking te verleggen.",
     features: [
-      { id: 4001, title: "AI Team Composition Suggester", description: "Stelt het ideale team voor een nieuw project voor op basis van vaardigheden en werkdruk.", completed: false },
-      { id: 4002, title: "AI Communicatie 'Health' Score", description: "Analyseert reactietijden, sentiment etc. om de teamdynamiek te meten.", completed: false },
-      { id: 4003, title: "AI Burnout Voorspelling", description: "Signaleert risico op overbelasting op basis van werkpatronen en taken.", completed: false },
-      { id: 4004, title: "AI Predictive Analysis & Risk Detection", description: "Waarschuwt proactief voor projectvertragingen en budgetoverschrijdingen.", completed: false },
-      { id: 4005, title: "Single Sign-On (SSO)", description: "Integratie met SAML, Google Workspace, Azure AD.", completed: false },
+      { id: 4001, title: "Geavanceerde Rapporten & Dashboards", description: "Bouw en deel custom dashboards met widgets voor specifieke projecten of teams.", completed: false },
+      { id: 4002, title: "Budgettering & Kostentracering", description: "Wijs budgetten toe aan projecten en houd de kosten per taak bij.", completed: false },
+      { id: 4003, title: "Resource Management", description: "Geavanceerde capaciteitsplanning en workload-inzichten over langere periodes.", completed: false },
+      { id: 4004, title: "Custom Fields", description: "Voeg eigen velden (tekst, getal, datum, dropdown) toe aan taken voor maximale flexibiliteit.", completed: false },
+      { id: 4005, title: "Single Sign-On (SSO)", description: "Integratie met SAML, Google Workspace, Azure AD voor enterprise-grade authenticatie.", completed: false },
       { id: 4006, title: "Data Residency Opties", description: "Kies de geografische locatie voor dataopslag (EU/US).", completed: false },
       { id: 4007, title: "Gast- / Klanttoegang", description: "Geef externe gebruikers beperkte, read-only toegang tot specifieke projecten of taken.", completed: false },
-      { id: 4008, title: "IP Whitelisting", description: "Beperk toegang tot de organisatie tot specifieke IP-adressen.", completed: false },
-      { id: 4009, title: "VR/AR Project Visualisatie", description: "Een virtuele 'Project Room' om data en voortgang in 3D te visualiseren.", completed: false },
-      { id: 4010, title: "Conversational UI", description: "Een chat-first interface als primair interactiemodel, naast de visuele interface.", completed: false },
-      { id: 4011, title: "Autonome AI Project Coördinator", description: "Een AI-agent die basis follow-ups doet, vergaderingen plant en rapportages opstelt.", completed: false },
-      { id: 4012, title: "Automatische Documentatie Generator", description: "Analyseert taken met een 'code'-tag en maakt een wiki-pagina aan.", completed: false },
+      { id: 4008, title: "IP Whitelisting", description: "Beperk toegang tot de organisatie tot specifieke IP-adressen voor extra beveiliging.", completed: false },
+      { id: 4009, title: "Geavanceerde Automatisering", description: "Een ingebouwde 'Zapier'-light voor het automatiseren van workflows binnen Chorey.", completed: false },
+      { id: 4010, title: "AI Predictive Analysis", description: "Waarschuwt proactief voor projectvertragingen en budgetoverschrijdingen op basis van historische data.", completed: false },
+      { id: 4011, title: "AI Burnout Voorspelling", description: "Signaleert risico op overbelasting op basis van werkpatronen en taken.", completed: false },
+      { id: 4012, title: "AI Automatische Status Updates", description: "Stelt statuswijzigingen voor op basis van gekoppelde commits, comments en activiteit.", completed: false },
+      { id: 4013, title: "Conversational UI", description: "Een chat-first interface als primair interactiemodel, naast de visuele interface.", completed: false },
+      { id: 4014, title: "AI Project Coördinator", description: "Een AI-agent die basis follow-ups doet, vergaderingen plant en rapportages opstelt.", completed: false },
+      { id: 4015, title: "Geëxporteerde PDF Rapporten", description: "Genereer professioneel opgemaakte PDF-rapporten van dashboards en projecten.", completed: false },
+    ]
+  },
+  {
+    name: "Fase 5: Personalisatie & Optimalisatie (Toekomst)",
+    description: "Deze fase focust op het verfijnen van de gebruikerservaring, het bieden van meer aanpassingsmogelijkheden en het optimaliseren van de dagelijkse workflow.",
+    features: [
+        { id: 5001, title: "Aanpasbare Dashboards", description: "Stel je eigen dashboard samen met een bibliotheek van widgets.", completed: false },
+        { id: 5002, title: "Taakafhankelijkheden Visualisatie", description: "Een interactieve graafweergave om de relaties tussen taken te zien.", completed: false },
+        { id: 5003, title: "Bulk Bewerken in Lijstweergave", description: "Selecteer meerdere taken in de lijstweergave en bewerk ze tegelijkertijd.", completed: false },
+        { id: 5004, title: "Verbeterde Mobiele Ervaring (PWA)", description: "Betere offline-ondersteuning, push-notificaties en native-achtige prestaties.", completed: false },
+        { id: 5005, title: "Geavanceerde Terugkerende Taken", description: "Stel complexe herhalingen in, zoals 'elke laatste vrijdag van de maand'.", completed: false },
+        { id: 5006, title: "Taakspecifieke Thema's/Iconen", description: "Geef individuele taken een uniek icoon of kleur voor snelle herkenning.", completed: false },
+        { id: 5007, title: "Aanpasbare Notificaties", description: "Stel per project of team in welke notificaties je wilt ontvangen.", completed: false },
+        { id: 5008, title: "Focus Modus v2", description: "Integreer een Pomodoro-timer en opties om afleidingen te blokkeren.", completed: false },
+        { id: 5009, title: "Toegankelijkheidsverbeteringen (WCAG)", description: "Zorg ervoor dat de applicatie volledig voldoet aan WCAG 2.1 AA-normen.", completed: false },
+        { id: 5010, title: "Snelkoppelingen voor Subtaken", description: "Maak snel subtaken aan met Markdown-achtige syntax (bv. `[ ] Subtaak`).", completed: false },
+        { id: 5011, title: "Privé Notities op Taken", description: "Voeg notities toe aan een taak die alleen voor jou zichtbaar zijn.", completed: false },
+        { id: 5012, title: "Command Bar Geschiedenis", description: "Bekijk en hergebruik recente commando's die je hebt uitgevoerd.", completed: false },
+        { id: 5013, title: "Taakbord Zoom-niveaus", description: "Zoom in of uit op het kanbanbord om meer of minder details te zien.", completed: false },
+        { id: 5014, title: "Persoonlijke Werk-uren", description: "Stel je werkuren in om workload-berekeningen en notificaties te verfijnen.", completed: false },
+        { id: 5015, title: "Dark/Light Mode per Werkruimte", description: "Stel een specifiek thema in voor een organisatie, los van je persoonlijke voorkeur.", completed: false },
     ]
   }
 ];
