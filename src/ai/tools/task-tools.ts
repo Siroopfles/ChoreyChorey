@@ -119,26 +119,28 @@ export const searchTasks = ai.defineTool(
   async ({ organizationId, filters }) => {
     let q = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
 
-    if (filters.status && typeof filters.status === 'string') {
-        q = query(q, where('status', '==', filters.status));
-    }
-    if (filters.priority && typeof filters.priority === 'string') {
-        q = query(q, where('priority', '==', filters.priority));
-    }
-    if (filters.assigneeId && typeof filters.assigneeId === 'string') {
-        q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
-    }
-    if (filters.labels && Array.isArray(filters.labels) && filters.labels.length > 0) {
-        const validLabels = filters.labels.filter(label => typeof label === 'string' && label);
-        if (validLabels.length > 0) {
-            q = query(q, where('labels', 'array-contains-any', validLabels));
+    if (filters) {
+        if (typeof filters.status === 'string' && filters.status) {
+            q = query(q, where('status', '==', filters.status));
+        }
+        if (typeof filters.priority === 'string' && filters.priority) {
+            q = query(q, where('priority', '==', filters.priority));
+        }
+        if (typeof filters.assigneeId === 'string' && filters.assigneeId) {
+            q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
+        }
+        if (Array.isArray(filters.labels) && filters.labels.length > 0) {
+            const validLabels = filters.labels.filter(label => typeof label === 'string' && label);
+            if (validLabels.length > 0) {
+                q = query(q, where('labels', 'array-contains-any', validLabels));
+            }
         }
     }
     
     const snapshot = await getDocs(q);
     let tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
 
-    if (filters.term && typeof filters.term === 'string') {
+    if (filters && typeof filters.term === 'string' && filters.term) {
         const lowercasedTerm = filters.term.toLowerCase();
         tasks = tasks.filter(task => 
             task.title.toLowerCase().includes(lowercasedTerm) || 
@@ -232,6 +234,10 @@ export const getUsers = ai.defineTool(
         })),
     },
     async ({ organizationId }) => {
+        if (!organizationId || typeof organizationId !== 'string') {
+            console.error('getUsers called with invalid organizationId:', organizationId);
+            return [];
+        }
         const q = query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId));
         const snapshot = await getDocs(q);
         const users = snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
