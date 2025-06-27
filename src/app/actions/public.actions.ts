@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
-import type { Task, User, Project } from '@/lib/types';
+import type { Task, User, Project, Organization } from '@/lib/types';
 
 export async function getPublicProjectData(projectId: string): Promise<{ project: Project, tasks: Task[], users: Pick<User, 'id' | 'name' | 'avatar'>[] } | { error: string }> {
     try {
@@ -15,6 +15,12 @@ export async function getPublicProjectData(projectId: string): Promise<{ project
         }
         
         const project = { id: projectDoc.id, ...projectDoc.data() } as Project;
+
+        const orgRef = doc(db, 'organizations', project.organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists() || orgDoc.data().settings?.features?.publicSharing === false) {
+            return { error: 'Publiek delen is uitgeschakeld voor deze organisatie.' };
+        }
 
         if (!project.isPublic) {
             return { error: 'Dit project is niet openbaar.' };
@@ -60,5 +66,3 @@ export async function getPublicProjectData(projectId: string): Promise<{ project
         return { error: 'Er is een onbekende fout opgetreden.' };
     }
 }
-
-    

@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment } from 'firebase/firestore';
-import type { User, Task, TaskFormValues, Status, HistoryEntry, Recurring, Subtask } from '@/lib/types';
+import type { User, Task, TaskFormValues, Status, HistoryEntry, Recurring, Subtask, Organization } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils';
 import { grantAchievements } from './gamification.actions';
 import { createNotification } from './notification.actions';
@@ -260,6 +260,13 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         const userDoc = await getDoc(userRef);
         const userName = userDoc.exists() ? userDoc.data().name : 'Onbekend';
 
+        const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+        if (!orgDoc.exists()) {
+          throw new Error("Organisatie niet gevonden.");
+        }
+        const organization = orgDoc.data() as Organization;
+        const showGamification = organization.settings?.features?.gamification !== false;
+
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
 
@@ -291,7 +298,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
 
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
             finalUpdates.completedAt = new Date();
-            if(taskToUpdate.assigneeIds.length > 0) {
+            if(showGamification && taskToUpdate.assigneeIds.length > 0) {
                 const points = calculatePoints(taskToUpdate.priority, taskToUpdate.storyPoints);
                 const batch = writeBatch(db);
                 taskToUpdate.assigneeIds.forEach(async (assigneeId) => {
@@ -565,6 +572,11 @@ export async function toggleSubtaskCompletionAction(taskId: string, subtaskId: s
 
 export async function toggleTaskTimerAction(taskId: string, userId: string, organizationId: string) {
     try {
+        const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+        if (!orgDoc.exists() || orgDoc.data().settings?.features?.timeTracking === false) {
+            return { error: 'Tijdregistratie is uitgeschakeld voor deze organisatie.' };
+        }
+        
         const taskRef = doc(db, "tasks", taskId);
         const taskDoc = await getDoc(taskRef);
         if (!taskDoc.exists()) throw new Error("Taak niet gevonden");

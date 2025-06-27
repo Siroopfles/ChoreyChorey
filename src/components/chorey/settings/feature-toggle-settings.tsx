@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Loader2, Save, Gamepad2, Database, Timer } from 'lucide-react';
+import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
@@ -19,8 +19,31 @@ const featureSchema = z.object({
   gamification: z.boolean().default(true),
   storyPoints: z.boolean().default(true),
   timeTracking: z.boolean().default(true),
+  mentorship: z.boolean().default(true),
+  goals: z.boolean().default(true),
+  ideas: z.boolean().default(true),
+  raci: z.boolean().default(true),
+  publicSharing: z.boolean().default(true),
 });
 type FeatureFormValues = z.infer<typeof featureSchema>;
+
+const FeatureToggle = ({ name, icon: Icon, label, description, control }: { name: keyof FeatureFormValues, icon: React.ElementType, label: string, description: string, control: any }) => (
+    <FormField
+        control={control}
+        name={name}
+        render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                    <FormLabel className="text-base flex items-center gap-2"><Icon/> {label}</FormLabel>
+                    <p className="text-sm text-muted-foreground">{description}</p>
+                </div>
+                <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+            </FormItem>
+        )}
+    />
+);
 
 export default function FeatureToggleSettings({ organization }: { organization: Organization }) {
   const { user, refreshUser } = useAuth();
@@ -33,6 +56,11 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       gamification: organization.settings?.features?.gamification ?? true,
       storyPoints: organization.settings?.features?.storyPoints ?? true,
       timeTracking: organization.settings?.features?.timeTracking ?? true,
+      mentorship: organization.settings?.features?.mentorship ?? true,
+      goals: organization.settings?.features?.goals ?? true,
+      ideas: organization.settings?.features?.ideas ?? true,
+      raci: organization.settings?.features?.raci ?? true,
+      publicSharing: organization.settings?.features?.publicSharing ?? true,
     },
   });
 
@@ -56,6 +84,17 @@ export default function FeatureToggleSettings({ organization }: { organization: 
     setIsSubmitting(false);
   };
 
+  const features = [
+      { name: 'gamification', icon: Gamepad2, label: 'Gamification', description: 'Schakel het puntensysteem, scorebord en prestaties in of uit.' },
+      { name: 'storyPoints', icon: Database, label: 'Story Points', description: 'Schakel het inschatten van complexiteit met Story Points in of uit.' },
+      { name: 'timeTracking', icon: Timer, label: 'Tijdregistratie', description: 'Schakel de mogelijkheid om tijd te registreren op taken in of uit.' },
+      { name: 'goals', icon: Trophy, label: 'Doelen & Uitdagingen', description: 'Sta gebruikers toe persoonlijke doelen en teamuitdagingen te creëren.' },
+      { name: 'ideas', icon: Lightbulb, label: 'Ideeënbus', description: 'Activeer de module voor het indienen en upvoten van ideeën.' },
+      { name: 'mentorship', icon: HeartHandshake, label: 'Mentorschap', description: 'Activeer de mentorschapspagina waar gebruikers elkaar kunnen vinden.' },
+      { name: 'raci', icon: UserCheck, label: 'RACI Matrix', description: 'Activeer de RACI-matrix voor een overzicht van verantwoordelijkheden.' },
+      { name: 'publicSharing', icon: Globe, label: 'Publiek Delen', description: 'Sta toe dat projecten openbaar gedeeld kunnen worden via een link.' },
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -68,51 +107,16 @@ export default function FeatureToggleSettings({ organization }: { organization: 
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="space-y-4">
-                     <FormField
-                        control={form.control}
-                        name="gamification"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <FormLabel className="text-base flex items-center gap-2"><Gamepad2/> Gamification</FormLabel>
-                                    <p className="text-sm text-muted-foreground">Schakel het puntensysteem, scorebord en prestaties in of uit.</p>
-                                </div>
-                                <FormControl>
-                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                </FormControl>
-                            </FormItem>
-                        )}
+                    {features.map(feature => (
+                        <FeatureToggle
+                            key={feature.name}
+                            name={feature.name as keyof FeatureFormValues}
+                            icon={feature.icon}
+                            label={feature.label}
+                            description={feature.description}
+                            control={form.control}
                         />
-                     <FormField
-                        control={form.control}
-                        name="storyPoints"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <FormLabel className="text-base flex items-center gap-2"><Database/> Story Points</FormLabel>
-                                     <p className="text-sm text-muted-foreground">Schakel het inschatten van complexiteit met Story Points in of uit.</p>
-                                </div>
-                                <FormControl>
-                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                        />
-                     <FormField
-                        control={form.control}
-                        name="timeTracking"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <FormLabel className="text-base flex items-center gap-2"><Timer/> Tijdregistratie</FormLabel>
-                                     <p className="text-sm text-muted-foreground">Schakel de mogelijkheid om tijd te registreren op taken in of uit.</p>
-                                </div>
-                                <FormControl>
-                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                        />
+                    ))}
                 </div>
                 <div className="flex justify-end">
                     <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>

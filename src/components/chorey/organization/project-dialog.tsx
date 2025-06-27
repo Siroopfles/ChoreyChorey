@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/auth-context';
 
 const projectSchema = z.object({
     name: z.string().min(2, 'Projectnaam moet minimaal 2 karakters bevatten.'),
@@ -40,6 +41,8 @@ export function ProjectDialog({ organizationId, project, allTeams, children }: P
     const [open, setOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
+    const { currentOrganization } = useAuth();
+    const canSharePublicly = currentOrganization?.settings?.features?.publicSharing !== false;
 
     const form = useForm<ProjectFormValues>({
         resolver: zodResolver(projectSchema),
@@ -190,21 +193,23 @@ export function ProjectDialog({ organizationId, project, allTeams, children }: P
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="isPublic"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                <div className="space-y-0.5">
-                                    <FormLabel>Publiek Zichtbaar</FormLabel>
-                                    <FormDescription>
-                                        Maak een read-only versie van dit project's bord deelbaar via een openbare link.
-                                    </FormDescription>
-                                </div>
-                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                                </FormItem>
-                            )}
-                        />
+                        {canSharePublicly && (
+                            <FormField
+                                control={form.control}
+                                name="isPublic"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Publiek Zichtbaar</FormLabel>
+                                        <FormDescription>
+                                            Maak een read-only versie van dit project's bord deelbaar via een openbare link.
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        )}
                         <DialogFooter>
                             <DialogClose asChild><Button type="button" variant="ghost">Annuleren</Button></DialogClose>
                             <Button type="submit" disabled={isSubmitting}>

@@ -12,9 +12,16 @@ import {
   getDoc,
   updateDoc
 } from 'firebase/firestore';
-import type { IdeaFormValues, IdeaStatus } from '@/lib/types';
-import { PERMISSIONS } from '@/lib/types';
-import { getDocs, query, where } from 'firebase/firestore';
+import type { IdeaFormValues, IdeaStatus, Organization } from '@/lib/types';
+import { PERMISSIONS, DEFAULT_ROLES } from '@/lib/types';
+
+async function checkIdeasEnabled(organizationId: string): Promise<boolean> {
+    const orgRef = doc(db, 'organizations', organizationId);
+    const orgDoc = await getDoc(orgRef);
+    if (!orgDoc.exists()) return false;
+    const orgData = orgDoc.data() as Organization;
+    return orgData.settings?.features?.ideas !== false;
+}
 
 // Helper to check permissions
 async function hasPermission(userId: string, organizationId: string, permission: typeof PERMISSIONS[keyof typeof PERMISSIONS]): Promise<boolean> {
@@ -22,18 +29,20 @@ async function hasPermission(userId: string, organizationId: string, permission:
     const orgDoc = await getDoc(orgRef);
     if (!orgDoc.exists()) return false;
     
-    const orgData = orgDoc.data();
+    const orgData = orgDoc.data() as Organization;
     const roleId = orgData.members?.[userId]?.role;
     if (!roleId) return false;
 
-    const allRoles = { ...orgData.settings?.customization?.customRoles, ...orgData.settings?.defaultRoles }; // This needs fixing, no defaultRoles
+    const allRoles = { ...DEFAULT_ROLES, ...(orgData.settings?.customization?.customRoles || {}) };
     const role = allRoles[roleId];
     return role?.permissions?.includes(permission) ?? false;
 }
 
-
 export async function createIdea(organizationId: string, creatorId: string, data: IdeaFormValues) {
   try {
+    if (!await checkIdeasEnabled(organizationId)) {
+      return { error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
+    }
     await addDoc(collection(db, 'ideas'), {
       ...data,
       organizationId,
@@ -52,6 +61,13 @@ export async function createIdea(organizationId: string, creatorId: string, data
 export async function toggleIdeaUpvote(ideaId: string, userId: string) {
   try {
     const ideaRef = doc(db, 'ideas', ideaId);
+    const ideaDocCheck = await getDoc(ideaRef);
+    if (!ideaDocCheck.exists()) throw new Error("Idee niet gevonden.");
+    
+    if (!await checkIdeasEnabled(ideaDocCheck.data().organizationId)) {
+        return { error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
+    }
+    
     await runTransaction(db, async (transaction) => {
       const ideaDoc = await transaction.get(ideaRef);
       if (!ideaDoc.exists()) {
@@ -73,20 +89,12 @@ export async function toggleIdeaUpvote(ideaId: string, userId: string) {
 }
 
 export async function updateIdeaStatus(ideaId: string, status: IdeaStatus, userId: string, organizationId: string) {
-  // A simple permission check for now. A more robust system would use the AuthProvider.
-  const usersSnapshot = await getDocs(query(collection(db, 'users'), where('__name__', '==', userId)));
-  if (usersSnapshot.empty) {
-     return { error: "Gebruiker niet gevonden." };
+  if (!await checkIdeasEnabled(organizationId)) {
+    return { error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
   }
-
-  const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
-  if (!orgDoc.exists()) {
-    return { error: "Organisatie niet gevonden." };
-  }
-  const orgData = orgDoc.data();
-  const userRole = orgData.members?.[userId]?.role;
   
-  if (userRole !== 'Owner' && userRole !== 'Admin') {
+  const canManage = await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_IDEAS);
+  if (!canManage) {
     return { error: "U heeft geen permissie om de status aan te passen." };
   }
   
@@ -99,4 +107,3 @@ export async function updateIdeaStatus(ideaId: string, status: IdeaStatus, userI
     return { error: error.message };
   }
 }
-

@@ -20,6 +20,11 @@ export type OrganizationSettings = {
     gamification: boolean;
     storyPoints: boolean;
     timeTracking: boolean;
+    mentorship?: boolean;
+    goals?: boolean;
+    ideas?: boolean;
+    raci?: boolean;
+    publicSharing?: boolean;
   },
   branding?: {
     primaryColor?: string;

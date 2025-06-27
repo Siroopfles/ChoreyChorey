@@ -219,15 +219,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const rateTask = async (taskId: string, rating: number) => {
     if (!user || !currentOrganization) return;
-    const result = await rateTaskAction(taskId, rating, tasks.find(t => t.id === taskId)!, user.id);
+    const result = await rateTaskAction(taskId, rating, tasks.find(t => t.id === taskId)!, user.id, currentOrganization.id);
     if (result.error) { handleError({ message: result.error }, 'beoordelen taak'); }
     else { toast({ title: 'Taak beoordeeld!', description: `Bonuspunten gegeven.` }); }
   };
 
   const thankForTask = async (taskId: string) => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
     const assignees = tasks.find(t => t.id === taskId)?.assigneeIds.map(id => ({ id, name: '' })) || [];
-    const result = await thankForTaskAction(taskId, user.id, assignees);
+    const result = await thankForTaskAction(taskId, user.id, assignees, currentOrganization.id);
     if (result.error) { handleError({ message: result.error }, 'bedanken voor taak'); }
     else { toast({ title: 'Bedankt!', description: `Bonuspunten gegeven aan ${result.assigneesNames}.` }); }
   };

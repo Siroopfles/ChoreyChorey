@@ -33,7 +33,8 @@ export default function OrganizationPage() {
         return <CreateOrganizationView />;
     }
     
-    const canManageRaci = currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG);
+    const showRaci = currentOrganization.settings?.features?.raci !== false;
+    const canManageRaci = currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) && showRaci;
     const canManageRoles = currentUserPermissions.includes(PERMISSIONS.MANAGE_ROLES);
     const canInviteMembers = currentUserPermissions.includes(PERMISSIONS.MANAGE_MEMBERS);
     const canManageProjects = currentUserPermissions.includes(PERMISSIONS.MANAGE_PROJECTS);

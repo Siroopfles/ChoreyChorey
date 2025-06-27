@@ -1,12 +1,26 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, updateDoc, doc, deleteDoc, writeBatch, increment } from 'firebase/firestore';
-import type { PersonalGoal, PersonalGoalFormValues, TeamChallengeFormValues, Milestone } from '@/lib/types';
+import { collection, addDoc, updateDoc, doc, deleteDoc, writeBatch, increment, getDoc } from 'firebase/firestore';
+import type { PersonalGoal, PersonalGoalFormValues, TeamChallengeFormValues, Milestone, Organization } from '@/lib/types';
+
+async function checkGoalsEnabled(organizationId: string): Promise<boolean> {
+    const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+    if (!orgDoc.exists()) {
+        console.error(`Organization ${organizationId} not found.`);
+        return false;
+    }
+    const orgData = orgDoc.data() as Organization;
+    return orgData.settings?.features?.goals !== false;
+}
 
 // Personal Goals
 export async function addPersonalGoal(organizationId: string, userId: string, goalData: PersonalGoalFormValues) {
   try {
+    if (!await checkGoalsEnabled(organizationId)) {
+      return { error: 'Doelen zijn uitgeschakeld voor deze organisatie.' };
+    }
     const newGoal: Omit<PersonalGoal, 'id'> = {
       userId,
       organizationId,
@@ -27,6 +41,12 @@ export async function addPersonalGoal(organizationId: string, userId: string, go
 export async function updatePersonalGoal(goalId: string, goalData: PersonalGoalFormValues, existingMilestones: Milestone[]) {
   try {
     const goalRef = doc(db, 'personalGoals', goalId);
+    const goalDoc = await getDoc(goalRef);
+    if (!goalDoc.exists()) return { error: 'Doel niet gevonden' };
+    if (!await checkGoalsEnabled(goalDoc.data().organizationId)) {
+        return { error: 'Doelen zijn uitgeschakeld voor deze organisatie.' };
+    }
+
     const updatedMilestones = goalData.milestones?.map((ms, index) => {
         const existingMilestone = existingMilestones.find(ems => ems.text === ms.text);
         return {
@@ -52,7 +72,14 @@ export async function updatePersonalGoal(goalId: string, goalData: PersonalGoalF
 
 export async function deletePersonalGoal(goalId: string) {
   try {
-    await deleteDoc(doc(db, 'personalGoals', goalId));
+    const goalRef = doc(db, 'personalGoals', goalId);
+    const goalDoc = await getDoc(goalRef);
+    if (!goalDoc.exists()) return { success: true };
+    if (!await checkGoalsEnabled(goalDoc.data().organizationId)) {
+        return { error: 'Doelen zijn uitgeschakeld voor deze organisatie.' };
+    }
+
+    await deleteDoc(goalRef);
     return { success: true };
   } catch(e: any) {
     return { error: e.message };
@@ -61,12 +88,18 @@ export async function deletePersonalGoal(goalId: string) {
 
 export async function toggleMilestoneCompletion(goalId: string, milestoneId: string, milestones: Milestone[]) {
   try {
+    const goalRef = doc(db, 'personalGoals', goalId);
+    const goalDoc = await getDoc(goalRef);
+    if (!goalDoc.exists()) return { error: 'Doel niet gevonden' };
+    if (!await checkGoalsEnabled(goalDoc.data().organizationId)) {
+        return { error: 'Doelen zijn uitgeschakeld voor deze organisatie.' };
+    }
+
     const updatedMilestones = milestones.map(m => 
       m.id === milestoneId ? { ...m, completed: !m.completed } : m
     );
     const allCompleted = updatedMilestones.every(m => m.completed);
     
-    const goalRef = doc(db, 'personalGoals', goalId);
     await updateDoc(goalRef, {
       milestones: updatedMilestones,
       status: allCompleted ? 'Achieved' : 'In Progress'
@@ -81,6 +114,9 @@ export async function toggleMilestoneCompletion(goalId: string, milestoneId: str
 // Team Challenges
 export async function addTeamChallenge(organizationId: string, challengeData: TeamChallengeFormValues) {
   try {
+    if (!await checkGoalsEnabled(organizationId)) {
+        return { error: 'Doelen en uitdagingen zijn uitgeschakeld voor deze organisatie.' };
+    }
     await addDoc(collection(db, 'teamChallenges'), {
         ...challengeData,
         organizationId: organizationId,
@@ -96,6 +132,11 @@ export async function addTeamChallenge(organizationId: string, challengeData: Te
 export async function updateTeamChallenge(challengeId: string, challengeData: TeamChallengeFormValues) {
   try {
     const challengeRef = doc(db, 'teamChallenges', challengeId);
+    const challengeDoc = await getDoc(challengeRef);
+    if (!challengeDoc.exists()) return { error: 'Uitdaging niet gevonden' };
+     if (!await checkGoalsEnabled(challengeDoc.data().organizationId)) {
+        return { error: 'Doelen en uitdagingen zijn uitgeschakeld voor deze organisatie.' };
+    }
     await updateDoc(challengeRef, challengeData as any);
     return { success: true };
   } catch(e: any) {
@@ -105,7 +146,13 @@ export async function updateTeamChallenge(challengeId: string, challengeData: Te
 
 export async function deleteTeamChallenge(challengeId: string) {
   try {
-    await deleteDoc(doc(db, 'teamChallenges', challengeId));
+    const challengeRef = doc(db, 'teamChallenges', challengeId);
+    const challengeDoc = await getDoc(challengeRef);
+    if (!challengeDoc.exists()) return { success: true };
+    if (!await checkGoalsEnabled(challengeDoc.data().organizationId)) {
+        return { error: 'Doelen en uitdagingen zijn uitgeschakeld voor deze organisatie.' };
+    }
+    await deleteDoc(challengeRef);
     return { success: true };
   } catch(e: any) {
     return { error: e.message };
@@ -118,6 +165,13 @@ export async function completeTeamChallenge(challengeId: string, teamMemberIds: 
     }
     
     try {
+        const challengeRef = doc(db, 'teamChallenges', challengeId);
+        const challengeDoc = await getDoc(challengeRef);
+        if (!challengeDoc.exists()) return { error: 'Uitdaging niet gevonden' };
+        if (!await checkGoalsEnabled(challengeDoc.data().organizationId)) {
+            return { error: 'Doelen en uitdagingen zijn uitgeschakeld voor deze organisatie.' };
+        }
+
         const batch = writeBatch(db);
         const rewardPerMember = Math.floor(reward / teamMemberIds.length);
 
@@ -126,7 +180,6 @@ export async function completeTeamChallenge(challengeId: string, teamMemberIds: 
             batch.update(userRef, { points: increment(rewardPerMember) });
         });
 
-        const challengeRef = doc(db, 'teamChallenges', challengeId);
         batch.update(challengeRef, { status: 'completed', completedAt: new Date() });
         
         await batch.commit();

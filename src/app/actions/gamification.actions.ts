@@ -1,8 +1,9 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, increment, arrayUnion, runTransaction, addDoc } from 'firebase/firestore';
-import type { Task, User } from '@/lib/types';
+import type { Task, User, Organization } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 
 async function grantAchievements(userId: string, type: 'completed' | 'thanked', task?: Task) {
@@ -48,11 +49,19 @@ async function grantAchievements(userId: string, type: 'completed' | 'thanked', 
 }
 
 
-export async function thankForTask(taskId: string, currentUserId: string, assignees: User[]) {
+export async function thankForTask(taskId: string, currentUserId: string, assignees: User[], organizationId: string) {
     if (!currentUserId) return { error: 'Niet geautoriseerd.'};
     if (assignees.length === 0) return { error: 'Geen toegewezenen om te bedanken.'};
 
     try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists()) return { error: 'Organisatie niet gevonden.'};
+        const orgData = orgDoc.data() as Organization;
+        if (orgData.settings?.features?.gamification === false) {
+            return { success: true }; // Silently succeed
+        }
+
         const batch = writeBatch(db);
         const points = 5; // Bonus points for being thanked
         
@@ -87,7 +96,7 @@ export async function thankForTask(taskId: string, currentUserId: string, assign
 }
 
 
-export async function rateTask(taskId: string, rating: number, task: Task, currentUserId: string) {
+export async function rateTask(taskId: string, rating: number, task: Task, currentUserId: string, organizationId: string) {
     if (!currentUserId) return { error: 'Niet geautoriseerd.' };
     
     const canRate = task.creatorId === currentUserId && !task.assigneeIds.includes(currentUserId);
@@ -100,6 +109,14 @@ export async function rateTask(taskId: string, rating: number, task: Task, curre
     }
 
     try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists()) return { error: 'Organisatie niet gevonden.'};
+        const orgData = orgDoc.data() as Organization;
+        if (orgData.settings?.features?.gamification === false) {
+            return { success: true }; // Silently succeed
+        }
+
         const batch = writeBatch(db);
         const taskRef = doc(db, 'tasks', taskId);
 

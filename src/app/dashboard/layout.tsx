@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Target, GitGraph, MailCheck, BarChart3, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -57,8 +57,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const { currentUserRole, currentOrganization, users } = useAuth();
     const pathname = usePathname();
     const announcement = currentOrganization?.settings?.announcement;
-
-    const showGamification = currentOrganization?.settings?.features?.gamification !== false;
+    
+    const features = currentOrganization?.settings?.features;
+    const showGamification = features?.gamification !== false;
+    const showGoals = features?.goals !== false;
+    const showIdeas = features?.ideas !== false;
+    const showMentorship = features?.mentorship !== false;
 
     const mainNavItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -67,9 +71,9 @@ function AppShell({ children }: { children: React.ReactNode }) {
     ];
     
     const planningNavItems = [
-        { href: '/dashboard/goals', icon: Trophy, label: 'Doelen' },
-        { href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' },
-        { href: '/dashboard/workload', icon: BarChart3, label: 'Workload' },
+        ...(showGoals ? [{ href: '/dashboard/goals', icon: Trophy, label: 'Doelen' }] : []),
+        ...(showIdeas ? [{ href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' }] : []),
+        { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
         { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
         { href: '/dashboard/templates', icon: SquareStack, label: 'Templates' },
     ];
@@ -79,13 +83,13 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
         ...(showGamification ? [
             { href: '/dashboard/leaderboard', icon: Award, label: 'Prestaties' },
-            { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
+            ...(showMentorship ? [{ href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' }] : []),
             { href: '/dashboard/shop', icon: Store, label: 'Winkel' },
         ] : []),
     ];
 
     const aiToolsNavItems = [
-        { href: '/dashboard/digest', icon: MailCheck, label: 'AI Digest' },
+        { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
         { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
     ];
 
