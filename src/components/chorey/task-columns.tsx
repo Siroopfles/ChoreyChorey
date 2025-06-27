@@ -1,4 +1,3 @@
-
 'use client';
 import type { User, Task, Team } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
@@ -8,6 +7,8 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, re
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { FileUp } from 'lucide-react';
 
 const TaskColumn = ({ title, tasks, users, currentUser, teams }: { title: string; tasks: Task[]; users: User[], currentUser: User | null, teams: Team[] }) => {
   const { setNodeRef } = useDroppable({
@@ -15,7 +16,7 @@ const TaskColumn = ({ title, tasks, users, currentUser, teams }: { title: string
   });
 
   return (
-    <div className="flex flex-col w-[320px] shrink-0">
+    <div className="flex flex-col w-[320px] shrink-0 h-full">
       <div className="flex items-center gap-2 px-1 pb-2">
         <h2 className="text-base font-semibold font-headline text-foreground">{title}</h2>
         <span className="text-sm font-normal bg-muted text-muted-foreground rounded-full px-2 py-0.5">
@@ -44,7 +45,7 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskColumnsProps) => {
-  const { tasks, updateTask, reorderTasks } = useTasks();
+  const { tasks, updateTask, reorderTasks, addTask } = useTasks();
   const { currentOrganization } = useAuth();
   const { toast } = useToast();
   const sensors = useSensors(
@@ -54,6 +55,7 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
       },
     })
   );
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const columns = currentOrganization?.settings?.customization?.statuses || [];
 
@@ -121,20 +123,71 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
     }
   }
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) {
+      return;
+    }
+
+    let successCount = 0;
+    for (const file of files) {
+      const success = await addTask({ title: file.name });
+      if (success) {
+        successCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast({
+        title: 'Taken aangemaakt!',
+        description: `${successCount} taak/taken aangemaakt op basis van de gesleepte bestanden.`,
+      });
+    }
+  };
+
+
   return (
      <DndContext 
       sensors={sensors} 
       onDragEnd={handleDragEnd} 
       collisionDetection={rectIntersection}
     >
-        <ScrollArea className="w-full">
-        <div className="flex gap-6 pb-4">
-            {columns.map((status) => (
-                <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} currentUser={currentUser} teams={teams} />
-            ))}
+        <div
+          className="relative h-full"
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <ScrollArea className="w-full h-full">
+          <div className="flex gap-6 pb-4 h-full">
+              {columns.map((status) => (
+                  <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} currentUser={currentUser} teams={teams} />
+              ))}
+          </div>
+          <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+           {isDragOver && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/80 border-2 border-dashed border-primary rounded-lg pointer-events-none transition-opacity duration-200">
+              <FileUp className="h-16 w-16 text-primary" />
+              <p className="mt-4 text-lg font-semibold text-primary">Sleep bestanden hierheen om taken te maken</p>
+            </div>
+          )}
         </div>
-        <ScrollBar orientation="horizontal" />
-        </ScrollArea>
     </DndContext>
   );
 };
