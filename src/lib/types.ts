@@ -1,6 +1,3 @@
-
-
-
 import { z } from 'zod';
 
 export type OrganizationSettings = {
@@ -121,13 +118,24 @@ export type TeamChallenge = {
     title: string;
     description: string;
     teamId: string;
-    target: number;
     metric: 'tasks_completed' | 'points_earned';
+    target: number;
     reward: number; // points
     status: 'active' | 'completed';
     createdAt: Date;
     completedAt?: Date;
 }
+
+export const teamChallengeFormSchema = z.object({
+  title: z.string().min(3, 'Titel moet minimaal 3 karakters bevatten.'),
+  description: z.string().optional(),
+  teamId: z.string().min(1, 'Je moet een team selecteren.'),
+  metric: z.enum(['tasks_completed', 'points_earned']),
+  target: z.coerce.number().int().positive("Doel moet een positief getal zijn."),
+  reward: z.coerce.number().int().positive("Beloning moet een positief getal zijn."),
+});
+
+export type TeamChallengeFormValues = z.infer<typeof teamChallengeFormSchema>;
 
 export const USER_STATUSES: { value: 'Online' | 'Afwezig' | 'In vergadering' | 'Niet storen' | 'Offline'; label: string }[] = [
   { value: 'Online', label: 'Online' },

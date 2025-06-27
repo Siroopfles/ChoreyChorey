@@ -1,6 +1,4 @@
 
-
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -23,7 +21,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus, TeamChallenge, TeamChallengeFormValues } from '@/lib/types';
 import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -81,6 +79,11 @@ type TaskContextType = {
   addIdea: (ideaData: IdeaFormValues) => Promise<boolean>;
   toggleIdeaUpvote: (ideaId: string) => void;
   updateIdeaStatus: (ideaId: string, status: IdeaStatus) => void;
+  teamChallenges: TeamChallenge[];
+  addTeamChallenge: (challengeData: TeamChallengeFormValues) => Promise<boolean>;
+  updateTeamChallenge: (challengeId: string, challengeData: TeamChallengeFormValues) => Promise<boolean>;
+  deleteTeamChallenge: (challengeId: string) => Promise<void>;
+  completeTeamChallenge: (challengeId: string) => Promise<void>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -138,6 +141,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [personalGoals, setPersonalGoals] = useState<PersonalGoal[]>([]);
   const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
@@ -186,6 +190,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setTemplates([]);
       setPersonalGoals([]);
       setIdeas([]);
+      setTeamChallenges([]);
       setLoading(false);
       return;
     }
@@ -217,7 +222,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           order: data.order || 0,
           storyPoints: data.storyPoints,
           blockedBy: data.blockedBy || [],
-          dependencyConfig: data.dependencyConfig,
+          dependencyConfig: data.dependencyConfig || {},
           recurring: data.recurring,
           organizationId: data.organizationId,
           imageDataUri: data.imageDataUri ?? null,
@@ -225,7 +230,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           timeLogged: data.timeLogged || 0,
           activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
           rating: data.rating || null,
-          reviewerId: data.reviewerId || null,
+          reviewerId: data.reviewerId ?? null,
           consultedUserIds: data.consultedUserIds || [],
           informedUserIds: data.informedUserIds || [],
           isChoreOfTheWeek: data.isChoreOfTheWeek || false,
@@ -298,6 +303,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         });
         setIdeas(ideasData);
     }, (error: FirestoreError) => handleError(error, 'laden van ideeën'));
+    
+    const qChallenges = query(collection(db, 'teamChallenges'), where("organizationId", "==", currentOrganization.id));
+    const unsubscribeChallenges = onSnapshot(qChallenges, (snapshot) => {
+        const challengesData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+                completedAt: (data.completedAt as Timestamp)?.toDate(),
+            } as TeamChallenge;
+        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setTeamChallenges(challengesData);
+    }, (error: FirestoreError) => handleError(error, 'laden van team uitdagingen'));
 
 
     return () => {
@@ -305,6 +324,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         unsubscribeTemplates();
         unsubscribeGoals();
         unsubscribeIdeas();
+        unsubscribeChallenges();
     };
   }, [authUser, currentOrganization, toast, currentUserPermissions, teams]);
 
@@ -1269,6 +1289,77 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addTeamChallenge = async (challengeData: TeamChallengeFormValues): Promise<boolean> => {
+    if (!authUser || !currentOrganization) return false;
+    try {
+      const newChallenge: Omit<TeamChallenge, 'id' | 'createdAt' | 'status'> = {
+        organizationId: currentOrganization.id,
+        ...challengeData,
+      };
+      await addDoc(collection(db, 'teamChallenges'), {
+          ...newChallenge,
+          status: 'active',
+          createdAt: new Date(),
+      });
+      toast({ title: 'Uitdaging Aangemaakt!', description: `De uitdaging "${challengeData.title}" is gestart.` });
+      return true;
+    } catch(e) {
+      handleError(e, 'opslaan van team uitdaging');
+      return false;
+    }
+  };
+
+  const updateTeamChallenge = async (challengeId: string, challengeData: TeamChallengeFormValues): Promise<boolean> => {
+    try {
+      const challengeRef = doc(db, 'teamChallenges', challengeId);
+      await updateDoc(challengeRef, challengeData as any); // cast to any to avoid type issues with firestore
+      toast({ title: 'Uitdaging Bijgewerkt!' });
+      return true;
+    } catch(e) {
+      handleError(e, 'bijwerken van team uitdaging');
+      return false;
+    }
+  };
+
+  const deleteTeamChallenge = async (challengeId: string) => {
+    try {
+      await deleteDoc(doc(db, 'teamChallenges', challengeId));
+      toast({ title: 'Uitdaging Verwijderd' });
+    } catch(e) {
+      handleError(e, 'verwijderen van team uitdaging');
+    }
+  };
+
+  const completeTeamChallenge = async (challengeId: string) => {
+    if (!currentOrganization) return;
+    const challenge = teamChallenges.find(c => c.id === challengeId);
+    const team = teams.find(t => t.id === challenge?.teamId);
+
+    if (!challenge || !team || team.memberIds.length === 0) {
+        handleError({ message: 'Uitdaging of team niet gevonden of team is leeg.'}, 'uitdaging voltooien');
+        return;
+    }
+    
+    try {
+        const batch = writeBatch(db);
+        const rewardPerMember = Math.floor(challenge.reward / team.memberIds.length);
+
+        team.memberIds.forEach(memberId => {
+            const userRef = doc(db, 'users', memberId);
+            batch.update(userRef, { points: increment(rewardPerMember) });
+        });
+
+        const challengeRef = doc(db, 'teamChallenges', challengeId);
+        batch.update(challengeRef, { status: 'completed', completedAt: new Date() });
+        
+        await batch.commit();
+        toast({ title: 'Uitdaging Voltooid!', description: `Team ${team.name} heeft ${challenge.reward} punten verdiend!` });
+
+    } catch (e) {
+        handleError(e, 'voltooien van uitdaging');
+    }
+  };
+
 
   return (
     <TaskContext.Provider value={{ 
@@ -1320,6 +1411,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       addIdea,
       toggleIdeaUpvote,
       updateIdeaStatus,
+      teamChallenges,
+      addTeamChallenge,
+      updateTeamChallenge,
+      deleteTeamChallenge,
+      completeTeamChallenge,
     }}>
       {children}
     </TaskContext.Provider>
