@@ -66,7 +66,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect, useMemo } from 'react';
-import EditTaskDialog from '@/components/chorey/edit-task-dialog';
+import EditTaskDialog from './edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { handleTextToSpeech } from '@/app/actions/ai.actions';

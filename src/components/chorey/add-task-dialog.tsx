@@ -121,5 +121,3 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
     </Dialog>
   );
 }
-
-    
