@@ -1,0 +1,16 @@
+{
+  "name": "Chorey | AI-Powered Task Management",
+  "short_name": "Chorey",
+  "description": "Het Gecentraliseerde Leefomgeving & Taakbeheer Intelligentie Systeem",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

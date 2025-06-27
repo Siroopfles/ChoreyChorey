@@ -15,6 +15,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Chorey | AI-Powered Task Management',
   description: 'Het Gecentraliseerde Leefomgeving & Taakbeheer Intelligentie Systeem',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -24,6 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="nl" suppressHydrationWarning>
+       <head>
+        <meta name="theme-color" content="#3b82f6" />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
