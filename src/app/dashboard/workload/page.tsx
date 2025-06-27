@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Button } from '@/components/ui/button';
@@ -8,41 +8,94 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Loader2, GitGraph, CalendarIcon, Bot } from 'lucide-react';
+import { Loader2, GitGraph, CalendarIcon, Bot, BarChart3 } from 'lucide-react';
 import { handleLevelWorkload } from '@/app/actions/ai.actions';
+import { getWorkloadData, type GetWorkloadDataOutput } from '@/app/actions/workload.actions';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { useTheme } from 'next-themes';
+
+const CAPACITY_THRESHOLD = 8;
 
 export default function WorkloadPage() {
     const { user, currentOrganization } = useAuth();
     const { users } = useTasks();
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState('');
-    const [error, setError] = useState('');
+    const [isBalancerLoading, setIsBalancerLoading] = useState(false);
+    const [isChartLoading, setIsChartLoading] = useState(true);
+    const [balancerResult, setBalancerResult] = useState('');
+    const [balancerError, setBalancerError] = useState('');
     const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
+    const { resolvedTheme } = useTheme();
     
     const [date, setDate] = useState<DateRange | undefined>({
         from: new Date(),
         to: addDays(new Date(), 6),
     });
 
+    const [workloadData, setWorkloadData] = useState<GetWorkloadDataOutput>([]);
+
+    useEffect(() => {
+        if (currentOrganization && date?.from && date?.to) {
+            setIsChartLoading(true);
+            getWorkloadData({
+                organizationId: currentOrganization.id,
+                startDate: format(date.from, 'yyyy-MM-dd'),
+                endDate: format(date.to, 'yyyy-MM-dd'),
+            }).then(data => {
+                setWorkloadData(data);
+                setIsChartLoading(false);
+            });
+        }
+    }, [currentOrganization, date]);
+
+    const { chartData, allUserNames } = useMemo(() => {
+        const userNames = new Set<string>();
+        workloadData.forEach(day => {
+            Object.values(day.users).forEach(u => userNames.add(u.name));
+        });
+        
+        const data = workloadData.map(day => {
+            const dayData: any = {
+                date: format(new Date(day.date), 'EEE d', { locale: nl }),
+                total: day.totalPoints
+            };
+            userNames.forEach(name => {
+                const userWorkload = Object.values(day.users).find(u => u.name === name);
+                dayData[name] = userWorkload?.points || 0;
+            });
+            return dayData;
+        });
+
+        return { chartData: data, allUserNames: Array.from(userNames) };
+    }, [workloadData]);
+    
+    const userColors = useMemo(() => {
+        const colors: Record<string, string> = {};
+        const lightness = resolvedTheme === 'dark' ? 60 : 45;
+        allUserNames.forEach((name, index) => {
+            colors[name] = `hsl(${200 + index * 40}, 70%, ${lightness}%)`;
+        });
+        return colors;
+    }, [allUserNames, resolvedTheme]);
+
     const handleLeveling = async () => {
         if (!user || !currentOrganization || !selectedUserId || !date?.from || !date?.to) {
-            setError("Selecteer een gebruiker en een periode om de werkdruk te balanceren.");
+            setBalancerError("Selecteer een gebruiker en een periode om de werkdruk te balanceren.");
             return;
         }
 
-        setIsLoading(true);
-        setResult('');
-        setError('');
+        setIsBalancerLoading(true);
+        setBalancerResult('');
+        setBalancerError('');
 
         const selectedUser = users.find(u => u.id === selectedUserId);
         if (!selectedUser) {
-            setError("Geselecteerde gebruiker niet gevonden.");
-            setIsLoading(false);
+            setBalancerError("Geselecteerde gebruiker niet gevonden.");
+            setIsBalancerLoading(false);
             return;
         }
 
@@ -57,41 +110,32 @@ export default function WorkloadPage() {
         const response = await handleLevelWorkload(input);
 
         if (response.error) {
-            setError(response.error);
+            setBalancerError(response.error);
         } else if (response.summary) {
-            setResult(response.summary);
+            setBalancerResult(response.summary);
+            // Refetch chart data after leveling
+            if(currentOrganization && date?.from && date?.to) {
+                getWorkloadData({
+                    organizationId: currentOrganization.id,
+                    startDate: format(date.from, 'yyyy-MM-dd'),
+                    endDate: format(date.to, 'yyyy-MM-dd'),
+                }).then(data => setWorkloadData(data));
+            }
         }
-        setIsLoading(false);
+        setIsBalancerLoading(false);
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold flex items-center gap-2"><GitGraph /> Workload Balanceren</h1>
-                <p className="text-muted-foreground">Laat AI de werkdruk van een teamlid analyseren en automatisch balanceren door taken te herplannen.</p>
+                <h1 className="text-3xl font-bold flex items-center gap-2"><GitGraph /> Workload</h1>
+                <p className="text-muted-foreground">Visualiseer de werkdruk van het team en balanceer deze met behulp van AI.</p>
             </div>
-
+            
             <Card>
                 <CardHeader>
-                    <CardTitle>Configureer Analyse</CardTitle>
-                    <CardDescription>Selecteer een gebruiker en een periode om te analyseren.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 md:space-y-0 md:flex md:items-end md:gap-4">
-                     <div className="grid gap-2 flex-1">
-                        <label className="font-medium text-sm">Gebruiker</label>
-                        <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecteer een gebruiker..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {users.map(u => (
-                                    <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="grid gap-2">
-                        <label className="font-medium text-sm">Periode</label>
+                    <CardTitle className="flex items-center gap-2"><BarChart3/> Team Werkdruk Visualisatie</CardTitle>
+                     <div className="grid gap-2">
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -129,33 +173,69 @@ export default function WorkloadPage() {
                             </PopoverContent>
                         </Popover>
                     </div>
-                    <Button onClick={handleLeveling} disabled={isLoading || !selectedUserId || !date}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GitGraph className="mr-2 h-4 w-4" />}
+                </CardHeader>
+                 <CardContent>
+                    {isChartLoading ? (
+                        <div className="h-[300px] flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                        </div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <ReferenceLine y={CAPACITY_THRESHOLD} label={{ value: "Capaciteit", position: 'insideTopLeft' }} stroke="red" strokeDasharray="3 3" />
+                                {allUserNames.map(name => (
+                                    <Bar key={name} dataKey={name} stackId="a" fill={userColors[name] || '#8884d8'} />
+                                ))}
+                            </BarChart>
+                        </ResponsiveContainer>
+                    )}
+                 </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Bot/> Werkdruk Balanceren (AI)</CardTitle>
+                    <CardDescription>Selecteer een gebruiker om hun werkdruk automatisch te laten herplannen door AI.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:flex sm:items-end sm:gap-4 sm:space-y-0">
+                     <div className="grid gap-2 flex-1">
+                        <label className="font-medium text-sm">Gebruiker</label>
+                        <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecteer een gebruiker..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {users.map(u => (
+                                    <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button onClick={handleLeveling} disabled={isBalancerLoading || !selectedUserId || !date}>
+                        {isBalancerLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GitGraph className="mr-2 h-4 w-4" />}
                         Balanceer Werkdruk
                     </Button>
                 </CardContent>
-            </Card>
-
-            {(result || error) && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            {error ? 'Er is een fout opgetreden' : 'Analyse Resultaat'}
-                        </CardTitle>
-                    </CardHeader>
+                {(balancerResult || balancerError) && (
                     <CardContent>
-                        {error ? (
-                            <p className="text-destructive">{error}</p>
+                        {balancerError ? (
+                            <p className="text-sm text-destructive">{balancerError}</p>
                         ) : (
                             <Alert>
                                 <Bot className="h-4 w-4" />
                                 <AlertTitle>AI Samenvatting</AlertTitle>
-                                <AlertDescription>{result}</AlertDescription>
+                                <AlertDescription>{balancerResult}</AlertDescription>
                             </Alert>
                         )}
                     </CardContent>
-                </Card>
-            )}
+                )}
+            </Card>
+
         </div>
     );
 }

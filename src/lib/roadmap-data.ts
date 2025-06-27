@@ -44,7 +44,7 @@ export const roadmapData = {
       { id: 17, title: "Team-specifieke Werkuren en Feestdagen", description: "Definieer werkuren en vrije dagen per team.", completed: false },
       { id: 18, title: "Project Scorecards", description: "Configureerbare gezondheids-score per project.", completed: false },
       { id: 19, title: "Skills Gap Analyse", description: "Identificeer missende vaardigheden voor een project.", completed: false },
-      { id: 26, title: "Workload Capacity Planning", description: "Visualiseer de werkdruk per teamlid.", completed: false },
+      { id: 26, title: "Workload Capacity Planning", description: "Visualiseer de werkdruk per teamlid.", completed: true },
       { id: 28, title: "Project Milestones", description: "Definieer belangrijke mijlpalen binnen een project.", completed: false },
       { id: 29, title: "Budget & Kostentracking", description: "Houd budgetten en gemaakte kosten bij per project of taak.", completed: false },
       { id: 30, title: "Resource Planning (Niet-menselijk)", description: "Wijs apparatuur of ruimtes toe aan taken.", completed: false },
