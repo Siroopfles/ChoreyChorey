@@ -119,18 +119,18 @@ export const searchTasks = ai.defineTool(
   async ({ organizationId, filters }) => {
     let q = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
 
-    if (filters.status) {
+    // Add extra checks to ensure no undefined values are passed to where()
+    if (typeof filters.status === 'string' && filters.status) {
       q = query(q, where('status', '==', filters.status));
     }
-    if (filters.priority) {
+    if (typeof filters.priority === 'string' && filters.priority) {
       q = query(q, where('priority', '==', filters.priority));
     }
-    if (filters.assigneeId) {
+    if (typeof filters.assigneeId === 'string' && filters.assigneeId) {
       q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
     }
-    if (filters.labels && filters.labels.length > 0) {
-      // Sanitize the labels array to prevent Firestore errors with undefined/null values.
-      const validLabels = filters.labels.filter(label => !!label);
+    if (Array.isArray(filters.labels) && filters.labels.length > 0) {
+      const validLabels = filters.labels.filter(label => typeof label === 'string' && label);
       if (validLabels.length > 0) {
         q = query(q, where('labels', 'array-contains-any', validLabels));
       }
