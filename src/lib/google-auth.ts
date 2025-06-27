@@ -1,5 +1,4 @@
 import { google } from 'googleapis';
-import 'dotenv/config';
 
 export function getGoogleAuthClient() {
     const clientId = process.env.GOOGLE_CLIENT_ID;
