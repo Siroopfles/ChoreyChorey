@@ -1,7 +1,7 @@
 'use client';
 
 import type { AttachmentSource } from '@/lib/utils';
-import { Link, Figma } from 'lucide-react';
+import { Link, Figma, Gitlab } from 'lucide-react';
 
 const GoogleDriveIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -28,12 +28,23 @@ const OneDriveIcon = () => (
 
 const FigmaIcon = () => <Figma className="h-4 w-4"/>;
 
+const BitbucketIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
+        <path d="M2.531 2.375l8.594 19.25-2.093 0.938-6.5-14.563v13.625h-2.125v-19.25h2.125zM22.563 15.188l-4.125-2.531-2.031 3.406 6.156-3.75zM12.969 4.313l-1.031 2.313-4.5-2.75 5.531-3.625z"></path>
+    </svg>
+);
+
+const GitLabIcon = () => <Gitlab className="h-4 w-4 text-orange-600"/>;
+
+
 export const AttachmentIcon = ({ source }: { source: AttachmentSource }) => {
   switch (source) {
     case 'google-drive': return <GoogleDriveIcon />;
     case 'dropbox': return <DropboxIcon />;
     case 'onedrive': return <OneDriveIcon />;
     case 'figma': return <FigmaIcon />;
+    case 'gitlab': return <GitLabIcon />;
+    case 'bitbucket': return <BitbucketIcon />;
     default: return <Link className="h-4 w-4" />;
   }
 };
