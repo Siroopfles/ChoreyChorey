@@ -257,6 +257,8 @@ export type Task = {
   activeTimerStartedAt?: Date | null;
   rating?: number | null;
   reviewerId?: string | null;
+  consultedUserIds?: string[];
+  informedUserIds?: string[];
   isChoreOfTheWeek?: boolean;
   helpNeeded?: boolean;
 };
@@ -300,6 +302,8 @@ export const taskFormSchema = z.object({
   recurring: recurringSchema.optional(),
   imageDataUri: z.string().optional(),
   reviewerId: z.string().optional(),
+  consultedUserIds: z.array(z.string()).optional(),
+  informedUserIds: z.array(z.string()).optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

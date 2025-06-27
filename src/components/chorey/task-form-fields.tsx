@@ -16,7 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail } from 'lucide-react';
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -299,7 +299,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
           name="assigneeIds"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Toegewezen aan</FormLabel>
+              <FormLabel>Verantwoordelijk (Responsible)</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -745,6 +745,109 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
       <TaskAssignmentSuggestion users={users} />
       
       <Separator />
+
+      <h3 className="text-lg font-semibold">RACI Rollen</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="consultedUserIds"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Raadplegen (Consulted)</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      {field.value?.length > 0 ? `${field.value.length} gebruiker(s)` : 'Selecteer gebruikers'}
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Zoek gebruiker..." />
+                    <CommandList>
+                      <CommandEmpty>Geen gebruiker gevonden.</CommandEmpty>
+                      <CommandGroup>
+                        {users.map((user) => {
+                          const isSelected = field.value?.includes(user.id);
+                          return (
+                            <CommandItem
+                              key={user.id}
+                              onSelect={() => {
+                                if (isSelected) {
+                                  field.onChange(field.value?.filter((id) => id !== user.id));
+                                } else {
+                                  field.onChange([...(field.value || []), user.id]);
+                                }
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                              {user.name}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="informedUserIds"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Informeren (Informed)</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
+                      <Mail className="mr-2 h-4 w-4" />
+                      {field.value?.length > 0 ? `${field.value.length} gebruiker(s)` : 'Selecteer gebruikers'}
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Zoek gebruiker..." />
+                    <CommandList>
+                      <CommandEmpty>Geen gebruiker gevonden.</CommandEmpty>
+                      <CommandGroup>
+                        {users.map((user) => {
+                          const isSelected = field.value?.includes(user.id);
+                          return (
+                            <CommandItem
+                              key={user.id}
+                              onSelect={() => {
+                                if (isSelected) {
+                                  field.onChange(field.value?.filter((id) => id !== user.id));
+                                } else {
+                                  field.onChange([...(field.value || []), user.id]);
+                                }
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                              {user.name}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <Separator />
+
 
       <div>
         <UiLabel>Omslagfoto</UiLabel>

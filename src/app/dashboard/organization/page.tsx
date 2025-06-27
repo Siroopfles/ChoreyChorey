@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Shield } from 'lucide-react';
+import { Loader2, Shield, UserCheck } from 'lucide-react';
 import type { Team } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { CreateOrganizationView } from '@/components/chorey/organization/create-organization-view';
@@ -70,6 +70,13 @@ export default function OrganizationPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h1 className="font-semibold text-lg md:text-2xl">Beheer voor {currentOrganization.name}</h1>
                 <div className="flex items-center gap-2">
+                    {canManageOrg && (
+                      <Button asChild variant="outline">
+                        <Link href="/dashboard/organization/raci">
+                          <UserCheck className="mr-2 h-4 w-4" /> RACI Matrix
+                        </Link>
+                      </Button>
+                    )}
                     {canManageOrg && (
                       <Button asChild variant="outline">
                         <Link href="/dashboard/organization/roles">

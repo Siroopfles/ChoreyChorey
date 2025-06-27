@@ -206,6 +206,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
           rating: data.rating || null,
           reviewerId: data.reviewerId || null,
+          consultedUserIds: data.consultedUserIds || [],
+          informedUserIds: data.informedUserIds || [],
           isChoreOfTheWeek: data.isChoreOfTheWeek || false,
           helpNeeded: data.helpNeeded || false,
         } as Task;
@@ -389,6 +391,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           completedAt: null,
           rating: null,
           reviewerId: taskData.reviewerId ?? null,
+          consultedUserIds: taskData.consultedUserIds || [],
+          informedUserIds: taskData.informedUserIds || [],
           helpNeeded: taskData.helpNeeded || false,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
@@ -434,6 +438,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           activeTimerStartedAt: null,
           rating: null,
           dependencyConfig: taskToClone.dependencyConfig || {},
+          consultedUserIds: taskToClone.consultedUserIds || [],
+          informedUserIds: taskToClone.informedUserIds || [],
         };
         
         delete (clonedTask as any).id; 
