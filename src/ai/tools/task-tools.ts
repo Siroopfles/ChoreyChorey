@@ -6,7 +6,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, arrayUnion, Timestamp, limit } from 'firebase/firestore';
 import type { Status, Task } from '@/lib/types';
 
 // Helper to add history entries
@@ -32,6 +32,7 @@ const CreateTaskDataSchema = z.object({
   labels: z.array(z.string()).optional().describe('A list of labels for the task.'),
   dueDate: z.string().optional().describe("The due date and time in 'YYYY-MM-DDTHH:mm:ss' ISO 8601 format. The AI should convert natural language dates like 'tomorrow at 10am' into this format."),
   isPrivate: z.boolean().optional().describe('Whether the task is private to the creator and assignee. Should be true for personal reminders.'),
+  projectId: z.string().optional().describe('The ID of the project this task belongs to.'),
 });
 
 export const createTask = ai.defineTool(
@@ -244,6 +245,35 @@ export const updateTask = ai.defineTool(
         }
         
         return { success: true };
+    }
+);
+
+export const findUserByEmail = ai.defineTool(
+    {
+        name: 'findUserByEmail',
+        description: 'Find a user by their email address within a specific organization.',
+        inputSchema: z.object({
+            email: z.string().email().describe('The email address of the user to find.'),
+            organizationId: z.string().describe('The ID of the organization to search within.'),
+        }),
+        outputSchema: z.object({
+            id: z.string(),
+            name: z.string(),
+        }).nullable(),
+    },
+    async ({ email, organizationId }) => {
+        const q = query(
+            collection(db, 'users'),
+            where('email', '==', email),
+            where('organizationIds', 'array-contains', organizationId),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+            return null;
+        }
+        const userDoc = snapshot.docs[0];
+        return { id: userDoc.id, name: userDoc.data().name };
     }
 );
 

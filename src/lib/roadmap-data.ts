@@ -75,7 +75,7 @@ export const roadmapPhases: Phase[] = [
       { id: 3004, title: "Microsoft Teams Integratie", description: "Volledige functionaliteit binnen MS Teams, inclusief notificaties en taakcreatie.", completed: true },
       { id: 3005, title: "Zapier / Make (Integromat) Integratie", description: "Verbind Chorey met duizenden andere apps via no-code platformen.", completed: false },
       { id: 3006, title: "Cloud Storage Integraties", description: "Koppel bestanden direct vanuit Google Drive, OneDrive en Dropbox.", completed: true },
-      { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek project- of gebruikersadres.", completed: false },
+      { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek project- of gebruikersadres.", completed: true },
       { id: 3008, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket issues en merge requests.", completed: true },
       { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden en prototypes als live-previews toe aan taken.", completed: true },
       { id: 3010, title: "Outlook Calendar Integratie", description: "Synchroniseer deadlines met je Outlook agenda.", completed: true },

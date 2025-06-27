@@ -227,3 +227,15 @@ export const SuggestHeadcountOutputSchema = z.object({
   totalHeadcount: z.number().describe('The total number of people suggested for the project.'),
 });
 export type SuggestHeadcountOutput = z.infer<typeof SuggestHeadcountOutputSchema>;
+
+// From email-to-task-flow.ts
+export const EmailToTaskInputSchema = z.object({
+  from: z.string().describe("The sender's email address."),
+  to: z.string().describe("The recipient's email address, which contains routing information."),
+  subject: z.string().describe("The subject of the email, which becomes the task title."),
+  body: z.string().describe("The body of the email, which becomes the task description."),
+});
+export type EmailToTaskInput = z.infer<typeof EmailToTaskInputSchema>;
+
+export const EmailToTaskOutputSchema = z.string().describe("A summary of the result, e.g., 'Task created' or an error message.");
+export type EmailToTaskOutput = z.infer<typeof EmailToTaskOutputSchema>;

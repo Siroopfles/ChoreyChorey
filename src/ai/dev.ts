@@ -16,3 +16,4 @@ import '@/ai/flows/find-duplicate-task-flow.ts';
 import '@/ai/flows/notification-digest-flow.ts';
 import '@/ai/flows/level-workload-flow.ts';
 import '@/ai/flows/suggest-headcount-flow.ts';
+import '@/ai/flows/email-to-task-flow.ts';
