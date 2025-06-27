@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -51,6 +52,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
         { href: '/dashboard/leaderboard', icon: Trophy, label: 'Scorebord' },
+        { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates' },
         { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
