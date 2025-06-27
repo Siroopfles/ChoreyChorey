@@ -148,6 +148,16 @@ export type User = {
   }
 };
 
+export type Session = {
+  id: string;
+  userId: string;
+  createdAt: Date;
+  lastAccessed: Date;
+  userAgent: string;
+  ipAddress?: string;
+  isActive: boolean;
+};
+
 export const ACHIEVEMENTS = {
   FIRST_TASK: { 
     id: 'first_task', 

@@ -19,7 +19,7 @@ import {
     type User as FirebaseUser,
     getAdditionalUserInfo,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import type { User, Organization, Team, RoleName, UserStatus, Permission } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
@@ -27,6 +27,9 @@ import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user.actions';
 import { useDebug } from './debug-context';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+
+const SESSION_STORAGE_KEY = 'chorey_session_id';
 
 type AuthContextType = {
     authUser: FirebaseUser | null;
@@ -59,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [currentUserPermissions, setCurrentUserPermissions] = useState<Permission[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
+    const [currentSessionId, setCurrentSessionId] = useLocalStorage(SESSION_STORAGE_KEY, '');
     const router = useRouter();
     const { toast } = useToast();
     const { isDebugMode } = useDebug();
@@ -112,7 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             const orgsQuery = query(collection(db, 'organizations'), where('__name__', 'in', userData.organizationIds));
             
-            // Using onSnapshot to listen for real-time updates to organizations
             const unsubscribeOrgs = onSnapshot(orgsQuery, (orgsSnapshot) => {
                 const userOrgs = orgsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
                 setOrganizations(userOrgs);
@@ -148,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }, (error) => handleError(error, 'laden van organisaties'));
 
-            return unsubscribeOrgs; // Return the listener cleanup function
+            return unsubscribeOrgs; 
         } else {
             if (isDebugMode) console.log('[DEBUG] AuthContext: User has no organizations.');
             setOrganizations([]);
@@ -157,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCurrentUserPermissions([]);
             setTeams([]);
             setUsers([]);
-            return () => {}; // Return an empty cleanup function
+            return () => {}; 
         }
     }, [isDebugMode]);
     
@@ -169,7 +172,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
             if (isDebugMode) console.log('[DEBUG] AuthContext: Auth state changed. User:', firebaseUser?.uid || 'null');
             
-            // Clean up previous listeners
             unsubscribeFromOrgs?.();
             unsubscribeFromUsers?.();
             unsubscribeFromTeams?.();
@@ -215,10 +217,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [currentOrganization]);
 
+    const createSession = async (uid: string) => {
+        const sessionId = crypto.randomUUID();
+        await setDoc(doc(db, 'sessions', sessionId), {
+            userId: uid,
+            createdAt: new Date(),
+            lastAccessed: new Date(),
+            userAgent: navigator.userAgent,
+            isActive: true,
+        });
+        setCurrentSessionId(sessionId);
+    };
 
     const loginWithEmail = async (email: string, pass: string) => {
         try {
-            await signInWithEmailAndPassword(auth, email, pass);
+            const credential = await signInWithEmailAndPassword(auth, email, pass);
+            await createSession(credential.user.uid);
         } catch (error) {
             handleError(error, 'inloggen');
             throw error;
@@ -251,6 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 status: { type: 'Online', until: null }
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+            await createSession(firebaseUser.uid);
             setUser({ id: firebaseUser.uid, ...newUser });
             setOrganizations([]);
             setCurrentOrganization(null);
@@ -265,10 +280,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         try {
             const userCredential = await signInWithPopup(auth, googleProvider);
+            const firebaseUser = userCredential.user;
+            await createSession(firebaseUser.uid);
             const additionalInfo = getAdditionalUserInfo(userCredential);
 
             if (additionalInfo?.isNewUser) {
-                const firebaseUser = userCredential.user;
                 let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                 try {
                     const { avatarDataUri } = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
@@ -307,6 +323,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (user?.id) {
               await updateUserStatusAction(user.id, { type: 'Offline', until: null });
             }
+            if (currentSessionId) {
+                const sessionRef = doc(db, 'sessions', currentSessionId);
+                await updateDoc(sessionRef, { isActive: false }).catch(console.error);
+            }
+            setCurrentSessionId('');
             await signOut(auth);
             router.push('/login');
         } catch (error) {
@@ -314,11 +335,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    useEffect(() => {
+        if (!currentSessionId || !db || !authUser) return;
+
+        const sessionRef = doc(db, 'sessions', currentSessionId);
+        const unsubscribe = onSnapshot(sessionRef, (docSnap) => {
+            if (docSnap.exists() && docSnap.data().isActive === false) {
+                logout();
+                toast({
+                    title: 'Sessie beëindigd',
+                    description: 'U bent op afstand uitgelogd vanuit deze sessie.',
+                    variant: 'destructive',
+                });
+            } else if (!docSnap.exists()) {
+                 logout();
+            }
+        });
+
+        const interval = setInterval(() => {
+             if (document.visibilityState === 'visible') {
+                updateDoc(sessionRef, { lastAccessed: new Date() }).catch(console.error);
+            }
+        }, 1000 * 60 * 5); // every 5 minutes
+
+        return () => {
+            unsubscribe();
+            clearInterval(interval);
+        };
+    }, [currentSessionId, authUser, logout, toast]);
+
+
     const refreshUser = useCallback(async () => {
         if (auth.currentUser) {
             setLoading(true);
-            // This will trigger a re-fetch via the onAuthStateChanged listener's logic
-            // To ensure it's fresh, we directly call it.
             await fetchUserAndOrgData(auth.currentUser);
             setLoading(false);
         }
@@ -331,7 +380,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(true);
             const userRef = doc(db, 'users', user.id);
             await updateDoc(userRef, { currentOrganizationId: orgId });
-            // The onSnapshot listener will handle the state update automatically
             toast({ title: "Organisatie gewisseld" });
         } catch(e) {
             handleError(e, 'wisselen van organisatie');
@@ -345,7 +393,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const result = await updateUserStatusAction(user.id, status);
             if (result.error) throw new Error(result.error);
-            // Optimistic update for the current user's own state
             setUser(prevUser => prevUser ? { ...prevUser, status } : null);
         } catch (e) {
             handleError(e, 'bijwerken van status');

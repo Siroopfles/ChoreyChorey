@@ -12,6 +12,7 @@ import FeatureToggleSettings from '@/components/chorey/settings/feature-toggle-s
 import BrandingSettings from '@/components/chorey/settings/branding-settings';
 import AnimationSettings from '@/components/chorey/settings/animation-settings';
 import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
+import SessionManagement from '@/components/chorey/settings/session-management';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
@@ -34,6 +35,7 @@ export default function SettingsPage() {
       
       <ProfileSettings user={user} />
       <AnimationSettings />
+      <SessionManagement />
 
       {currentOrganization && (
         <>
