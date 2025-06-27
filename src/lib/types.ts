@@ -22,6 +22,10 @@ export type OrganizationSettings = {
     level: 'info' | 'warning' | 'emergency';
   } | null;
   savedFilters?: SavedFilter[];
+  slack?: {
+    enabled: boolean;
+    channelId: string;
+  };
 }
 
 export type Organization = {
@@ -51,6 +55,7 @@ export const PERMISSIONS = {
   VIEW_SENSITIVE_DATA: 'VIEW_SENSITIVE_DATA',
   MANAGE_IDEAS: 'MANAGE_IDEAS',
   MANAGE_API_KEYS: 'MANAGE_API_KEYS',
+  MANAGE_INTEGRATIONS: 'MANAGE_INTEGRATIONS',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -70,6 +75,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.VIEW_SENSITIVE_DATA]: { name: 'Gevoelige Data Zien', description: 'Kan de inhoud van taken zien die als "gevoelig" zijn gemarkeerd.' },
   [PERMISSIONS.MANAGE_IDEAS]: { name: 'Ideeën Beheren', description: 'Kan de status van ideeën in de ideeënbus aanpassen.' },
   [PERMISSIONS.MANAGE_API_KEYS]: { name: 'API Sleutels Beheren', description: 'Kan API-sleutels voor de organisatie aanmaken, inzien en intrekken.' },
+  [PERMISSIONS.MANAGE_INTEGRATIONS]: { name: 'Integraties Beheren', description: 'Kan integraties met externe services zoals Slack configureren.' },
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
@@ -94,6 +100,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.VIEW_SENSITIVE_DATA,
       PERMISSIONS.MANAGE_IDEAS,
       PERMISSIONS.MANAGE_API_KEYS,
+      PERMISSIONS.MANAGE_INTEGRATIONS,
     ],
   },
   Member: {

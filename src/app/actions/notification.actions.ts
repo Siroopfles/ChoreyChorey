@@ -3,8 +3,9 @@
 
 import { db } from '@/lib/firebase';
 import { collection, doc, addDoc, getDoc, Timestamp } from 'firebase/firestore';
-import type { User, Task, Priority } from '@/lib/types';
+import type { User, Task, Priority, Organization } from '@/lib/types';
 import { isAfter } from 'date-fns';
+import { sendSlackMessage } from '@/lib/slack-service';
 
 const priorityOrder: Record<Priority, number> = {
     'Laag': 0,
@@ -34,7 +35,7 @@ export async function createNotification(userId: string, message: string, taskId
 
     // Check for DND status
     if (userData.status?.type === 'Niet storen') {
-      const dndUntil = (userData.status.until as Timestamp | null)?.toDate();
+      const dndUntil = (userData.status.until as Timestamp | null)?.toDate() ?? null;
       if (!dndUntil || isAfter(dndUntil, new Date())) {
         console.log(`Notification for ${userData.name} suppressed due to DND status.`);
         return;
@@ -61,7 +62,7 @@ export async function createNotification(userId: string, message: string, taskId
         }
     }
       
-    // If all checks pass, create the notification
+    // If all checks pass, create the in-app notification
     await addDoc(collection(db, 'notifications'), {
       userId,
       message,
@@ -70,6 +71,18 @@ export async function createNotification(userId: string, message: string, taskId
       read: false,
       createdAt: new Date(),
     });
+
+    // Trigger external notifications (e.g., Slack)
+    const orgRef = doc(db, 'organizations', organizationId);
+    const orgDoc = await getDoc(orgRef);
+    if (orgDoc.exists()) {
+        const orgData = orgDoc.data() as Organization;
+        const slackConfig = orgData.settings?.slack;
+        if (slackConfig?.enabled && slackConfig.channelId) {
+            // Fire-and-forget
+            sendSlackMessage(slackConfig.channelId, message).catch(console.error);
+        }
+    }
   } catch (e) {
     console.error(`Error creating notification for user ${userId}:`, e);
     // Don't re-throw, creating a notification is not a critical failure
