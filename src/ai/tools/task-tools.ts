@@ -129,7 +129,11 @@ export const searchTasks = ai.defineTool(
       q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
     }
     if (filters.labels && filters.labels.length > 0) {
-      q = query(q, where('labels', 'array-contains-any', filters.labels));
+      // Sanitize the labels array to prevent Firestore errors with undefined/null values.
+      const validLabels = filters.labels.filter(label => !!label);
+      if (validLabels.length > 0) {
+        q = query(q, where('labels', 'array-contains-any', validLabels));
+      }
     }
     
     const snapshot = await getDocs(q);
