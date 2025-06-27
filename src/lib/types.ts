@@ -188,6 +188,7 @@ export type User = {
   twoFactorRecoveryCodes?: string[];
   notificationSettings?: {
     dailyDigestEnabled?: boolean;
+    notificationPriorityThreshold?: Priority;
   };
   lastDigestSentAt?: Date;
 };

@@ -6,7 +6,7 @@ import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, 
 import type { User, UserStatus } from '@/lib/types';
 import { authenticator } from 'otplib';
 
-export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills'>>) {
+export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings'>>) {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, data);

@@ -18,11 +18,12 @@ import { handleGenerateAvatar } from '@/app/actions/ai.actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
-import { ALL_SKILLS } from '@/lib/types';
+import { ALL_SKILLS, type Priority } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import type { User as UserType } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Naam moet minimaal 2 karakters bevatten.'),
@@ -82,6 +83,21 @@ export default function ProfileSettings({ user }: { user: UserType }) {
         notificationSettings: {
             ...user.notificationSettings,
             dailyDigestEnabled: enabled,
+        }
+    });
+    if (result.error) {
+        toast({ title: 'Fout', description: result.error, variant: 'destructive' });
+    } else {
+        toast({ title: 'Instelling opgeslagen!'});
+        await refreshUser();
+    }
+  };
+  
+  const handlePriorityThresholdChange = async (threshold: Priority) => {
+    const result = await updateUserProfile(user.id, {
+        notificationSettings: {
+            ...user.notificationSettings,
+            notificationPriorityThreshold: threshold,
         }
     });
     if (result.error) {
@@ -216,7 +232,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
               <CardTitle className="flex items-center gap-2"><Bell/>Notificatie-instellingen</CardTitle>
               <CardDescription>Beheer hier je notificatievoorkeuren.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
               <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                       <Label htmlFor="daily-digest" className="font-semibold">Dagelijks Overzicht</Label>
@@ -227,6 +243,28 @@ export default function ProfileSettings({ user }: { user: UserType }) {
                       checked={user.notificationSettings?.dailyDigestEnabled ?? false}
                       onCheckedChange={handleDigestToggle}
                   />
+              </div>
+               <div className="rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label className="font-semibold">Prioriteitsdrempel</Label>
+                  <p className="text-sm text-muted-foreground">
+                      Ontvang alleen notificaties voor taken met de geselecteerde prioriteit of hoger.
+                  </p>
+                </div>
+                <Select
+                  value={user.notificationSettings?.notificationPriorityThreshold || 'Laag'}
+                  onValueChange={handlePriorityThresholdChange}
+                >
+                  <SelectTrigger className="mt-2">
+                      <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="Laag">Alle meldingen (vanaf Laag)</SelectItem>
+                      <SelectItem value="Midden">Midden en hoger</SelectItem>
+                      <SelectItem value="Hoog">Hoog en hoger</SelectItem>
+                      <SelectItem value="Urgent">Alleen Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
           </CardContent>
       </Card>
