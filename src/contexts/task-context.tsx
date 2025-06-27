@@ -28,8 +28,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
 import { calculatePoints } from '@/lib/utils';
 import { triggerWebhooks } from '@/lib/webhook-service';
+import { createNotification } from '@/app/actions/notification.actions';
 import { createIdea as createIdeaAction, toggleIdeaUpvote as toggleIdeaUpvoteAction, updateIdeaStatus as updateIdeaStatusAction } from '@/app/actions/ideas.actions';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user.actions';
+import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
+import { addPersonalGoal as addPersonalGoalAction, updatePersonalGoal as updatePersonalGoalAction, deletePersonalGoal as deletePersonalGoalAction, toggleMilestoneCompletion as toggleMilestoneCompletionAction } from '@/app/actions/goal.actions';
+import { addTeamChallenge as addTeamChallengeAction, updateTeamChallenge as updateTeamChallengeAction, deleteTeamChallenge as deleteTeamChallengeAction, completeTeamChallenge as completeTeamChallengeAction } from '@/app/actions/goal.actions';
 
 type TaskContextType = {
   tasks: Task[];
@@ -141,6 +145,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { authUser, user, currentOrganization, users, currentUserPermissions, projects, refreshUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [personalGoals, setPersonalGoals] = useState<PersonalGoal[]>([]);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
@@ -193,6 +198,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setPersonalGoals([]);
       setIdeas([]);
       setTeamChallenges([]);
+      setNotifications([]);
       setLoading(false);
       return;
     }
@@ -277,6 +283,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         } as TaskTemplate));
         setTemplates(templatesData);
     }, (error: FirestoreError) => handleError(error, 'laden van templates'));
+    
+    const qNotifications = query(collection(db, "notifications"), where("userId", "==", authUser.uid), where("organizationId", "==", currentOrganization.id));
+    const unsubscribeNotifications = onSnapshot(qNotifications, (snapshot) => {
+        const notificationsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+                snoozedUntil: (data.snoozedUntil as Timestamp)?.toDate(),
+            } as Notification;
+        }).filter(n => !n.archived)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setNotifications(notificationsData);
+    }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
 
     const qGoals = query(collection(db, 'personalGoals'), where("userId", "==", authUser.uid), where("organizationId", "==", currentOrganization.id));
     const unsubscribeGoals = onSnapshot(qGoals, (snapshot) => {
@@ -324,75 +345,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return () => {
         unsubscribeTasks();
         unsubscribeTemplates();
+        unsubscribeNotifications();
         unsubscribeGoals();
         unsubscribeIdeas();
         unsubscribeChallenges();
     };
   }, [authUser, currentOrganization, toast, currentUserPermissions, projects]);
 
-
-  useEffect(() => {
-    if (!db || !authUser || !currentOrganization) {
-      setNotifications([]);
-      return;
-    };
-    
-    const q = query(collection(db, "notifications"), where("userId", "==", authUser.uid), where("organizationId", "==", currentOrganization.id));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const notificationsData = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                createdAt: (data.createdAt as Timestamp).toDate(),
-                snoozedUntil: (data.snoozedUntil as Timestamp)?.toDate(),
-            } as Notification;
-        }).filter(n => !n.archived)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        setNotifications(notificationsData);
-    }, (error: FirestoreError) => handleError(error, 'laden van notificaties'));
-
-    return () => unsubscribe();
-  }, [authUser, currentOrganization, toast]);
-
-
-  const createNotification = async (userId: string, message: string, taskId: string, organizationId: string) => {
-    if (!authUser || userId === authUser.uid) return;
-    try {
-      const userToNotifyRef = doc(db, 'users', userId);
-      const userToNotifyDoc = await getDoc(userToNotifyRef);
-
-      if (userToNotifyDoc.exists()) {
-        const userData = userToNotifyDoc.data() as User;
-        
-        if (userData.mutedTaskIds?.includes(taskId)) {
-            console.log(`Notification for ${userData.name} suppressed because task ${taskId} is muted.`);
-            return;
-        }
-
-        if (userData.status?.type === 'Niet storen') {
-          const dndUntil = (userData.status.until as Timestamp | null)?.toDate();
-          if (!dndUntil || isAfter(dndUntil, new Date())) {
-            // Do not send notification if DND is active indefinitely, or the end date is in the future.
-            console.log(`Notification for ${userData.name} suppressed due to DND status.`);
-            return;
-          }
-        }
-      }
-
-      await addDoc(collection(db, 'notifications'), {
-        userId,
-        message,
-        taskId,
-        organizationId,
-        read: false,
-        createdAt: new Date(),
-      });
-    } catch (e) {
-      handleError(e, 'maken van notificatie');
-    }
-  };
-  
   const markAllNotificationsAsRead = async () => {
     if (!authUser) return;
     try {
@@ -496,7 +455,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                   assigneeId,
                   `${user?.name} heeft je toegewezen aan: "${firestoreTask.title}"`,
                   docRef.id,
-                  currentOrganization.id
+                  currentOrganization.id,
+                  authUser.uid,
               );
             });
         }
@@ -717,16 +677,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (updates.assigneeIds) {
              const addedAssignees = updates.assigneeIds.filter(id => !taskToUpdate.assigneeIds.includes(id));
              addedAssignees.forEach(assigneeId => {
-                 createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId, currentOrganization.id);
+                 createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId, currentOrganization.id, authUser.uid);
              });
         }
         
         if (updates.reviewerId && updates.reviewerId !== taskToUpdate.reviewerId) {
-            createNotification(updates.reviewerId, `Je bent gevraagd om een review te doen voor: "${taskToUpdate.title}"`, taskId, currentOrganization.id);
+            createNotification(updates.reviewerId, `Je bent gevraagd om een review te doen voor: "${taskToUpdate.title}"`, taskId, currentOrganization.id, authUser.uid);
         }
 
         if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== authUser.uid) {
-             await createNotification(taskToUpdate.creatorId, `${user?.name} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId, currentOrganization.id);
+             await createNotification(taskToUpdate.creatorId, `${user?.name} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId, currentOrganization.id, authUser.uid);
         }
 
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
@@ -773,7 +733,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                                 assigneeId,
                                 `Nieuwe herhalende taak: "${newTaskData.title}"`,
                                 docRef.id,
-                                currentOrganization.id
+                                currentOrganization.id,
+                                authUser.uid
                             );
                         })
                     }
@@ -906,7 +867,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 assigneeId,
                 `${user.name} heeft gereageerd op: "${taskData.title}"`,
                 taskId,
-                currentOrganization.id
+                currentOrganization.id,
+                user.id
             );
           }
         })
@@ -916,7 +878,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 taskData.creatorId,
                 `${user.name} heeft gereageerd op: "${taskData.title}"`,
                 taskId,
-                currentOrganization.id
+                currentOrganization.id,
+                user.id
             );
         }
         
@@ -1013,7 +976,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                             assigneeId,
                             `Je bent toegewezen aan taak: "${task.title}"`,
                             taskId,
-                            currentOrganization.id
+                            currentOrganization.id,
+                            authUser.uid
                         );
                     }
                 });
@@ -1123,26 +1087,24 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const addTemplate = async (templateData: TaskTemplateFormValues) => {
-    if (!authUser || !currentOrganization) throw new Error("Niet geautoriseerd of geen organisatie geselecteerd.");
-    const newTemplate = {
-      ...templateData,
-      organizationId: currentOrganization.id,
-      creatorId: authUser.uid,
-      createdAt: new Date(),
-    };
-    await addDoc(collection(db, 'taskTemplates'), newTemplate);
+    const result = await addTemplateAction(currentOrganization!.id, authUser!.uid, templateData);
+    if (result.error) {
+      handleError({ message: result.error }, 'template toevoegen');
+    }
   };
 
   const updateTemplate = async (templateId: string, templateData: TaskTemplateFormValues) => {
-    if (!authUser || !currentOrganization) throw new Error("Niet geautoriseerd of geen organisatie geselecteerd.");
-    const templateRef = doc(db, 'taskTemplates', templateId);
-    await updateDoc(templateRef, templateData);
+    const result = await updateTemplateAction(templateId, templateData);
+    if (result.error) {
+      handleError({ message: result.error }, 'template bijwerken');
+    }
   };
 
   const deleteTemplate = async (templateId: string) => {
-    if (!authUser || !currentOrganization) throw new Error("Niet geautoriseerd of geen organisatie geselecteerd.");
-    const templateRef = doc(db, 'taskTemplates', templateId);
-    await deleteDoc(templateRef);
+    const result = await deleteTemplateAction(templateId);
+    if (result.error) {
+      handleError({ message: result.error }, 'template verwijderen');
+    }
   };
 
   const resetSubtasks = async (taskId: string) => {
@@ -1206,90 +1168,44 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const addPersonalGoal = async (goalData: PersonalGoalFormValues): Promise<boolean> => {
-    if (!authUser || !currentOrganization) return false;
-    try {
-      const newGoal: Omit<PersonalGoal, 'id'> = {
-        userId: authUser.uid,
-        organizationId: currentOrganization.id,
-        title: goalData.title,
-        description: goalData.description || '',
-        targetDate: goalData.targetDate || undefined,
-        status: 'In Progress',
-        milestones: goalData.milestones?.map(m => ({...m, id: crypto.randomUUID(), completed: false})) || [],
-        createdAt: new Date(),
-      };
-      await addDoc(collection(db, 'personalGoals'), newGoal);
-      toast({ title: 'Doel Aangemaakt!', description: `Je nieuwe doel "${goalData.title}" is opgeslagen.` });
-      return true;
-    } catch(e) {
-      handleError(e, 'opslaan van persoonlijk doel');
+    const result = await addPersonalGoalAction(currentOrganization!.id, authUser!.uid, goalData);
+    if (result.error) {
+      handleError({ message: result.error }, 'opslaan van persoonlijk doel');
       return false;
     }
+    toast({ title: 'Doel Aangemaakt!', description: `Je nieuwe doel "${goalData.title}" is opgeslagen.` });
+    return true;
   };
 
   const updatePersonalGoal = async (goalId: string, goalData: PersonalGoalFormValues): Promise<boolean> => {
-    try {
-      const goalRef = doc(db, 'personalGoals', goalId);
-      const existingGoal = personalGoals.find(g => g.id === goalId);
-      if (!existingGoal) return false;
-
-      const updatedMilestones = goalData.milestones?.map((ms, index) => {
-          const existingMilestone = existingGoal.milestones.find(ems => ems.text === ms.text);
-          return {
-              id: existingMilestone?.id || existingGoal.milestones[index]?.id || crypto.randomUUID(),
-              text: ms.text,
-              completed: existingMilestone?.completed || existingGoal.milestones[index]?.completed || false
-          }
-      }) || [];
-
-      const cleanGoalData = {
-          title: goalData.title,
-          description: goalData.description,
-          targetDate: goalData.targetDate,
-          milestones: updatedMilestones
-      }
-
-      await updateDoc(goalRef, cleanGoalData);
-      toast({ title: 'Doel Bijgewerkt!' });
-      return true;
-    } catch(e) {
-      handleError(e, 'bijwerken van persoonlijk doel');
+    const existingGoal = personalGoals.find(g => g.id === goalId);
+    if (!existingGoal) return false;
+    const result = await updatePersonalGoalAction(goalId, goalData, existingGoal.milestones);
+    if (result.error) {
+      handleError({ message: result.error }, 'bijwerken van persoonlijk doel');
       return false;
     }
+    toast({ title: 'Doel Bijgewerkt!' });
+    return true;
   };
 
   const deletePersonalGoal = async (goalId: string) => {
-    try {
-      await deleteDoc(doc(db, 'personalGoals', goalId));
+    const result = await deletePersonalGoalAction(goalId);
+    if (result.error) {
+      handleError({ message: result.error }, 'verwijderen van persoonlijk doel');
+    } else {
       toast({ title: 'Doel Verwijderd' });
-    } catch(e) {
-      handleError(e, 'verwijderen van persoonlijk doel');
     }
   };
   
   const toggleMilestoneCompletion = async (goalId: string, milestoneId: string) => {
-    try {
-      const goal = personalGoals.find(g => g.id === goalId);
-      if (!goal) return;
-
-      const updatedMilestones = goal.milestones.map(m => 
-        m.id === milestoneId ? { ...m, completed: !m.completed } : m
-      );
-      
-      const allCompleted = updatedMilestones.every(m => m.completed);
-      
-      const goalRef = doc(db, 'personalGoals', goalId);
-      await updateDoc(goalRef, {
-        milestones: updatedMilestones,
-        status: allCompleted ? 'Achieved' : 'In Progress'
-      });
-      
-      if (allCompleted) {
-        toast({ title: 'Doel Behaald!', description: `Gefeliciteerd met het behalen van je doel: "${goal.title}"` });
-      }
-
-    } catch (e) {
-      handleError(e, 'bijwerken van mijlpaal');
+    const goal = personalGoals.find(g => g.id === goalId);
+    if (!goal) return;
+    const result = await toggleMilestoneCompletionAction(goalId, milestoneId, goal.milestones);
+    if (result.error) {
+      handleError({ message: result.error }, 'bijwerken van mijlpaal');
+    } else if (result.allCompleted) {
+      toast({ title: 'Doel Behaald!', description: `Gefeliciteerd met het behalen van je doel: "${goal.title}"` });
     }
   };
 
@@ -1323,43 +1239,32 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const addTeamChallenge = async (challengeData: TeamChallengeFormValues): Promise<boolean> => {
-    if (!authUser || !currentOrganization) return false;
-    try {
-      const newChallenge: Omit<TeamChallenge, 'id' | 'createdAt' | 'status'> = {
-        organizationId: currentOrganization.id,
-        ...challengeData,
-      };
-      await addDoc(collection(db, 'teamChallenges'), {
-          ...newChallenge,
-          status: 'active',
-          createdAt: new Date(),
-      });
-      toast({ title: 'Uitdaging Aangemaakt!', description: `De uitdaging "${challengeData.title}" is gestart.` });
-      return true;
-    } catch(e) {
-      handleError(e, 'opslaan van team uitdaging');
+    if (!currentOrganization) return false;
+    const result = await addTeamChallengeAction(currentOrganization.id, challengeData);
+    if (result.error) {
+      handleError({ message: result.error }, 'opslaan van team uitdaging');
       return false;
     }
+    toast({ title: 'Uitdaging Aangemaakt!', description: `De uitdaging "${challengeData.title}" is gestart.` });
+    return true;
   };
 
   const updateTeamChallenge = async (challengeId: string, challengeData: TeamChallengeFormValues): Promise<boolean> => {
-    try {
-      const challengeRef = doc(db, 'teamChallenges', challengeId);
-      await updateDoc(challengeRef, challengeData as any); // cast to any to avoid type issues with firestore
-      toast({ title: 'Uitdaging Bijgewerkt!' });
-      return true;
-    } catch(e) {
-      handleError(e, 'bijwerken van team uitdaging');
+    const result = await updateTeamChallengeAction(challengeId, challengeData);
+    if (result.error) {
+      handleError({ message: result.error }, 'bijwerken van team uitdaging');
       return false;
     }
+    toast({ title: 'Uitdaging Bijgewerkt!' });
+    return true;
   };
 
   const deleteTeamChallenge = async (challengeId: string) => {
-    try {
-      await deleteDoc(doc(db, 'teamChallenges', challengeId));
+    const result = await deleteTeamChallengeAction(challengeId);
+    if (result.error) {
+      handleError({ message: result.error }, 'verwijderen van team uitdaging');
+    } else {
       toast({ title: 'Uitdaging Verwijderd' });
-    } catch(e) {
-      handleError(e, 'verwijderen van team uitdaging');
     }
   };
 
@@ -1369,28 +1274,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const { teams } = useAuth();
     const team = teams.find(t => t.id === challenge?.teamId);
 
-    if (!challenge || !team || team.memberIds.length === 0) {
-        handleError({ message: 'Uitdaging of team niet gevonden of team is leeg.'}, 'uitdaging voltooien');
+    if (!challenge || !team) {
+        handleError({ message: 'Uitdaging of team niet gevonden.'}, 'uitdaging voltooien');
         return;
     }
     
-    try {
-        const batch = writeBatch(db);
-        const rewardPerMember = Math.floor(challenge.reward / team.memberIds.length);
-
-        team.memberIds.forEach(memberId => {
-            const userRef = doc(db, 'users', memberId);
-            batch.update(userRef, { points: increment(rewardPerMember) });
-        });
-
-        const challengeRef = doc(db, 'teamChallenges', challengeId);
-        batch.update(challengeRef, { status: 'completed', completedAt: new Date() });
-        
-        await batch.commit();
-        toast({ title: 'Uitdaging Voltooid!', description: `Team ${team.name} heeft ${challenge.reward} punten verdiend!` });
-
-    } catch (e) {
-        handleError(e, 'voltooien van uitdaging');
+    const result = await completeTeamChallengeAction(challenge.id, team.memberIds, challenge.reward);
+    if (result.error) {
+      handleError({ message: result.error }, 'voltooien van uitdaging');
+    } else {
+      toast({ title: 'Uitdaging Voltooid!', description: `Team ${team.name} heeft ${challenge.reward} punten verdiend!` });
     }
   };
 
@@ -1480,3 +1373,5 @@ export function useTasks() {
   }
   return context;
 }
+
+    
