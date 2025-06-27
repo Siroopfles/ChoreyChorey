@@ -190,3 +190,16 @@ export type NotificationDigestInput = z.infer<typeof NotificationDigestInputSche
 
 export const NotificationDigestOutputSchema = z.string().describe('A markdown-formatted summary of the notifications.');
 export type NotificationDigestOutput = z.infer<typeof NotificationDigestOutputSchema>;
+
+// From level-workload-flow.ts
+export const LevelWorkloadInputSchema = z.object({
+  userId: z.string().describe('The ID of the user whose workload to level.'),
+  userName: z.string().describe('The name of the user.'),
+  organizationId: z.string().describe('The ID of the organization.'),
+  startDate: z.string().describe('The start date of the period to analyze (YYYY-MM-DD).'),
+  endDate: z.string().describe('The end date of the period to analyze (YYYY-MM-DD).'),
+});
+export type LevelWorkloadInput = z.infer<typeof LevelWorkloadInputSchema>;
+
+export const LevelWorkloadOutputSchema = z.string().describe('A natural language summary of the changes made to the workload.');
+export type LevelWorkloadOutput = z.infer<typeof LevelWorkloadOutputSchema>;

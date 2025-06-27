@@ -40,7 +40,7 @@ export const roadmapData = {
       { id: 13, title: "Headcount Planning", description: "Plan toekomstige personeelsbehoefte op projectniveau.", completed: false },
       { id: 14, title: "Resource Vervanging", description: "Snel alle taken van persoon A overzetten naar persoon B.", completed: true },
       { id: 15, title: "RACI Matrix Generator", description: "Genereer een Responsible, Accountable, Consulted, Informed matrix.", completed: true },
-      { id: 16, title: "Automatische Resource Leveling", description: "Verschuif taken automatisch om overbelasting te voorkomen.", completed: false },
+      { id: 16, title: "Automatische Resource Leveling", description: "Verschuif taken automatisch om overbelasting te voorkomen.", completed: true },
       { id: 17, title: "Team-specifieke Werkuren en Feestdagen", description: "Definieer werkuren en vrije dagen per team.", completed: false },
       { id: 18, title: "Project Scorecards", description: "Configureerbare gezondheids-score per project.", completed: false },
       { id: 19, title: "Skills Gap Analyse", description: "Identificeer missende vaardigheden voor een project.", completed: false },

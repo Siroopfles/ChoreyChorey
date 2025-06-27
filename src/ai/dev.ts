@@ -14,3 +14,4 @@ import '@/ai/flows/suggest-labels-flow.ts';
 import '@/ai/flows/meeting-to-tasks-flow.ts';
 import '@/ai/flows/find-duplicate-task-flow.ts';
 import '@/ai/flows/notification-digest-flow.ts';
+import '@/ai/flows/level-workload-flow.ts';
