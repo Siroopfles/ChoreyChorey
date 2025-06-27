@@ -344,6 +344,7 @@ export type Task = {
   assigneeIds: string[];
   creatorId: string | null;
   projectId?: string | null;
+  teamId?: string | null;
   labels: Label[];
   subtasks: Subtask[];
   attachments: Attachment[];
@@ -403,6 +404,7 @@ export const taskFormSchema = z.object({
   description: z.string().optional(),
   assigneeIds: z.array(z.string()).optional(),
   projectId: z.string().optional(),
+  teamId: z.string().optional(),
   dueDate: z.date().optional(),
   priority: z.string().min(1, 'Prioriteit is verplicht.'),
   labels: z.array(z.string()).optional(),
@@ -485,6 +487,7 @@ export type Filters = {
   labels: string[];
   priority: Priority | null;
   projectId: string | null;
+  teamId: string | null;
 };
 
 export type SavedFilter = {

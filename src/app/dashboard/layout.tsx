@@ -58,6 +58,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const announcement = currentOrganization?.settings?.announcement;
 
+    const showGamification = currentOrganization?.settings?.features?.gamification !== false;
+
     const mainNavItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' },
@@ -75,9 +77,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const communityNavItems = [
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
-        { href: '/dashboard/leaderboard', icon: Award, label: 'Prestaties' },
-        { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
-        { href: '/dashboard/shop', icon: Store, label: 'Winkel' },
+        ...(showGamification ? [
+            { href: '/dashboard/leaderboard', icon: Award, label: 'Prestaties' },
+            { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
+            { href: '/dashboard/shop', icon: Store, label: 'Winkel' },
+        ] : []),
     ];
 
     const aiToolsNavItems = [
