@@ -121,7 +121,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setLoading(true);
 
     const commonQuery = (collectionName: string) => query(collection(db, collectionName), where("organizationId", "==", currentOrganization.id));
-    const userSpecificQuery = (collectionName: string) => query(commonQuery(collectionName), where("userId", "==", user.uid));
+    const userSpecificQuery = (collectionName: string) => query(commonQuery(collectionName), where("userId", "==", user.id));
 
     const unsubTasks = onSnapshot(commonQuery('tasks'), (snapshot) => {
       let tasksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: (doc.data().createdAt as Timestamp)?.toDate(), dueDate: (doc.data().dueDate as Timestamp)?.toDate(), completedAt: (doc.data().completedAt as Timestamp)?.toDate(), activeTimerStartedAt: (doc.data().activeTimerStartedAt as Timestamp)?.toDate(), history: (doc.data().history || []).map((h: any) => ({ ...h, timestamp: (h.timestamp as Timestamp)?.toDate() })), comments: (doc.data().comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate(), readBy: c.readBy || [] })) } as Task));
@@ -129,7 +129,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       const canViewSensitive = currentUserPermissions.includes(PERMISSIONS.VIEW_SENSITIVE_DATA);
       const projectsMap = new Map(projects.map(p => [p.id, p]));
 
-      tasksData = tasksData.filter(task => !task.isPrivate || task.assigneeIds.includes(user.uid) || task.creatorId === user.uid)
+      tasksData = tasksData.filter(task => !task.isPrivate || task.assigneeIds.includes(user.id) || task.creatorId === user.id)
         .map(task => {
           const projectIsSensitive = task.projectId ? projectsMap.get(task.projectId)?.isSensitive : false;
           if ((task.isSensitive || projectIsSensitive) && !canViewSensitive) {
@@ -145,7 +145,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const unsubGoals = onSnapshot(userSpecificQuery('personalGoals'), (s) => setPersonalGoals(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), targetDate: (d.data().targetDate as Timestamp)?.toDate(), milestones: d.data().milestones || [] } as PersonalGoal)).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van doelen'));
     const unsubIdeas = onSnapshot(commonQuery('ideas'), (s) => setIdeas(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as Idea))), (e) => handleError(e, 'laden van ideeën'));
     const unsubChallenges = onSnapshot(commonQuery('teamChallenges'), (s) => setTeamChallenges(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), completedAt: (d.data().completedAt as Timestamp)?.toDate()} as TeamChallenge)).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van uitdagingen'));
-    const unsubNotifications = onSnapshot(query(collection(db, "notifications"), where("userId", "==", user.uid), where("organizationId", "==", currentOrganization.id)), (s) => setNotifications(s.docs.map(d => ({ id: d.id, ...d.data(), createdAt: (d.data().createdAt as Timestamp).toDate(), snoozedUntil: (d.data().snoozedUntil as Timestamp)?.toDate() } as Notification)).filter(n => !n.archived).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van notificaties'));
+    const unsubNotifications = onSnapshot(query(collection(db, "notifications"), where("userId", "==", user.id), where("organizationId", "==", currentOrganization.id)), (s) => setNotifications(s.docs.map(d => ({ id: d.id, ...d.data(), createdAt: (d.data().createdAt as Timestamp).toDate(), snoozedUntil: (d.data().snoozedUntil as Timestamp)?.toDate() } as Notification)).filter(n => !n.archived).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van notificaties'));
 
     return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubGoals(); unsubIdeas(); unsubChallenges(); };
   }, [user, currentOrganization, currentUserPermissions, projects]);
