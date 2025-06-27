@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, Team } from '@/lib/types';
+import type { User, Project } from '@/lib/types';
 import { useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase } from 'lucide-react';
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -30,13 +30,13 @@ import type { FindDuplicateTaskOutput } from '@/ai/schemas';
 
 type TaskFormFieldsProps = {
   users: User[];
-  teams: Team[];
+  projects: Project[];
 };
 
-export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
+export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, teams } = useAuth();
   const status = form.watch('status');
   const isPrivate = form.watch('isPrivate');
 
@@ -320,7 +320,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
                     <CommandList>
                       <CommandEmpty>Geen gebruiker gevonden.</CommandEmpty>
                       <CommandGroup>
-                        {users.map((user) => {
+                        {(users || []).map((user) => {
                           const isSelected = field.value?.includes(user.id);
                           return (
                             <CommandItem
@@ -362,6 +362,32 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
                     )
                 })}
               </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="projectId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Project</FormLabel>
+              <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
+                <FormControl>
+                  <SelectTrigger>
+                    <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Selecteer een project" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Geen project</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -776,7 +802,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
                             <CommandList>
                             <CommandEmpty>Geen gebruiker gevonden.</CommandEmpty>
                             <CommandGroup>
-                                {users.map((user) => {
+                                {(users || []).map((user) => {
                                 const isSelected = field.value?.includes(user.id);
                                 return (
                                     <CommandItem
@@ -824,7 +850,7 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
                             <CommandList>
                             <CommandEmpty>Geen gebruiker gevonden.</CommandEmpty>
                             <CommandGroup>
-                                {users.map((user) => {
+                                {(users || []).map((user) => {
                                 const isSelected = field.value?.includes(user.id);
                                 return (
                                     <CommandItem

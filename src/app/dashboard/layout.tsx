@@ -54,8 +54,8 @@ const UserCosmeticStyle = () => {
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
-    const { users, tasks, viewedUser, setViewedUser, isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
-    const { currentUserRole, currentOrganization } = useAuth();
+    const { tasks, viewedUser, setViewedUser, isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
+    const { currentUserRole, currentOrganization, users } = useAuth();
     const pathname = usePathname();
     const announcement = currentOrganization?.settings?.announcement;
 
