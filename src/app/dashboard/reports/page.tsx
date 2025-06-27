@@ -1,18 +1,19 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
 import { useTasks } from '@/contexts/task-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FilePieChart, BarChart3, Settings2 } from 'lucide-react';
+import { FilePieChart, BarChart3, Settings2, Users as UsersIcon, ListChecks, ArrowUpNarrowWide, Hash, Database, Trophy } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import type { Task, User } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 type ReportConfig = {
     name: string;
@@ -27,6 +28,39 @@ type ReportData = {
     fill?: string;
 }[];
 
+const chartOptions: { value: 'bar' | 'pie'; label: string; icon: React.ElementType }[] = [
+    { value: 'bar', label: 'Staafdiagram', icon: BarChart3 },
+    { value: 'pie', label: 'Cirkeldiagram', icon: FilePieChart }
+];
+
+const groupOptions: { value: 'status' | 'priority' | 'assignee'; label: string; icon: React.ElementType }[] = [
+    { value: 'status', label: 'Status', icon: ListChecks },
+    { value: 'priority', label: 'Prioriteit', icon: ArrowUpNarrowWide },
+    { value: 'assignee', label: 'Toegewezen aan', icon: UsersIcon }
+];
+
+const metricOptions: { value: 'count' | 'storyPoints' | 'points'; label: string; icon: React.ElementType }[] = [
+    { value: 'count', label: 'Aantal taken', icon: Hash },
+    { value: 'storyPoints', label: 'Totaal Story Points', icon: Database },
+    { value: 'points', label: 'Totaal Punten', icon: Trophy }
+];
+
+
+const OptionCard = ({ option, selected, onSelect }: { option: { value: any; label: string; icon: React.ElementType }, selected: boolean, onSelect: () => void }) => {
+    const Icon = option.icon;
+    return (
+        <button
+            onClick={onSelect}
+            className={cn(
+                "flex flex-col items-center justify-center gap-2 rounded-lg border p-4 text-center transition-colors hover:bg-accent",
+                selected && "bg-primary/10 border-primary ring-2 ring-primary text-primary"
+            )}
+        >
+            <Icon className="h-8 w-8" />
+            <span className="text-sm font-semibold">{option.label}</span>
+        </button>
+    )
+}
 
 export default function ReportsPage() {
     const { tasks, users, loading } = useTasks();
@@ -118,46 +152,56 @@ export default function ReportsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Settings2 />Rapport Configuratie</CardTitle>
+                    <CardDescription>Stel uw rapport samen door opties te selecteren en klik op 'Genereer'.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="space-y-1">
-                        <Label htmlFor="report-name">Rapportnaam</Label>
-                        <Input id="report-name" value={config.name} onChange={e => setConfig({...config, name: e.target.value})} />
+                <CardContent className="space-y-6">
+                     <div className="space-y-2">
+                        <Label>1. Kies een grafiektype</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            {chartOptions.map(option => (
+                                <OptionCard 
+                                    key={option.value}
+                                    option={option}
+                                    selected={config.chartType === option.value}
+                                    onSelect={() => setConfig(c => ({...c, chartType: option.value}))}
+                                />
+                            ))}
+                        </div>
                     </div>
-                     <div className="space-y-1">
-                        <Label>Grafiektype</Label>
-                        <Select value={config.chartType} onValueChange={val => setConfig({...config, chartType: val as 'bar' | 'pie'})}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="bar">Staafdiagram</SelectItem>
-                                <SelectItem value="pie">Cirkeldiagram</SelectItem>
-                            </SelectContent>
-                        </Select>
+
+                    <div className="space-y-2">
+                        <Label>2. Kies hoe te groeperen</Label>
+                        <div className="grid grid-cols-3 gap-4">
+                            {groupOptions.map(option => (
+                                <OptionCard 
+                                    key={option.value}
+                                    option={option}
+                                    selected={config.groupBy === option.value}
+                                    onSelect={() => setConfig(c => ({...c, groupBy: option.value}))}
+                                />
+                            ))}
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                        <Label>Groepeer op</Label>
-                         <Select value={config.groupBy} onValueChange={val => setConfig({...config, groupBy: val as 'status' | 'priority' | 'assignee'})}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="status">Status</SelectItem>
-                                <SelectItem value="priority">Prioriteit</SelectItem>
-                                <SelectItem value="assignee">Toegewezen aan</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="space-y-1">
-                        <Label>Meetwaarde</Label>
-                         <Select value={config.metric} onValueChange={val => setConfig({...config, metric: val as 'count' | 'storyPoints' | 'points'})}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="count">Aantal taken</SelectItem>
-                                <SelectItem value="storyPoints">Totaal Story Points</SelectItem>
-                                <SelectItem value="points">Totaal Punten</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    
+                     <div className="space-y-2">
+                        <Label>3. Kies een meetwaarde</Label>
+                        <div className="grid grid-cols-3 gap-4">
+                            {metricOptions.map(option => (
+                                <OptionCard 
+                                    key={option.value}
+                                    option={option}
+                                    selected={config.metric === option.value}
+                                    onSelect={() => setConfig(c => ({...c, metric: option.value}))}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col items-start gap-4">
+                    <div className="space-y-1 w-full max-w-sm">
+                        <Label htmlFor="report-name">4. Geef uw rapport een naam</Label>
+                        <Input id="report-name" value={config.name} onChange={e => setConfig({...config, name: e.target.value})} />
+                    </div>
                      <Button onClick={handleGenerateReport} disabled={loading}>
                         <BarChart3 className="mr-2 h-4 w-4" />
                         Genereer Rapport
