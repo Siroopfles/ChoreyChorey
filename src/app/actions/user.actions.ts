@@ -267,3 +267,28 @@ export async function verifyLoginCode(userId: string, code: string) {
         return { error: error.message };
     }
 }
+
+export async function toggleMuteTask(userId: string, taskId: string) {
+    try {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+
+        if (!userDoc.exists()) {
+            throw new Error("Gebruiker niet gevonden.");
+        }
+
+        const userData = userDoc.data() as User;
+        const mutedTaskIds = userData.mutedTaskIds || [];
+
+        const isMuted = mutedTaskIds.includes(taskId);
+
+        await updateDoc(userRef, {
+            mutedTaskIds: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
+        });
+        
+        return { success: true, newState: isMuted ? 'unmuted' : 'muted' };
+    } catch (error: any) {
+        console.error("Error toggling task mute:", error);
+        return { error: error.message };
+    }
+}

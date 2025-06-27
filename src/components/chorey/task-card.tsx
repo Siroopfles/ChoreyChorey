@@ -56,6 +56,8 @@ import {
   Eye,
   Crosshair,
   HandHeart,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -124,7 +126,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
   const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
   const PriorityIcon = priorityConfig[task.priority as keyof typeof priorityConfig]?.icon || Equal;
   const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, setViewedUser, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask } = useTasks();
   const { currentOrganization, currentUserRole } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -149,6 +151,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
   const isSelected = selectedTaskIds.includes(task.id);
   const [liveTime, setLiveTime] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+
+  const isMuted = useMemo(() => {
+    return currentUser?.mutedTaskIds?.includes(task.id);
+  }, [currentUser?.mutedTaskIds, task.id]);
 
   const [dateStatus, setDateStatus] = useState({
     isOverdue: false,
@@ -408,6 +414,11 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                         </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                     </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => toggleMuteTask(task.id)}>
+                        {isMuted ? <Bell className="mr-2 h-4 w-4" /> : <BellOff className="mr-2 h-4 w-4" />}
+                        <span>{isMuted ? 'Dempen opheffen' : 'Dempen'}</span>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {task.status === 'Geannuleerd' ? (
                       <>

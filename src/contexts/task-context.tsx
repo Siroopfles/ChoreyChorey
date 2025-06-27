@@ -29,6 +29,7 @@ import { useAuth } from './auth-context';
 import { calculatePoints } from '@/lib/utils';
 import { triggerWebhooks } from '@/lib/webhook-service';
 import { createIdea as createIdeaAction, toggleIdeaUpvote as toggleIdeaUpvoteAction, updateIdeaStatus as updateIdeaStatusAction } from '@/app/actions/ideas.actions';
+import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user.actions';
 
 type TaskContextType = {
   tasks: Task[];
@@ -84,6 +85,7 @@ type TaskContextType = {
   updateTeamChallenge: (challengeId: string, challengeData: TeamChallengeFormValues) => Promise<boolean>;
   deleteTeamChallenge: (challengeId: string) => Promise<void>;
   completeTeamChallenge: (challengeId: string) => Promise<void>;
+  toggleMuteTask: (taskId: string) => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -135,7 +137,7 @@ const calculateNextDueDate = (currentDueDate: Date | undefined, recurring: Recur
 
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { authUser, user, currentOrganization, users, currentUserPermissions, projects } = useAuth();
+  const { authUser, user, currentOrganization, users, currentUserPermissions, projects, refreshUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -361,7 +363,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       const userToNotifyDoc = await getDoc(userToNotifyRef);
 
       if (userToNotifyDoc.exists()) {
-        const userData = userToNotifyDoc.data();
+        const userData = userToNotifyDoc.data() as User;
+        
+        if (userData.mutedTaskIds?.includes(taskId)) {
+            console.log(`Notification for ${userData.name} suppressed because task ${taskId} is muted.`);
+            return;
+        }
+
         if (userData.status?.type === 'Niet storen') {
           const dndUntil = (userData.status.until as Timestamp | null)?.toDate();
           if (!dndUntil || isAfter(dndUntil, new Date())) {
@@ -1361,6 +1369,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const toggleMuteTask = async (taskId: string) => {
+    if (!user) return;
+    try {
+        const result = await toggleMuteTaskAction(user.id, taskId);
+        if (result.error) {
+            handleError({ message: result.error }, 'dempen van taak');
+        } else {
+            toast({ title: `Taak ${result.newState === 'muted' ? 'gedempt' : 'niet langer gedempt'}` });
+            await refreshUser();
+        }
+    } catch (e) {
+        handleError(e, 'dempen van taak');
+    }
+  };
+
 
   return (
     <TaskContext.Provider value={{ 
@@ -1417,6 +1440,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       updateTeamChallenge,
       deleteTeamChallenge,
       completeTeamChallenge,
+      toggleMuteTask,
     }}>
       {children}
     </TaskContext.Provider>

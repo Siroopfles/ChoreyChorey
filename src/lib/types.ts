@@ -182,6 +182,7 @@ export type User = {
   cosmetic?: {
     primaryColor?: string;
   },
+  mutedTaskIds?: string[];
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string;
   twoFactorRecoveryCodes?: string[];
