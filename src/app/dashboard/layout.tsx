@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Target, GitGraph, MailCheck, BarChart, Lightbulb, Award } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Target, GitGraph, MailCheck, BarChart3, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -59,26 +59,35 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const announcement = currentOrganization?.settings?.announcement;
 
-    const navItems = [
+    const mainNavItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { href: '/dashboard/my-week', icon: CalendarDays, label: 'Mijn Week' },
+        { href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' },
         { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
-        { href: '/dashboard/digest', icon: MailCheck, label: 'Digest' },
-        { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
-        { href: '/dashboard/goals', icon: Trophy, label: 'Doelen & Uitdagingen' },
-        { href: '/dashboard/leaderboard', icon: Award, label: 'Prestaties' },
-        { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
-        { href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' },
-        { href: '/dashboard/shop', icon: Store, label: 'Puntenwinkel' },
-        { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
-        { href: '/dashboard/headcount', icon: Users, label: 'Headcount' },
-        { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
-        { href: '/dashboard/reports', icon: BarChart, label: 'Rapporten' },
-        { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates' },
-        { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
     ];
     
+    const planningNavItems = [
+        { href: '/dashboard/goals', icon: Trophy, label: 'Doelen' },
+        { href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' },
+        { href: '/dashboard/workload', icon: BarChart3, label: 'Workload' },
+        { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
+        { href: '/dashboard/templates', icon: SquareStack, label: 'Templates' },
+    ];
+    
+    const communityNavItems = [
+        { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
+        { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
+        { href: '/dashboard/leaderboard', icon: Award, label: 'Prestaties' },
+        { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
+        { href: '/dashboard/shop', icon: Store, label: 'Winkel' },
+    ];
+
+    const aiToolsNavItems = [
+        { href: '/dashboard/digest', icon: MailCheck, label: 'AI Digest' },
+        { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
+    ];
+
     const adminNavItems = [
+        { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
         { href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }
     ];
 
@@ -107,7 +116,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                 <SidebarContent className="p-4 flex flex-col">
                     <CommandBar />
                     <SidebarMenu className="mt-4">
-                        {navItems.map((item) => (
+                        {mainNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
                                     <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
@@ -117,6 +126,43 @@ function AppShell({ children }: { children: React.ReactNode }) {
                                 </Link>
                             </SidebarMenuItem>
                         ))}
+
+                        <SidebarSeparator className="my-2" />
+                        {planningNavItems.map((item) => (
+                            <SidebarMenuItem key={item.href}>
+                                <Link href={item.href} passHref>
+                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                        <item.icon />
+                                        <span>{item.label}</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                        ))}
+                        
+                        <SidebarSeparator className="my-2" />
+                        {communityNavItems.map((item) => (
+                            <SidebarMenuItem key={item.href}>
+                                <Link href={item.href} passHref>
+                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                        <item.icon />
+                                        <span>{item.label}</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                        ))}
+
+                        <SidebarSeparator className="my-2" />
+                        {aiToolsNavItems.map((item) => (
+                            <SidebarMenuItem key={item.href}>
+                                <Link href={item.href} passHref>
+                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                        <item.icon />
+                                        <span>{item.label}</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                        ))}
+
                          {(currentUserRole === 'Owner' || currentUserRole === 'Admin') && (
                             <>
                                 <SidebarSeparator className="my-2" />

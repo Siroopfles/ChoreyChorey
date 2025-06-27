@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Check, Filter, Users, Tags, ArrowUpNarrowWide, X, User as UserIcon, Briefcase } from "lucide-react";
+import { Check, Users, Tags, ArrowUpNarrowWide, X, User as UserIcon, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SavedFiltersManager } from "./saved-filters-manager";
 

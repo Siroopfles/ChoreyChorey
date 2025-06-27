@@ -234,7 +234,8 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
   const canRate = showGamification && currentUser && task.status === 'Voltooid' && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id) && !task.rating;
   const canManageChoreOfWeek = currentUserRole === 'Owner' || currentUserRole === 'Admin';
 
-  const handleCopyId = () => {
+  const handleCopyId = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(task.id);
     toast({
         title: "Taak ID Gekopieerd!",
@@ -349,11 +350,11 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                 </CardTitle>
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" aria-label={`Meer acties voor taak ${task.title}`}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" aria-label={`Meer acties voor taak ${task.title}`} onClick={e => e.stopPropagation()}>
                     <MoreVertical className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/focus/${task.id}`}>
                         <Crosshair className="mr-2 h-4 w-4" />
@@ -486,7 +487,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                 <Button
                     size="sm"
                     className="w-full mb-2 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => updateTask(task.id, { status: 'Voltooid' })}
+                    onClick={(e) => { e.stopPropagation(); updateTask(task.id, { status: 'Voltooid' }); }}
                 >
                     <CheckCheck className="mr-2 h-4 w-4" />
                     Goedkeuren & Voltooien
@@ -498,7 +499,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                     size="sm"
                     variant="outline"
                     className="w-full mb-2"
-                    onClick={() => thankForTask(task.id)}
+                    onClick={(e) => { e.stopPropagation(); thankForTask(task.id); }}
                     disabled={task.thanked}
                 >
                     <Heart className="mr-2 h-4 w-4 text-pink-500" />
@@ -539,6 +540,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                         href={attachment.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
                         className="flex items-center gap-2 text-xs text-muted-foreground hover:underline mt-1"
                         >
                         <Paperclip className="h-3 w-3" />
@@ -551,7 +553,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
             {task.subtasks.length > 0 && (
                 <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="subtasks" className="border-b-0">
-                    <AccordionTrigger className="p-0 hover:no-underline [&_svg]:h-4 [&_svg]:w-4">
+                    <AccordionTrigger onClick={e => e.stopPropagation()} className="p-0 hover:no-underline [&_svg]:h-4 [&_svg]:w-4">
                     <div className="w-full space-y-1">
                         <div className="flex justify-between items-center text-xs text-muted-foreground">
                         <span>Subtaken</span>
@@ -565,7 +567,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                     <AccordionContent className="pt-2 pb-0">
                     <div className="space-y-2">
                         {visibleSubtasks.map(subtask => (
-                          <div key={subtask.id} className="flex items-center justify-between group">
+                          <div key={subtask.id} className="flex items-center justify-between group" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center gap-3">
                               <Checkbox
                                 id={`subtask-${subtask.id}`}
@@ -730,5 +732,3 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
 };
 
 export default TaskCard;
-
-    

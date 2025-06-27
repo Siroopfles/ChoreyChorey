@@ -88,7 +88,7 @@ type TaskContextType = {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { user, currentOrganization, currentUserPermissions, projects, refreshUser } = useAuth();
+  const { user, currentOrganization, currentUserPermissions, projects, teams: allTeams, refreshUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -98,14 +98,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
-  const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, projectId: null });
+  const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null });
   const [viewedUser, setViewedUser] = useState<User | null>(null);
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const setFilters = (newFilters: Partial<Filters>) => { setRawFilters(prev => ({...prev, ...newFilters})); };
-  const clearFilters = () => { setRawFilters({ assigneeId: null, labels: [], priority: null, projectId: null }); setSearchTerm(''); };
-  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.projectId ? 1 : 0);
+  const clearFilters = () => { setRawFilters({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null }); setSearchTerm(''); };
+  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.projectId ? 1 : 0) + (filters.teamId ? 1 : 0);
   const toggleTaskSelection = (taskId: string) => { setSelectedTaskIds(prev => prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]); };
 
   const handleError = (error: any, context: string) => {
@@ -410,5 +410,3 @@ export function useTasks() {
   }
   return context;
 }
-
-    

@@ -6,11 +6,12 @@ import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { FileDown, Download, FileText, HandHeart } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FileDown, Download, FileText, HandHeart, MoreHorizontal } from 'lucide-react';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
-import type { Task, User, Label, Priority, Team } from '@/lib/types';
+import type { Task, User, Label, Priority, Project } from '@/lib/types';
 import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
 import MeetingImportDialog from '@/components/chorey/meeting-import-dialog';
 import DashboardView from '@/components/chorey/dashboard-view';
@@ -105,18 +106,27 @@ export default function DashboardPage() {
           <FilterBar />
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsMeetingImporting(true)}>
-                <FileText className="mr-2 h-4 w-4" />
-                Importeer uit Notulen
-            </Button>
-            <Button variant="outline" onClick={() => setIsImporting(true)}>
-                <FileDown className="mr-2 h-4 w-4" />
-                Importeer Taken
-            </Button>
-             <Button variant="outline" onClick={handleExport}>
-                <Download className="mr-2 h-4 w-4" />
-                Exporteer naar CSV
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => setIsMeetingImporting(true)}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Importeer uit Notulen
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsImporting(true)}>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Importeer Taken
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleExport}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporteer naar CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </div>
 

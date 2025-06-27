@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
@@ -7,9 +7,10 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { DebugProvider } from '@/contexts/debug-context';
 import { UIPreferencesProvider } from '@/contexts/ui-preferences-context';
 
-const inter = Inter({ 
+const ptSans = PT_Sans({ 
   subsets: ['latin'],
-  variable: '--font-inter',
+  weight: ['400', '700'],
+  variable: '--font-pt-sans',
 });
 
 export const metadata: Metadata = {
@@ -28,10 +29,10 @@ export default function RootLayout({
        <head>
         <meta name="theme-color" content="#3b82f6" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${ptSans.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
