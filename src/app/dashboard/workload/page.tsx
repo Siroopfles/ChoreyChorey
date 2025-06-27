@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -55,24 +54,41 @@ export default function WorkloadPage() {
 
     const { chartData, allUserNames } = useMemo(() => {
         const userNames = new Set<string>();
+        const usersById = new Map(users.map(u => [u.id, u]));
+
         workloadData.forEach(day => {
             Object.values(day.users).forEach(u => userNames.add(u.name));
+            day.unavailableUserIds.forEach(id => {
+                const user = usersById.get(id);
+                if (user) userNames.add(user.name);
+            });
         });
-        
+
         const data = workloadData.map(day => {
             const dayData: any = {
                 date: format(new Date(day.date), 'EEE d', { locale: nl }),
-                total: day.totalPoints
+                total: day.totalPoints,
             };
+            const unavailableIdsOnThisDay = day.unavailableUserIds || [];
+
             userNames.forEach(name => {
-                const userWorkload = Object.values(day.users).find(u => u.name === name);
-                dayData[name] = userWorkload?.points || 0;
+                const user = users.find(u => u.name === name);
+                const isUnavailable = user ? unavailableIdsOnThisDay.includes(user.id) : false;
+
+                if (isUnavailable) {
+                    dayData[name] = 0; // Don't show regular workload
+                    dayData[`${name}-unavailable`] = CAPACITY_THRESHOLD; // Show unavailable bar
+                } else {
+                    const userWorkload = Object.values(day.users).find(u => u.name === name);
+                    dayData[name] = userWorkload?.points || 0;
+                    dayData[`${name}-unavailable`] = 0;
+                }
             });
             return dayData;
         });
 
         return { chartData: data, allUserNames: Array.from(userNames) };
-    }, [workloadData]);
+    }, [workloadData, users]);
     
     const userColors = useMemo(() => {
         const colors: Record<string, string> = {};
@@ -182,6 +198,13 @@ export default function WorkloadPage() {
                         </div>
                     ) : (
                         <ResponsiveContainer width="100%" height={300}>
+                            <svg>
+                                <defs>
+                                    <pattern id="pattern-stripe" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                                        <rect width="2.5" height="4" transform="translate(0,0)" fill="hsl(var(--muted-foreground))" opacity="0.3"></rect>
+                                    </pattern>
+                                </defs>
+                            </svg>
                             <RechartsBarChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="date" />
@@ -191,6 +214,9 @@ export default function WorkloadPage() {
                                 <ReferenceLine y={CAPACITY_THRESHOLD} label={{ value: "Capaciteit", position: 'insideTopLeft' }} stroke="red" strokeDasharray="3 3" />
                                 {allUserNames.map(name => (
                                     <Bar key={name} dataKey={name} stackId="a" fill={userColors[name] || '#8884d8'} />
+                                ))}
+                                {allUserNames.map(name => (
+                                    <Bar key={`${name}-unavailable`} dataKey={`${name}-unavailable`} stackId="a" fill="url(#pattern-stripe)" />
                                 ))}
                             </RechartsBarChart>
                         </ResponsiveContainer>

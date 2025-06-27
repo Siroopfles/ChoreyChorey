@@ -1,5 +1,4 @@
 
-
 export const roadmapData = {
     "Fundamenteel Taakbeheer (Basis)": [
       { id: 1001, title: "Taakcreatie & Eigenschappen", description: "Prioriteit, labels, toewijzing en deadlines.", completed: true },
@@ -52,7 +51,7 @@ export const roadmapData = {
       { id: 32, title: "Geavanceerd Template Beheer", description: "Rijkere templates met meer vooraf ingestelde velden zoals herhaling en bijlagen.", completed: true },
       { id: 33, title: "Project Portfolio Management", description: "Groepeer en beheer gerelateerde projecten als een portfolio.", completed: true },
       { id: 34, title: "Gantt Chart met Critical Path Analysis", description: "Identificeer automatisch het kritieke pad in een project.", completed: false },
-      { id: 35, title: "Time Off & Availability Management", description: "Gebruikers kunnen hun afwezigheid aangeven, wat zichtbaar is in de planning.", completed: false },
+      { id: 35, title: "Time Off & Availability Management", description: "Gebruikers kunnen hun afwezigheid aangeven, wat zichtbaar is in de planning.", completed: true },
       { id: 36, title: "Facturatie op basis van Tijdregistratie", description: "Genereer factuurvoorstellen op basis van gelogde tijd.", completed: false },
       { id: 37, title: "Risico Register", description: "Een aparte module per project om risico's te identificeren, te beoordelen en te mitigeren.", completed: false },
       { id: 38, title: "Stakeholder Management", description: "Wijs stakeholders toe aan projecten met specifieke communicatievoorkeuren.", completed: false },
@@ -102,7 +101,7 @@ export const roadmapData = {
       { id: 59, title: "Team-Based Challenges & Competities", description: "Stel doelen voor teams met een beloning.", completed: false },
       { id: 60, title: "Skill Endorsements", description: "Gebruikers kunnen elkaars vaardigheden onderschrijven.", completed: true },
       { id: 61, title: "Ideeënbus & Feature Request Voting", description: "Laat gebruikers meebeslissen over de toekomst van Chorey.", completed: false },
-      { id: 62, title: "Puntenwinkel", description: "Wissel verdiende punten in voor cosmetische items.", completed: true },
+      { id: 62, title: "Puntenwinkel", description: "Wissel verdiende punten in voor coole cosmetische items.", completed: true },
       { id: 63, title: "Guilds / Clans", description: "Laat gebruikers permanente groepen vormen voor competities en samenwerking.", completed: true },
     ],
     "Het Webdashboard, UI & UX": [

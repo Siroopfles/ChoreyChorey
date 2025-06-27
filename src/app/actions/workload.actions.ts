@@ -2,8 +2,8 @@
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Task, Priority } from '@/lib/types';
-import { eachDayOfInterval, formatISO, startOfDay } from 'date-fns';
+import type { Task, Priority, User } from '@/lib/types';
+import { eachDayOfInterval, formatISO, startOfDay, isAfter } from 'date-fns';
 
 // These schemas are for documentation and can be used with Zod on the client if needed.
 type GetWorkloadDataInput = {
@@ -22,6 +22,7 @@ type DailyWorkload = {
   date: string;
   totalPoints: number;
   users: Record<string, UserWorkload>;
+  unavailableUserIds: string[];
 };
 
 export type GetWorkloadDataOutput = DailyWorkload[];
@@ -42,7 +43,17 @@ export async function getWorkloadData(input: GetWorkloadDataInput): Promise<GetW
   try {
     const usersQuery = query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId));
     const usersSnapshot = await getDocs(usersQuery);
-    const userMap = new Map(usersSnapshot.docs.map(doc => [doc.id, { id: doc.id, ...doc.data() } as any]));
+    const userMap = new Map(usersSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return [doc.id, { 
+          id: doc.id, 
+          ...data,
+          status: {
+              ...data.status,
+              until: (data.status?.until as Timestamp)?.toDate()
+          }
+      } as User]
+    }));
 
     const tasksQuery = query(
       collection(db, 'tasks'),
@@ -72,10 +83,21 @@ export async function getWorkloadData(input: GetWorkloadDataInput): Promise<GetW
 
     interval.forEach(day => {
         const dateKey = formatISO(day, { representation: 'date' });
+        const unavailableUserIds: string[] = [];
+        userMap.forEach(user => {
+            const status = user.status?.type;
+            const until = user.status?.until;
+            
+            if (status === 'Afwezig' || (status === 'Niet storen' && until && isAfter(until, day))) {
+                unavailableUserIds.push(user.id);
+            }
+        });
+
         workloadByDay[dateKey] = {
             date: dateKey,
             totalPoints: 0,
             users: {},
+            unavailableUserIds,
         };
     });
 
@@ -88,7 +110,7 @@ export async function getWorkloadData(input: GetWorkloadDataInput): Promise<GetW
         
         task.assigneeIds.forEach(userId => {
           const user = userMap.get(userId);
-          if (user) {
+          if (user && !workloadByDay[dateKey].unavailableUserIds.includes(userId)) {
             if (!workloadByDay[dateKey].users[userId]) {
               workloadByDay[dateKey].users[userId] = { name: user.name, points: 0, taskCount: 0 };
             }
