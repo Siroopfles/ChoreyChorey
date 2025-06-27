@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, MailCheck, BarChart, Target, GitGraph, ClipboardUser } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -62,12 +62,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const navItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { href: '/dashboard/my-week', icon: CalendarDays, label: 'Mijn Week' },
-        { href: '/dashboard/goals', icon: Target, label: 'Mijn Doelen' },
         { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
-        { href: '/dashboard/digest', icon: MailCheck, label: 'Overzicht' },
-        { href: '/dashboard/reports', icon: BarChart, label: 'Rapporten' },
-        { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
-        { href: '/dashboard/headcount', icon: ClipboardUser, label: 'Headcount' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
         { href: '/dashboard/leaderboard', icon: Trophy, label: 'Prestaties' },
         { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
