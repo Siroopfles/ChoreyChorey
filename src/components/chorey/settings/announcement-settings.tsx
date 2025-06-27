@@ -19,7 +19,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const announcementSchema = z.object({
   message: z.string().min(1, 'Bericht mag niet leeg zijn.'),
-  level: z.enum(['info', 'warning']),
+  level: z.enum(['info', 'warning', 'emergency']),
 });
 type AnnouncementFormValues = z.infer<typeof announcementSchema>;
 
@@ -86,7 +86,7 @@ export default function AnnouncementSettings({ organization }: { organization: O
           <Megaphone /> Organisatie Aankondiging
         </CardTitle>
         <CardDescription>
-          Plaats een banner die voor alle gebruikers in de organisatie bovenaan het dashboard zichtbaar is.
+          Plaats een banner die voor alle gebruikers in de organisatie bovenaan het dashboard zichtbaar is. Gebruik 'Noodgeval' voor kritieke, niet-verbergbare meldingen.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -128,6 +128,7 @@ export default function AnnouncementSettings({ organization }: { organization: O
                                 <SelectContent>
                                     <SelectItem value="info">Info (Blauw)</SelectItem>
                                     <SelectItem value="warning">Waarschuwing (Geel)</SelectItem>
+                                    <SelectItem value="emergency">Noodgeval (Rood, niet-verbergbaar)</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage />

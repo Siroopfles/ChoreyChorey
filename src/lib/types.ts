@@ -20,7 +20,7 @@ export type OrganizationSettings = {
   announcement?: {
     id: string;
     message: string;
-    level: 'info' | 'warning';
+    level: 'info' | 'warning' | 'emergency';
   } | null;
   savedFilters?: SavedFilter[];
 }

@@ -239,7 +239,7 @@ export const roadmapData = {
       { id: 114, title: "ISO 27001 Compliance Reporting & Evidence Pack", description: "Rapportage voor ISO 27001.", completed: false },
       { id: 115, title: "E-Discovery & Legal Hold Module", description: "Bewaar data voor juridische doeleinden.", completed: false },
       { id: 116, title: "Service Level Agreement (SLA) Tracking & Reporting", description: "Volg en rapporteer over SLA's.", completed: false },
-      { id: 117, title: "Emergency Alert System", description: "Voor P1-incidenten of bedrijfsbrede noodgevallen.", completed: false },
+      { id: 117, title: "Emergency Alert System", description: "Voor P1-incidenten of bedrijfsbrede noodgevallen.", completed: true },
     ],
     "Samenwerking & Communicatie (Next-Gen)": [
       { id: 118, title: "Real-time Collaborative Task Editing", description: "Meerdere mensen typen tegelijk in een beschrijving.", completed: false },
