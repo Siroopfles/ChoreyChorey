@@ -3,7 +3,7 @@
 import { useUIPreferences } from '@/contexts/ui-preferences-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Speed } from 'lucide-react';
+import { Gauge } from 'lucide-react';
 
 export default function AnimationSettings() {
   const { preferences, setAnimationSpeed } = useUIPreferences();
@@ -12,7 +12,7 @@ export default function AnimationSettings() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Speed /> Interface Snelheid
+          <Gauge /> Interface Snelheid
         </CardTitle>
         <CardDescription>
           Pas de snelheid van interface-animaties aan. Een lagere waarde is sneller.
