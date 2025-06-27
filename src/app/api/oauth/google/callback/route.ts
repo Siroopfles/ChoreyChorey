@@ -2,7 +2,38 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { oauth2Client } from '@/lib/google-auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { use } from 'react';
+
+const renderResponse = (success: boolean, error?: string) => {
+    const message = JSON.stringify({
+        type: 'google-auth-callback',
+        success,
+        error: error || null,
+    });
+
+    return new NextResponse(
+        `<!DOCTYPE html>
+        <html>
+        <head>
+            <title>Authenticating...</title>
+        </head>
+        <body>
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage(${message}, window.location.origin);
+                }
+                window.close();
+            </script>
+            <p>Authenticatie voltooid. U kunt dit venster sluiten.</p>
+        </body>
+        </html>`,
+        {
+            headers: {
+                'Content-Type': 'text/html',
+            },
+        }
+    );
+};
+
 
 export async function GET(request: NextRequest) {
     const url = new URL(request.url);
@@ -10,14 +41,13 @@ export async function GET(request: NextRequest) {
     const state = url.searchParams.get('state');
 
     if (!code) {
-        return NextResponse.redirect(new URL('/dashboard/settings?error=auth_failed', url.origin));
+        return renderResponse(false, 'auth_failed');
     }
 
     if (!state) {
-        return NextResponse.redirect(new URL('/dashboard/settings?error=invalid_state', url.origin));
+        return renderResponse(false, 'invalid_state');
     }
     
-    // The state should contain the userId
     const userId = state;
 
     try {
@@ -28,14 +58,14 @@ export async function GET(request: NextRequest) {
             await updateDoc(userRef, {
                 googleRefreshToken: tokens.refresh_token,
             });
-            return NextResponse.redirect(new URL('/dashboard/settings?success=google_connected', url.origin));
+            return renderResponse(true);
         } else {
             console.error('No refresh token received from Google.');
-            return NextResponse.redirect(new URL('/dashboard/settings?error=no_refresh_token', url.origin));
+            return renderResponse(false, 'no_refresh_token');
         }
 
     } catch (error) {
         console.error('Error exchanging auth code for tokens:', error);
-        return NextResponse.redirect(new URL('/dashboard/settings?error=token_exchange_failed', url.origin));
+        return renderResponse(false, 'token_exchange_failed');
     }
 }

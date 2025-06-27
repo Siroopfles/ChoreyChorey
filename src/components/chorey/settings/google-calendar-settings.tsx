@@ -1,30 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Calendar, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateGoogleAuthUrl, disconnectGoogleCalendar } from '@/app/actions/user.actions';
-import { useSearchParams } from 'next/navigation';
 
 export default function GoogleCalendarSettings() {
     const { user, refreshUser } = useAuth();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
-    const searchParams = useSearchParams();
-
-    useEffect(() => {
-        const error = searchParams.get('error');
-        const success = searchParams.get('success');
-        if (error) {
-            toast({ title: 'Google Calendar Fout', description: 'Kon niet verbinden met Google Calendar.', variant: 'destructive' });
-        }
-        if (success === 'google_connected') {
-            toast({ title: 'Verbonden!', description: 'Succesvol verbonden met Google Calendar.' });
-        }
-    }, [searchParams, toast]);
     
     if (!user) {
         return null;
@@ -35,8 +22,29 @@ export default function GoogleCalendarSettings() {
     const handleConnect = async () => {
         setIsLoading(true);
         const result = await generateGoogleAuthUrl(user.id);
+        
         if (result.url) {
-            window.location.href = result.url;
+            const popup = window.open(result.url, 'google-auth', 'width=600,height=700');
+            
+            const handleMessage = async (event: MessageEvent) => {
+                if (event.origin !== window.location.origin) {
+                    return;
+                }
+
+                if (event.data.type === 'google-auth-callback') {
+                    if (event.data.success) {
+                        toast({ title: 'Verbonden!', description: 'Succesvol verbonden met Google Calendar.' });
+                        await refreshUser();
+                    } else {
+                        toast({ title: 'Google Calendar Fout', description: event.data.error || 'Kon niet verbinden met Google Calendar.', variant: 'destructive' });
+                    }
+                    setIsLoading(false);
+                    window.removeEventListener('message', handleMessage);
+                    popup?.close();
+                }
+            };
+            
+            window.addEventListener('message', handleMessage, false);
         } else {
             toast({ title: 'Fout', description: 'Kon de Google authenticatie URL niet genereren.', variant: 'destructive' });
             setIsLoading(false);
