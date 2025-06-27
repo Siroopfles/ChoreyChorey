@@ -36,7 +36,7 @@ type EditTaskDialogProps = {
 
 export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
-  const { updateTask, addComment } = useTasks();
+  const { updateTask, addComment, markCommentAsRead } = useTasks();
   const { projects } = useAuth();
 
   const form = useForm<TaskFormValues>({
@@ -158,6 +158,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                             comments={task.comments}
                             users={users}
                             addComment={addComment}
+                            markCommentAsRead={markCommentAsRead}
                         />
                     </TabsContent>
                     <TabsContent value="history" className="flex-1 min-h-0 mt-2">
@@ -170,5 +171,3 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     </Dialog>
   );
 }
-
-    

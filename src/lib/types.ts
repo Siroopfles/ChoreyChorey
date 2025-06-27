@@ -285,6 +285,7 @@ export type Comment = {
   userId: string;
   text: string;
   createdAt: Date;
+  readBy?: string[];
 };
 
 export type HistoryEntry = {
@@ -497,4 +498,3 @@ export const ideaFormSchema = z.object({
     description: z.string().min(10, 'Omschrijving moet minimaal 10 karakters bevatten.'),
 });
 export type IdeaFormValues = z.infer<typeof ideaFormSchema>;
-    

@@ -48,6 +48,7 @@ type TaskContextType = {
   reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => void;
   resetSubtasks: (taskId: string) => void;
   addComment: (taskId: string, text: string) => void;
+  markCommentAsRead: (taskId: string, commentId: string) => void;
   thankForTask: (taskId: string) => Promise<void>;
   addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
   updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
@@ -140,7 +141,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { authUser, user, currentOrganization, users, currentUserPermissions, projects, refreshUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [personalGoals, setPersonalGoals] = useState<PersonalGoal[]>([]);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
@@ -214,7 +214,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           labels: data.labels || [],
           subtasks: data.subtasks || [],
           attachments: data.attachments || [],
-          comments: (data.comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate() })),
+          comments: (data.comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate(), readBy: c.readBy || [] })),
           history: (data.history || []).map((h: any) => ({ ...h, timestamp: (h.timestamp as Timestamp)?.toDate() })),
           isPrivate: data.isPrivate || false,
           isSensitive: data.isSensitive || false,
@@ -891,6 +891,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             userId: user.id,
             text,
             createdAt: new Date(),
+            readBy: [user.id],
         };
         const historyEntry = addHistoryEntry(user.id, 'Reactie toegevoegd', `"${text.replace(/<[^>]*>?/gm, '')}"`);
         
@@ -925,6 +926,30 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     } catch (e) {
         handleError(e, 'reageren op taak');
+    }
+  };
+
+  const markCommentAsRead = async (taskId: string, commentId: string) => {
+    if (!user) return;
+
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const comment = task.comments.find(c => c.id === commentId);
+    if (!comment || comment.readBy?.includes(user.id)) return;
+
+    const updatedComments = task.comments.map(c => 
+        c.id === commentId
+            ? { ...c, readBy: [...(c.readBy || []), user.id] }
+            : c
+    );
+
+    const taskRef = doc(db, 'tasks', taskId);
+    try {
+        await updateDoc(taskRef, { comments: updatedComments });
+        // No toast, this is a background action.
+    } catch(e) {
+        handleError(e, 'bijwerken van leesbevestiging');
     }
   };
 
@@ -1399,6 +1424,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       reorderTasks,
       resetSubtasks,
       addComment,
+      markCommentAsRead,
       thankForTask,
       addTemplate,
       updateTemplate,
@@ -1454,5 +1480,3 @@ export function useTasks() {
   }
   return context;
 }
-
-    

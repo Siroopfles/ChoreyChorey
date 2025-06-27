@@ -1,10 +1,11 @@
+
 'use client';
 
 import type { User, Comment as CommentType } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Bot, Loader2, Speaker } from 'lucide-react';
+import { Bot, Loader2, Speaker, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { handleSummarizeComments, handleMultiSpeakerTextToSpeech } from '@/app/actions/ai.actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,20 +13,77 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { RichTextEditor } from '../ui/rich-text-editor';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/contexts/auth-context';
 
-const CommentItem = ({ comment, user }: { comment: CommentType; user?: User }) => {
+const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }) => {
+    const readers = (comment.readBy || [])
+        .map(userId => users.find(u => u.id === userId)?.name)
+        .filter(Boolean);
+
+    if (readers.length === 0) return null;
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Eye className="h-3 w-3" />
+                        <span>{readers.length}</span>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p className="font-semibold">Gelezen door:</p>
+                    <ul className="list-disc list-inside">
+                        {readers.map(name => <li key={name}>{name}</li>)}
+                    </ul>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
+
+const CommentItem = ({ comment, user, onVisible, allUsers }: { comment: CommentType; user?: User; onVisible: () => void; allUsers: User[] }) => {
+    const commentRef = useRef<HTMLDivElement>(null);
+    const { user: currentUser } = useAuth();
+    
+    const hasBeenReadByMe = currentUser ? comment.readBy?.includes(currentUser.id) : false;
+
+    useEffect(() => {
+        if(hasBeenReadByMe) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    onVisible();
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.8 }
+        );
+
+        if (commentRef.current) {
+            observer.observe(commentRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, [onVisible, hasBeenReadByMe]);
+
   return (
-    <div className="flex items-start gap-3">
+    <div ref={commentRef} className="flex items-start gap-3">
       <Avatar className="h-8 w-8 border">
         <AvatarImage src={user?.avatar} />
         <AvatarFallback>{user?.name.charAt(0) ?? '?'}</AvatarFallback>
       </Avatar>
       <div className="flex-1">
-        <div className="flex items-center gap-2">
-            <p className="font-semibold text-sm">{user?.name ?? 'Onbekende gebruiker'}</p>
-            <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(comment.createdAt, { addSuffix: true, locale: nl })}
-            </p>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <p className="font-semibold text-sm">{user?.name ?? 'Onbekende gebruiker'}</p>
+                <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(comment.createdAt, { addSuffix: true, locale: nl })}
+                </p>
+            </div>
+            <ReadReceipt comment={comment} users={allUsers} />
         </div>
         <div className="text-sm text-foreground/90 prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: comment.text }} />
       </div>
@@ -38,9 +96,10 @@ type TaskCommentsProps = {
   comments: CommentType[];
   users: User[];
   addComment: (taskId: string, text: string) => void;
+  markCommentAsRead: (taskId: string, commentId: string) => void;
 };
 
-export function TaskComments({ taskId, comments, users, addComment }: TaskCommentsProps) {
+export function TaskComments({ taskId, comments, users, addComment, markCommentAsRead }: TaskCommentsProps) {
   const { toast } = useToast();
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState('');
@@ -111,6 +170,10 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
       setNewComment('');
     }
   };
+  
+  const handleCommentVisible = (commentId: string) => {
+    markCommentAsRead(taskId, commentId);
+  };
 
   return (
     <div className="flex-1 flex flex-col gap-4 min-h-0">
@@ -150,7 +213,13 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
           )}
           {sortedComments.length > 0 ? (
               sortedComments.map(comment => (
-                  <CommentItem key={comment.id} comment={comment} user={users.find(u => u.id === comment.userId)} />
+                  <CommentItem 
+                    key={comment.id}
+                    comment={comment}
+                    user={users.find(u => u.id === comment.userId)}
+                    onVisible={() => handleCommentVisible(comment.id)}
+                    allUsers={users}
+                  />
               ))
           ) : (
               <p className="text-sm text-muted-foreground text-center py-4">Nog geen reacties.</p>
