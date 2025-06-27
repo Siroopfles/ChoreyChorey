@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, type ReactNode, useMemo, useCallback } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const UI_PREFERENCES_KEY = 'chorey_ui_preferences';
@@ -26,14 +26,14 @@ export function UIPreferencesProvider({ children }: { children: ReactNode }) {
         document.documentElement.style.setProperty('--animation-speed-modifier', `${preferences.animationSpeed}`);
     }, [preferences.animationSpeed]);
 
-    const setAnimationSpeed = (speed: number) => {
+    const setAnimationSpeed = useCallback((speed: number) => {
         setPreferences(prev => ({ ...prev, animationSpeed: speed }));
-    };
+    }, [setPreferences]);
     
-    const value = {
+    const value = useMemo(() => ({
         preferences,
         setAnimationSpeed,
-    };
+    }), [preferences, setAnimationSpeed]);
 
     return <UIPreferencesContext.Provider value={value}>{children}</UIPreferencesContext.Provider>;
 }
