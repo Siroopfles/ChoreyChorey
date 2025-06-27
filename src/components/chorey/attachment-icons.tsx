@@ -26,13 +26,18 @@ const OneDriveIcon = () => (
     </svg>
 );
 
-const FigmaIcon = () => <Figma className="h-4 w-4"/>;
-
 const BitbucketIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
         <path d="M2.531 2.375l8.594 19.25-2.093 0.938-6.5-14.563v13.625h-2.125v-19.25h2.125zM22.563 15.188l-4.125-2.531-2.031 3.406 6.156-3.75zM12.969 4.313l-1.031 2.313-4.5-2.75 5.531-3.625z"></path>
     </svg>
 );
+
+const AdobeXdIcon = () => (
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#FF61F6">
+        <path d="M15.2 2.8H8.8C5.6 2.8 3 5.4 3 8.6v6.8c0 3.2 2.6 5.8 5.8 5.8h6.4c3.2 0 5.8-2.6 5.8-5.8V8.6c0-3.2-2.6-5.8-5.8-5.8zM9.3 16h-2L6 8h2.3l1.3 5.3L10.9 8H13l-3.7 8zm7.3-8h2.4v8h-2.4V8z"/>
+    </svg>
+);
+
 
 const GitLabIcon = () => <Gitlab className="h-4 w-4 text-orange-600"/>;
 
@@ -42,9 +47,10 @@ export const AttachmentIcon = ({ source }: { source: AttachmentSource }) => {
     case 'google-drive': return <GoogleDriveIcon />;
     case 'dropbox': return <DropboxIcon />;
     case 'onedrive': return <OneDriveIcon />;
-    case 'figma': return <FigmaIcon />;
+    case 'figma': return <Figma className="h-4 w-4" />;
     case 'gitlab': return <GitLabIcon />;
     case 'bitbucket': return <BitbucketIcon />;
+    case 'adobe-xd': return <AdobeXdIcon />;
     default: return <Link className="h-4 w-4" />;
   }
 };

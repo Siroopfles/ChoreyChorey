@@ -22,7 +22,7 @@ export const calculatePoints = (priority: Priority, storyPoints?: number): numbe
     return finalPoints;
 };
 
-export type AttachmentSource = 'google-drive' | 'onedrive' | 'dropbox' | 'figma' | 'gitlab' | 'bitbucket' | 'generic-link';
+export type AttachmentSource = 'google-drive' | 'onedrive' | 'dropbox' | 'figma' | 'gitlab' | 'bitbucket' | 'adobe-xd' | 'generic-link';
 
 export function getAttachmentSource(url: string | undefined): AttachmentSource {
     if (!url) return 'generic-link';
@@ -30,6 +30,7 @@ export function getAttachmentSource(url: string | undefined): AttachmentSource {
     if (url.includes('dropbox.com')) return 'dropbox';
     if (url.includes('onedrive.live.com') || url.includes('1drv.ms')) return 'onedrive';
     if (url.includes('figma.com')) return 'figma';
+    if (url.includes('xd.adobe.com')) return 'adobe-xd';
     if (url.includes('gitlab.com')) return 'gitlab';
     if (url.includes('bitbucket.org')) return 'bitbucket';
     return 'generic-link';
