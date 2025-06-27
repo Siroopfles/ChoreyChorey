@@ -69,7 +69,7 @@ export const roadmapPhases: Phase[] = [
     name: "Fase 3: Ecosysteem & Integraties (Gepland)",
     description: "Chorey verbinden met de tools die u al gebruikt. Deze fase richt zich op het openen van het platform en het bouwen van naadloze verbindingen met andere diensten.",
     features: [
-      { id: 3001, title: "Public API v2", description: "Uitbreiding van de API met meer endpoints (projecten, teams, gebruikers) en webhook management.", completed: false },
+      { id: 3001, title: "Public API v2", description: "Uitbreiding van de API met meer endpoints (projecten, teams, gebruikers) en webhook management.", completed: true },
       { id: 3002, title: "Slack Integratie", description: "Ontvang notificaties in Slack en maak taken aan vanuit een Slack-bericht.", completed: false },
       { id: 3003, title: "GitHub Integratie", description: "Koppel taken aan issues en pull requests. Synchroniseer statusupdates.", completed: false },
       { id: 3004, title: "Microsoft Teams Integratie", description: "Volledige functionaliteit binnen MS Teams, inclusief notificaties en taakcreatie.", completed: false },

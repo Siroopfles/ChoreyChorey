@@ -513,6 +513,13 @@ export const API_PERMISSIONS = {
   'read:tasks': 'Lezen: Taken',
   'write:tasks': 'Schrijven: Taken',
   'delete:tasks': 'Verwijderen: Taken',
+  'read:users': 'Lezen: Gebruikers',
+  'read:projects': 'Lezen: Projecten',
+  'write:projects': 'Schrijven: Projecten',
+  'delete:projects': 'Verwijderen: Projecten',
+  'read:teams': 'Lezen: Teams',
+  'write:teams': 'Schrijven: Teams',
+  'delete:teams': 'Verwijderen: Teams',
 } as const;
 
 export type ApiPermission = keyof typeof API_PERMISSIONS;
