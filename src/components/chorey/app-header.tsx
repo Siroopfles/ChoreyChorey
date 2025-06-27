@@ -22,7 +22,7 @@ import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Ch
 import { useTheme } from 'next-themes';
 import { useTasks } from '@/contexts/task-context';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
@@ -30,7 +30,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { isAfter } from 'date-fns';
-import { USER_STATUSES, statusStyles } from '@/lib/types';
+import { statusStyles } from '@/lib/types';
 import { CreateOrganizationDialog } from './organization/create-organization-dialog';
 
 export default function AppHeader() {
@@ -54,7 +54,14 @@ export default function AppHeader() {
   }
 
   const currentStatus = user?.status?.type || 'Offline';
+  const dndUntil = user?.status?.until;
   const currentStatusStyle = statusStyles[currentStatus] || statusStyles.Offline;
+  let statusLabel = currentStatusStyle.label;
+  if (currentStatus === 'Niet storen' && dndUntil && isAfter(dndUntil, new Date())) {
+    statusLabel = `Niet storen (tot ${format(dndUntil, 'HH:mm')})`;
+  } else if (currentStatus === 'Niet storen' && !dndUntil) {
+    statusLabel = 'Niet storen';
+  }
 
   return (
     <>
@@ -183,7 +190,7 @@ export default function AppHeader() {
                   </DropdownMenuTrigger>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Status: {currentStatusStyle.label}</p>
+                  <p>Status: {statusLabel}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -193,16 +200,43 @@ export default function AppHeader() {
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <div className={cn("w-2 h-2 rounded-full mr-2", currentStatusStyle.dot)} />
-                  <span>Status: {currentStatusStyle.label}</span>
+                  <span>Status: {statusLabel}</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
-                    {USER_STATUSES.map(status => (
-                      <DropdownMenuItem key={status.value} onClick={() => updateUserStatus({ type: status.value })}>
-                        <div className={cn("w-2 h-2 rounded-full mr-2", (statusStyles[status.value] || statusStyles.Offline).dot)} />
-                        <span>{status.label}</span>
-                      </DropdownMenuItem>
-                    ))}
+                    <DropdownMenuItem onClick={() => updateUserStatus({ type: 'Online', until: null })}>
+                      <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles.Online.dot)} />
+                      <span>Online</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updateUserStatus({ type: 'Afwezig', until: null })}>
+                      <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles.Afwezig.dot)} />
+                      <span>Afwezig</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updateUserStatus({ type: 'In vergadering', until: null })}>
+                      <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles['In vergadering'].dot)} />
+                      <span>In vergadering</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles['Niet storen'].dot)} />
+                        <span>Niet storen</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setMinutes(u.getMinutes() + 30); updateUserStatus({ type: 'Niet storen', until: u }); }}>Voor 30 minuten</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setHours(u.getHours() + 2); updateUserStatus({ type: 'Niet storen', until: u }); }}>Voor 2 uur</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setHours(22, 0, 0, 0); updateUserStatus({ type: 'Niet storen', until: u }); }}>Tot vanavond</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setDate(u.getDate() + 1); u.setHours(8, 0, 0, 0); updateUserStatus({ type: 'Niet storen', until: u }); }}>Tot morgenochtend</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateUserStatus({ type: 'Niet storen', until: null })}>Tot ik het uitzet</DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => updateUserStatus({ type: 'Offline', until: null })}>
+                      <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles.Offline.dot)} />
+                      <span>Offline</span>
+                    </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>

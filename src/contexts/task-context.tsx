@@ -288,19 +288,34 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
 
   const createNotification = async (userId: string, message: string, taskId: string, organizationId: string) => {
-      if (!authUser || userId === authUser.uid) return;
-      try {
-          await addDoc(collection(db, 'notifications'), {
-              userId,
-              message,
-              taskId,
-              organizationId,
-              read: false,
-              createdAt: new Date(),
-          });
-      } catch (e) {
-          handleError(e, 'maken van notificatie');
+    if (!authUser || userId === authUser.uid) return;
+    try {
+      const userToNotifyRef = doc(db, 'users', userId);
+      const userToNotifyDoc = await getDoc(userToNotifyRef);
+
+      if (userToNotifyDoc.exists()) {
+        const userData = userToNotifyDoc.data();
+        if (userData.status?.type === 'Niet storen') {
+          const dndUntil = (userData.status.until as Timestamp | null)?.toDate();
+          if (!dndUntil || isAfter(dndUntil, new Date())) {
+            // Do not send notification if DND is active indefinitely, or the end date is in the future.
+            console.log(`Notification for ${userData.name} suppressed due to DND status.`);
+            return;
+          }
+        }
       }
+
+      await addDoc(collection(db, 'notifications'), {
+        userId,
+        message,
+        taskId,
+        organizationId,
+        read: false,
+        createdAt: new Date(),
+      });
+    } catch (e) {
+      handleError(e, 'maken van notificatie');
+    }
   };
   
   const markAllNotificationsAsRead = async () => {

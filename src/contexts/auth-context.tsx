@@ -19,7 +19,7 @@ import {
     type User as FirebaseUser,
     getAdditionalUserInfo,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import type { User, Organization, Team, RoleName, UserStatus, Permission } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
@@ -85,8 +85,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        const userData = { id: userDoc.id, ...userDoc.data() } as User;
+        const rawData = userDoc.data();
+        const userData: User = {
+            id: userDoc.id,
+            name: rawData.name,
+            email: rawData.email,
+            points: rawData.points,
+            avatar: rawData.avatar,
+            achievements: rawData.achievements,
+            organizationIds: rawData.organizationIds,
+            currentOrganizationId: rawData.currentOrganizationId,
+            skills: rawData.skills,
+            endorsements: rawData.endorsements,
+            cosmetic: rawData.cosmetic,
+            status: rawData.status ? {
+                ...rawData.status,
+                until: (rawData.status.until as Timestamp | null)?.toDate() ?? null,
+            } : { type: 'Offline', until: null },
+        };
         setUser(userData);
+
         if (isDebugMode) console.log('[DEBUG] AuthContext: User data set:', userData);
 
         if (userData.organizationIds && userData.organizationIds.length > 0) {
@@ -222,8 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 console.error("Failed to generate AI avatar, using placeholder.", aiError);
             }
 
-            const newUser: User = {
-                id: firebaseUser.uid,
+            const newUser: Omit<User, 'id'> = {
                 name,
                 email,
                 points: 0,
@@ -231,9 +248,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 achievements: [],
                 organizationIds: [],
                 currentOrganizationId: null,
+                status: { type: 'Online', until: null }
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-            setUser(newUser);
+            setUser({ id: firebaseUser.uid, ...newUser });
             setOrganizations([]);
             setCurrentOrganization(null);
 
@@ -261,8 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     console.error("Failed to generate AI avatar, using placeholder.", aiError);
                 }
 
-                const newUser: User = {
-                    id: firebaseUser.uid,
+                const newUser: Omit<User, 'id'> = {
                     name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
                     email: firebaseUser.email!,
                     points: 0,
@@ -270,9 +287,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     achievements: [],
                     organizationIds: [],
                     currentOrganizationId: null,
+                    status: { type: 'Online', until: null },
                 };
                 await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-                setUser(newUser);
+                setUser({ id: firebaseUser.uid, ...newUser });
                 setOrganizations([]);
                 setCurrentOrganization(null);
             }
@@ -287,7 +305,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             if (user?.id) {
-              await updateUserStatusAction(user.id, { type: 'Offline' });
+              await updateUserStatusAction(user.id, { type: 'Offline', until: null });
             }
             await signOut(auth);
             router.push('/login');

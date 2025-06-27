@@ -110,10 +110,11 @@ export type Team = {
   isPublic?: boolean;
 };
 
-export const USER_STATUSES: { value: 'Online' | 'Afwezig' | 'In vergadering' | 'Offline'; label: string }[] = [
+export const USER_STATUSES: { value: 'Online' | 'Afwezig' | 'In vergadering' | 'Niet storen' | 'Offline'; label: string }[] = [
   { value: 'Online', label: 'Online' },
   { value: 'Afwezig', label: 'Afwezig' },
   { value: 'In vergadering', label: 'In vergadering' },
+  { value: 'Niet storen', label: 'Niet storen' },
   { value: 'Offline', label: 'Offline' },
 ];
 
@@ -121,11 +122,13 @@ export const statusStyles: Record<string, { dot: string; label: string }> = {
   Online: { dot: 'bg-green-500', label: 'Online' },
   Afwezig: { dot: 'bg-yellow-500', label: 'Afwezig' },
   'In vergadering': { dot: 'bg-red-500', label: 'In vergadering' },
+  'Niet storen': { dot: 'bg-purple-500', label: 'Niet storen' },
   Offline: { dot: 'bg-gray-400', label: 'Offline' },
 };
 
 export type UserStatus = {
-  type: 'Online' | 'Afwezig' | 'In vergadering' | 'Offline';
+  type: 'Online' | 'Afwezig' | 'In vergadering' | 'Niet storen' | 'Offline';
+  until?: Date | null;
 };
 
 export type User = {
@@ -139,7 +142,7 @@ export type User = {
   currentOrganizationId?: string | null;
   skills?: string[];
   endorsements?: Record<string, string[]>; // Map of skill to array of user IDs
-  status?: UserStatus;
+  status: UserStatus;
   cosmetic?: {
     primaryColor?: string;
   }
