@@ -161,9 +161,20 @@ export async function handleIdentifyRisk(input: IdentifyRiskInput) {
     }
 }
 
-export async function handleSuggestLabels(input: SuggestLabelsInput) {
+export async function handleSuggestLabels(input: Omit<SuggestLabelsInput, 'availableLabels'>, organizationId: string) {
     try {
-        const result = await suggestLabels(input);
+        const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+        if (!orgDoc.exists()) {
+            return { error: 'Organisatie niet gevonden.' };
+        }
+        const orgData = orgDoc.data() as Organization;
+        const availableLabels = orgData.settings?.customization?.labels || [];
+
+        if (availableLabels.length === 0) {
+            return { labels: [] };
+        }
+
+        const result = await suggestLabels({ ...input, availableLabels });
         return { labels: result.labels };
     } catch (e: any) {
         return { error: e.message };

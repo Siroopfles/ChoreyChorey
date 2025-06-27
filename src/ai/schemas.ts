@@ -130,6 +130,7 @@ export type SuggestPriorityOutput = z.infer<typeof SuggestPriorityOutputSchema>;
 export const SuggestLabelsInputSchema = z.object({
   title: z.string().describe('The title of the task.'),
   description: z.string().optional().describe('The description of the task.'),
+  availableLabels: z.array(z.string()).describe('The list of available labels to choose from.'),
 });
 export type SuggestLabelsInput = z.infer<typeof SuggestLabelsInputSchema>;
 

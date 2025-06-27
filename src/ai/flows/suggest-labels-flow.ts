@@ -9,7 +9,6 @@
 import {ai} from '@/ai/genkit';
 import { SuggestLabelsInputSchema, SuggestLabelsOutputSchema } from '@/ai/schemas';
 import type { SuggestLabelsInput, SuggestLabelsOutput } from '@/ai/schemas';
-import { ALL_LABELS } from '@/lib/types';
 
 export async function suggestLabels(input: SuggestLabelsInput): Promise<SuggestLabelsOutput> {
   return suggestLabelsFlow(input);
@@ -22,7 +21,7 @@ const prompt = ai.definePrompt({
   model: 'gemini-pro',
   prompt: `Je bent een expert in taakbeheer. Analyseer de titel en omschrijving van de volgende taak en kies 1 tot 3 relevante labels uit de onderstaande lijst.
 
-Beschikbare labels: ${ALL_LABELS.join(', ')}
+Beschikbare labels: {{#each availableLabels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
 Taak Titel: {{{title}}}
 {{#if description}}

@@ -190,8 +190,12 @@ export function TaskFormFields({ users, teams }: TaskFormFieldsProps) {
         toast({ title: 'Titel vereist', description: 'Voer een titel in om labels te kunnen genereren.', variant: 'destructive' });
         return;
     }
+    if (!currentOrganization) {
+      toast({ title: 'Organisatie niet gevonden', description: 'Kan labels niet ophalen.', variant: 'destructive' });
+      return;
+    }
     setIsSuggestingLabels(true);
-    const result = await handleSuggestLabels({ title, description });
+    const result = await handleSuggestLabels({ title, description }, currentOrganization.id);
     if (result.error) {
         toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
     } else if (result.labels) {
