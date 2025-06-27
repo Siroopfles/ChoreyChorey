@@ -118,3 +118,36 @@ export async function updateUserStatus(userId: string, status: UserStatus) {
         return { error: error.message };
     }
 }
+
+export async function purchaseTheme(userId: string, color: string, cost: number) {
+    if (cost < 0) {
+        return { error: 'Kosten kunnen niet negatief zijn.' };
+    }
+    
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await transaction.get(userRef);
+
+            if (!userDoc.exists()) {
+                throw new Error("Gebruiker niet gevonden.");
+            }
+            
+            const userData = userDoc.data() as User;
+
+            if ((userData.points || 0) < cost) {
+                throw new Error("Je hebt niet genoeg punten voor dit thema.");
+            }
+
+            transaction.update(userRef, { 
+                points: increment(-cost),
+                'cosmetic.primaryColor': color 
+            });
+        });
+        
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error purchasing theme:", error);
+        return { error: error.message };
+    }
+}

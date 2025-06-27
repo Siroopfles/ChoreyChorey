@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -38,6 +38,19 @@ const BrandingStyle = () => {
   return <style dangerouslySetInnerHTML={{ __html: css }} />;
 };
 
+const UserCosmeticStyle = () => {
+  const { user } = useAuth();
+  const primaryColor = user?.cosmetic?.primaryColor;
+
+  if (!primaryColor) {
+    return null;
+  }
+
+  const css = `:root { --primary: ${primaryColor}; }`;
+
+  return <style dangerouslySetInnerHTML={{ __html: css }} />;
+};
+
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
@@ -53,6 +66,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
         { href: '/dashboard/leaderboard', icon: Trophy, label: 'Scorebord' },
         { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
+        { href: '/dashboard/shop', icon: Store, label: 'Puntenwinkel' },
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates' },
         { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
@@ -77,6 +91,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     return (
         <SidebarProvider>
             <BrandingStyle />
+            <UserCosmeticStyle />
             <Sidebar>
                 <SidebarHeader className="p-4 border-b border-sidebar-border">
                     <Link href="/dashboard">

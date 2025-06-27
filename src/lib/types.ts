@@ -140,6 +140,9 @@ export type User = {
   skills?: string[];
   endorsements?: Record<string, string[]>; // Map of skill to array of user IDs
   status?: UserStatus;
+  cosmetic?: {
+    primaryColor?: string;
+  }
 };
 
 export const ACHIEVEMENTS = {
