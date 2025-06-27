@@ -6,7 +6,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
 import type { Status, Task } from '@/lib/types';
 
 // Helper to add history entries
@@ -118,27 +118,24 @@ export const searchTasks = ai.defineTool(
   },
   async ({ organizationId, filters }) => {
     try {
-        const queryConstraints: any[] = [];
-        
-        // Always filter by organizationId
-        if (typeof organizationId === 'string' && organizationId.length > 0) {
-            queryConstraints.push(where('organizationId', '==', organizationId));
-        } else {
+        if (!organizationId || typeof organizationId !== 'string') {
             console.error("CRITICAL: searchTasks called without a valid organizationId.");
-            return []; // Cannot perform a query without an organizationId
+            return [];
         }
 
+        const queryConstraints: any[] = [where('organizationId', '==', organizationId)];
+        
         if (filters) {
-            if (typeof filters.status === 'string' && filters.status.length > 0) {
+            if (filters.status && typeof filters.status === 'string') {
                 queryConstraints.push(where('status', '==', filters.status));
             }
-            if (typeof filters.priority === 'string' && filters.priority.length > 0) {
+            if (filters.priority && typeof filters.priority === 'string') {
                 queryConstraints.push(where('priority', '==', filters.priority));
             }
-            if (typeof filters.assigneeId === 'string' && filters.assigneeId.length > 0) {
+            if (filters.assigneeId && typeof filters.assigneeId === 'string') {
                 queryConstraints.push(where('assigneeIds', 'array-contains', filters.assigneeId));
             }
-            if (Array.isArray(filters.labels) && filters.labels.length > 0) {
+            if (filters.labels && Array.isArray(filters.labels) && filters.labels.length > 0) {
                 const validLabels = filters.labels.filter(label => typeof label === 'string' && label.length > 0);
                 if (validLabels.length > 0) {
                     queryConstraints.push(where('labels', 'array-contains-any', validLabels));
@@ -148,10 +145,23 @@ export const searchTasks = ai.defineTool(
     
         const q = query(collection(db, 'tasks'), ...queryConstraints);
         const snapshot = await getDocs(q);
-        let tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+        
+        let tasks = snapshot.docs.map(doc => {
+            const data = doc.data();
+            // Perform timestamp conversion here
+            const convertedData: Partial<Task> = {};
+            for (const key in data) {
+                if (data[key] instanceof Timestamp) {
+                    (convertedData as any)[key] = (data[key] as Timestamp).toDate();
+                } else {
+                    (convertedData as any)[key] = data[key];
+                }
+            }
+            return { id: doc.id, ...convertedData } as Task;
+        });
 
         // Client-side filtering for search term as Firestore doesn't support it well with other filters
-        if (filters && typeof filters.term === 'string' && filters.term.length > 0) {
+        if (filters && typeof filters.term === 'string' && filters.term) {
             const lowercasedTerm = filters.term.toLowerCase();
             tasks = tasks.filter(task => 
                 task.title.toLowerCase().includes(lowercasedTerm) || 
@@ -171,7 +181,7 @@ export const searchTasks = ai.defineTool(
     } catch (error: any) {
         console.error("CRITICAL ERROR in searchTasks tool:", error);
         console.error("Filters that caused the error:", JSON.stringify(filters, null, 2));
-        return []; // Return an empty array to prevent the AI flow from crashing completely.
+        return [];
     }
   }
 );
