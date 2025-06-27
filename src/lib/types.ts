@@ -44,6 +44,10 @@ export type OrganizationSettings = {
     owner: string;
     repos: string[];
   };
+  teams?: {
+    enabled: boolean;
+    webhookUrl: string;
+  };
   limits?: {
     maxMembers?: number;
     maxTasks?: number;

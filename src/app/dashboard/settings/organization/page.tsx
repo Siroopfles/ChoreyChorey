@@ -14,6 +14,7 @@ import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
 import { PERMISSIONS } from '@/lib/types';
 import SlackSettings from '@/components/chorey/settings/slack-settings';
 import GitHubSettings from '@/components/chorey/settings/github-settings';
+import TeamsSettings from '@/components/chorey/settings/teams-settings';
 import LimitSettings from '@/components/chorey/settings/limit-settings';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -67,6 +68,7 @@ export default function OrganizationSettingsPage() {
         <LimitSettings organization={currentOrganization} />
         {canManageIntegrations && <SlackSettings organization={currentOrganization} />}
         {canManageIntegrations && <GitHubSettings organization={currentOrganization} />}
+        {canManageIntegrations && <TeamsSettings organization={currentOrganization} />}
         <WebhookSettings />
         {canManageApiKeys && <ApiKeySettings />}
         <WorkflowSettings organization={currentOrganization} />

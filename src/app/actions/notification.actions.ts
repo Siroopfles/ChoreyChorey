@@ -6,6 +6,7 @@ import { collection, doc, addDoc, getDoc, Timestamp } from 'firebase/firestore';
 import type { User, Task, Priority, Organization } from '@/lib/types';
 import { isAfter } from 'date-fns';
 import { sendSlackMessage } from '@/lib/slack-service';
+import { sendTeamsMessage } from '@/lib/teams-service';
 
 const priorityOrder: Record<Priority, number> = {
     'Laag': 0,
@@ -72,15 +73,22 @@ export async function createNotification(userId: string, message: string, taskId
       createdAt: new Date(),
     });
 
-    // Trigger external notifications (e.g., Slack)
+    // Trigger external notifications
     const orgRef = doc(db, 'organizations', organizationId);
     const orgDoc = await getDoc(orgRef);
     if (orgDoc.exists()) {
         const orgData = orgDoc.data() as Organization;
+        
+        // Slack
         const slackConfig = orgData.settings?.slack;
         if (slackConfig?.enabled && slackConfig.channelId) {
-            // Fire-and-forget
             sendSlackMessage(slackConfig.channelId, message).catch(console.error);
+        }
+
+        // Microsoft Teams
+        const teamsConfig = orgData.settings?.teams;
+        if (teamsConfig?.enabled && teamsConfig.webhookUrl) {
+            sendTeamsMessage(teamsConfig.webhookUrl, message).catch(console.error);
         }
     }
   } catch (e) {
