@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -65,7 +66,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/digest', icon: MailCheck, label: 'Overzicht' },
         { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
-        { href: '/dashboard/leaderboard', icon: Trophy, label: 'Scorebord' },
+        { href: '/dashboard/leaderboard', icon: Trophy, label: 'Prestaties' },
         { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
         { href: '/dashboard/shop', icon: Store, label: 'Puntenwinkel' },
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },

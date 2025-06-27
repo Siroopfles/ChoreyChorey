@@ -208,8 +208,8 @@ export default function LeaderboardPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2"><Trophy /> Scorebord</h1>
-          <p className="text-muted-foreground">Zie wie de meeste punten heeft, individueel of in teamverband.</p>
+          <h1 className="text-3xl font-bold flex items-center gap-2"><Trophy /> Prestaties & Scorebord</h1>
+          <p className="text-muted-foreground">Analyseer prestaties en bekijk wie aan de top staat, individueel of in teamverband.</p>
         </div>
       </div>
        <Tabs defaultValue="individual">
