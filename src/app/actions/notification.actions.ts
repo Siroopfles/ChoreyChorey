@@ -1,14 +1,29 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, doc, addDoc, getDoc, Timestamp } from 'firebase/firestore';
-import type { User } from '@/lib/types';
+import type { User, Task } from '@/lib/types';
 import { isAfter } from 'date-fns';
 
 export async function createNotification(userId: string, message: string, taskId: string | null, organizationId: string, fromUserId: string) {
   if (userId === fromUserId) return; // Don't notify yourself
   
   try {
+    // If there is a task ID, check its priority. Only send for 'Urgent' tasks.
+    if (taskId) {
+        const taskRef = doc(db, 'tasks', taskId);
+        const taskDoc = await getDoc(taskRef);
+
+        if (taskDoc.exists()) {
+            const taskData = taskDoc.data() as Task;
+            if (taskData.priority !== 'Urgent') {
+                // Silently drop the notification if not urgent
+                return;
+            }
+        }
+    }
+      
     const userToNotifyRef = doc(db, 'users', userId);
     const userToNotifyDoc = await getDoc(userToNotifyRef);
 
