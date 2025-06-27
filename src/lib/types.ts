@@ -50,6 +50,7 @@ export const PERMISSIONS = {
   VIEW_AUDIT_LOG: 'VIEW_AUDIT_LOG',
   VIEW_SENSITIVE_DATA: 'VIEW_SENSITIVE_DATA',
   MANAGE_IDEAS: 'MANAGE_IDEAS',
+  MANAGE_API_KEYS: 'MANAGE_API_KEYS',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -68,6 +69,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.VIEW_AUDIT_LOG]: { name: 'Audit Log Bekijken', description: 'Heeft toegang tot de audit log met alle acties binnen de organisatie.' },
   [PERMISSIONS.VIEW_SENSITIVE_DATA]: { name: 'Gevoelige Data Zien', description: 'Kan de inhoud van taken zien die als "gevoelig" zijn gemarkeerd.' },
   [PERMISSIONS.MANAGE_IDEAS]: { name: 'Ideeën Beheren', description: 'Kan de status van ideeën in de ideeënbus aanpassen.' },
+  [PERMISSIONS.MANAGE_API_KEYS]: { name: 'API Sleutels Beheren', description: 'Kan API-sleutels voor de organisatie aanmaken, inzien en intrekken.' },
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
@@ -91,6 +93,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.VIEW_AUDIT_LOG,
       PERMISSIONS.VIEW_SENSITIVE_DATA,
       PERMISSIONS.MANAGE_IDEAS,
+      PERMISSIONS.MANAGE_API_KEYS,
     ],
   },
   Member: {
@@ -503,3 +506,13 @@ export const ideaFormSchema = z.object({
     description: z.string().min(10, 'Omschrijving moet minimaal 10 karakters bevatten.'),
 });
 export type IdeaFormValues = z.infer<typeof ideaFormSchema>;
+
+export type ApiKey = {
+  id: string;
+  organizationId: string;
+  name: string;
+  hashedKey: string;
+  keyPrefix: string;
+  createdAt: Date;
+  lastUsed?: Date;
+};

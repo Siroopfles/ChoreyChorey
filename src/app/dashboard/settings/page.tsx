@@ -16,9 +16,11 @@ import AnnouncementSettings from '@/components/chorey/settings/announcement-sett
 import SessionManagement from '@/components/chorey/settings/session-management';
 import TwoFactorAuthSettings from '@/components/chorey/settings/two-factor-auth-settings';
 import WebhookSettings from '@/components/chorey/settings/webhook-settings';
+import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
+import { PERMISSIONS } from '@/lib/types';
 
 export default function SettingsPage() {
-  const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
+  const { user, loading: authLoading, currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
 
   if (authLoading || !user) {
     return (
@@ -29,6 +31,7 @@ export default function SettingsPage() {
   }
 
   const isOwnerOrAdmin = currentUserRole === 'Owner' || currentUserRole === 'Admin';
+  const canManageApiKeys = currentUserPermissions.includes(PERMISSIONS.MANAGE_API_KEYS);
 
   return (
     <div className="space-y-6">
@@ -47,6 +50,7 @@ export default function SettingsPage() {
           {isOwnerOrAdmin && <AnnouncementSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <BrandingSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <WebhookSettings />}
+          {canManageApiKeys && <ApiKeySettings />}
           {isOwnerOrAdmin && <WorkflowSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <FeatureToggleSettings organization={currentOrganization} />}
           <DangerZone
