@@ -173,7 +173,7 @@ export const roadmapData = {
       { id: 68, title: "Verplichte 2FA voor bepaalde rollen", description: "Forceer Two-Factor Authentication.", completed: false },
       { id: 69, title: "API Rate Limiting & Key Management", description: "Beheer API-toegang.", completed: false },
       { id: 70, title: "Sessie Management", description: "Zie en beëindig actieve login-sessies.", completed: false },
-      { id: 71, title: "Gebruikersgroepen met overervende permissies", description: "Groepeer gebruikers en wijs permissies toe.", completed: false },
+      { id: 71, title: "Gebruikersgroepen met overervende permissies", description: "Groepeer gebruikers en wijs permissies toe.", completed: true },
       { id: 72, title: "'Impersonate User' functie voor support/admins", description: "Log in als een andere gebruiker.", completed: false },
       { id: 94, title: "Two-Factor Authentication (2FA)", description: "Verbeterde accountbeveiliging.", completed: false },
       { id: 95, title: "Uitgebreide Audit Logs voor Beheerders", description: "Gedetailleerde logging van alle acties.", completed: true },

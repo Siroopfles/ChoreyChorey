@@ -2,7 +2,7 @@
 'use client';
 
 import type { User as UserType, RoleName } from '@/lib/types';
-import { DEFAULT_ROLES, statusStyles } from '@/lib/types';
+import { DEFAULT_ROLES, statusStyles, PERMISSIONS } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
 import { updateUserRoleInOrganization } from '@/app/actions/organization.actions';
 import { useToast } from '@/hooks/use-toast';
@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
-    const { currentOrganization, user: currentUser, currentUserRole } = useAuth();
+    const { currentOrganization, user: currentUser, currentUserPermissions } = useAuth();
     const { toast } = useToast();
 
     if (!currentOrganization) return null;
@@ -25,7 +25,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
         ...(currentOrganization.settings?.customization?.customRoles || {})
     };
     
-    const canManageRoles = currentUserRole === 'Owner' || currentUserRole === 'Admin';
+    const canManageRoles = currentUserPermissions.includes(PERMISSIONS.MANAGE_ROLES);
     
     const handleRoleChange = async (targetUserId: string, newRole: RoleName) => {
         if (!currentUser) return;

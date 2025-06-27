@@ -698,8 +698,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
 
         Object.keys(finalUpdates).forEach(key => {
-          if (finalUpdates[key] === undefined) {
-            finalUpdates[key] = null;
+          if ((finalUpdates as any)[key] === undefined) {
+            (finalUpdates as any)[key] = null;
           }
         });
         
@@ -920,7 +920,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     } catch (e) {
         handleError(e, 'bulk-update');
     }
-  }
+  };
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
     if (!authUser) return;

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import type { Task, User, HistoryEntry } from '@/lib/types';
+import { PERMISSIONS } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -27,7 +28,7 @@ type AggregatedHistoryEntry = HistoryEntry & {
 };
 
 export default function AuditLogPage() {
-    const { currentUserRole, loading: authLoading } = useAuth();
+    const { currentUserPermissions, loading: authLoading } = useAuth();
     const { tasks, users, loading: tasksLoading } = useTasks();
     const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -60,7 +61,7 @@ export default function AuditLogPage() {
         );
     }
 
-    if (currentUserRole !== 'Owner' && currentUserRole !== 'Admin') {
+    if (!currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG)) {
         return (
             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-[400px]">
                 <h3 className="text-2xl font-bold tracking-tight">Geen Toegang</h3>

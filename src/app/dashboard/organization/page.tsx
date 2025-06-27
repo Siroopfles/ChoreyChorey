@@ -7,6 +7,7 @@ import { useTasks } from '@/contexts/task-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Shield, UserCheck, Plus } from 'lucide-react';
 import type { Team } from '@/lib/types';
+import { PERMISSIONS } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { CreateOrganizationView } from '@/components/chorey/organization/create-organization-view';
 import { TeamDialog } from '@/components/chorey/organization/team-dialog';
@@ -18,7 +19,7 @@ import { Button } from '@/components/ui/button';
 
 
 export default function OrganizationPage() {
-    const { currentOrganization, loading: authLoading, currentUserRole, teams } = useAuth();
+    const { currentOrganization, loading: authLoading, currentUserPermissions, teams } = useAuth();
     const { users: usersInOrg } = useTasks();
     const [loading, setLoading] = useState(true);
 
@@ -63,29 +64,32 @@ export default function OrganizationPage() {
         );
     }
     
-    const canManageOrg = currentUserRole === 'Owner' || currentUserRole === 'Admin';
+    const canManageRaci = currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG); // Assuming similar level
+    const canManageRoles = currentUserPermissions.includes(PERMISSIONS.MANAGE_ROLES);
+    const canInviteMembers = currentUserPermissions.includes(PERMISSIONS.MANAGE_MEMBERS);
+    const canManageTeams = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEAMS);
 
     return (
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h1 className="font-semibold text-lg md:text-2xl">Beheer voor {currentOrganization.name}</h1>
                 <div className="flex items-center gap-2">
-                    {canManageOrg && (
+                    {canManageRaci && (
                       <Button asChild variant="outline">
                         <Link href="/dashboard/organization/raci">
                           <UserCheck className="mr-2 h-4 w-4" /> RACI Matrix
                         </Link>
                       </Button>
                     )}
-                    {canManageOrg && (
+                    {canManageRoles && (
                       <Button asChild variant="outline">
                         <Link href="/dashboard/organization/roles">
                           <Shield className="mr-2 h-4 w-4" /> Rollen & Permissies
                         </Link>
                       </Button>
                     )}
-                    {canManageOrg && <InviteMembersDialog organizationId={currentOrganization.id} />}
-                    {canManageOrg && (
+                    {canInviteMembers && <InviteMembersDialog organizationId={currentOrganization.id} />}
+                    {canManageTeams && (
                       <TeamDialog organizationId={currentOrganization.id}>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
@@ -119,7 +123,7 @@ export default function OrganizationPage() {
                                 <CardDescription>Maak je eerste team aan om leden te organiseren.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {canManageOrg && (
+                                {canManageTeams && (
                                     <TeamDialog organizationId={currentOrganization.id}>
                                         <Button>
                                             <Plus className="mr-2 h-4 w-4" />
