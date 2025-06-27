@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ClipboardUser, Users, BrainCircuit } from 'lucide-react';
+import { Loader2, Users, BrainCircuit } from 'lucide-react';
 import { handleSuggestHeadcount } from '@/app/actions/ai.actions';
 import type { SuggestHeadcountOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -39,7 +40,7 @@ export default function HeadcountPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold flex items-center gap-2"><ClipboardUser /> Headcount Planner</h1>
+                <h1 className="text-3xl font-bold flex items-center gap-2"><Users /> Headcount Planner</h1>
                 <p className="text-muted-foreground">Laat AI een optimale teamsamenstelling en personeelsbehoefte voorstellen op basis van uw projectomschrijving.</p>
             </div>
 
