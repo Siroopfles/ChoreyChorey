@@ -1,4 +1,5 @@
 
+
 'use client';
 import type { Task, User, Project } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,6 +59,7 @@ import {
   HandHeart,
   Bell,
   BellOff,
+  Github,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -697,6 +699,12 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                         <MessageSquare className="h-3 w-3" />
                         <span>{task.comments.length}</span>
                     </div>
+                    )}
+                     {task.githubLinks && task.githubLinks.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            <Github className="h-3 w-3" />
+                            <span>{task.githubLinks.length}</span>
+                        </div>
                     )}
                     <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />

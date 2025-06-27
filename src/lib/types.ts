@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+export type GitHubLink = {
+  url: string;
+  number: number;
+  title: string;
+  state: 'open' | 'closed' | 'merged';
+  type: 'issue' | 'pull-request';
+};
+
 export type OrganizationSettings = {
   customization: {
     statuses: string[];
@@ -25,6 +33,10 @@ export type OrganizationSettings = {
   slack?: {
     enabled: boolean;
     channelId: string;
+  };
+  github?: {
+    owner: string;
+    repos: string[];
   };
 }
 
@@ -75,7 +87,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.VIEW_SENSITIVE_DATA]: { name: 'Gevoelige Data Zien', description: 'Kan de inhoud van taken zien die als "gevoelig" zijn gemarkeerd.' },
   [PERMISSIONS.MANAGE_IDEAS]: { name: 'Ideeën Beheren', description: 'Kan de status van ideeën in de ideeënbus aanpassen.' },
   [PERMISSIONS.MANAGE_API_KEYS]: { name: 'API Sleutels Beheren', description: 'Kan API-sleutels voor de organisatie aanmaken, inzien en intrekken.' },
-  [PERMISSIONS.MANAGE_INTEGRATIONS]: { name: 'Integraties Beheren', description: 'Kan integraties met externe services zoals Slack configureren.' },
+  [PERMISSIONS.MANAGE_INTEGRATIONS]: { name: 'Integraties Beheren', description: 'Kan integraties met externe services zoals Slack en GitHub configureren.' },
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
@@ -348,6 +360,7 @@ export type Task = {
   isChoreOfTheWeek?: boolean;
   helpNeeded?: boolean;
   googleEventId?: string | null;
+  githubLinks?: GitHubLink[];
 };
 
 export type Notification = {
@@ -361,6 +374,14 @@ export type Notification = {
   archived?: boolean;
   organizationId: string;
 };
+
+export const githubLinkSchema = z.object({
+  url: z.string().url(),
+  number: z.number(),
+  title: z.string(),
+  state: z.enum(['open', 'closed', 'merged']),
+  type: z.enum(['issue', 'pull-request']),
+});
 
 export const subtaskSchema = z.object({
     text: z.string().min(1, 'Subtaak mag niet leeg zijn.'),
@@ -391,6 +412,7 @@ export const taskFormSchema = z.object({
   reviewerId: z.string().optional(),
   consultedUserIds: z.array(z.string()).optional(),
   informedUserIds: z.array(z.string()).optional(),
+  githubLinks: z.array(githubLinkSchema).optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

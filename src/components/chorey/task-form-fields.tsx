@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { User, Project } from '@/lib/types';
@@ -27,6 +28,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
 import type { FindDuplicateTaskOutput } from '@/ai/schemas';
+import { GitHubLinker } from './github-linker';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -889,9 +891,9 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
           </Alert>
       )}
 
+      <GitHubLinker />
 
       <Separator />
-
 
       <div>
         <UiLabel>Omslagfoto</UiLabel>

@@ -20,6 +20,7 @@ import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
 import { PERMISSIONS } from '@/lib/types';
 import GoogleCalendarSettings from '@/components/chorey/settings/google-calendar-settings';
 import SlackSettings from '@/components/chorey/settings/slack-settings';
+import GitHubSettings from '@/components/chorey/settings/github-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
@@ -54,6 +55,7 @@ export default function SettingsPage() {
           {isOwnerOrAdmin && <AnnouncementSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <BrandingSettings organization={currentOrganization} />}
           {canManageIntegrations && <SlackSettings organization={currentOrganization} />}
+          {canManageIntegrations && <GitHubSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <WebhookSettings />}
           {canManageApiKeys && <ApiKeySettings />}
           {isOwnerOrAdmin && <WorkflowSettings organization={currentOrganization} />}
