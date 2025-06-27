@@ -12,6 +12,7 @@ import AnimationSettings from '@/components/chorey/settings/animation-settings';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import TogglSettings from '@/components/chorey/settings/toggl-settings';
+import ClockifySettings from '@/components/chorey/settings/clockify-settings';
 
 export default function ProfileSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -43,6 +44,7 @@ export default function ProfileSettingsPage() {
       <GoogleCalendarSettings />
       <MicrosoftCalendarSettings />
       <TogglSettings user={user} />
+      <ClockifySettings user={user} />
     </div>
   );
 }

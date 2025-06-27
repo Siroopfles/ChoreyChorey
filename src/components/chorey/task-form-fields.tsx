@@ -32,6 +32,7 @@ import { GitHubLinker } from './github-linker';
 import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from './attachment-icons';
 import { TogglProjectSelector } from './toggl-project-selector';
+import { ClockifyProjectSelector } from './clockify-project-selector';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -779,6 +780,7 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
       </div>
 
       <TogglProjectSelector />
+      <ClockifyProjectSelector />
 
       <TaskAssignmentSuggestion users={users} />
       

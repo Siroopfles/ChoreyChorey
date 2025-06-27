@@ -26,6 +26,7 @@ export type OrganizationSettings = {
     raci?: boolean;
     publicSharing?: boolean;
     toggl?: boolean;
+    clockify?: boolean;
   },
   branding?: {
     primaryColor?: string;
@@ -243,6 +244,7 @@ export type User = {
   googleRefreshToken?: string | null;
   microsoftRefreshToken?: string | null;
   togglApiToken?: string;
+  clockifyApiToken?: string;
 };
 
 export type Session = {
@@ -394,6 +396,8 @@ export type Task = {
   githubLinks?: GitHubLink[];
   togglWorkspaceId?: number;
   togglProjectId?: number;
+  clockifyWorkspaceId?: string;
+  clockifyProjectId?: string;
 };
 
 export type Notification = {
@@ -449,6 +453,8 @@ export const taskFormSchema = z.object({
   githubLinks: z.array(githubLinkSchema).optional(),
   togglWorkspaceId: z.coerce.number().optional(),
   togglProjectId: z.coerce.number().optional(),
+  clockifyWorkspaceId: z.string().optional(),
+  clockifyProjectId: z.string().optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
