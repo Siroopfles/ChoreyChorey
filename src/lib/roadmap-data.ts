@@ -175,7 +175,7 @@ export const roadmapData = {
       { id: 70, title: "Sessie Management", description: "Zie en beëindig actieve login-sessies.", completed: true },
       { id: 71, title: "Gebruikersgroepen met overervende permissies", description: "Groepeer gebruikers en wijs permissies toe.", completed: true },
       { id: 72, title: "'Impersonate User' functie voor support/admins", description: "Log in als een andere gebruiker.", completed: false },
-      { id: 94, title: "Two-Factor Authentication (2FA)", description: "Verbeterde accountbeveiliging.", completed: false },
+      { id: 94, title: "Two-Factor Authentication (2FA)", description: "Verbeterde accountbeveiliging.", completed: true },
       { id: 95, title: "Uitgebreide Audit Logs voor Beheerders", description: "Gedetailleerde logging van alle acties.", completed: true },
       { id: 96, title: "Single Sign-On (SSO)", description: "Integratie met SAML, Google, Microsoft.", completed: false },
       { id: 97, title: "Data Residency Opties", description: "Kies de geografische locatie voor dataopslag.", completed: false },

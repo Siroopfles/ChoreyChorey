@@ -2,8 +2,9 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import type { User, UserStatus } from '@/lib/types';
+import { authenticator } from 'otplib';
 
 export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills'>>) {
     try {
@@ -148,6 +149,121 @@ export async function purchaseTheme(userId: string, color: string, cost: number)
         return { success: true };
     } catch (error: any) {
         console.error("Error purchasing theme:", error);
+        return { error: error.message };
+    }
+}
+
+
+// --- Two-Factor Authentication Actions ---
+
+export async function generateTwoFactorSecret(userId: string, email: string) {
+    try {
+        const secret = authenticator.generateSecret();
+        const otpauth = authenticator.keyuri(email, 'Chorey', secret);
+        
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, { twoFactorSecret: secret, twoFactorEnabled: false });
+
+        return { otpauth };
+    } catch (error: any) {
+        console.error("Error generating 2FA secret:", error);
+        return { error: error.message };
+    }
+}
+
+export async function verifyAndEnableTwoFactor(userId: string, token: string) {
+    try {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists() || !userDoc.data()?.twoFactorSecret) {
+            throw new Error('2FA secret not found for user.');
+        }
+
+        const secret = userDoc.data()?.twoFactorSecret;
+        const isValid = authenticator.verify({ token, secret });
+
+        if (!isValid) {
+            return { error: 'Ongeldige code. Probeer het opnieuw.' };
+        }
+
+        const recoveryCodes = Array.from({ length: 10 }, () => 
+            Math.random().toString(36).substring(2, 12).toUpperCase()
+        );
+
+        await updateDoc(userRef, {
+            twoFactorEnabled: true,
+            twoFactorRecoveryCodes: recoveryCodes
+        });
+        
+        return { success: true, recoveryCodes };
+
+    } catch (error: any) {
+        console.error("Error verifying 2FA setup:", error);
+        return { error: error.message };
+    }
+}
+
+export async function disableTwoFactor(userId: string, token: string) {
+     try {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists() || !userDoc.data()?.twoFactorSecret) {
+            throw new Error('2FA is niet ingeschakeld.');
+        }
+
+        const { twoFactorSecret, twoFactorRecoveryCodes } = userDoc.data() as User;
+        const isTokenValid = authenticator.verify({ token, secret: twoFactorSecret! });
+        const isRecoveryCode = twoFactorRecoveryCodes?.includes(token);
+
+        if (!isTokenValid && !isRecoveryCode) {
+            return { error: 'Ongeldige code.' };
+        }
+
+        await updateDoc(userRef, {
+            twoFactorEnabled: false,
+            twoFactorSecret: null,
+            twoFactorRecoveryCodes: null
+        });
+        
+        return { success: true };
+
+    } catch (error: any) {
+        console.error("Error disabling 2FA:", error);
+        return { error: error.message };
+    }
+}
+
+
+export async function verifyLoginCode(userId: string, code: string) {
+    try {
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+
+        if (!userDoc.exists() || !userDoc.data()?.twoFactorEnabled) {
+            throw new Error("Gebruiker niet gevonden of 2FA is niet ingeschakeld.");
+        }
+        
+        const userData = userDoc.data() as User;
+
+        // Check TOTP
+        const isTokenValid = authenticator.verify({ token: code, secret: userData.twoFactorSecret! });
+        if (isTokenValid) {
+            return { success: true };
+        }
+
+        // Check recovery codes
+        const recoveryCodes = userData.twoFactorRecoveryCodes || [];
+        if (recoveryCodes.includes(code)) {
+            // Consume the recovery code
+            const updatedRecoveryCodes = recoveryCodes.filter(rc => rc !== code);
+            await updateDoc(userRef, { twoFactorRecoveryCodes: updatedRecoveryCodes });
+            return { success: true };
+        }
+        
+        return { error: 'Ongeldige verificatiecode.' };
+
+    } catch(error: any) {
+        console.error("Error verifying login code:", error);
         return { error: error.message };
     }
 }

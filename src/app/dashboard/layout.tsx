@@ -155,15 +155,27 @@ function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading, currentOrganization } = useAuth();
+  const { user, loading, currentOrganization, mfaRequired } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     if (loading) return; 
 
+    // Handle MFA flow first
+    if (mfaRequired) {
+        if (pathname !== '/login/verify') {
+            router.push('/login/verify');
+        }
+        return; // Stop further checks if MFA is required
+    }
+    
     if (!user) {
-      router.push('/login');
+      const allowedPaths = ['/login', '/signup', '/invite/[inviteId]'];
+      const isAllowed = allowedPaths.some(p => pathname.startsWith(p.replace(/\[.*?\]/, '')))
+      if (!isAllowed) {
+        router.push('/login');
+      }
       return;
     }
     
@@ -171,11 +183,20 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       router.push('/dashboard/organization');
     }
 
-  }, [user, loading, currentOrganization, router, pathname]);
+  }, [user, loading, currentOrganization, mfaRequired, router, pathname]);
 
-  if (loading || (!user && !pathname.startsWith('/invite/'))) {
+  if (loading || (!user && !pathname.startsWith('/invite/') && pathname !== '/login/verify')) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+  
+  if (mfaRequired) {
+    // Render children if on verify page, otherwise AuthGuard's effect will redirect.
+    return pathname === '/login/verify' ? <>{children}</> : (
+       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -190,7 +211,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   if (pathname.startsWith('/dashboard/focus')) {
       return <>{children}</>;
   }
-
 
   if (!currentOrganization && pathname !== '/dashboard/organization') {
     return (

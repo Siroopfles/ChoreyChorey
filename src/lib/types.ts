@@ -145,7 +145,10 @@ export type User = {
   status: UserStatus;
   cosmetic?: {
     primaryColor?: string;
-  }
+  },
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
+  twoFactorRecoveryCodes?: string[];
 };
 
 export type Session = {

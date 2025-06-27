@@ -13,6 +13,7 @@ import BrandingSettings from '@/components/chorey/settings/branding-settings';
 import AnimationSettings from '@/components/chorey/settings/animation-settings';
 import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
 import SessionManagement from '@/components/chorey/settings/session-management';
+import TwoFactorAuthSettings from '@/components/chorey/settings/two-factor-auth-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
@@ -34,6 +35,7 @@ export default function SettingsPage() {
       </div>
       
       <ProfileSettings user={user} />
+      <TwoFactorAuthSettings user={user} />
       <AnimationSettings />
       <SessionManagement />
 

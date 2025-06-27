@@ -35,10 +35,12 @@ type AuthContextType = {
     authUser: FirebaseUser | null;
     user: User | null;
     loading: boolean;
+    mfaRequired: boolean;
     loginWithEmail: (email: string, pass: string) => Promise<void>;
     signupWithEmail: (email: string, pass: string, name: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
     logout: () => void;
+    completeMfa: () => void;
     refreshUser: () => Promise<void>;
     organizations: Organization[];
     currentOrganization: Organization | null;
@@ -56,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [mfaRequired, setMfaRequired] = useState(false);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
     const [currentUserRole, setCurrentUserRole] = useState<RoleName | null>(null);
@@ -106,6 +109,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ...rawData.status,
                 until: (rawData.status.until as Timestamp | null)?.toDate() ?? null,
             } : { type: 'Offline', until: null },
+            twoFactorEnabled: rawData.twoFactorEnabled,
+            twoFactorSecret: rawData.twoFactorSecret,
+            twoFactorRecoveryCodes: rawData.twoFactorRecoveryCodes,
         };
         setUser(userData);
 
@@ -179,10 +185,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(true);
             if (firebaseUser) {
                 setAuthUser(firebaseUser);
-                unsubscribeFromOrgs = await fetchUserAndOrgData(firebaseUser);
+                // Don't fully load data if MFA is required. The verify page will handle it.
+                if (!mfaRequired) {
+                    unsubscribeFromOrgs = await fetchUserAndOrgData(firebaseUser);
+                }
             } else {
                 setAuthUser(null);
                 setUser(null);
+                setMfaRequired(false);
                 setOrganizations([]);
                 setCurrentOrganization(null);
                 setCurrentUserRole(null);
@@ -199,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             unsubscribeFromUsers?.();
             unsubscribeFromTeams?.();
         };
-    }, [fetchUserAndOrgData, isDebugMode]);
+    }, [fetchUserAndOrgData, isDebugMode, mfaRequired]);
 
 
     useEffect(() => {
@@ -229,10 +239,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentSessionId(sessionId);
     };
 
+    const handleLoginSuccess = async (firebaseUser: FirebaseUser) => {
+        setAuthUser(firebaseUser); // Set auth user immediately
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists() && userDoc.data().twoFactorEnabled) {
+            setMfaRequired(true);
+            router.push('/login/verify');
+        } else {
+            await createSession(firebaseUser.uid);
+            // Let the onAuthStateChanged handler do the rest
+        }
+    };
+
     const loginWithEmail = async (email: string, pass: string) => {
         try {
             const credential = await signInWithEmailAndPassword(auth, email, pass);
-            await createSession(credential.user.uid);
+            await handleLoginSuccess(credential.user);
         } catch (error) {
             handleError(error, 'inloggen');
             throw error;
@@ -281,7 +305,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const userCredential = await signInWithPopup(auth, googleProvider);
             const firebaseUser = userCredential.user;
-            await createSession(firebaseUser.uid);
             const additionalInfo = getAdditionalUserInfo(userCredential);
 
             if (additionalInfo?.isNewUser) {
@@ -306,10 +329,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     status: { type: 'Online', until: null },
                 };
                 await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-                setUser({ id: firebaseUser.uid, ...newUser });
-                setOrganizations([]);
-                setCurrentOrganization(null);
             }
+            
+            await handleLoginSuccess(firebaseUser);
+
         } catch (error: any) {
             handleError(error, 'inloggen met Google');
             throw error;
@@ -328,6 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 await updateDoc(sessionRef, { isActive: false }).catch(console.error);
             }
             setCurrentSessionId('');
+            setMfaRequired(false);
             await signOut(auth);
             router.push('/login');
         } catch (error) {
@@ -399,14 +423,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const completeMfa = async () => {
+        if (authUser) {
+            setMfaRequired(false);
+            await createSession(authUser.uid);
+            router.push('/dashboard');
+        }
+    };
+
     const value = {
         authUser,
         user,
         loading,
+        mfaRequired,
         loginWithEmail,
         signupWithEmail,
         loginWithGoogle,
         logout,
+        completeMfa,
         refreshUser,
         organizations,
         currentOrganization,
