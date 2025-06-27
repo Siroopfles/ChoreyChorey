@@ -119,6 +119,7 @@ export const searchTasks = ai.defineTool(
   async ({ organizationId, filters }) => {
     let q = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
 
+    // Robust checks to prevent invalid query values
     if (filters.status) {
       q = query(q, where('status', '==', filters.status));
     }
@@ -128,8 +129,8 @@ export const searchTasks = ai.defineTool(
     if (filters.assigneeId) {
       q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
     }
-    if (filters.labels && filters.labels.length > 0) {
-      const validLabels = filters.labels.filter(label => label);
+    if (filters.labels && Array.isArray(filters.labels) && filters.labels.length > 0) {
+      const validLabels = filters.labels.filter(label => typeof label === 'string' && label);
       if (validLabels.length > 0) {
         q = query(q, where('labels', 'array-contains-any', validLabels));
       }
