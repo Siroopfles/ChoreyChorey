@@ -5,11 +5,12 @@ import { useAuth } from '@/contexts/auth-context';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { User, Building, ArrowRight } from 'lucide-react';
+import { User, Building, ArrowRight, Plug } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
+import { PERMISSIONS } from '@/lib/types';
 
 export default function SettingsPage() {
-    const { user, loading: authLoading, currentUserRole } = useAuth();
+    const { user, loading: authLoading, currentUserRole, currentUserPermissions } = useAuth();
     
     if (authLoading || !user) {
         return (
@@ -20,6 +21,7 @@ export default function SettingsPage() {
     }
 
     const isOwnerOrAdmin = currentUserRole === 'Owner' || currentUserRole === 'Admin';
+    const canManageIntegrations = currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS);
 
     return (
         <div className="space-y-6">
@@ -52,13 +54,33 @@ export default function SettingsPage() {
                                 Organisatie
                             </CardTitle>
                             <CardDescription>
-                                Beheer workflow, branding, integraties, limieten en andere instellingen voor de hele organisatie.
+                                Beheer workflow, branding, limieten en andere instellingen voor de hele organisatie.
                             </CardDescription>
                         </CardHeader>
                          <div className="p-6 pt-0">
                             <Button asChild>
                                 <Link href="/dashboard/settings/organization">
                                     Organisatie-instellingen <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </div>
+                    </Card>
+                )}
+                {canManageIntegrations && (
+                    <Card className="hover:border-primary/50 transition-colors">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-3">
+                                <Plug className="h-6 w-6 text-primary" />
+                                Integraties
+                            </CardTitle>
+                            <CardDescription>
+                                Verbind Chorey met externe applicaties zoals Zapier, Slack, GitHub, en meer.
+                            </CardDescription>
+                        </CardHeader>
+                         <div className="p-6 pt-0">
+                            <Button asChild>
+                                <Link href="/dashboard/settings/integrations">
+                                    Beheer Integraties <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>
                         </div>

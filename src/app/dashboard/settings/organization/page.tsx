@@ -12,10 +12,6 @@ import AnnouncementSettings from '@/components/chorey/settings/announcement-sett
 import WebhookSettings from '@/components/chorey/settings/webhook-settings';
 import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
 import { PERMISSIONS } from '@/lib/types';
-import SlackSettings from '@/components/chorey/settings/slack-settings';
-import GitHubSettings from '@/components/chorey/settings/github-settings';
-import TeamsSettings from '@/components/chorey/settings/teams-settings';
-import DiscordSettings from '@/components/chorey/settings/discord-settings';
 import LimitSettings from '@/components/chorey/settings/limit-settings';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -33,8 +29,7 @@ export default function OrganizationSettingsPage() {
 
   const isOwnerOrAdmin = currentUserRole === 'Owner' || currentUserRole === 'Admin';
   const canManageApiKeys = currentUserPermissions.includes(PERMISSIONS.MANAGE_API_KEYS);
-  const canManageIntegrations = currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS);
-
+  
   if (!currentOrganization) {
     return (
         <div className="text-center">
@@ -67,10 +62,6 @@ export default function OrganizationSettingsPage() {
         <AnnouncementSettings organization={currentOrganization} />
         <BrandingSettings organization={currentOrganization} />
         <LimitSettings organization={currentOrganization} />
-        {canManageIntegrations && <SlackSettings organization={currentOrganization} />}
-        {canManageIntegrations && <GitHubSettings organization={currentOrganization} />}
-        {canManageIntegrations && <TeamsSettings organization={currentOrganization} />}
-        {canManageIntegrations && <DiscordSettings organization={currentOrganization} />}
         <WebhookSettings />
         {canManageApiKeys && <ApiKeySettings />}
         <WorkflowSettings organization={currentOrganization} />

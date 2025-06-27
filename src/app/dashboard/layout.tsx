@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -54,7 +54,7 @@ const UserCosmeticStyle = () => {
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
     const { isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
-    const { currentUserRole, currentOrganization, users } = useAuth();
+    const { currentUserRole, currentOrganization, users, currentUserPermissions } = useAuth();
     const pathname = usePathname();
     const announcement = currentOrganization?.settings?.announcement;
     
@@ -92,10 +92,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
         { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
     ];
-
+    
     const adminNavItems = [
-        { href: '/dashboard/settings/organization', icon: Settings, label: 'Instellingen' },
-        { href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }
+        { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
+        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS) ? [{ href: '/dashboard/settings/integrations', icon: Plug, label: 'Integraties' }] : []),
+        ...(currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) ? [{ href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }] : []),
     ];
 
     useEffect(() => {
