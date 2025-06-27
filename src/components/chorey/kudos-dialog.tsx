@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
-import { transferPoints } from '@/app/actions/user.actions';
+import { transferPoints } from '@/app/actions/gamification.actions';
 import type { User } from '@/lib/types';
 
 const kudosSchema = z.object({
@@ -53,7 +53,7 @@ export function KudosDialog({
     if (!sender) return;
     setIsSubmitting(true);
     
-    const result = await transferPoints(sender.id, recipient.id, data.amount, data.message || '');
+    const result = await transferPoints(sender.id, recipient.id, data.amount, data.message || '', sender.name);
     
     if (result.error) {
         toast({ title: 'Fout', description: result.error, variant: 'destructive' });
