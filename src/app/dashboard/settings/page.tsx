@@ -11,6 +11,7 @@ import WorkflowSettings from '@/components/chorey/settings/workflow-settings';
 import FeatureToggleSettings from '@/components/chorey/settings/feature-toggle-settings';
 import BrandingSettings from '@/components/chorey/settings/branding-settings';
 import AnimationSettings from '@/components/chorey/settings/animation-settings';
+import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
@@ -37,6 +38,7 @@ export default function SettingsPage() {
       {currentOrganization && (
         <>
           {isOwnerOrAdmin && <OrganizationSettings organization={currentOrganization} />}
+          {isOwnerOrAdmin && <AnnouncementSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <BrandingSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <WorkflowSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <FeatureToggleSettings organization={currentOrganization} />}

@@ -162,7 +162,7 @@ export const roadmapData = {
       { id: 62, title: "Push Notificaties met Actieknoppen", description: "Bv. 'Voltooien', 'Snooze'.", completed: false },
       { id: 63, title: "'Mute' specifieke taak- of project-threads", description: "Stop notificaties voor een specifieke taak.", completed: false },
       { id: 64, title: "Notificatie Prioriteit", description: "Alleen 'Urgent' @mentions sturen een push notificatie.", completed: false },
-      { id: 65, title: "Ingebouwde Aankondigingen-module voor beheerders", description: "Stuur aankondigingen naar alle gebruikers.", completed: false },
+      { id: 65, title: "Ingebouwde Aankondigingen-module voor beheerders", description: "Stuur aankondigingen naar alle gebruikers.", completed: true },
       { id: 66, title: "'Leesbevestiging' voor belangrijke comments of updates", description: "Zie wie een belangrijke update heeft gelezen.", completed: false },
       { id: 89, title: "Dagelijks Overzicht", description: "Configureerbaar kanaal voor dagelijkse updates.", completed: false },
       { id: 91, title: "Verbeterde @mentions en Taakdiscussies", description: "Rijkere discussies met threads.", completed: true },

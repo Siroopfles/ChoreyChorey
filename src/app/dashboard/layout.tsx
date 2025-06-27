@@ -22,6 +22,7 @@ import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import UserProfileSheet from '@/components/chorey/user-profile-sheet';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import Link from 'next/link';
+import AnnouncementBanner from '@/components/chorey/announcement-banner';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useAuth();
@@ -42,6 +43,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const { users, tasks, viewedUser, setViewedUser, isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
     const { currentUserRole, currentOrganization } = useAuth();
     const pathname = usePathname();
+    const announcement = currentOrganization?.settings?.announcement;
 
     const navItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -114,6 +116,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
             <SidebarInset className="flex flex-col">
                 <AppHeader />
                 <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
+                    {announcement && <AnnouncementBanner announcement={announcement} />}
                     {children}
                 </main>
                 <BulkActionBar />

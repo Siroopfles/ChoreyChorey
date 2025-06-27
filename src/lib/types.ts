@@ -16,7 +16,12 @@ export type OrganizationSettings = {
   branding?: {
     primaryColor?: string;
     logoUrl?: string;
-  }
+  },
+  announcement?: {
+    id: string;
+    message: string;
+    level: 'info' | 'warning';
+  } | null;
 }
 
 export type Organization = {
