@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A set of AI tools for interacting with tasks in Firestore.
@@ -109,7 +110,7 @@ export const searchTasks = ai.defineTool(
         title: z.string(),
         description: z.string().optional(),
         status: z.string(),
-        priority: z.string(),
+        priority: z.string().nullable(),
         assigneeIds: z.array(z.string()),
         dueDate: z.string().nullable(),
       })
@@ -147,7 +148,7 @@ export const searchTasks = ai.defineTool(
       title: task.title,
       description: task.description,
       status: task.status,
-      priority: task.priority,
+      priority: task.priority || null,
       assigneeIds: task.assigneeIds,
       dueDate: task.dueDate ? task.dueDate.toISOString().split('T')[0] : null,
     }));
