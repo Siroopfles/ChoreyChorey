@@ -119,27 +119,26 @@ export const searchTasks = ai.defineTool(
   async ({ organizationId, filters }) => {
     let q = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
 
-    // Robust checks to prevent invalid query values
-    if (filters.status) {
-      q = query(q, where('status', '==', filters.status));
+    if (filters.status && typeof filters.status === 'string') {
+        q = query(q, where('status', '==', filters.status));
     }
-    if (filters.priority) {
-      q = query(q, where('priority', '==', filters.priority));
+    if (filters.priority && typeof filters.priority === 'string') {
+        q = query(q, where('priority', '==', filters.priority));
     }
-    if (filters.assigneeId) {
-      q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
+    if (filters.assigneeId && typeof filters.assigneeId === 'string') {
+        q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
     }
     if (filters.labels && Array.isArray(filters.labels) && filters.labels.length > 0) {
-      const validLabels = filters.labels.filter(label => typeof label === 'string' && label);
-      if (validLabels.length > 0) {
-        q = query(q, where('labels', 'array-contains-any', validLabels));
-      }
+        const validLabels = filters.labels.filter(label => typeof label === 'string' && label);
+        if (validLabels.length > 0) {
+            q = query(q, where('labels', 'array-contains-any', validLabels));
+        }
     }
     
     const snapshot = await getDocs(q);
     let tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
 
-    if (filters.term) {
+    if (filters.term && typeof filters.term === 'string') {
         const lowercasedTerm = filters.term.toLowerCase();
         tasks = tasks.filter(task => 
             task.title.toLowerCase().includes(lowercasedTerm) || 
