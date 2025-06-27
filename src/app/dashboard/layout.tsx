@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, MailCheck, FilePieChart, Target, GitGraph, ClipboardUser } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, MailCheck, BarChart3, Target, GitGraph, ClipboardUser } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -65,7 +65,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/goals', icon: Target, label: 'Mijn Doelen' },
         { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
         { href: '/dashboard/digest', icon: MailCheck, label: 'Overzicht' },
-        { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
+        { href: '/dashboard/reports', icon: BarChart3, label: 'Rapporten' },
         { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
         { href: '/dashboard/headcount', icon: ClipboardUser, label: 'Headcount' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
