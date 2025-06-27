@@ -31,6 +31,7 @@ import type { FindDuplicateTaskOutput } from '@/ai/schemas';
 import { GitHubLinker } from './github-linker';
 import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from './attachment-icons';
+import { TogglProjectSelector } from './toggl-project-selector';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -776,6 +777,8 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
           )}
         />
       </div>
+
+      <TogglProjectSelector />
 
       <TaskAssignmentSuggestion users={users} />
       

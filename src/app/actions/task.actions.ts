@@ -12,6 +12,7 @@ import Papa from 'papaparse';
 import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar-service';
 import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/microsoft-graph-service';
+import { createTogglTimeEntry } from '@/lib/toggl-service';
 
 // --- Internal Helper Functions ---
 
@@ -215,6 +216,8 @@ export async function createTaskAction(organizationId: string, creatorId: string
           consultedUserIds: taskData.consultedUserIds || [],
           informedUserIds: taskData.informedUserIds || [],
           helpNeeded: taskData.helpNeeded || false,
+          togglWorkspaceId: taskData.togglWorkspaceId,
+          togglProjectId: taskData.togglProjectId,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -611,7 +614,12 @@ export async function toggleSubtaskCompletionAction(taskId: string, subtaskId: s
 export async function toggleTaskTimerAction(taskId: string, userId: string, organizationId: string) {
     try {
         const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
-        if (!orgDoc.exists() || orgDoc.data().settings?.features?.timeTracking === false) {
+        if (!orgDoc.exists()) {
+             throw new Error("Organisatie niet gevonden.");
+        }
+        const organization = orgDoc.data() as Organization;
+
+        if (organization.settings?.features?.timeTracking === false) {
             return { error: 'Tijdregistratie is uitgeschakeld voor deze organisatie.' };
         }
         
@@ -621,15 +629,32 @@ export async function toggleTaskTimerAction(taskId: string, userId: string, orga
         const task = taskDoc.data() as Task;
 
         if (task.activeTimerStartedAt) {
+            const startTime = (task.activeTimerStartedAt as any).toDate();
             const now = new Date();
-            const elapsed = Math.floor((now.getTime() - (task.activeTimerStartedAt as any).toDate().getTime()) / 1000);
+            const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
             const newTimeLogged = (task.timeLogged || 0) + elapsed;
+            
             await updateDoc(taskRef, {
                 timeLogged: newTimeLogged,
                 activeTimerStartedAt: null,
                 history: arrayUnion(addHistoryEntry(userId, 'Tijdregistratie gestopt', `Totaal gelogd: ${newTimeLogged}s`))
             });
             await triggerWebhooks(organizationId, 'task.updated', {...task, timeLogged: newTimeLogged, activeTimerStartedAt: null, id: taskId});
+            
+            // Toggl Integration
+            if (organization.settings?.features?.toggl) {
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                const user = userDoc.data() as User;
+                if (user.togglApiToken && task.togglWorkspaceId && task.togglProjectId) {
+                    try {
+                        await createTogglTimeEntry(user.togglApiToken, task.togglWorkspaceId, task, elapsed, startTime);
+                    } catch (togglError) {
+                        console.error('Failed to sync time entry to Toggl:', togglError);
+                        // Do not throw error to user, just log it
+                    }
+                }
+            }
+
         } else {
             await updateDoc(taskRef, {
                 activeTimerStartedAt: new Date(),

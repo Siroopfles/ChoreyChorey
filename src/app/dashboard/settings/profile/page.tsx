@@ -11,6 +11,7 @@ import MicrosoftCalendarSettings from '@/components/chorey/settings/microsoft-ca
 import AnimationSettings from '@/components/chorey/settings/animation-settings';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import TogglSettings from '@/components/chorey/settings/toggl-settings';
 
 export default function ProfileSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -41,6 +42,7 @@ export default function ProfileSettingsPage() {
       <SessionManagement />
       <GoogleCalendarSettings />
       <MicrosoftCalendarSettings />
+      <TogglSettings user={user} />
     </div>
   );
 }

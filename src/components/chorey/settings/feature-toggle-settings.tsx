@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe } from 'lucide-react';
+import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
@@ -24,6 +24,7 @@ const featureSchema = z.object({
   ideas: z.boolean().default(true),
   raci: z.boolean().default(true),
   publicSharing: z.boolean().default(true),
+  toggl: z.boolean().default(false),
 });
 type FeatureFormValues = z.infer<typeof featureSchema>;
 
@@ -61,6 +62,7 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       ideas: organization.settings?.features?.ideas ?? true,
       raci: organization.settings?.features?.raci ?? true,
       publicSharing: organization.settings?.features?.publicSharing ?? true,
+      toggl: organization.settings?.features?.toggl ?? false,
     },
   });
 
@@ -93,6 +95,7 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       { name: 'mentorship', icon: HeartHandshake, label: 'Mentorschap', description: 'Activeer de mentorschapspagina waar gebruikers elkaar kunnen vinden.' },
       { name: 'raci', icon: UserCheck, label: 'RACI Matrix', description: 'Activeer de RACI-matrix voor een overzicht van verantwoordelijkheden.' },
       { name: 'publicSharing', icon: Globe, label: 'Publiek Delen', description: 'Sta toe dat projecten openbaar gedeeld kunnen worden via een link.' },
+      { name: 'toggl', icon: Clock, label: 'Toggl Integratie', description: 'Sta gebruikers toe om hun Toggl-account te koppelen voor tijdregistratie.' },
   ];
 
   return (
