@@ -14,8 +14,8 @@ import { Replace, Trash2, X, UserPlus, ArrowUpNarrowWide } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 export default function BulkActionBar() {
-    const { selectedTaskIds, bulkUpdateTasks, setSelectedTaskIds, users } = useTasks();
-    const { currentOrganization } = useAuth();
+    const { selectedTaskIds, bulkUpdateTasks, setSelectedTaskIds } = useTasks();
+    const { currentOrganization, users } = useAuth();
     
     const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
     const allPriorities = currentOrganization?.settings?.customization?.priorities || [];

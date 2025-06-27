@@ -18,8 +18,8 @@ const raciColors: Record<string, string> = {
 }
 
 export default function RacimatrixPage() {
-    const { tasks, users, loading: tasksLoading } = useTasks();
-    const { loading: authLoading, currentUserRole } = useAuth();
+    const { tasks, loading: tasksLoading } = useTasks();
+    const { users, loading: authLoading, currentUserRole } = useAuth();
 
     if (tasksLoading || authLoading) {
         return (

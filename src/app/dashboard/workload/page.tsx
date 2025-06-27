@@ -1,8 +1,8 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,8 +22,7 @@ import { useTheme } from 'next-themes';
 const CAPACITY_THRESHOLD = 8;
 
 export default function WorkloadPage() {
-    const { user, currentOrganization } = useAuth();
-    const { users } = useTasks();
+    const { user, currentOrganization, users } = useAuth();
     const [isBalancerLoading, setIsBalancerLoading] = useState(false);
     const [isChartLoading, setIsChartLoading] = useState(true);
     const [balancerResult, setBalancerResult] = useState('');

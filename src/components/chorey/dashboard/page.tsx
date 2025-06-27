@@ -25,8 +25,8 @@ import { ChoreOfTheWeekCard } from '@/components/chorey/chore-of-the-week-card';
 import { GettingStartedGuide } from '@/components/chorey/getting-started-guide';
 
 export default function DashboardPage() {
-  const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
-  const { user: currentUser, projects, currentOrganization } = useAuth();
+  const { tasks, loading, searchTerm, setSearchTerm, filters } = useTasks();
+  const { user: currentUser, projects, currentOrganization, users } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
@@ -161,5 +161,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

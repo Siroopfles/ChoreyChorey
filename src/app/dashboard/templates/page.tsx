@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, type ReactNode } from 'react';
@@ -11,12 +12,14 @@ import {
 } from '@/components/ui/card';
 import { Loader2, Plus } from 'lucide-react';
 import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/auth-context';
 import { Separator } from '@/components/ui/separator';
 import { TemplateCard } from '@/components/chorey/templates/template-card';
 import { TemplateDialog } from '@/components/chorey/templates/template-dialog';
 
 export default function TemplatesPage() {
-  const { templates, loading, users } = useTasks();
+  const { templates, loading } = useTasks();
+  const { users } = useAuth();
 
   if (loading) {
     return (

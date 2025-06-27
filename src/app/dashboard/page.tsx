@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, Suspense } from 'react';
@@ -24,8 +25,8 @@ import { ChoreOfTheWeekCard } from '@/components/chorey/chore-of-the-week-card';
 import { GettingStartedGuide } from '@/components/chorey/getting-started-guide';
 
 export default function DashboardPage() {
-  const { tasks, users, loading, searchTerm, setSearchTerm, filters } = useTasks();
-  const { user: currentUser, teams, currentOrganization } = useAuth();
+  const { tasks, loading, searchTerm, setSearchTerm, filters } = useTasks();
+  const { user: currentUser, teams, currentOrganization, users } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
@@ -133,7 +134,7 @@ export default function DashboardPage() {
           <TabsTrigger value="gantt">Gantt</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="flex-1 mt-4 overflow-hidden">
-          <TaskColumns tasks={regularTasks} users={users} currentUser={currentUser} teams={teams} />
+          <TaskColumns tasks={regularTasks} users={users} currentUser={currentUser} projects={[]} />
         </TabsContent>
         <TabsContent value="list" className="flex-1 mt-4 overflow-y-auto">
           <TaskListView tasks={regularTasks} users={users} />

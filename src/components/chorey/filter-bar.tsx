@@ -14,8 +14,8 @@ import { SavedFiltersManager } from "./saved-filters-manager";
 
 
 export default function FilterBar() {
-  const { users, filters, setFilters, clearFilters, activeFilterCount } = useTasks();
-  const { user: currentUser, projects, currentOrganization } = useAuth();
+  const { filters, setFilters, clearFilters, activeFilterCount } = useTasks();
+  const { user: currentUser, projects, currentOrganization, users } = useAuth();
   
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
   const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
@@ -149,5 +149,3 @@ export default function FilterBar() {
     </div>
   );
 }
-
-    

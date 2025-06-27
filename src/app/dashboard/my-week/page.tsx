@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useTasks } from '@/contexts/task-context';
@@ -10,8 +11,8 @@ import TaskCard from '@/components/chorey/task-card';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 
 export default function MyWeekPage() {
-    const { tasks, users, loading: tasksLoading } = useTasks();
-    const { user, loading: authLoading, teams } = useAuth();
+    const { tasks, loading: tasksLoading } = useTasks();
+    const { user, users, loading: authLoading, teams, projects } = useAuth();
 
     const weekTasks = useMemo(() => {
         const today = startOfToday();
@@ -62,7 +63,7 @@ export default function MyWeekPage() {
                             <h2 className="text-xl font-semibold mb-4 capitalize">{day}</h2>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {dayTasks.map(task => (
-                                    <TaskCard key={task.id} task={task} users={users} currentUser={user} teams={teams} />
+                                    <TaskCard key={task.id} task={task} users={users} currentUser={user} projects={projects} />
                                 ))}
                             </div>
                         </div>

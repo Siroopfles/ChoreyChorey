@@ -8,13 +8,11 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowRight, Loader2, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
 import { useToast } from '@/hooks/use-toast';
 import { reassignTasks } from '@/app/actions/organization.actions';
 
 export function ReassignTasksCard() {
-    const { currentOrganization, user: currentUser } = useAuth();
-    const { users } = useTasks();
+    const { currentOrganization, user: currentUser, users } = useAuth();
     const { toast } = useToast();
 
     const [fromUserId, setFromUserId] = useState<string | undefined>(undefined);

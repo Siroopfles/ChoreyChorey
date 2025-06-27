@@ -28,8 +28,8 @@ type AggregatedHistoryEntry = HistoryEntry & {
 };
 
 export default function AuditLogPage() {
-    const { currentUserPermissions, loading: authLoading } = useAuth();
-    const { tasks, users, loading: tasksLoading } = useTasks();
+    const { currentUserPermissions, loading: authLoading, users } = useAuth();
+    const { tasks, loading: tasksLoading } = useTasks();
     const [editingTask, setEditingTask] = useState<Task | null>(null);
 
     const aggregatedHistory = useMemo((): AggregatedHistoryEntry[] => {

@@ -29,8 +29,8 @@ const getRankIcon = (index: number) => {
 };
 
 function IndividualLeaderboard() {
-  const { tasks, users, loading: tasksLoading } = useTasks();
-  const { currentOrganization, loading: authLoading } = useAuth();
+  const { tasks, loading: tasksLoading } = useTasks();
+  const { users, currentOrganization, loading: authLoading } = useAuth();
   const [selectedTag, setSelectedTag] = useState<string>('Algemeen');
 
   const allLabels = useMemo(() => currentOrganization?.settings?.customization?.labels || [], [currentOrganization]);
@@ -124,8 +124,7 @@ function IndividualLeaderboard() {
 }
 
 function TeamLeaderboard() {
-    const { users } = useTasks();
-    const { teams } = useAuth();
+    const { users, teams } = useAuth();
     
     const { sortedTeams, maxPoints } = useMemo(() => {
         const usersById = new Map(users.map(u => [u.id, u]));
