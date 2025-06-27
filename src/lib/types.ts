@@ -194,6 +194,7 @@ export type User = {
     notificationPriorityThreshold?: Priority;
   };
   lastDigestSentAt?: Date;
+  googleRefreshToken?: string | null;
 };
 
 export type Session = {
@@ -339,6 +340,7 @@ export type Task = {
   informedUserIds?: string[];
   isChoreOfTheWeek?: boolean;
   helpNeeded?: boolean;
+  googleEventId?: string | null;
 };
 
 export type Notification = {

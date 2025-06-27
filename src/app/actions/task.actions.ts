@@ -10,6 +10,7 @@ import { createNotification } from './notification.actions';
 import { triggerWebhooks } from '@/lib/webhook-service';
 import Papa from 'papaparse';
 import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
+import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar-service';
 
 // --- Internal Helper Functions ---
 
@@ -228,6 +229,19 @@ export async function createTaskAction(organizationId: string, creatorId: string
             });
         }
         await triggerWebhooks(organizationId, 'task.created', { ...firestoreTask, id: docRef.id });
+
+        // Google Calendar Sync
+        if (taskData.dueDate) {
+            try {
+                const eventId = await createCalendarEvent(creatorId, { ...firestoreTask, id: docRef.id });
+                if (eventId) {
+                    await updateDoc(docRef, { googleEventId: eventId });
+                }
+            } catch (e) {
+                console.error("Google Calendar event creation failed, but task was created in Chorey:", e);
+                // Don't throw, task creation shouldn't fail because of this
+            }
+        }
         return { success: true };
     } catch (e: any) {
         return { error: e.message };
@@ -323,6 +337,28 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         await updateDoc(taskRef, finalUpdates);
         const updatedTask = { ...taskToUpdate, ...finalUpdates, id: taskId };
         await triggerWebhooks(organizationId, 'task.updated', updatedTask);
+
+        // Google Calendar Sync
+        try {
+            const dueDateChanged = 'dueDate' in updates;
+            if (dueDateChanged) {
+                if (updates.dueDate && updatedTask.googleEventId) { // Date changed, event exists -> update
+                    await updateCalendarEvent(userId, updatedTask);
+                } else if (updates.dueDate && !updatedTask.googleEventId) { // Date added, no event -> create
+                    const eventId = await createCalendarEvent(userId, updatedTask);
+                    if (eventId) await updateDoc(taskRef, { googleEventId: eventId });
+                } else if (!updates.dueDate && updatedTask.googleEventId) { // Date removed, event exists -> delete
+                    await deleteCalendarEvent(userId, updatedTask.googleEventId);
+                    await updateDoc(taskRef, { googleEventId: null });
+                }
+            } else if (('title' in updates || 'description' in updates) && updatedTask.googleEventId) {
+                // Other details changed, update event if it exists
+                await updateCalendarEvent(userId, updatedTask);
+            }
+        } catch (e) {
+            console.error("Google Calendar event update failed:", e);
+        }
+        
         return { success: true, updatedTask };
 
     } catch (e: any) {
@@ -355,6 +391,7 @@ export async function cloneTaskAction(taskId: string, userId: string, organizati
           dependencyConfig: taskToClone.dependencyConfig || {},
           consultedUserIds: taskToClone.consultedUserIds || [],
           informedUserIds: taskToClone.informedUserIds || [],
+          googleEventId: null, // Don't clone the calendar event
         };
         
         delete (clonedTask as any).id; 
@@ -416,9 +453,19 @@ export async function deleteTaskPermanentlyAction(taskId: string, organizationId
         const taskDoc = await getDoc(taskRef);
         if(!taskDoc.exists()) return { success: true };
 
-        const taskData = { ...taskDoc.data(), id: taskId };
+        const taskData = { ...taskDoc.data(), id: taskId } as Task;
         await deleteDoc(taskRef);
         await triggerWebhooks(organizationId, 'task.deleted', taskData);
+        
+        // Google Calendar Sync
+        if (taskData.googleEventId && taskData.creatorId) {
+            try {
+                await deleteCalendarEvent(taskData.creatorId, taskData.googleEventId);
+            } catch (e) {
+                console.error("Google Calendar event deletion failed:", e);
+            }
+        }
+        
         return { success: true };
     } catch (e: any) {
         return { error: e.message };
@@ -596,5 +643,3 @@ export async function setChoreOfTheWeekAction(taskId: string, organizationId: st
         return { error: e.message };
     }
 }
-
-    

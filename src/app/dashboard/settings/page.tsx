@@ -18,6 +18,7 @@ import TwoFactorAuthSettings from '@/components/chorey/settings/two-factor-auth-
 import WebhookSettings from '@/components/chorey/settings/webhook-settings';
 import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
 import { PERMISSIONS } from '@/lib/types';
+import GoogleCalendarSettings from '@/components/chorey/settings/google-calendar-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
@@ -43,6 +44,7 @@ export default function SettingsPage() {
       <TwoFactorAuthSettings user={user} />
       <AnimationSettings />
       <SessionManagement />
+      <GoogleCalendarSettings />
 
       {currentOrganization && (
         <>

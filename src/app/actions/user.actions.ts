@@ -5,8 +5,9 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import type { User, UserStatus } from '@/lib/types';
 import { authenticator } from 'otplib';
+import { oauth2Client, scopes } from '@/lib/google-auth';
 
-export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings'>>) {
+export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken'>>) {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, data);
@@ -98,6 +99,32 @@ export async function purchaseTheme(userId: string, color: string, cost: number)
         return { success: true };
     } catch (error: any) {
         console.error("Error purchasing theme:", error);
+        return { error: error.message };
+    }
+}
+
+
+// --- Google Calendar Actions ---
+
+export async function generateGoogleAuthUrl(userId: string) {
+    const url = oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: scopes,
+        prompt: 'consent', // Force to get a refresh token every time
+        state: userId, // Pass userId to identify the user in the callback
+    });
+    return { url };
+}
+
+export async function disconnectGoogleCalendar(userId: string) {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            googleRefreshToken: null,
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error disconnecting Google Calendar:", error);
         return { error: error.message };
     }
 }
