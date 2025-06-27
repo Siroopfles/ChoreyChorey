@@ -48,6 +48,10 @@ export type OrganizationSettings = {
     enabled: boolean;
     webhookUrl: string;
   };
+  discord?: {
+    enabled: boolean;
+    webhookUrl: string;
+  };
   limits?: {
     maxMembers?: number;
     maxTasks?: number;

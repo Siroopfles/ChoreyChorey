@@ -7,6 +7,7 @@ import type { User, Task, Priority, Organization } from '@/lib/types';
 import { isAfter } from 'date-fns';
 import { sendSlackMessage } from '@/lib/slack-service';
 import { sendTeamsMessage } from '@/lib/teams-service';
+import { sendDiscordMessage } from '@/lib/discord-service';
 
 const priorityOrder: Record<Priority, number> = {
     'Laag': 0,
@@ -89,6 +90,12 @@ export async function createNotification(userId: string, message: string, taskId
         const teamsConfig = orgData.settings?.teams;
         if (teamsConfig?.enabled && teamsConfig.webhookUrl) {
             sendTeamsMessage(teamsConfig.webhookUrl, message).catch(console.error);
+        }
+
+        // Discord
+        const discordConfig = orgData.settings?.discord;
+        if (discordConfig?.enabled && discordConfig.webhookUrl) {
+            sendDiscordMessage(discordConfig.webhookUrl, message).catch(console.error);
         }
     }
   } catch (e) {
