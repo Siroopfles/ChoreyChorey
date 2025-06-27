@@ -3,11 +3,9 @@
 
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2 } from 'lucide-react';
-import type { Team, User } from '@/lib/types';
-import { ManageMembersPopover } from './manage-members-popover';
+import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2, Briefcase } from 'lucide-react';
+import type { Team, User, Project } from '@/lib/types';
 import { TeamDialog } from './team-dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -27,30 +25,30 @@ import {
 } from '@/components/ui/alert-dialog';
 
 
-export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] }) {
+export function TeamCard({ project, allTeams }: { project: Project, usersInOrg: User[], allTeams: Team[] }) {
     const { toast } = useToast();
     const { user, currentUserPermissions } = useAuth();
     const [isCompleting, setIsCompleting] = useState(false);
     
-    const canManageTeams = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEAMS);
+    const canManageProjects = currentUserPermissions.includes(PERMISSIONS.MANAGE_PROJECTS);
 
-    const members = useMemo(() => {
-        return team.memberIds.map(id => usersInOrg.find(u => u.id === id)).filter(Boolean) as User[];
-    }, [team.memberIds, usersInOrg]);
+    const assignedTeams = useMemo(() => {
+        return (project.teamIds || []).map(id => allTeams.find(t => t.id === id)).filter(Boolean) as Team[];
+    }, [project.teamIds, allTeams]);
     
     const handleShare = () => {
-        const link = `${window.location.origin}/public/team/${team.id}`;
+        const link = `${window.location.origin}/public/project/${project.id}`;
         navigator.clipboard.writeText(link);
         toast({
             title: 'Link Gekopieerd!',
-            description: 'De openbare link naar dit teambord is gekopieerd.',
+            description: 'De openbare link naar dit projectbord is gekopieerd.',
         });
     }
 
     const handleCompleteProject = async () => {
         if (!user) return;
         setIsCompleting(true);
-        const result = await completeProject(team.id, team.organizationId, user.id);
+        const result = await completeProject(project.id, project.organizationId, user.id);
         if (result.error) {
             toast({ title: "Fout", description: result.error, variant: 'destructive' });
         } else {
@@ -65,27 +63,27 @@ export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] 
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <CardTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5 text-primary"/>
-                        {team.name}
-                        {team.isSensitive && (
+                        <Briefcase className="h-5 w-5 text-primary"/>
+                        {project.name}
+                        {project.isSensitive && (
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger><EyeOff className="h-4 w-4 text-muted-foreground" /></TooltipTrigger>
-                                    <TooltipContent><p>Dit is een gevoelig team.</p></TooltipContent>
+                                    <TooltipContent><p>Dit is een gevoelig project.</p></TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
                         )}
-                        {team.isPublic && (
+                        {project.isPublic && (
                              <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger><Globe className="h-4 w-4 text-blue-500" /></TooltipTrigger>
-                                    <TooltipContent><p>Dit team is publiek deelbaar.</p></TooltipContent>
+                                    <TooltipContent><p>Dit project is publiek deelbaar.</p></TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
                         )}
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                         {canManageTeams && (
+                         {canManageProjects && (
                             <AlertDialog>
                                 <TooltipProvider>
                                     <Tooltip>
@@ -101,7 +99,7 @@ export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] 
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Weet u het zeker?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Dit zal het project '{team.name}' als voltooid markeren en een prestatie-badge toekennen aan alle teamleden. Deze actie kan niet ongedaan worden gemaakt.
+                                            Dit zal het project '{project.name}' als voltooid markeren en een prestatie-badge toekennen aan alle leden van de toegewezen teams. Deze actie kan niet ongedaan worden gemaakt.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -114,35 +112,23 @@ export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] 
                                 </AlertDialogContent>
                             </AlertDialog>
                         )}
-                        <TeamDialog organizationId={team.organizationId} team={team}>
+                        <TeamDialog organizationId={project.organizationId} project={project} allTeams={allTeams}>
                            <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4"/></Button>
                         </TeamDialog>
-                        <ManageMembersPopover team={team} usersInOrg={usersInOrg} />
                     </div>
                 </div>
-                <CardDescription>{members.length} {members.length === 1 ? 'lid' : 'leden'}</CardDescription>
+                <CardDescription>{project.program || 'Geen programma'}</CardDescription>
             </CardHeader>
             <CardContent className="flex justify-between items-center">
-                {members.length > 0 ? (
-                    <TooltipProvider>
-                        <div className="flex -space-x-2">
-                            {members.map(member => (
-                                <Tooltip key={member.id}>
-                                    <TooltipTrigger asChild>
-                                        <Avatar className="border-2 border-background">
-                                            <AvatarImage src={member.avatar} />
-                                            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>{member.name}</p></TooltipContent>
-                                </Tooltip>
-                            ))}
-                        </div>
-                    </TooltipProvider>
+                {assignedTeams.length > 0 ? (
+                    <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">{assignedTeams.map(t => t.name).join(', ')}</span>
+                    </div>
                 ) : (
-                    <p className="text-sm text-muted-foreground">Dit team heeft nog geen leden.</p>
+                    <p className="text-sm text-muted-foreground">Geen teams toegewezen.</p>
                 )}
-                 {team.isPublic && <Button variant="outline" size="sm" onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Deel Link</Button>}
+                 {project.isPublic && <Button variant="outline" size="sm" onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Deel Link</Button>}
             </CardContent>
         </Card>
     );
