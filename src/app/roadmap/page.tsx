@@ -3,12 +3,12 @@ import LandingFooter from "@/components/landing/footer"
 import LandingHeader from "@/components/landing/header"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { roadmapData } from "@/lib/roadmap-data"
+import { roadmapPhases } from "@/lib/roadmap-data"
 
 
 export default function RoadmapPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-secondary/50">
+    <div className="flex flex-col min-h-screen bg-background">
       <LandingHeader />
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">
@@ -19,19 +19,22 @@ export default function RoadmapPage() {
                 Een overzicht van wat we hebben gebouwd en wat de toekomst brengt. We werken constant aan het verbeteren van ons platform.
               </p>
             </div>
-            <div className="mx-auto grid max-w-7xl gap-12 py-12">
-              {Object.entries(roadmapData).map(([category, features]) => (
-                <div key={category} className="space-y-6">
-                  <h2 className="text-3xl font-bold tracking-tight">{category}</h2>
+            <div className="mx-auto grid max-w-7xl gap-16 py-12">
+              {roadmapPhases.map((phase) => (
+                <div key={phase.name} className="space-y-8">
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-bold tracking-tight">{phase.name}</h2>
+                    <p className="text-muted-foreground max-w-3xl">{phase.description}</p>
+                  </div>
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {features.sort((a, b) => a.id - b.id).map((item) => (
-                      <Card key={item.id} className={cn("flex flex-col", item.completed && "bg-background/60 border-green-500/40")}>
+                    {phase.features.sort((a, b) => a.id - b.id).map((item) => (
+                      <Card key={item.id} className={cn("flex flex-col", item.completed ? "bg-secondary/50 border-green-500/20" : "bg-card")}>
                         <CardHeader className="flex flex-row items-start justify-between gap-4">
-                          <CardTitle className={cn("text-lg", item.completed && "text-muted-foreground")}>{item.title}</CardTitle>
+                          <CardTitle className={cn("text-base", item.completed && "text-muted-foreground")}>{item.title}</CardTitle>
                           {item.completed && <Check className="h-6 w-6 text-green-500 shrink-0" />}
                         </CardHeader>
                         <CardContent className="flex-grow">
-                          <p className={cn("text-muted-foreground", item.completed && "text-muted-foreground/80")}>{item.description}</p>
+                          <p className={cn("text-sm text-muted-foreground", item.completed && "text-muted-foreground/80")}>{item.description}</p>
                         </CardContent>
                       </Card>
                     ))}
