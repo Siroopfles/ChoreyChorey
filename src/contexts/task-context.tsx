@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -27,6 +28,7 @@ import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
 import { calculatePoints } from '@/lib/utils';
+import { triggerWebhooks } from '@/lib/webhook-service';
 
 type TaskContextType = {
   tasks: Task[];
@@ -448,6 +450,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
               );
             });
         }
+        triggerWebhooks(currentOrganization.id, 'task.created', { ...firestoreTask, id: docRef.id });
         return true;
     } catch (e) {
         handleError(e, 'opslaan van taak');
@@ -485,18 +488,19 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         
         delete (clonedTask as any).id; 
 
-        await addDoc(collection(db, 'tasks'), clonedTask);
+        const docRef = await addDoc(collection(db, 'tasks'), clonedTask);
         toast({
             title: 'Taak Gekloond!',
             description: `Een kopie van "${taskToClone.title}" is aangemaakt.`,
         });
+        triggerWebhooks(currentOrganization.id, 'task.created', { ...clonedTask, id: docRef.id });
     } catch (e) {
         handleError(e, 'klonen van taak');
     }
   }
 
   const splitTask = async (taskId: string) => {
-    if (!authUser) return;
+    if (!authUser || !currentOrganization) return;
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
@@ -553,6 +557,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             title: 'Taak gesplitst!',
             description: `Een nieuwe taak is aangemaakt met de overige subtaken.`,
         });
+        triggerWebhooks(currentOrganization.id, 'task.created', { ...newTaskData, id: newTaskRef.id });
+        triggerWebhooks(currentOrganization.id, 'task.updated', { ...originalTask, id: taskRef.id, subtasks: originalSubtasks });
 
     } catch (e) {
         handleError(e, 'splitsen van taak');
@@ -560,13 +566,19 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteTaskPermanently = async (taskId: string) => {
+    if (!currentOrganization) return;
     try {
         const taskRef = doc(db, 'tasks', taskId);
+        const taskDoc = await getDoc(taskRef);
+        if(!taskDoc.exists()) return;
+
+        const taskData = { ...taskDoc.data(), id: taskId };
         await deleteDoc(taskRef);
         toast({
             title: 'Taak Permanent Verwijderd',
             variant: 'destructive',
         });
+        triggerWebhooks(currentOrganization.id, 'task.deleted', taskData);
     } catch (e) {
         handleError(e, 'permanent verwijderen van taak');
     }
@@ -720,6 +732,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                         title: 'Herhalende Taak',
                         description: `De volgende taak "${newTaskData.title}" is aangemaakt.`,
                     });
+                    triggerWebhooks(currentOrganization.id, 'task.created', { ...newTaskData, id: docRef.id });
 
                 } catch (e) {
                     handleError(e, 'aanmaken van herhalende taak');
@@ -742,6 +755,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         });
         
         await updateDoc(taskRef, finalUpdates);
+        const updatedTask = { ...taskToUpdate, ...finalUpdates };
+        triggerWebhooks(currentOrganization.id, 'task.updated', updatedTask);
+
 
     } catch (e) {
         handleError(e, `bijwerken van taak`);
@@ -749,7 +765,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const rateTask = async (taskId: string, rating: number) => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
@@ -789,6 +805,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             title: 'Taak beoordeeld!',
             description: `De toegewezen teamleden hebben ${bonusPoints} bonuspunten ontvangen.`
         });
+        const updatedTask = { ...task, rating: rating };
+        triggerWebhooks(currentOrganization.id, 'task.updated', updatedTask);
     } catch (e) {
         handleError(e, 'beoordelen van taak');
     }
@@ -850,6 +868,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 currentOrganization.id
             );
         }
+        
+        const updatedTask = { ...taskData, id: taskId, comments: [...taskData.comments, newComment] };
+        triggerWebhooks(currentOrganization.id, 'task.updated', updatedTask);
+
 
     } catch (e) {
         handleError(e, 'reageren op taak');
@@ -857,7 +879,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const thankForTask = async (taskId: string) => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
     const task = tasks.find(t => t.id === taskId);
     if (!task || task.assigneeIds.length === 0 || task.thanked) return;
 
@@ -890,6 +912,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             title: 'Bedankt!',
             description: `${assigneesNames} heeft ${points} bonuspunten ontvangen.`,
         });
+
+        const updatedTask = { ...task, thanked: true };
+        triggerWebhooks(currentOrganization.id, 'task.updated', updatedTask);
 
     } catch (e) {
         handleError(e, 'bedanken voor taak');
@@ -947,6 +972,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             const taskRef = doc(db, 'tasks', id);
             batch.update(taskRef, cleanUpdates);
             batch.update(taskRef, { history: arrayUnion(historyEntry) });
+            const updatedTask = { ...tasks.find(t => t.id === id), ...cleanUpdates };
+            triggerWebhooks(currentOrganization.id, 'task.updated', updatedTask);
         });
 
         await batch.commit();
@@ -961,7 +988,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
-    if (!authUser) return;
+    if (!authUser || !currentOrganization) return;
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskToUpdate = tasks.find(t => t.id === taskId);
@@ -981,6 +1008,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
                 subtasks: updatedSubtasks,
                 history: arrayUnion(historyEntry)
              });
+            const updatedTask = { ...taskToUpdate, subtasks: updatedSubtasks };
+            triggerWebhooks(currentOrganization.id, 'task.updated', updatedTask);
         }
     } catch (e) {
         handleError(e, 'bijwerken van subtaak');
@@ -988,7 +1017,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleTaskTimer = async (taskId: string) => {
-    if (!authUser) return;
+    if (!authUser || !currentOrganization) return;
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
 
@@ -1004,12 +1033,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           activeTimerStartedAt: null,
           history: arrayUnion(addHistoryEntry(authUser.uid, 'Tijdregistratie gestopt', `Totaal gelogd: ${newTimeLogged}s`))
         });
+        triggerWebhooks(currentOrganization.id, 'task.updated', {...task, timeLogged: newTimeLogged, activeTimerStartedAt: null});
       } else {
         // Timer is stopped, so start it
         await updateDoc(taskRef, {
           activeTimerStartedAt: new Date(),
           history: arrayUnion(addHistoryEntry(authUser.uid, 'Tijdregistratie gestart'))
         });
+        triggerWebhooks(currentOrganization.id, 'task.updated', {...task, activeTimerStartedAt: new Date()});
       }
     } catch (e) {
       handleError(e, "tijdregistratie bijwerken");
@@ -1040,7 +1071,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const resetSubtasks = async (taskId: string) => {
-    if (!authUser) return;
+    if (!authUser || !currentOrganization) return;
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskToUpdate = tasks.find(t => t.id === taskId);
@@ -1057,6 +1088,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             subtasks: resetSubtasks,
             history: arrayUnion(historyEntry)
         });
+        
+        const updatedTask = { ...taskToUpdate, subtasks: resetSubtasks };
+        triggerWebhooks(currentOrganization.id, 'task.updated', updatedTask);
 
         toast({
             title: 'Subtaken gereset!',
@@ -1078,6 +1112,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (currentChore) {
             const oldChoreRef = doc(db, 'tasks', currentChore.id);
             batch.update(oldChoreRef, { isChoreOfTheWeek: false });
+            triggerWebhooks(currentOrganization.id, 'task.updated', {...currentChore, isChoreOfTheWeek: false });
         }
 
         // Set the new chore of the week
@@ -1086,6 +1121,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
         await batch.commit();
         toast({ title: 'Klus van de Week ingesteld!' });
+        const newChoreTask = tasks.find(t => t.id === taskId);
+        if(newChoreTask) {
+             triggerWebhooks(currentOrganization.id, 'task.updated', {...newChoreTask, isChoreOfTheWeek: true });
+        }
     } catch (e) {
         handleError(e, 'instellen van Klus van de Week');
     }

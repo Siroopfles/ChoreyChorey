@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -14,6 +15,7 @@ import AnimationSettings from '@/components/chorey/settings/animation-settings';
 import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
 import SessionManagement from '@/components/chorey/settings/session-management';
 import TwoFactorAuthSettings from '@/components/chorey/settings/two-factor-auth-settings';
+import WebhookSettings from '@/components/chorey/settings/webhook-settings';
 
 export default function SettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole } = useAuth();
@@ -44,6 +46,7 @@ export default function SettingsPage() {
           {isOwnerOrAdmin && <OrganizationSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <AnnouncementSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <BrandingSettings organization={currentOrganization} />}
+          {isOwnerOrAdmin && <WebhookSettings />}
           {isOwnerOrAdmin && <WorkflowSettings organization={currentOrganization} />}
           {isOwnerOrAdmin && <FeatureToggleSettings organization={currentOrganization} />}
           <DangerZone

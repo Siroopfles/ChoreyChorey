@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 
 export type OrganizationSettings = {
@@ -409,3 +410,29 @@ export type Invite = {
     status: 'pending' | 'accepted';
     createdAt: Date;
 };
+
+export const WEBHOOK_EVENTS = {
+  'task.created': 'Taak Aangemaakt',
+  'task.updated': 'Taak Bijgewerkt',
+  'task.deleted': 'Taak Verwijderd',
+} as const;
+export type WebhookEvent = keyof typeof WEBHOOK_EVENTS;
+
+export type Webhook = {
+  id: string;
+  name: string;
+  organizationId: string;
+  url: string;
+  events: WebhookEvent[];
+  secret: string;
+  enabled: boolean;
+  createdAt: Date;
+};
+
+export const webhookFormSchema = z.object({
+  name: z.string().min(2, 'Naam moet minimaal 2 karakters bevatten.'),
+  url: z.string().url('Voer een geldige URL in.'),
+  events: z.array(z.nativeEnum(Object.keys(WEBHOOK_EVENTS))).min(1, 'Selecteer ten minste één gebeurtenis.'),
+  enabled: z.boolean().default(true),
+});
+export type WebhookFormValues = z.infer<typeof webhookFormSchema>;

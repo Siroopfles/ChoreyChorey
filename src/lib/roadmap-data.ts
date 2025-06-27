@@ -1,4 +1,5 @@
 
+
 export const roadmapData = {
     "Fundamenteel Taakbeheer (Basis)": [
       { id: 1001, title: "Taakcreatie & Eigenschappen", description: "Prioriteit, labels, toewijzing en deadlines.", completed: true },
@@ -153,7 +154,7 @@ export const roadmapData = {
       { id: 84, title: "Zapier / Make (Integromat) Integratie", description: "Verbind Chorey met duizenden andere apps.", completed: false },
       { id: 85, title: "Cloud Storage Integraties", description: "Koppel bestanden direct vanuit Google Drive, OneDrive, Dropbox.", completed: false },
       { id: 86, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek projectadres.", completed: false },
-      { id: 87, title: "Webhooks", description: "Stuur real-time updates naar externe systemen bij gebeurtenissen in Chorey.", completed: false },
+      { id: 87, title: "Webhooks", description: "Stuur real-time updates naar externe systemen bij gebeurtenissen in Chorey.", completed: true },
     ],
     "Notificaties & Communicatie": [
       { id: 1088, title: "Flexibel Notificatiesysteem", description: "Notificaties voor @mentions en toewijzingen.", completed: true },
