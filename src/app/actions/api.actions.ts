@@ -1,9 +1,10 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
-import type { ApiKey, Organization, Permission } from '@/lib/types';
+import type { ApiKey, Organization, Permission, ApiPermission } from '@/lib/types';
 import { PERMISSIONS, DEFAULT_ROLES } from '@/lib/types';
 
 // Simplified permission check for server actions
@@ -25,7 +26,7 @@ function hashKey(key: string): string {
     return crypto.createHash('sha256').update(key).digest('hex');
 }
 
-export async function generateApiKey(organizationId: string, userId: string, name: string): Promise<{ plainTextKey: string } | { error: string }> {
+export async function generateApiKey(organizationId: string, userId: string, name: string, permissions: ApiPermission[]): Promise<{ plainTextKey: string } | { error: string }> {
     if (!await checkPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
         return { error: 'Geen permissie om API sleutels aan te maken.' };
     }
@@ -41,6 +42,7 @@ export async function generateApiKey(organizationId: string, userId: string, nam
             hashedKey,
             keyPrefix,
             createdAt: new Date(),
+            permissions: permissions,
         };
 
         await addDoc(collection(db, 'apiKeys'), newApiKeyData);
@@ -67,6 +69,7 @@ export async function getApiKeys(organizationId: string, userId: string): Promis
                 keyPrefix: data.keyPrefix,
                 createdAt: (data.createdAt as Timestamp).toDate(),
                 lastUsed: (data.lastUsed as Timestamp)?.toDate(),
+                permissions: data.permissions || [],
             };
         });
         return { keys };

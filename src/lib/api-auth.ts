@@ -3,18 +3,19 @@
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import crypto from 'crypto';
+import type { ApiPermission } from './types';
 
 function hashKey(key: string): string {
     return crypto.createHash('sha256').update(key).digest('hex');
 }
 
 /**
- * Authenticates an API request and returns the organization ID if successful.
+ * Authenticates an API request and returns the organization ID and permissions if successful.
  * Also updates the lastUsed timestamp on the key.
  * @param apiKey The plain text API key from the request header.
- * @returns The organizationId or null if authentication fails.
+ * @returns An object with organizationId and permissions, or null if authentication fails.
  */
-export async function getOrgIdFromApiKey(apiKey: string): Promise<string | null> {
+export async function authenticateApiKey(apiKey: string): Promise<{ organizationId: string; permissions: ApiPermission[] } | null> {
     if (!apiKey || !apiKey.startsWith('chorey_sk_')) {
         return null;
     }
@@ -38,7 +39,10 @@ export async function getOrgIdFromApiKey(apiKey: string): Promise<string | null>
             console.error(`Failed to update lastUsed for key ${keyDoc.id}:`, err);
         });
 
-        return keyData.organizationId;
+        return {
+            organizationId: keyData.organizationId,
+            permissions: keyData.permissions || [],
+        };
 
     } catch (error) {
         console.error("Error authenticating API key:", error);

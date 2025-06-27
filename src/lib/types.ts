@@ -507,6 +507,14 @@ export const ideaFormSchema = z.object({
 });
 export type IdeaFormValues = z.infer<typeof ideaFormSchema>;
 
+export const API_PERMISSIONS = {
+  'read:tasks': 'Lezen: Taken',
+  'write:tasks': 'Schrijven: Taken',
+  'delete:tasks': 'Verwijderen: Taken',
+} as const;
+
+export type ApiPermission = keyof typeof API_PERMISSIONS;
+
 export type ApiKey = {
   id: string;
   organizationId: string;
@@ -515,4 +523,5 @@ export type ApiKey = {
   keyPrefix: string;
   createdAt: Date;
   lastUsed?: Date;
+  permissions: ApiPermission[];
 };

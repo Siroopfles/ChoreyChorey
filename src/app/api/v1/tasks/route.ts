@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getOrgIdFromApiKey } from '@/lib/api-auth';
+import { authenticateApiKey } from '@/lib/api-auth';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, Timestamp, addDoc } from 'firebase/firestore';
 import type { Status, Task } from '@/lib/types';
@@ -25,16 +25,20 @@ const serializeTask = (data: any) => {
 export async function GET(request: NextRequest) {
     const authHeader = request.headers.get('Authorization');
     const apiKey = authHeader?.split('Bearer ')[1];
-
     if (!apiKey) {
         return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
     }
 
-    const organizationId = await getOrgIdFromApiKey(apiKey);
-
-    if (!organizationId) {
+    const authResult = await authenticateApiKey(apiKey);
+    if (!authResult) {
         return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
     }
+
+    if (!authResult.permissions.includes('read:tasks')) {
+        return NextResponse.json({ error: 'Forbidden: Your API key lacks read permissions for tasks.' }, { status: 403 });
+    }
+    
+    const { organizationId } = authResult;
 
     try {
         const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
@@ -61,11 +65,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
     }
 
-    const organizationId = await getOrgIdFromApiKey(apiKey);
-
-    if (!organizationId) {
+    const authResult = await authenticateApiKey(apiKey);
+    if (!authResult) {
         return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
     }
+
+    if (!authResult.permissions.includes('write:tasks')) {
+        return NextResponse.json({ error: 'Forbidden: Your API key lacks write permissions for tasks.' }, { status: 403 });
+    }
+
+    const { organizationId } = authResult;
 
     try {
         const body = await request.json();

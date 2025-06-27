@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getOrgIdFromApiKey } from '@/lib/api-auth';
+import { authenticateApiKey } from '@/lib/api-auth';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import type { Task } from '@/lib/types';
@@ -30,10 +30,17 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
     if (!apiKey) {
         return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
     }
-    const organizationId = await getOrgIdFromApiKey(apiKey);
-    if (!organizationId) {
+
+    const authResult = await authenticateApiKey(apiKey);
+    if (!authResult) {
         return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
     }
+    
+    if (!authResult.permissions.includes('read:tasks')) {
+        return NextResponse.json({ error: 'Forbidden: Your API key lacks read permissions for tasks.' }, { status: 403 });
+    }
+
+    const { organizationId } = authResult;
 
     try {
         const { taskId } = params;
@@ -65,10 +72,17 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
     if (!apiKey) {
         return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
     }
-    const organizationId = await getOrgIdFromApiKey(apiKey);
-    if (!organizationId) {
+
+    const authResult = await authenticateApiKey(apiKey);
+    if (!authResult) {
         return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
     }
+
+    if (!authResult.permissions.includes('write:tasks')) {
+        return NextResponse.json({ error: 'Forbidden: Your API key lacks write permissions for tasks.' }, { status: 403 });
+    }
+
+    const { organizationId } = authResult;
     
     try {
         const { taskId } = params;
@@ -113,10 +127,17 @@ export async function DELETE(request: NextRequest, { params }: { params: { taskI
     if (!apiKey) {
         return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
     }
-    const organizationId = await getOrgIdFromApiKey(apiKey);
-    if (!organizationId) {
+    
+    const authResult = await authenticateApiKey(apiKey);
+    if (!authResult) {
         return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
     }
+
+    if (!authResult.permissions.includes('delete:tasks')) {
+        return NextResponse.json({ error: 'Forbidden: Your API key lacks delete permissions for tasks.' }, { status: 403 });
+    }
+    
+    const { organizationId } = authResult;
 
     try {
         const { taskId } = params;

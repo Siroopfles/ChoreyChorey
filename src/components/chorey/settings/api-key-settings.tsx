@@ -9,11 +9,14 @@ import { Loader2, KeyRound, Plus, Trash2, Copy, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { generateApiKey, getApiKeys, revokeApiKey } from '@/app/actions/api.actions';
-import type { ApiKey } from '@/lib/types';
+import type { ApiKey, ApiPermission } from '@/lib/types';
+import { API_PERMISSIONS } from '@/lib/types';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 
 type ApiKeyDisplay = Omit<ApiKey, 'hashedKey' | 'organizationId'>;
 
@@ -24,6 +27,7 @@ export default function ApiKeySettings() {
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [keyName, setKeyName] = useState('');
+    const [selectedPermissions, setSelectedPermissions] = useState<ApiPermission[]>([]);
     const [newKeyDialog, setNewKeyDialog] = useState<{ open: boolean, key: string }>({ open: false, key: '' });
     const [hasCopied, setHasCopied] = useState(false);
 
@@ -39,9 +43,12 @@ export default function ApiKeySettings() {
     }, [currentOrganization, user]);
 
     const handleGenerate = async () => {
-        if (!keyName.trim() || !user || !currentOrganization) return;
+        if (!keyName.trim() || !user || !currentOrganization || selectedPermissions.length === 0) {
+            toast({ title: 'Fout', description: 'Voer een naam in en selecteer ten minste één permissie.', variant: 'destructive' });
+            return;
+        }
         setIsGenerating(true);
-        const result = await generateApiKey(currentOrganization.id, user.id, keyName);
+        const result = await generateApiKey(currentOrganization.id, user.id, keyName, selectedPermissions);
         if (result.error) {
             toast({ title: 'Fout', description: result.error, variant: 'destructive' });
         } else {
@@ -49,6 +56,7 @@ export default function ApiKeySettings() {
             const fetchResult = await getApiKeys(currentOrganization.id, user.id);
             if (fetchResult.keys) setKeys(fetchResult.keys);
             setKeyName('');
+            setSelectedPermissions([]);
         }
         setIsGenerating(false);
     };
@@ -70,6 +78,12 @@ export default function ApiKeySettings() {
         setTimeout(() => setHasCopied(false), 2000);
     }
 
+    const handlePermissionToggle = (permission: ApiPermission, checked: boolean | 'indeterminate') => {
+        setSelectedPermissions(prev => 
+            checked ? [...prev, permission] : prev.filter(p => p !== permission)
+        );
+    };
+
     return (
         <>
         <Card>
@@ -78,9 +92,27 @@ export default function ApiKeySettings() {
                 <CardDescription>Beheer API-sleutels om uw Chorey-organisatie te integreren met andere applicaties.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
+                <div className="p-4 border rounded-md space-y-4">
+                     <h4 className="font-medium">Nieuwe Sleutel Genereren</h4>
                     <Input placeholder="Naam voor nieuwe sleutel..." value={keyName} onChange={(e) => setKeyName(e.target.value)} />
-                    <Button onClick={handleGenerate} disabled={!keyName.trim() || isGenerating}>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Permissies</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            {Object.entries(API_PERMISSIONS).map(([key, label]) => (
+                                <div key={key} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`perm-${key}`}
+                                        onCheckedChange={(checked) => handlePermissionToggle(key as ApiPermission, checked)}
+                                        checked={selectedPermissions.includes(key as ApiPermission)}
+                                    />
+                                    <label htmlFor={`perm-${key}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                        {label}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <Button onClick={handleGenerate} disabled={!keyName.trim() || isGenerating || selectedPermissions.length === 0}>
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Plus className="mr-2 h-4 w-4" />}
                         Genereer
                     </Button>
@@ -93,7 +125,7 @@ export default function ApiKeySettings() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Naam</TableHead>
-                                    <TableHead>Sleutel Prefix</TableHead>
+                                    <TableHead>Permissies</TableHead>
                                     <TableHead>Aangemaakt</TableHead>
                                     <TableHead className="text-right"></TableHead>
                                 </TableRow>
@@ -102,7 +134,13 @@ export default function ApiKeySettings() {
                                 {keys.length > 0 ? keys.map(key => (
                                     <TableRow key={key.id}>
                                         <TableCell className="font-medium">{key.name}</TableCell>
-                                        <TableCell className="font-mono text-muted-foreground">{key.keyPrefix}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-wrap gap-1">
+                                                {key.permissions.map(perm => (
+                                                    <Badge key={perm} variant="secondary">{API_PERMISSIONS[perm]}</Badge>
+                                                ))}
+                                            </div>
+                                        </TableCell>
                                         <TableCell>{format(key.createdAt, 'd MMM yyyy', { locale: nl })}</TableCell>
                                         <TableCell className="text-right">
                                             <AlertDialog>
