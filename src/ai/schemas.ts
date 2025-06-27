@@ -179,3 +179,14 @@ export const FindDuplicateTaskOutputSchema = z.object({
   reasoning: z.string().describe('A brief explanation of why the task is or is not considered a duplicate.'),
 });
 export type FindDuplicateTaskOutput = z.infer<typeof FindDuplicateTaskOutputSchema>;
+
+// From notification-digest-flow.ts
+export const NotificationDigestInputSchema = z.object({
+  userId: z.string().describe('The ID of the user for whom to generate the digest.'),
+  organizationId: z.string().describe('The ID of the organization.'),
+  period: z.enum(['daily', 'weekly']).describe('The time period for the digest.'),
+});
+export type NotificationDigestInput = z.infer<typeof NotificationDigestInputSchema>;
+
+export const NotificationDigestOutputSchema = z.string().describe('A markdown-formatted summary of the notifications.');
+export type NotificationDigestOutput = z.infer<typeof NotificationDigestOutputSchema>;

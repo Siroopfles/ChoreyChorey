@@ -165,7 +165,7 @@ export const roadmapData = {
       { id: 66, title: "'Leesbevestiging' voor belangrijke comments of updates", description: "Zie wie een belangrijke update heeft gelezen.", completed: false },
       { id: 89, title: "Dagelijks Overzicht", description: "Configureerbaar kanaal voor dagelijkse updates.", completed: false },
       { id: 91, title: "Verbeterde @mentions en Taakdiscussies", description: "Rijkere discussies met threads.", completed: true },
-      { id: 92, title: "Notificatie Digest", description: "Ontvang een samenvatting (dagelijks/wekelijks) van alle updates.", completed: false },
+      { id: 92, title: "Notificatie Digest", description: "Ontvang een samenvatting (dagelijks/wekelijks) van alle updates.", completed: true },
     ],
     "Veiligheid, Compliance & Beheer": [
       { id: 1093, title: "Geavanceerd Rechtenbeheer (RBAC)", description: "Definieer rollen (Eigenaar, Beheerder, Lid) met specifieke permissies.", completed: true },

@@ -17,7 +17,8 @@ import { identifyRisk } from '@/ai/flows/identify-risk';
 import { suggestLabels } from '@/ai/flows/suggest-labels-flow';
 import { meetingToTasks } from '@/ai/flows/meeting-to-tasks-flow';
 import { findDuplicateTask } from '@/ai/flows/find-duplicate-task-flow';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput } from '@/ai/schemas';
+import { generateNotificationDigest } from '@/ai/flows/notification-digest-flow';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -179,6 +180,15 @@ export async function handleFindDuplicateTask(input: FindDuplicateTaskInput) {
     try {
         const result = await findDuplicateTask(input);
         return { result };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function handleNotificationDigest(input: NotificationDigestInput) {
+    try {
+        const summary = await generateNotificationDigest(input);
+        return { summary };
     } catch (e: any) {
         return { error: e.message };
     }
