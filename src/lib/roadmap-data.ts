@@ -103,7 +103,7 @@ export const roadmapData = {
       { id: 60, title: "Skill Endorsements", description: "Gebruikers kunnen elkaars vaardigheden onderschrijven.", completed: true },
       { id: 61, title: "Ideeënbus & Feature Request Voting", description: "Laat gebruikers meebeslissen over de toekomst van Chorey.", completed: false },
       { id: 62, title: "Puntenwinkel", description: "Wissel verdiende punten in voor cosmetische items.", completed: false },
-      { id: 63, title: "Guilds / Clans", description: "Laat gebruikers permanente groepen vormen voor competities en samenwerking.", completed: false },
+      { id: 63, title: "Guilds / Clans", description: "Laat gebruikers permanente groepen vormen voor competities en samenwerking.", completed: true },
     ],
     "Het Webdashboard, UI & UX": [
       { id: 1064, title: "Geavanceerd Webdashboard", description: "Het centrale beheerplatform.", completed: true },
