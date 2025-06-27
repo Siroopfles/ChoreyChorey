@@ -114,7 +114,7 @@ export const roadmapData = {
       { id: 1072, title: "Command Palette (Cmd/Ctrl+K)", description: "Een centrale interface om alles te besturen.", completed: true },
       { id: 1074, title: "Aanpasbare Views (Filteren)", description: "Filter taken op basis van diverse criteria.", completed: true },
       { id: 1075, title: "Dark Mode & Theming", description: "Donkere modus en andere kleurenthema's voor de interface.", completed: true },
-      { id: 37, title: "Publiek Deelbare Dashboards", description: "Read-only link voor externen.", completed: false },
+      { id: 37, title: "Publiek Deelbare Dashboards", description: "Read-only link voor externen.", completed: true },
       { id: 38, title: "Horloge Companion App", description: "Apple Watch/Wear OS.", completed: false },
       { id: 39, title: "Globale Inbox", description: "Één plek voor alle @mentions, reviews, notificaties.", completed: true },
       { id: 40, title: "Multi-Window / Tab Support", description: "Ondersteuning voor meerdere vensters in de webapp.", completed: false },

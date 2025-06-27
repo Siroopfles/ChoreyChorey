@@ -106,6 +106,7 @@ export type Team = {
   memberIds: string[];
   program?: string;
   isSensitive?: boolean;
+  isPublic?: boolean;
 };
 
 export const USER_STATUSES: { value: 'Online' | 'Afwezig' | 'In vergadering' | 'Offline'; label: string }[] = [

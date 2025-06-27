@@ -5,11 +5,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Shield, UserCheck } from 'lucide-react';
+import { Loader2, Shield, UserCheck, Plus } from 'lucide-react';
 import type { Team } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { CreateOrganizationView } from '@/components/chorey/organization/create-organization-view';
-import { CreateTeamDialog } from '@/components/chorey/organization/create-team-dialog';
+import { TeamDialog } from '@/components/chorey/organization/team-dialog';
 import { TeamCard } from '@/components/chorey/organization/team-card';
 import { InviteMembersDialog } from '@/components/chorey/organization/invite-members-dialog';
 import { MemberList } from '@/components/chorey/organization/member-list';
@@ -85,7 +85,14 @@ export default function OrganizationPage() {
                       </Button>
                     )}
                     {canManageOrg && <InviteMembersDialog organizationId={currentOrganization.id} />}
-                    {canManageOrg && <CreateTeamDialog organizationId={currentOrganization.id} />}
+                    {canManageOrg && (
+                      <TeamDialog organizationId={currentOrganization.id}>
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nieuw Team
+                        </Button>
+                      </TeamDialog>
+                    )}
                 </div>
             </div>
 
@@ -112,7 +119,14 @@ export default function OrganizationPage() {
                                 <CardDescription>Maak je eerste team aan om leden te organiseren.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {canManageOrg && <CreateTeamDialog organizationId={currentOrganization.id} />}
+                                {canManageOrg && (
+                                    <TeamDialog organizationId={currentOrganization.id}>
+                                        <Button>
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Nieuw Team
+                                        </Button>
+                                    </TeamDialog>
+                                )}
                             </CardContent>
                         </Card>
                     )}
