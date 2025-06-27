@@ -119,18 +119,17 @@ export const searchTasks = ai.defineTool(
   async ({ organizationId, filters }) => {
     let q = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
 
-    // Add extra checks to ensure no undefined values are passed to where()
-    if (typeof filters.status === 'string' && filters.status) {
+    if (filters.status) {
       q = query(q, where('status', '==', filters.status));
     }
-    if (typeof filters.priority === 'string' && filters.priority) {
+    if (filters.priority) {
       q = query(q, where('priority', '==', filters.priority));
     }
-    if (typeof filters.assigneeId === 'string' && filters.assigneeId) {
+    if (filters.assigneeId) {
       q = query(q, where('assigneeIds', 'array-contains', filters.assigneeId));
     }
-    if (Array.isArray(filters.labels) && filters.labels.length > 0) {
-      const validLabels = filters.labels.filter(label => typeof label === 'string' && label);
+    if (filters.labels && filters.labels.length > 0) {
+      const validLabels = filters.labels.filter(label => label);
       if (validLabels.length > 0) {
         q = query(q, where('labels', 'array-contains-any', validLabels));
       }
@@ -186,20 +185,29 @@ export const updateTask = ai.defineTool(
     async ({ taskId, userId, updates }) => {
         const taskRef = doc(db, 'tasks', taskId);
         const historyEntries = [];
+        
+        const cleanUpdates: { [key: string]: any } = { ...updates };
 
-        if(updates.add_subtask) {
+        if(cleanUpdates.add_subtask) {
             const newSubtask = {
                 id: crypto.randomUUID(),
-                text: updates.add_subtask,
+                text: cleanUpdates.add_subtask,
                 completed: false,
             };
             await updateDoc(taskRef, { subtasks: arrayUnion(newSubtask) });
-            historyEntries.push(addHistoryEntry(userId, 'Subtaak toegevoegd', `"${updates.add_subtask}"`));
-            delete (updates as any).add_subtask;
+            historyEntries.push(addHistoryEntry(userId, 'Subtaak toegevoegd', `"${cleanUpdates.add_subtask}"`));
+            delete cleanUpdates.add_subtask;
         }
 
-        if (Object.keys(updates).length > 0) {
-            await updateDoc(taskRef, { ...updates });
+        Object.keys(cleanUpdates).forEach(key => {
+            if (cleanUpdates[key] === undefined) {
+                delete cleanUpdates[key];
+            }
+        });
+
+
+        if (Object.keys(cleanUpdates).length > 0) {
+            await updateDoc(taskRef, cleanUpdates);
              historyEntries.push(addHistoryEntry(userId, 'Taak bijgewerkt', `via AI commando.`));
         }
 
