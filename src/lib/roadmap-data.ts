@@ -50,7 +50,7 @@ export const roadmapData = {
       { id: 30, title: "Resource Planning (Niet-menselijk)", description: "Wijs apparatuur of ruimtes toe aan taken.", completed: false },
       { id: 31, title: "Afhankelijkheden Tussen Projecten", description: "Maak hele projecten van elkaar afhankelijk.", completed: false },
       { id: 32, title: "Geavanceerd Template Beheer", description: "Rijkere templates met meer vooraf ingestelde velden zoals herhaling en bijlagen.", completed: true },
-      { id: 33, title: "Project Portfolio Management", description: "Groepeer en beheer gerelateerde projecten als een portfolio.", completed: false },
+      { id: 33, title: "Project Portfolio Management", description: "Groepeer en beheer gerelateerde projecten als een portfolio.", completed: true },
       { id: 34, title: "Gantt Chart met Critical Path Analysis", description: "Identificeer automatisch het kritieke pad in een project.", completed: false },
       { id: 35, title: "Time Off & Availability Management", description: "Gebruikers kunnen hun afwezigheid aangeven, wat zichtbaar is in de planning.", completed: false },
       { id: 36, title: "Facturatie op basis van Tijdregistratie", description: "Genereer factuurvoorstellen op basis van gelogde tijd.", completed: false },
