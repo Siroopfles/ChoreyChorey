@@ -5,7 +5,7 @@ import { collection, doc, addDoc, getDoc, Timestamp } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { isAfter } from 'date-fns';
 
-export async function createNotification(userId: string, message: string, taskId: string, organizationId: string, fromUserId: string) {
+export async function createNotification(userId: string, message: string, taskId: string | null, organizationId: string, fromUserId: string) {
   if (userId === fromUserId) return; // Don't notify yourself
   
   try {
@@ -15,7 +15,7 @@ export async function createNotification(userId: string, message: string, taskId
     if (userToNotifyDoc.exists()) {
       const userData = userToNotifyDoc.data() as User;
       
-      if (userData.mutedTaskIds?.includes(taskId)) {
+      if (taskId && userData.mutedTaskIds?.includes(taskId)) {
           console.log(`Notification for ${userData.name} suppressed because task ${taskId} is muted.`);
           return;
       }

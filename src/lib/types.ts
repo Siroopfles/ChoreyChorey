@@ -186,6 +186,10 @@ export type User = {
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string;
   twoFactorRecoveryCodes?: string[];
+  notificationSettings?: {
+    dailyDigestEnabled?: boolean;
+  };
+  lastDigestSentAt?: Date;
 };
 
 export type Session = {
@@ -337,7 +341,7 @@ export type Notification = {
   id: string;
   userId: string;
   message: string;
-  taskId?: string;
+  taskId?: string | null;
   read: boolean;
   createdAt: Date;
   snoozedUntil?: Date;

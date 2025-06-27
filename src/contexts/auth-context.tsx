@@ -26,6 +26,7 @@ import { DEFAULT_ROLES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user.actions';
+import { sendDailyDigest } from '@/app/actions/digest.actions';
 import { useDebug } from './debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
@@ -115,10 +116,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             twoFactorEnabled: rawData.twoFactorEnabled,
             twoFactorSecret: rawData.twoFactorSecret,
             twoFactorRecoveryCodes: rawData.twoFactorRecoveryCodes,
+            notificationSettings: rawData.notificationSettings,
+            lastDigestSentAt: (rawData.lastDigestSentAt as Timestamp | null)?.toDate() ?? undefined,
         };
         setUser(userData);
 
         if (isDebugMode) console.log('[DEBUG] AuthContext: User data set:', userData);
+
+        const shouldSendDigest = userData.notificationSettings?.dailyDigestEnabled;
+        const now = new Date();
+        const lastSent = userData.lastDigestSentAt;
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        if (shouldSendDigest && userData.currentOrganizationId && (!lastSent || (now.getTime() - lastSent.getTime()) > oneDay)) {
+            if (isDebugMode) console.log('[DEBUG] AuthContext: Triggering daily digest for user', firebaseUser.uid);
+            // Don't await this, let it run in the background
+            sendDailyDigest(firebaseUser.uid, userData.currentOrganizationId);
+        }
 
         if (userData.organizationIds && userData.organizationIds.length > 0) {
             if (isDebugMode) console.log('[DEBUG] AuthContext: Fetching organizations with IDs:', userData.organizationIds);
@@ -474,5 +488,3 @@ export function useAuth() {
     }
     return context;
 }
-
-    
