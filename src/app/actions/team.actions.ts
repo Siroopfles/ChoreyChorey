@@ -1,0 +1,48 @@
+
+'use server';
+
+import { db } from '@/lib/firebase';
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import type { Team } from '@/lib/types';
+
+export async function manageTeam(
+  action: 'create' | 'update' | 'delete',
+  payload: {
+    organizationId: string;
+    teamId?: string;
+    name?: string;
+  }
+) {
+  try {
+    const { organizationId, teamId, name } = payload;
+    if (!organizationId) {
+        throw new Error('Organization ID is required.');
+    }
+
+    if (action === 'create' && name) {
+      const newTeam: Omit<Team, 'id'> = {
+        name,
+        organizationId,
+        memberIds: [],
+      };
+      await addDoc(collection(db, 'teams'), newTeam);
+      return { success: true };
+    }
+
+    if (action === 'update' && teamId && name) {
+      const teamRef = doc(db, 'teams', teamId);
+      await updateDoc(teamRef, { name });
+      return { success: true };
+    }
+
+    if (action === 'delete' && teamId) {
+      const teamRef = doc(db, 'teams', teamId);
+      await deleteDoc(teamRef);
+      return { success: true };
+    }
+
+    throw new Error('Invalid action or payload for managing team.');
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}

@@ -1,23 +1,23 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, Shield, UserCheck, Plus, Briefcase, Users } from 'lucide-react';
-import type { Team, Project } from '@/lib/types';
+import { Loader2, Shield, UserCheck, Plus, Briefcase, Users, Edit } from 'lucide-react';
+import type { Team } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { CreateOrganizationView } from '@/components/chorey/organization/create-organization-view';
-import { TeamDialog } from '@/components/chorey/organization/team-dialog';
-import { TeamCard } from '@/components/chorey/organization/team-card';
+import { ProjectDialog } from '@/components/chorey/organization/project-dialog';
+import { ProjectCard } from '@/components/chorey/organization/project-card';
 import { InviteMembersDialog } from '@/components/chorey/organization/invite-members-dialog';
 import { MemberList } from '@/components/chorey/organization/member-list';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
+import { TeamDialog } from '@/components/chorey/organization/team-dialog';
+import { ManageMembersPopover } from '@/components/chorey/organization/manage-members-popover';
 
 export default function OrganizationPage() {
     const { currentOrganization, loading: authLoading, currentUserPermissions, projects, teams } = useAuth();
@@ -39,6 +39,7 @@ export default function OrganizationPage() {
     const canManageRoles = currentUserPermissions.includes(PERMISSIONS.MANAGE_ROLES);
     const canInviteMembers = currentUserPermissions.includes(PERMISSIONS.MANAGE_MEMBERS);
     const canManageProjects = currentUserPermissions.includes(PERMISSIONS.MANAGE_PROJECTS);
+    const canManageTeams = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEAMS);
 
     return (
         <div className="space-y-6">
@@ -60,14 +61,6 @@ export default function OrganizationPage() {
                       </Button>
                     )}
                     {canInviteMembers && <InviteMembersDialog organizationId={currentOrganization.id} />}
-                    {canManageProjects && (
-                      <TeamDialog organizationId={currentOrganization.id} allTeams={teams}>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nieuw Project
-                        </Button>
-                      </TeamDialog>
-                    )}
                 </div>
             </div>
 
@@ -75,11 +68,21 @@ export default function OrganizationPage() {
 
             <div className="grid gap-x-6 gap-y-12 lg:grid-cols-2">
                 <div className="space-y-8">
-                    <h2 className="text-xl font-semibold flex items-center gap-2"><Briefcase/> Projecten</h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-semibold flex items-center gap-2"><Briefcase/> Projecten</h2>
+                       {canManageProjects && (
+                         <ProjectDialog organizationId={currentOrganization.id} allTeams={teams}>
+                            <Button size="sm">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nieuw Project
+                            </Button>
+                        </ProjectDialog>
+                       )}
+                    </div>
                      {projects.length > 0 ? (
                         <div className="grid gap-6 md:grid-cols-1">
                             {projects.map(project => (
-                                <TeamCard key={project.id} project={project} usersInOrg={usersInOrg} allTeams={teams} />
+                                <ProjectCard key={project.id} project={project} usersInOrg={usersInOrg} allTeams={teams} />
                             ))}
                         </div>
                     ) : (
@@ -90,31 +93,51 @@ export default function OrganizationPage() {
                             </CardHeader>
                             <CardContent>
                                 {canManageProjects && (
-                                    <TeamDialog organizationId={currentOrganization.id} allTeams={teams}>
+                                    <ProjectDialog organizationId={currentOrganization.id} allTeams={teams}>
                                         <Button>
                                             <Plus className="mr-2 h-4 w-4" />
                                             Nieuw Project
                                         </Button>
-                                    </TeamDialog>
+                                    </ProjectDialog>
                                 )}
                             </CardContent>
                         </Card>
                     )}
 
-                     <h2 className="text-xl font-semibold flex items-center gap-2 mt-8"><Users /> Teams</h2>
+                     <div className="flex items-center justify-between mt-8">
+                        <h2 className="text-xl font-semibold flex items-center gap-2"><Users /> Teams</h2>
+                         {canManageTeams && (
+                            <TeamDialog>
+                                <Button size="sm">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nieuw Team
+                                </Button>
+                            </TeamDialog>
+                        )}
+                     </div>
                      {teams.length > 0 ? (
                        <Card>
                          <CardContent className="p-4 space-y-4">
                            {teams.map(team => (
                              <div key={team.id} className="flex items-center justify-between">
                                <p className="font-medium">{team.name}</p>
-                               <div className="flex -space-x-2">
-                                   {(team.memberIds || []).map(id => usersInOrg.find(u => u.id === id)).filter(Boolean).map(member => (
-                                       <Avatar key={member!.id} className="h-6 w-6 border-2 border-background">
-                                           <AvatarImage src={member!.avatar} />
-                                           <AvatarFallback>{member!.name.charAt(0)}</AvatarFallback>
-                                       </Avatar>
-                                   ))}
+                               <div className="flex items-center gap-2">
+                                <div className="flex -space-x-2">
+                                    {(team.memberIds || []).map(id => usersInOrg.find(u => u.id === id)).filter(Boolean).map(member => (
+                                        <Avatar key={member!.id} className="h-6 w-6 border-2 border-background">
+                                            <AvatarImage src={member!.avatar} />
+                                            <AvatarFallback>{member!.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                    ))}
+                                </div>
+                                {canManageTeams && (
+                                    <>
+                                        <ManageMembersPopover team={team} usersInOrg={usersInOrg} />
+                                        <TeamDialog team={team}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4"/></Button>
+                                        </TeamDialog>
+                                    </>
+                                )}
                                </div>
                              </div>
                            ))}

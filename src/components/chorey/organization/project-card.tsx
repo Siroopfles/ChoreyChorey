@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2, Briefcase } from 'lucide-react';
 import type { Team, User, Project } from '@/lib/types';
-import { TeamDialog } from './team-dialog';
+import { ProjectDialog } from './project-dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 
-export function TeamCard({ project, allTeams }: { project: Project, usersInOrg: User[], allTeams: Team[] }) {
+export function ProjectCard({ project, allTeams }: { project: Project, usersInOrg: User[], allTeams: Team[] }) {
     const { toast } = useToast();
     const { user, currentUserPermissions } = useAuth();
     const [isCompleting, setIsCompleting] = useState(false);
@@ -112,9 +112,9 @@ export function TeamCard({ project, allTeams }: { project: Project, usersInOrg: 
                                 </AlertDialogContent>
                             </AlertDialog>
                         )}
-                        <TeamDialog organizationId={project.organizationId} project={project} allTeams={allTeams}>
+                        <ProjectDialog organizationId={project.organizationId} project={project} allTeams={allTeams}>
                            <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4"/></Button>
-                        </TeamDialog>
+                        </ProjectDialog>
                     </div>
                 </div>
                 <CardDescription>{project.program || 'Geen programma'}</CardDescription>
@@ -133,4 +133,3 @@ export function TeamCard({ project, allTeams }: { project: Project, usersInOrg: 
         </Card>
     );
 }
-
