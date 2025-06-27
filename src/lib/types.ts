@@ -346,6 +346,33 @@ export type TaskTemplate = TaskTemplateFormValues & {
   createdAt: Date;
 };
 
+export type Milestone = {
+  id: string;
+  text: string;
+  completed: boolean;
+};
+
+export type PersonalGoal = {
+  id: string;
+  userId: string;
+  organizationId: string;
+  title: string;
+  description?: string;
+  targetDate?: Date;
+  status: 'In Progress' | 'Achieved';
+  milestones: Milestone[];
+  createdAt: Date;
+};
+
+export const personalGoalFormSchema = z.object({
+  title: z.string().min(3, 'Titel moet minimaal 3 karakters bevatten.'),
+  description: z.string().optional(),
+  targetDate: z.date().optional(),
+  milestones: z.array(z.object({ text: z.string().min(1, "Mijlpaal mag niet leeg zijn.") })).optional(),
+});
+
+export type PersonalGoalFormValues = z.infer<typeof personalGoalFormSchema>;
+
 
 export type Filters = {
   assigneeId: string | null;

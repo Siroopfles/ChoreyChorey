@@ -220,7 +220,7 @@ export const roadmapData = {
       { id: 99, title: "Geïntegreerde Pomodoro Timer", description: "Een timer voor focus-sessies.", completed: false },
       { id: 100, title: "'Einde van de Dag' afronding", description: "Prompt om de dag te reviewen.", completed: false },
       { id: 101, title: "'Do Not Disturb' schema's", description: "Stel periodes in waarin je niet gestoord wilt worden.", completed: true },
-      { id: 102, title: "Persoonlijke Goal Tracking", description: "Los van projecttaken.", completed: false },
+      { id: 102, title: "Persoonlijke Goal Tracking", description: "Los van projecttaken.", completed: true },
       { id: 103, title: "Integratie met mindfulness-apps", description: "Headspace/Calm.", completed: false },
       { id: 104, title: "Werk-privé balans dashboard", description: "Analyse van werkuren.", completed: false },
       { id: 105, title: "Muziek voor Focus' integratie", description: "Spotify.", completed: false },

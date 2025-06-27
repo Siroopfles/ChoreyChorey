@@ -21,7 +21,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues } from '@/lib/types';
 import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,11 @@ type TaskContextType = {
   setViewedUser: (user: User | null) => void;
   isAddTaskDialogOpen: boolean;
   setIsAddTaskDialogOpen: (open: boolean) => void;
+  personalGoals: PersonalGoal[];
+  addPersonalGoal: (goalData: PersonalGoalFormValues) => Promise<boolean>;
+  updatePersonalGoal: (goalId: string, goalData: PersonalGoalFormValues) => Promise<boolean>;
+  deletePersonalGoal: (goalId: string) => Promise<void>;
+  toggleMilestoneCompletion: (goalId: string, milestoneId: string) => Promise<void>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -123,6 +128,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [personalGoals, setPersonalGoals] = useState<PersonalGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
@@ -166,9 +172,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (!currentOrganization) {
+    if (!currentOrganization || !authUser) {
       setTasks([]);
       setTemplates([]);
+      setPersonalGoals([]);
       setLoading(false);
       return;
     }
@@ -254,10 +261,26 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         setTemplates(templatesData);
     }, (error: FirestoreError) => handleError(error, 'laden van templates'));
 
+    const qGoals = query(collection(db, 'personalGoals'), where("userId", "==", authUser.uid), where("organizationId", "==", currentOrganization.id));
+    const unsubscribeGoals = onSnapshot(qGoals, (snapshot) => {
+        const goalsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+                targetDate: (data.targetDate as Timestamp)?.toDate(),
+                milestones: data.milestones || [],
+            } as PersonalGoal;
+        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setPersonalGoals(goalsData);
+    }, (error: FirestoreError) => handleError(error, 'laden van persoonlijke doelen'));
+
 
     return () => {
         unsubscribeTasks();
         unsubscribeTemplates();
+        unsubscribeGoals();
     };
   }, [authUser, currentOrganization, toast, currentUserPermissions, teams]);
 
@@ -1068,6 +1091,94 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addPersonalGoal = async (goalData: PersonalGoalFormValues): Promise<boolean> => {
+    if (!authUser || !currentOrganization) return false;
+    try {
+      const newGoal: Omit<PersonalGoal, 'id'> = {
+        userId: authUser.uid,
+        organizationId: currentOrganization.id,
+        title: goalData.title,
+        description: goalData.description || '',
+        targetDate: goalData.targetDate || undefined,
+        status: 'In Progress',
+        milestones: goalData.milestones?.map(m => ({...m, id: crypto.randomUUID(), completed: false})) || [],
+        createdAt: new Date(),
+      };
+      await addDoc(collection(db, 'personalGoals'), newGoal);
+      toast({ title: 'Doel Aangemaakt!', description: `Je nieuwe doel "${goalData.title}" is opgeslagen.` });
+      return true;
+    } catch(e) {
+      handleError(e, 'opslaan van persoonlijk doel');
+      return false;
+    }
+  };
+
+  const updatePersonalGoal = async (goalId: string, goalData: PersonalGoalFormValues): Promise<boolean> => {
+    try {
+      const goalRef = doc(db, 'personalGoals', goalId);
+      const existingGoal = personalGoals.find(g => g.id === goalId);
+      if (!existingGoal) return false;
+
+      const updatedMilestones = goalData.milestones?.map((ms, index) => {
+          const existingMilestone = existingGoal.milestones.find(ems => ems.text === ms.text);
+          return {
+              id: existingMilestone?.id || existingGoal.milestones[index]?.id || crypto.randomUUID(),
+              text: ms.text,
+              completed: existingMilestone?.completed || existingGoal.milestones[index]?.completed || false
+          }
+      }) || [];
+
+      const cleanGoalData = {
+          title: goalData.title,
+          description: goalData.description,
+          targetDate: goalData.targetDate,
+          milestones: updatedMilestones
+      }
+
+      await updateDoc(goalRef, cleanGoalData);
+      toast({ title: 'Doel Bijgewerkt!' });
+      return true;
+    } catch(e) {
+      handleError(e, 'bijwerken van persoonlijk doel');
+      return false;
+    }
+  };
+
+  const deletePersonalGoal = async (goalId: string) => {
+    try {
+      await deleteDoc(doc(db, 'personalGoals', goalId));
+      toast({ title: 'Doel Verwijderd' });
+    } catch(e) {
+      handleError(e, 'verwijderen van persoonlijk doel');
+    }
+  };
+  
+  const toggleMilestoneCompletion = async (goalId: string, milestoneId: string) => {
+    try {
+      const goal = personalGoals.find(g => g.id === goalId);
+      if (!goal) return;
+
+      const updatedMilestones = goal.milestones.map(m => 
+        m.id === milestoneId ? { ...m, completed: !m.completed } : m
+      );
+      
+      const allCompleted = updatedMilestones.every(m => m.completed);
+      
+      const goalRef = doc(db, 'personalGoals', goalId);
+      await updateDoc(goalRef, {
+        milestones: updatedMilestones,
+        status: allCompleted ? 'Achieved' : 'In Progress'
+      });
+      
+      if (allCompleted) {
+        toast({ title: 'Doel Behaald!', description: `Gefeliciteerd met het behalen van je doel: "${goal.title}"` });
+      }
+
+    } catch (e) {
+      handleError(e, 'bijwerken van mijlpaal');
+    }
+  };
+
 
   return (
     <TaskContext.Provider value={{ 
@@ -1109,7 +1220,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       viewedUser,
       setViewedUser,
       isAddTaskDialogOpen,
-      setIsAddTaskDialogOpen
+      setIsAddTaskDialogOpen,
+      personalGoals,
+      addPersonalGoal,
+      updatePersonalGoal,
+      deletePersonalGoal,
+      toggleMilestoneCompletion,
     }}>
       {children}
     </TaskContext.Provider>
