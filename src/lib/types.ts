@@ -22,6 +22,7 @@ export type OrganizationSettings = {
     message: string;
     level: 'info' | 'warning';
   } | null;
+  savedFilters?: SavedFilter[];
 }
 
 export type Organization = {
@@ -345,6 +346,13 @@ export type Filters = {
   labels: string[];
   priority: Priority | null;
   teamId: string | null;
+};
+
+export type SavedFilter = {
+  id: string;
+  name: string;
+  creatorId: string;
+  filters: Filters;
 };
 
 export type Invite = {

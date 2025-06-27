@@ -58,6 +58,7 @@ type TaskContextType = {
   filters: Filters;
   setFilters: (newFilters: Partial<Filters>) => void;
   clearFilters: () => void;
+  activeFilterCount: number;
   notifications: Notification[];
   markAllNotificationsAsRead: () => void;
   markSingleNotificationAsRead: (notificationId: string) => void;
@@ -138,6 +139,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setRawFilters({ assigneeId: null, labels: [], priority: null, teamId: null });
       setSearchTerm('');
   };
+  
+  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.teamId ? 1 : 0);
 
   const handleError = (error: any, context: string) => {
     console.error(`Error in ${context}:`, error);
@@ -1082,6 +1085,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       filters,
       setFilters,
       clearFilters,
+      activeFilterCount,
       notifications,
       markAllNotificationsAsRead,
       markSingleNotificationAsRead,

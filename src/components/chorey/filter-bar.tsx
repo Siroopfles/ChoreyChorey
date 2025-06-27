@@ -10,10 +10,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Check, Filter, Users, Tags, ArrowUpNarrowWide, X, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SavedFiltersManager } from "./saved-filters-manager";
 
 
 export default function FilterBar() {
-  const { users, filters, setFilters, clearFilters } = useTasks();
+  const { users, filters, setFilters, clearFilters, activeFilterCount } = useTasks();
   const { user: currentUser, teams, currentOrganization } = useAuth();
   
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
@@ -27,7 +28,6 @@ export default function FilterBar() {
     setFilters({ labels: newLabels });
   };
   
-  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.teamId ? 1 : 0);
   const assigneeName = filters.assigneeId ? users.find(u => u.id === filters.assigneeId)?.name : null;
   const teamName = filters.teamId ? teams.find(t => t.id === filters.teamId)?.name : null;
 
@@ -144,6 +144,8 @@ export default function FilterBar() {
           Wissen
         </Button>
       )}
+
+      <SavedFiltersManager />
     </div>
   );
 }
