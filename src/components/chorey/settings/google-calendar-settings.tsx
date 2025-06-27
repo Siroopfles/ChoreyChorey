@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Calendar, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateGoogleAuthUrl, disconnectGoogleCalendar } from '@/app/actions/user.actions';
+import { generateGoogleAuthUrl, disconnectGoogleCalendar, updateUserProfile } from '@/app/actions/user.actions';
 
 export default function GoogleCalendarSettings() {
     const { user, refreshUser } = useAuth();
@@ -32,9 +32,14 @@ export default function GoogleCalendarSettings() {
                 }
 
                 if (event.data.type === 'google-auth-callback') {
-                    if (event.data.success) {
-                        toast({ title: 'Verbonden!', description: 'Succesvol verbonden met Google Calendar.' });
-                        await refreshUser();
+                    if (event.data.success && event.data.refreshToken) {
+                        const updateResult = await updateUserProfile(user.id, { googleRefreshToken: event.data.refreshToken });
+                         if (updateResult.error) {
+                            toast({ title: 'Fout bij opslaan token', description: updateResult.error, variant: 'destructive' });
+                        } else {
+                            toast({ title: 'Verbonden!', description: 'Succesvol verbonden met Google Calendar.' });
+                            await refreshUser();
+                        }
                     } else {
                         toast({ title: 'Google Calendar Fout', description: event.data.error || 'Kon niet verbinden met Google Calendar.', variant: 'destructive' });
                     }

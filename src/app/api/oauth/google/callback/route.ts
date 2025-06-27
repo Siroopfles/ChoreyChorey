@@ -1,13 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { oauth2Client } from '@/lib/google-auth';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
-const renderResponse = (success: boolean, error?: string) => {
+const renderResponse = (success: boolean, error?: string, refreshToken?: string | null) => {
     const message = JSON.stringify({
         type: 'google-auth-callback',
         success,
         error: error || null,
+        refreshToken: refreshToken || null,
     });
 
     return new NextResponse(
@@ -47,18 +46,12 @@ export async function GET(request: NextRequest) {
     if (!state) {
         return renderResponse(false, 'invalid_state');
     }
-    
-    const userId = state;
 
     try {
         const { tokens } = await oauth2Client.getToken(code);
         
         if (tokens.refresh_token) {
-            const userRef = doc(db, 'users', userId);
-            await updateDoc(userRef, {
-                googleRefreshToken: tokens.refresh_token,
-            });
-            return renderResponse(true);
+            return renderResponse(true, undefined, tokens.refresh_token);
         } else {
             console.error('No refresh token received from Google.');
             return renderResponse(false, 'no_refresh_token');
