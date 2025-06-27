@@ -1,4 +1,5 @@
 
+
 export const roadmapData = {
     "Fundamenteel Taakbeheer (Basis)": [
       { id: 1001, title: "Taakcreatie & Eigenschappen", description: "Prioriteit, labels, toewijzing en deadlines.", completed: true },
@@ -98,9 +99,9 @@ export const roadmapData = {
       { id: 35, title: "User-Generated Content Challenges", description: "Bv. 'maak de beste taak-template'.", completed: true },
       { id: 36, title: "Project Post-Mortem Badges", description: "Badges voor succesvol afgeronde projecten.", completed: false },
       { id: 58, title: "'Help Wanted' Board", description: "Vraag om hulp bij specifieke taken.", completed: true },
-      { id: 59, title: "Team-Based Challenges & Competities", description: "Stel doelen voor teams met een beloning.", completed: false },
+      { id: 59, title: "Team-Based Challenges & Competities", description: "Stel doelen voor teams met een beloning.", completed: true },
       { id: 60, title: "Skill Endorsements", description: "Gebruikers kunnen elkaars vaardigheden onderschrijven.", completed: true },
-      { id: 61, title: "Ideeënbus & Feature Request Voting", description: "Laat gebruikers meebeslissen over de toekomst van Chorey.", completed: false },
+      { id: 61, title: "Ideeënbus & Feature Request Voting", description: "Laat gebruikers meebeslissen over de toekomst van Chorey.", completed: true },
       { id: 62, title: "Puntenwinkel", description: "Wissel verdiende punten in voor coole cosmetische items.", completed: true },
       { id: 63, title: "Guilds / Clans", description: "Laat gebruikers permanente groepen vormen voor competities en samenwerking.", completed: true },
     ],

@@ -1,5 +1,6 @@
 
 
+
 import { z } from 'zod';
 
 export type OrganizationSettings = {
@@ -50,6 +51,7 @@ export const PERMISSIONS = {
   VIEW_ALL_TASKS: 'VIEW_ALL_TASKS',
   VIEW_AUDIT_LOG: 'VIEW_AUDIT_LOG',
   VIEW_SENSITIVE_DATA: 'VIEW_SENSITIVE_DATA',
+  MANAGE_IDEAS: 'MANAGE_IDEAS',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -66,6 +68,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.VIEW_ALL_TASKS]: { name: 'Alle Taken Zien', description: 'Kan alle niet-privé taken binnen de organisatie bekijken.' },
   [PERMISSIONS.VIEW_AUDIT_LOG]: { name: 'Audit Log Bekijken', description: 'Heeft toegang tot de audit log met alle acties binnen de organisatie.' },
   [PERMISSIONS.VIEW_SENSITIVE_DATA]: { name: 'Gevoelige Data Zien', description: 'Kan de inhoud van taken zien die als "gevoelig" zijn gemarkeerd.' },
+  [PERMISSIONS.MANAGE_IDEAS]: { name: 'Ideeën Beheren', description: 'Kan de status van ideeën in de ideeënbus aanpassen.' },
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
@@ -87,6 +90,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.VIEW_ALL_TASKS,
       PERMISSIONS.VIEW_AUDIT_LOG,
       PERMISSIONS.VIEW_SENSITIVE_DATA,
+      PERMISSIONS.MANAGE_IDEAS,
     ],
   },
   Member: {
@@ -110,6 +114,20 @@ export type Team = {
   isSensitive?: boolean;
   isPublic?: boolean;
 };
+
+export type TeamChallenge = {
+    id: string;
+    organizationId: string;
+    title: string;
+    description: string;
+    teamId: string;
+    target: number;
+    metric: 'tasks_completed' | 'points_earned';
+    reward: number; // points
+    status: 'active' | 'completed';
+    createdAt: Date;
+    completedAt?: Date;
+}
 
 export const USER_STATUSES: { value: 'Online' | 'Afwezig' | 'In vergadering' | 'Niet storen' | 'Offline'; label: string }[] = [
   { value: 'Online', label: 'Online' },
@@ -436,3 +454,22 @@ export const webhookFormSchema = z.object({
   enabled: z.boolean().default(true),
 });
 export type WebhookFormValues = z.infer<typeof webhookFormSchema>;
+
+export type IdeaStatus = 'new' | 'planned' | 'in-progress' | 'completed';
+
+export type Idea = {
+    id: string;
+    organizationId: string;
+    creatorId: string;
+    title: string;
+    description: string;
+    upvotes: string[];
+    status: IdeaStatus;
+    createdAt: Date;
+};
+
+export const ideaFormSchema = z.object({
+    title: z.string().min(5, 'Titel moet minimaal 5 karakters bevatten.'),
+    description: z.string().min(10, 'Omschrijving moet minimaal 10 karakters bevatten.'),
+});
+export type IdeaFormValues = z.infer<typeof ideaFormSchema>;

@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Target, GitGraph, MailCheck, BarChart } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, LayoutTemplate, Settings, CalendarDays, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Target, GitGraph, MailCheck, BarChart, Lightbulb } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -65,9 +65,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
         { href: '/dashboard/digest', icon: MailCheck, label: 'Digest' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
-        { href: '/dashboard/goals', icon: Target, label: 'Doelen' },
+        { href: '/dashboard/goals', icon: Target, label: 'Doelen & Uitdagingen' },
         { href: '/dashboard/leaderboard', icon: Trophy, label: 'Prestaties' },
         { href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' },
+        { href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' },
         { href: '/dashboard/shop', icon: Store, label: 'Puntenwinkel' },
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/headcount', icon: Users, label: 'Headcount' },

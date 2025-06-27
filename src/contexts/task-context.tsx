@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -22,13 +23,14 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus } from '@/lib/types';
 import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
 import { calculatePoints } from '@/lib/utils';
 import { triggerWebhooks } from '@/lib/webhook-service';
+import { createIdea as createIdeaAction, toggleIdeaUpvote as toggleIdeaUpvoteAction, updateIdeaStatus as updateIdeaStatusAction } from '@/app/actions/ideas.actions';
 
 type TaskContextType = {
   tasks: Task[];
@@ -75,6 +77,10 @@ type TaskContextType = {
   updatePersonalGoal: (goalId: string, goalData: PersonalGoalFormValues) => Promise<boolean>;
   deletePersonalGoal: (goalId: string) => Promise<void>;
   toggleMilestoneCompletion: (goalId: string, milestoneId: string) => Promise<void>;
+  ideas: Idea[];
+  addIdea: (ideaData: IdeaFormValues) => Promise<boolean>;
+  toggleIdeaUpvote: (ideaId: string) => void;
+  updateIdeaStatus: (ideaId: string, status: IdeaStatus) => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -131,6 +137,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [personalGoals, setPersonalGoals] = useState<PersonalGoal[]>([]);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
@@ -178,6 +185,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setTasks([]);
       setTemplates([]);
       setPersonalGoals([]);
+      setIdeas([]);
       setLoading(false);
       return;
     }
@@ -212,7 +220,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           dependencyConfig: data.dependencyConfig,
           recurring: data.recurring,
           organizationId: data.organizationId,
-          imageDataUri: data.imageDataUri,
+          imageDataUri: data.imageDataUri ?? null,
           thanked: data.thanked || false,
           timeLogged: data.timeLogged || 0,
           activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
@@ -278,11 +286,25 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         setPersonalGoals(goalsData);
     }, (error: FirestoreError) => handleError(error, 'laden van persoonlijke doelen'));
 
+    const qIdeas = query(collection(db, 'ideas'), where("organizationId", "==", currentOrganization.id));
+    const unsubscribeIdeas = onSnapshot(qIdeas, (snapshot) => {
+        const ideasData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: (data.createdAt as Timestamp).toDate(),
+            } as Idea;
+        });
+        setIdeas(ideasData);
+    }, (error: FirestoreError) => handleError(error, 'laden van ideeën'));
+
 
     return () => {
         unsubscribeTasks();
         unsubscribeTemplates();
         unsubscribeGoals();
+        unsubscribeIdeas();
     };
   }, [authUser, currentOrganization, toast, currentUserPermissions, teams]);
 
@@ -1218,6 +1240,35 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addIdea = async (ideaData: IdeaFormValues): Promise<boolean> => {
+    if (!user || !currentOrganization) return false;
+    const result = await createIdeaAction(currentOrganization.id, user.id, ideaData);
+    if (result.error) {
+      handleError({ message: result.error }, 'indienen van idee');
+      return false;
+    }
+    toast({ title: 'Idee ingediend!', description: 'Bedankt voor je bijdrage.' });
+    return true;
+  };
+
+  const toggleIdeaUpvote = async (ideaId: string) => {
+    if (!user) return;
+    const result = await toggleIdeaUpvoteAction(ideaId, user.id);
+    if (result.error) {
+      handleError({ message: result.error }, 'stemmen op idee');
+    }
+  };
+
+  const updateIdeaStatus = async (ideaId: string, status: IdeaStatus) => {
+    if (!user || !currentOrganization) return;
+    const result = await updateIdeaStatusAction(ideaId, status, user.id, currentOrganization.id);
+    if (result.error) {
+      handleError({ message: result.error }, 'bijwerken van idee status');
+    } else {
+      toast({ title: 'Status bijgewerkt!' });
+    }
+  };
+
 
   return (
     <TaskContext.Provider value={{ 
@@ -1265,6 +1316,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       updatePersonalGoal,
       deletePersonalGoal,
       toggleMilestoneCompletion,
+      ideas,
+      addIdea,
+      toggleIdeaUpvote,
+      updateIdeaStatus,
     }}>
       {children}
     </TaskContext.Provider>
