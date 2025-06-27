@@ -212,7 +212,13 @@ export const ACHIEVEMENTS = {
     name: 'Gewaardeerd',
     description: 'Ontvang een bedankje van een ander voor een voltooide taak.',
     icon: 'Heart',
-  }
+  },
+  PROJECT_COMPLETED: {
+    id: 'project_completed',
+    name: 'Project Voltooid',
+    description: 'Je hebt met succes bijgedragen aan de voltooiing van een project.',
+    icon: 'Medal',
+  },
 };
 
 export type Priority = string;

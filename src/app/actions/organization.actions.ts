@@ -3,7 +3,8 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc, deleteField } from 'firebase/firestore';
-import type { User, Organization, Invite, RoleName, SavedFilter, Filters } from '@/lib/types';
+import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team } from '@/lib/types';
+import { ACHIEVEMENTS } from '@/lib/types';
 
 
 export async function createOrganizationInvite(organizationId: string, inviterId: string, organizationName: string) {
@@ -287,4 +288,56 @@ export async function manageSavedFilter(
     console.error('Error managing saved filter:', error);
     return { error: error.message };
   }
+}
+
+export async function completeProject(teamId: string, organizationId: string, currentUserId: string) {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
+        
+        const orgData = orgDoc.data() as Organization;
+        const currentUserRole = (orgData.members || {})[currentUserId]?.role;
+
+        if (currentUserRole !== 'Owner' && currentUserRole !== 'Admin') {
+            throw new Error("Je hebt geen permissie om een project te voltooien.");
+        }
+
+        const teamRef = doc(db, 'teams', teamId);
+        const teamDoc = await getDoc(teamRef);
+        if (!teamDoc.exists()) throw new Error("Team niet gevonden.");
+        
+        const teamData = teamDoc.data() as Team;
+        const memberIds = teamData.memberIds || [];
+
+        if (memberIds.length === 0) {
+            return { success: true, message: "Project voltooid, maar er waren geen leden om een badge aan uit te reiken." };
+        }
+
+        const batch = writeBatch(db);
+        const achievementId = ACHIEVEMENTS.PROJECT_COMPLETED.id;
+        const notificationMessage = `Project '${teamData.name}' is voltooid! Je hebt de prestatie "${ACHIEVEMENTS.PROJECT_COMPLETED.name}" ontgrendeld.`;
+
+        memberIds.forEach(memberId => {
+            const userRef = doc(db, 'users', memberId);
+            batch.update(userRef, { achievements: arrayUnion(achievementId) });
+
+            const notificationRef = doc(collection(db, 'notifications'));
+            batch.set(notificationRef, {
+                userId: memberId,
+                message: notificationMessage,
+                read: false,
+                createdAt: new Date(),
+                organizationId: organizationId,
+            });
+        });
+        
+        await batch.commit();
+
+        return { success: true, message: `${memberIds.length} lid / leden hebben een prestatie ontvangen.` };
+
+    } catch (error: any) {
+        console.error("Error completing project:", error);
+        return { error: error.message };
+    }
 }

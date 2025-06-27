@@ -14,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Trophy, Award, Rocket, Users, Heart, Star, HandHeart } from 'lucide-react';
+import { CheckCircle, Trophy, Award, Rocket, Users, Heart, Star, HandHeart, Medal } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,7 @@ const achievementIcons: Record<string, React.ElementType> = {
     'ten_tasks': Award,
     'community_helper': Users,
     'appreciated': Heart,
+    'project_completed': Medal,
 };
 
 function UserStats({ user, userTasks }: { user: User; userTasks: Task[] }) {

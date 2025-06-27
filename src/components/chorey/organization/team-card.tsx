@@ -5,15 +5,35 @@ import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, EyeOff, Globe, Share2, Edit } from 'lucide-react';
+import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2 } from 'lucide-react';
 import type { Team, User } from '@/lib/types';
 import { ManageMembersPopover } from './manage-members-popover';
 import { TeamDialog } from './team-dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context';
+import { PERMISSIONS } from '@/lib/types';
+import { completeProject } from '@/app/actions/organization.actions';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
 
 export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] }) {
     const { toast } = useToast();
+    const { user, currentUserPermissions } = useAuth();
+    const [isCompleting, setIsCompleting] = useState(false);
+    
+    const canManageTeams = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEAMS);
+
     const members = useMemo(() => {
         return team.memberIds.map(id => usersInOrg.find(u => u.id === id)).filter(Boolean) as User[];
     }, [team.memberIds, usersInOrg]);
@@ -26,6 +46,19 @@ export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] 
             description: 'De openbare link naar dit teambord is gekopieerd.',
         });
     }
+
+    const handleCompleteProject = async () => {
+        if (!user) return;
+        setIsCompleting(true);
+        const result = await completeProject(team.id, team.organizationId, user.id);
+        if (result.error) {
+            toast({ title: "Fout", description: result.error, variant: 'destructive' });
+        } else {
+            toast({ title: "Project Voltooid!", description: result.message });
+        }
+        setIsCompleting(false);
+    };
+
 
     return (
         <Card>
@@ -52,6 +85,35 @@ export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] 
                         )}
                     </CardTitle>
                     <div className="flex items-center gap-2">
+                         {canManageTeams && (
+                            <AlertDialog>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8"><Medal className="h-4 w-4 text-amber-500"/></Button>
+                                            </AlertDialogTrigger>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Project Voltooien</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Weet u het zeker?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Dit zal het project '{team.name}' als voltooid markeren en een prestatie-badge toekennen aan alle teamleden. Deze actie kan niet ongedaan worden gemaakt.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleCompleteProject} disabled={isCompleting}>
+                                            {isCompleting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                            Ja, voltooi project
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
                         <TeamDialog organizationId={team.organizationId} team={team}>
                            <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4"/></Button>
                         </TeamDialog>
