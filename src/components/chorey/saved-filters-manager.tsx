@@ -54,7 +54,7 @@ export function SavedFiltersManager() {
   }
 
   const handleApply = (filter: SavedFilter) => {
-    const emptyFilters = { assigneeId: null, labels: [], priority: null, teamId: null };
+    const emptyFilters = { assigneeId: null, labels: [], priority: null, projectId: null };
     setFilters({ ...emptyFilters, ...filter.filters }); // Replace current filters
     toast({ title: 'Filter toegepast', description: `'${filter.name}' is nu actief.`})
   }
@@ -120,3 +120,5 @@ export function SavedFiltersManager() {
     </div>
   )
 }
+
+    

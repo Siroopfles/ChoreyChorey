@@ -1,6 +1,7 @@
+
 'use client';
 
-import type { User, TaskFormValues, Task, Label, Team } from '@/lib/types';
+import type { User, TaskFormValues, Task, Label, Project } from '@/lib/types';
 import { taskFormSchema } from '@/lib/types';
 import { useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -36,7 +37,7 @@ type EditTaskDialogProps = {
 export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
   const { updateTask, addComment } = useTasks();
-  const { teams } = useAuth();
+  const { projects } = useAuth();
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -44,7 +45,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       title: task.title,
       description: task.description,
       assigneeIds: task.assigneeIds || [],
-      teamId: task.teamId || undefined,
+      projectId: task.projectId || undefined,
       dueDate: task.dueDate,
       priority: task.priority,
       labels: task.labels,
@@ -63,7 +64,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
       title: task.title,
       description: task.description,
       assigneeIds: task.assigneeIds || [],
-      teamId: task.teamId || undefined,
+      projectId: task.projectId || undefined,
       dueDate: task.dueDate,
       priority: task.priority,
       labels: task.labels,
@@ -134,7 +135,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col min-h-0">
                     <ScrollArea className="flex-1 pr-4 -mr-4">
-                        <TaskFormFields users={users} teams={teams} />
+                        <TaskFormFields users={users} projects={projects} />
                     </ScrollArea>
                     <div className="flex justify-end gap-2 pt-4 border-t mt-4">
                         <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
@@ -169,3 +170,5 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     </Dialog>
   );
 }
+
+    

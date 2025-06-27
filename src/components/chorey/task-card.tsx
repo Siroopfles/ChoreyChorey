@@ -1,6 +1,6 @@
 
 'use client';
-import type { Task, User, Team } from '@/lib/types';
+import type { Task, User, Project } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -45,7 +45,7 @@ import {
   Volume2,
   Loader2,
   Repeat,
-  Users,
+  Briefcase,
   Heart,
   Timer,
   TimerOff,
@@ -78,7 +78,7 @@ type TaskCardProps = {
   users: User[];
   isDragging?: boolean;
   currentUser: User | null;
-  teams: Team[];
+  projects: Project[];
 };
 
 const priorityConfig = {
@@ -119,7 +119,7 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
   };
 
 
-const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps) => {
+const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardProps) => {
   const assignees = useMemo(() => task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
   const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
   const PriorityIcon = priorityConfig[task.priority as keyof typeof priorityConfig]?.icon || Equal;
@@ -136,7 +136,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
   const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
   const showTimeTracking = currentOrganization?.settings?.features?.timeTracking !== false;
 
-  const team = teams.find((t) => t.id === task.teamId);
+  const project = projects.find((p) => p.id === task.projectId);
 
   const isPrivilegedUser = useMemo(() => currentUser && (task.creatorId === currentUser.id || task.assigneeIds.includes(currentUser.id)), [currentUser, task.creatorId, task.assigneeIds]);
   const visibleSubtasks = useMemo(() => task.subtasks.filter(s => !s.isPrivate || isPrivilegedUser), [task.subtasks, isPrivilegedUser]);
@@ -651,10 +651,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
                             </Tooltip>
                         </TooltipProvider>
                     )}
-                    {team && (
+                    {project && (
                         <div className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            <span className="truncate">{team.name}</span>
+                            <Briefcase className="h-3 w-3" />
+                            <span className="truncate">{project.name}</span>
                         </div>
                     )}
                     {task.dueDate && (
@@ -719,3 +719,5 @@ const TaskCard = ({ task, users, isDragging, currentUser, teams }: TaskCardProps
 };
 
 export default TaskCard;
+
+    

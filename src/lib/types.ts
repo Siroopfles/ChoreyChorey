@@ -40,6 +40,7 @@ export const PERMISSIONS = {
   MANAGE_ORGANIZATION: 'MANAGE_ORGANIZATION',
   MANAGE_ROLES: 'MANAGE_ROLES',
   MANAGE_MEMBERS: 'MANAGE_MEMBERS',
+  MANAGE_PROJECTS: 'MANAGE_PROJECTS',
   MANAGE_TEAMS: 'MANAGE_TEAMS',
   CREATE_TASK: 'CREATE_TASK',
   EDIT_TASK: 'EDIT_TASK',
@@ -57,6 +58,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.MANAGE_ORGANIZATION]: { name: 'Organisatie Beheren', description: 'Kan de naam, workflow en feature instellingen van de organisatie aanpassen.' },
   [PERMISSIONS.MANAGE_ROLES]: { name: 'Rollen Beheren', description: 'Kan de rollen van andere leden aanpassen (behalve de eigenaar).' },
   [PERMISSIONS.MANAGE_MEMBERS]: { name: 'Leden Beheren', description: 'Kan leden uitnodigen voor en verwijderen uit de organisatie.' },
+  [PERMISSIONS.MANAGE_PROJECTS]: { name: 'Projecten Beheren', description: 'Kan projecten aanmaken, bewerken en verwijderen.' },
   [PERMISSIONS.MANAGE_TEAMS]: { name: 'Teams Beheren', description: 'Kan teams aanmaken en de leden van teams beheren.' },
   [PERMISSIONS.CREATE_TASK]: { name: 'Taken Aanmaken', description: 'Kan nieuwe taken aanmaken binnen de organisatie.' },
   [PERMISSIONS.EDIT_TASK]: { name: 'Taken Bewerken', description: 'Kan de details van bestaande taken aanpassen.' },
@@ -79,6 +81,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.MANAGE_ORGANIZATION,
       PERMISSIONS.MANAGE_ROLES,
       PERMISSIONS.MANAGE_MEMBERS,
+      PERMISSIONS.MANAGE_PROJECTS,
       PERMISSIONS.MANAGE_TEAMS,
       PERMISSIONS.CREATE_TASK,
       PERMISSIONS.EDIT_TASK,
@@ -101,15 +104,21 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
 };
 export type RoleName = string;
 
+export type Project = {
+  id: string;
+  name: string;
+  organizationId: string;
+  teamIds?: string[];
+  program?: string;
+  isSensitive?: boolean;
+  isPublic?: boolean;
+};
 
 export type Team = {
   id: string;
   name: string;
   organizationId: string;
   memberIds: string[];
-  program?: string;
-  isSensitive?: boolean;
-  isPublic?: boolean;
 };
 
 export type TeamChallenge = {
@@ -294,7 +303,7 @@ export type Task = {
   dueDate?: Date;
   assigneeIds: string[];
   creatorId: string | null;
-  teamId?: string | null;
+  projectId?: string | null;
   labels: Label[];
   subtasks: Subtask[];
   attachments: Attachment[];
@@ -343,7 +352,7 @@ export const taskFormSchema = z.object({
   title: z.string().min(3, 'Titel moet minimaal 3 karakters lang zijn.'),
   description: z.string().optional(),
   assigneeIds: z.array(z.string()).optional(),
-  teamId: z.string().optional(),
+  projectId: z.string().optional(),
   dueDate: z.date().optional(),
   priority: z.string().min(1, 'Prioriteit is verplicht.'),
   labels: z.array(z.string()).optional(),
@@ -424,7 +433,7 @@ export type Filters = {
   assigneeId: string | null;
   labels: string[];
   priority: Priority | null;
-  teamId: string | null;
+  projectId: string | null;
 };
 
 export type SavedFilter = {
@@ -487,3 +496,4 @@ export const ideaFormSchema = z.object({
     description: z.string().min(10, 'Omschrijving moet minimaal 10 karakters bevatten.'),
 });
 export type IdeaFormValues = z.infer<typeof ideaFormSchema>;
+    

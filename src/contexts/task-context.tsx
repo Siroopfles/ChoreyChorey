@@ -21,7 +21,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus, TeamChallenge, TeamChallengeFormValues } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, Comment, HistoryEntry, Recurring, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus, TeamChallenge, TeamChallengeFormValues, Project } from '@/lib/types';
 import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -135,7 +135,7 @@ const calculateNextDueDate = (currentDueDate: Date | undefined, recurring: Recur
 
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { authUser, user, currentOrganization, users, currentUserPermissions, teams } = useAuth();
+  const { authUser, user, currentOrganization, users, currentUserPermissions, projects } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -145,7 +145,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
-  const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, teamId: null });
+  const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, projectId: null });
   const [viewedUser, setViewedUser] = useState<User | null>(null);
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -155,11 +155,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
 
   const clearFilters = () => {
-      setRawFilters({ assigneeId: null, labels: [], priority: null, teamId: null });
+      setRawFilters({ assigneeId: null, labels: [], priority: null, projectId: null });
       setSearchTerm('');
   };
   
-  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.teamId ? 1 : 0);
+  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.projectId ? 1 : 0);
 
   const handleError = (error: any, context: string) => {
     console.error(`Error in ${context}:`, error);
@@ -208,7 +208,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           priority: data.priority || 'Midden',
           assigneeIds: data.assigneeIds || [],
           creatorId: data.creatorId || null,
-          teamId: data.teamId || null,
+          projectId: data.projectId || null,
           labels: data.labels || [],
           subtasks: data.subtasks || [],
           attachments: data.attachments || [],
@@ -248,10 +248,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
       // Mask sensitive data
       const canViewSensitive = currentUserPermissions.includes(PERMISSIONS.VIEW_SENSITIVE_DATA);
-      const teamsMap = new Map(teams.map(t => [t.id, t]));
+      const projectsMap = new Map(projects.map(p => [p.id, p]));
       processedTasks = processedTasks.map(task => {
-          const teamIsSensitive = task.teamId ? teamsMap.get(task.teamId)?.isSensitive : false;
-          if ((task.isSensitive || teamIsSensitive) && !canViewSensitive) {
+          const projectIsSensitive = task.projectId ? projectsMap.get(task.projectId)?.isSensitive : false;
+          if ((task.isSensitive || projectIsSensitive) && !canViewSensitive) {
               return {
                   ...task,
                   title: '[Gevoelige Taak]',
@@ -326,7 +326,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         unsubscribeIdeas();
         unsubscribeChallenges();
     };
-  }, [authUser, currentOrganization, toast, currentUserPermissions, teams]);
+  }, [authUser, currentOrganization, toast, currentUserPermissions, projects]);
 
 
   useEffect(() => {
@@ -451,7 +451,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
           description: taskData.description || '',
           assigneeIds: taskData.assigneeIds || [],
           creatorId: authUser.uid,
-          teamId: taskData.teamId || null,
+          projectId: taskData.projectId || null,
           dueDate: taskData.dueDate || null,
           priority: taskData.priority || 'Midden',
           isPrivate: taskData.isPrivate || false,
@@ -680,7 +680,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
 
-        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeIds', 'priority', 'dueDate', 'title', 'teamId', 'reviewerId'];
+        const fieldsToTrack: (keyof Task)[] = ['status', 'assigneeIds', 'priority', 'dueDate', 'title', 'projectId', 'reviewerId'];
         fieldsToTrack.forEach(field => {
             if (updates[field] !== undefined && JSON.stringify(updates[field]) !== JSON.stringify(taskToUpdate[field])) {
                 let oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');
@@ -1333,6 +1333,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const completeTeamChallenge = async (challengeId: string) => {
     if (!currentOrganization) return;
     const challenge = teamChallenges.find(c => c.id === challengeId);
+    const { teams } = useAuth();
     const team = teams.find(t => t.id === challenge?.teamId);
 
     if (!challenge || !team || team.memberIds.length === 0) {
@@ -1429,3 +1430,5 @@ export function useTasks() {
   }
   return context;
 }
+
+    

@@ -8,14 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Check, Filter, Users, Tags, ArrowUpNarrowWide, X, User as UserIcon } from "lucide-react";
+import { Check, Filter, Users, Tags, ArrowUpNarrowWide, X, User as UserIcon, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SavedFiltersManager } from "./saved-filters-manager";
 
 
 export default function FilterBar() {
   const { users, filters, setFilters, clearFilters, activeFilterCount } = useTasks();
-  const { user: currentUser, teams, currentOrganization } = useAuth();
+  const { user: currentUser, projects, currentOrganization } = useAuth();
   
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
   const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
@@ -29,7 +29,7 @@ export default function FilterBar() {
   };
   
   const assigneeName = filters.assigneeId ? users.find(u => u.id === filters.assigneeId)?.name : null;
-  const teamName = filters.teamId ? teams.find(t => t.id === filters.teamId)?.name : null;
+  const projectName = filters.projectId ? projects.find(p => p.id === filters.projectId)?.name : null;
 
 
   const handleSetMyTasks = () => {
@@ -70,19 +70,19 @@ export default function FilterBar() {
        <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
-            <Users className="mr-2 h-4 w-4" />
-            Team
-            {teamName && <Badge variant="secondary" className="ml-2">{teamName}</Badge>}
+            <Briefcase className="mr-2 h-4 w-4" />
+            Project
+            {projectName && <Badge variant="secondary" className="ml-2">{projectName}</Badge>}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem onSelect={() => setFilters({ teamId: null })}>
-            Alle Teams
+          <DropdownMenuItem onSelect={() => setFilters({ projectId: null })}>
+            Alle Projecten
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          {teams.map(team => (
-            <DropdownMenuItem key={team.id} onSelect={() => setFilters({ teamId: team.id })}>
-              {team.name}
+          {projects.map(project => (
+            <DropdownMenuItem key={project.id} onSelect={() => setFilters({ projectId: project.id })}>
+              {project.name}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
@@ -149,3 +149,5 @@ export default function FilterBar() {
     </div>
   );
 }
+
+    

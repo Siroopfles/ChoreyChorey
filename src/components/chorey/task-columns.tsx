@@ -1,5 +1,6 @@
+
 'use client';
-import type { User, Task, Team } from '@/lib/types';
+import type { User, Task, Project } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -10,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { FileUp } from 'lucide-react';
 
-const TaskColumn = ({ title, tasks, users, currentUser, teams }: { title: string; tasks: Task[]; users: User[], currentUser: User | null, teams: Team[] }) => {
+const TaskColumn = ({ title, tasks, users, currentUser, projects }: { title: string; tasks: Task[]; users: User[], currentUser: User | null, projects: Project[] }) => {
   const { setNodeRef } = useDroppable({
     id: title,
   });
@@ -25,7 +26,7 @@ const TaskColumn = ({ title, tasks, users, currentUser, teams }: { title: string
       </div>
        <SortableContext id={title} items={tasks} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
-            {tasks.map((task) => <SortableTaskCard key={task.id} task={task} users={users} currentUser={currentUser} teams={teams} />)}
+            {tasks.map((task) => <SortableTaskCard key={task.id} task={task} users={users} currentUser={currentUser} projects={projects} />)}
             {tasks.length === 0 && (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80 pointer-events-none">
                 Sleep een taak hierheen.
@@ -41,10 +42,10 @@ type TaskColumnsProps = {
   users: User[];
   tasks: Task[];
   currentUser: User | null;
-  teams: Team[];
+  projects: Project[];
 };
 
-const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskColumnsProps) => {
+const TaskColumns = ({ users, tasks: filteredTasks, currentUser, projects }: TaskColumnsProps) => {
   const { tasks, updateTask, reorderTasks, addTask } = useTasks();
   const { currentOrganization } = useAuth();
   const { toast } = useToast();
@@ -176,7 +177,7 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
           <ScrollArea className="w-full h-full">
           <div className="flex gap-6 pb-4 h-full">
               {columns.map((status) => (
-                  <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} currentUser={currentUser} teams={teams} />
+                  <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} currentUser={currentUser} projects={projects} />
               ))}
           </div>
           <ScrollBar orientation="horizontal" />
@@ -193,3 +194,5 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, teams }: TaskCo
 };
 
 export default TaskColumns;
+
+    

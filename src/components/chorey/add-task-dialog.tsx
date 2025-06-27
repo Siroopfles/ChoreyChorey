@@ -33,7 +33,7 @@ type AddTaskDialogProps = {
 export default function AddTaskDialog({ users, template, open, onOpenChange }: AddTaskDialogProps) {
   const { toast } = useToast();
   const { addTask } = useTasks();
-  const { teams, currentOrganization } = useAuth();
+  const { projects, currentOrganization } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const defaultPriority = currentOrganization?.settings?.customization?.priorities?.[1] || 'Midden';
@@ -50,7 +50,7 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
     recurring: undefined,
     storyPoints: undefined,
     assigneeIds: [],
-    teamId: undefined,
+    projectId: undefined,
     dueDate: undefined,
     imageDataUri: undefined,
   };
@@ -103,7 +103,7 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <ScrollArea className="h-[65vh] pr-6">
-                <TaskFormFields users={users} teams={teams} />
+                <TaskFormFields users={users} projects={projects} />
               </ScrollArea>
               <DialogFooter className="pt-4">
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
@@ -121,3 +121,5 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
     </Dialog>
   );
 }
+
+    

@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc, deleteField } from 'firebase/firestore';
-import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team } from '@/lib/types';
+import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 
 
@@ -135,7 +135,7 @@ export async function deleteOrganization(organizationId: string, userId: string)
         const batch = writeBatch(db);
 
         // Delete associated collections
-        const collectionsToDelete = ['teams', 'tasks', 'taskTemplates', 'invites'];
+        const collectionsToDelete = ['projects', 'teams', 'tasks', 'taskTemplates', 'invites'];
         for (const coll of collectionsToDelete) {
             const q = query(collection(db, coll), where('organizationId', '==', organizationId));
             const snapshot = await getDocs(q);
@@ -290,7 +290,7 @@ export async function manageSavedFilter(
   }
 }
 
-export async function completeProject(teamId: string, organizationId: string, currentUserId: string) {
+export async function completeProject(projectId: string, organizationId: string, currentUserId: string) {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
@@ -303,22 +303,35 @@ export async function completeProject(teamId: string, organizationId: string, cu
             throw new Error("Je hebt geen permissie om een project te voltooien.");
         }
 
-        const teamRef = doc(db, 'teams', teamId);
-        const teamDoc = await getDoc(teamRef);
-        if (!teamDoc.exists()) throw new Error("Team niet gevonden.");
+        const projectRef = doc(db, 'projects', projectId);
+        const projectDoc = await getDoc(projectRef);
+        if (!projectDoc.exists()) throw new Error("Project niet gevonden.");
         
-        const teamData = teamDoc.data() as Team;
-        const memberIds = teamData.memberIds || [];
+        const projectData = projectDoc.data() as Project;
+        const teamIds = projectData.teamIds || [];
+        if (teamIds.length === 0) {
+             return { success: true, message: "Project voltooid, maar er waren geen teams toegewezen om een badge aan uit te reiken." };
+        }
+        
+        const teamsQuery = query(collection(db, 'teams'), where('__name__', 'in', teamIds));
+        const teamsSnapshot = await getDocs(teamsQuery);
+        const memberIds = new Set<string>();
+        teamsSnapshot.docs.forEach(doc => {
+            const teamData = doc.data() as Team;
+            teamData.memberIds.forEach(id => memberIds.add(id));
+        });
 
-        if (memberIds.length === 0) {
-            return { success: true, message: "Project voltooid, maar er waren geen leden om een badge aan uit te reiken." };
+        const uniqueMemberIds = Array.from(memberIds);
+
+        if (uniqueMemberIds.length === 0) {
+            return { success: true, message: "Project voltooid, maar er waren geen leden in de toegewezen teams om een badge aan uit te reiken." };
         }
 
         const batch = writeBatch(db);
         const achievementId = ACHIEVEMENTS.PROJECT_COMPLETED.id;
-        const notificationMessage = `Project '${teamData.name}' is voltooid! Je hebt de prestatie "${ACHIEVEMENTS.PROJECT_COMPLETED.name}" ontgrendeld.`;
+        const notificationMessage = `Project '${projectData.name}' is voltooid! Je hebt de prestatie "${ACHIEVEMENTS.PROJECT_COMPLETED.name}" ontgrendeld.`;
 
-        memberIds.forEach(memberId => {
+        uniqueMemberIds.forEach(memberId => {
             const userRef = doc(db, 'users', memberId);
             batch.update(userRef, { achievements: arrayUnion(achievementId) });
 
@@ -334,10 +347,12 @@ export async function completeProject(teamId: string, organizationId: string, cu
         
         await batch.commit();
 
-        return { success: true, message: `${memberIds.length} lid / leden hebben een prestatie ontvangen.` };
+        return { success: true, message: `${uniqueMemberIds.length} lid / leden hebben een prestatie ontvangen.` };
 
     } catch (error: any) {
         console.error("Error completing project:", error);
         return { error: error.message };
     }
 }
+
+    

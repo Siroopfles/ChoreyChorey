@@ -21,7 +21,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
-import type { User, Organization, Team, RoleName, UserStatus, Permission } from '@/lib/types';
+import type { User, Organization, Team, RoleName, UserStatus, Permission, Project } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
@@ -48,6 +48,7 @@ type AuthContextType = {
     currentUserPermissions: Permission[];
     switchOrganization: (orgId: string) => Promise<void>;
     users: User[];
+    projects: Project[];
     teams: Team[];
     updateUserStatus: (status: UserStatus) => Promise<void>;
 };
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [currentUserRole, setCurrentUserRole] = useState<RoleName | null>(null);
     const [currentUserPermissions, setCurrentUserPermissions] = useState<Permission[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [currentSessionId, setCurrentSessionId] = useLocalStorage(SESSION_STORAGE_KEY, '');
     const router = useRouter();
@@ -164,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCurrentOrganization(null);
             setCurrentUserRole(null);
             setCurrentUserPermissions([]);
+            setProjects([]);
             setTeams([]);
             setUsers([]);
             return () => {}; 
@@ -173,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let unsubscribeFromOrgs: (() => void) | undefined;
         let unsubscribeFromUsers: (() => void) | undefined;
+        let unsubscribeFromProjects: (() => void) | undefined;
         let unsubscribeFromTeams: (() => void) | undefined;
 
         const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -180,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             unsubscribeFromOrgs?.();
             unsubscribeFromUsers?.();
+            unsubscribeFromProjects?.();
             unsubscribeFromTeams?.();
 
             setLoading(true);
@@ -197,6 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setCurrentOrganization(null);
                 setCurrentUserRole(null);
                 setCurrentUserPermissions([]);
+                setProjects([]);
                 setTeams([]);
                 setUsers([]);
             }
@@ -207,6 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             unsubscribeAuth();
             unsubscribeFromOrgs?.();
             unsubscribeFromUsers?.();
+            unsubscribeFromProjects?.();
             unsubscribeFromTeams?.();
         };
     }, [fetchUserAndOrgData, isDebugMode, mfaRequired]);
@@ -215,13 +222,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (currentOrganization) {
             const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrganization.id));
+            const projectsQuery = query(collection(db, 'projects'), where('organizationId', '==', currentOrganization.id));
             const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrganization.id));
 
             const unsubscribeUsers = onSnapshot(usersQuery, snapshot => setUsers(snapshot.docs.map(d => ({...d.data(), id: d.id} as User))));
+            const unsubscribeProjects = onSnapshot(projectsQuery, snapshot => setProjects(snapshot.docs.map(d => ({...d.data(), id: d.id} as Project))));
             const unsubscribeTeams = onSnapshot(teamsQuery, snapshot => setTeams(snapshot.docs.map(d => ({...d.data(), id: d.id} as Team))));
             
             return () => {
                 unsubscribeUsers();
+                unsubscribeProjects();
                 unsubscribeTeams();
             };
         }
@@ -448,6 +458,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentUserPermissions,
         switchOrganization,
         users,
+        projects,
         teams,
         updateUserStatus,
     };
@@ -462,3 +473,5 @@ export function useAuth() {
     }
     return context;
 }
+
+    

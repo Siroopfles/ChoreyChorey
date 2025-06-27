@@ -3,27 +3,27 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
-import type { Task, User, Team } from '@/lib/types';
+import type { Task, User, Project } from '@/lib/types';
 
-export async function getPublicTeamData(teamId: string): Promise<{ team: Team, tasks: Task[], users: Pick<User, 'id' | 'name' | 'avatar'>[] } | { error: string }> {
+export async function getPublicProjectData(projectId: string): Promise<{ project: Project, tasks: Task[], users: Pick<User, 'id' | 'name' | 'avatar'>[] } | { error: string }> {
     try {
-        const teamRef = doc(db, 'teams', teamId);
-        const teamDoc = await getDoc(teamRef);
+        const projectRef = doc(db, 'projects', projectId);
+        const projectDoc = await getDoc(projectRef);
 
-        if (!teamDoc.exists()) {
-            return { error: 'Team niet gevonden.' };
+        if (!projectDoc.exists()) {
+            return { error: 'Project niet gevonden.' };
         }
         
-        const team = { id: teamDoc.id, ...teamDoc.data() } as Team;
+        const project = { id: projectDoc.id, ...projectDoc.data() } as Project;
 
-        if (!team.isPublic) {
-            return { error: 'Dit team is niet openbaar.' };
+        if (!project.isPublic) {
+            return { error: 'Dit project is niet openbaar.' };
         }
         
-        // Fetch tasks for the public team, excluding private/sensitive ones
+        // Fetch tasks for the public project, excluding private/sensitive ones
         const tasksQuery = query(
             collection(db, 'tasks'), 
-            where('teamId', '==', teamId),
+            where('projectId', '==', projectId),
             where('isPrivate', '==', false),
             where('isSensitive', '==', false)
         );
@@ -53,10 +53,12 @@ export async function getPublicTeamData(teamId: string): Promise<{ team: Team, t
             });
         }
         
-        return { team, tasks, users };
+        return { project, tasks, users };
 
     } catch (e: any) {
-        console.error("Error fetching public team data:", e);
+        console.error("Error fetching public project data:", e);
         return { error: 'Er is een onbekende fout opgetreden.' };
     }
 }
+
+    
