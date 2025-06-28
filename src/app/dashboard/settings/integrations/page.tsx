@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowLeft, KeyRound, Webhook, Zap, HelpCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, KeyRound, Webhook, Zap, HelpCircle, Bookmark } from 'lucide-react';
 import { PERMISSIONS } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -94,6 +95,21 @@ export default function IntegrationsPage() {
         <GitHubSettings organization={currentOrganization} />
         <TeamsSettings organization={currentOrganization} />
         <DiscordSettings organization={currentOrganization} />
+
+        <Separator />
+
+        <h2 className="text-xl font-semibold">Browser Integratie</h2>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Bookmark /> Bookmarklet</CardTitle>
+                <CardDescription>Maak taken aan vanaf elke webpagina met één klik in uw browser, zonder een extensie te installeren.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button asChild>
+                    <Link href="/dashboard/settings/bookmarklet">Bekijk Instructies</Link>
+                </Button>
+            </CardContent>
+        </Card>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { User, TaskFormValues, TaskTemplateFormValues } from '@/lib/types';
@@ -22,6 +23,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskFormFields } from './task-form-fields';
 import { Loader2 } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 type AddTaskDialogProps = {
   users: User[];
@@ -35,6 +37,8 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
   const { addTask } = useTasks();
   const { projects, currentOrganization } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
   
   const defaultPriority = currentOrganization?.settings?.customization?.priorities?.[1] || 'Midden';
 
@@ -62,7 +66,22 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
 
   useEffect(() => {
     if (open) {
-      if (template) {
+      const shouldAddTaskFromUrl = searchParams.get('addTask') === 'true';
+
+      if (shouldAddTaskFromUrl) {
+          const title = searchParams.get('title');
+          const url = searchParams.get('url');
+
+          form.reset({
+              ...defaultFormValues,
+              title: title ? decodeURIComponent(title) : '',
+              description: url ? `<a href="${decodeURIComponent(url)}" target="_blank">${decodeURIComponent(url)}</a>` : '',
+          });
+          
+          const newPath = window.location.pathname;
+          router.replace(newPath, { scroll: false });
+
+      } else if (template) {
         form.reset({
           ...defaultFormValues,
           title: template.title,
@@ -80,7 +99,7 @@ export default function AddTaskDialog({ users, template, open, onOpenChange }: A
         form.reset(defaultFormValues);
       }
     }
-  }, [open, template, form, defaultFormValues]);
+  }, [open, template, form, defaultFormValues, searchParams, router]);
 
   async function onSubmit(data: TaskFormValues) {
     setIsSubmitting(true);

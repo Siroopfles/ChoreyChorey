@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -57,6 +58,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const { isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
     const { currentUserRole, currentOrganization, users, currentUserPermissions } = useAuth();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const announcement = currentOrganization?.settings?.announcement;
     
     const features = currentOrganization?.settings?.features;
@@ -110,6 +112,13 @@ function AppShell({ children }: { children: React.ReactNode }) {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [setIsAddTaskDialogOpen]);
+    
+    useEffect(() => {
+        const shouldAddTask = searchParams.get('addTask') === 'true';
+        if (shouldAddTask) {
+            setIsAddTaskDialogOpen(true);
+        }
+    }, [searchParams, setIsAddTaskDialogOpen]);
 
 
     return (
