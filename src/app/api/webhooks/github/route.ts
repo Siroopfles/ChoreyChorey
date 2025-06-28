@@ -1,10 +1,12 @@
+
 'use server';
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { updateTaskAction } from '@/app/actions/task.actions';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, writeBatch } from 'firebase/firestore';
 import crypto from 'crypto';
+import type { Organization, Task, GitHubLink } from '@/lib/types';
+import { getGithubItemDetailsFromUrl } from '@/lib/github-service';
 
 async function verifySignature(request: NextRequest): Promise<{ isValid: boolean; body?: any }> {
   try {
@@ -36,6 +38,38 @@ async function verifySignature(request: NextRequest): Promise<{ isValid: boolean
   }
 }
 
+// Helper function to extract task IDs (e.g., "CHR-firestoreid") from text
+function findTaskIds(text: string): string[] {
+    const regex = /(?:[Ff]ixes|[Rr]esolves|[Cc]loses)?:?\s*#?(CHR-([a-zA-Z0-9]{20}))/g;
+    const matches = [...text.matchAll(regex)];
+    // Group 2 contains the actual Firestore ID without the "CHR-" prefix
+    return matches.map(match => match[2]); 
+}
+
+// Generic helper to link a GitHub item (PR or commit) to a Chorey task
+async function linkItemToTask(taskId: string, newItem: GitHubLink, organizationId: string) {
+    const taskRef = doc(db, 'tasks', taskId);
+    const taskDoc = await getDoc(taskRef);
+
+    if (!taskDoc.exists() || taskDoc.data().organizationId !== organizationId) {
+        console.log(`Webhook: Task ${taskId} not found or does not belong to org ${organizationId}.`);
+        return;
+    }
+
+    if (taskDoc.data().githubLinkUrls?.includes(newItem.url)) {
+        console.log(`Webhook: Task ${taskId} is already linked to ${newItem.url}.`);
+        return;
+    }
+    
+    await updateDoc(taskRef, {
+        githubLinks: arrayUnion(newItem),
+        githubLinkUrls: arrayUnion(newItem.url)
+    });
+
+    console.log(`Webhook: Successfully linked ${newItem.type} ${newItem.url} to task ${taskId}.`);
+}
+
+
 export async function POST(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get('orgId');
@@ -50,37 +84,63 @@ export async function POST(request: NextRequest) {
     }
 
     const event = request.headers.get('x-github-event');
-    if (event !== 'pull_request') {
-        return NextResponse.json({ message: 'Event ignored: not a pull request.' }, { status: 200 });
-    }
     
     try {
         const payload = body;
         
-        if (payload.action === 'closed' && payload.pull_request.merged === true) {
-            const prUrl = payload.pull_request.html_url;
+        if (event === 'pull_request') {
+            const pr = payload.pull_request;
             
-            const q = query(
-                collection(db, 'tasks'),
-                where('organizationId', '==', organizationId),
-                where('githubLinkUrls', 'array-contains', prUrl),
-                limit(1)
-            );
-            
-            const snapshot = await getDocs(q);
+            // Logic for when a PR is merged
+            if (payload.action === 'closed' && pr.merged === true) {
+                const q = query(
+                    collection(db, 'tasks'),
+                    where('organizationId', '==', organizationId),
+                    where('githubLinkUrls', 'array-contains', pr.html_url)
+                );
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                    const batch = writeBatch(db);
+                    snapshot.forEach(taskDoc => {
+                        console.log(`Webhook: Found task ${taskDoc.id} for merged PR ${pr.html_url}. Updating status to 'Voltooid'.`);
+                        batch.update(taskDoc.ref, { status: 'Voltooid' });
+                    });
+                    await batch.commit();
+                }
+            } 
+            // Logic for when a PR is opened
+            else if (payload.action === 'opened') {
+                const textToSearch = `${pr.title} ${pr.body || ''}`;
+                const taskIds = findTaskIds(textToSearch);
+                const newLink: GitHubLink = {
+                    url: pr.html_url,
+                    number: pr.number,
+                    title: pr.title,
+                    state: pr.state,
+                    type: 'pull-request'
+                };
+                for (const taskId of taskIds) {
+                    await linkItemToTask(taskId, newLink, organizationId);
+                }
+            }
 
-            if (!snapshot.empty) {
-                const taskDoc = snapshot.docs[0];
-                const taskId = taskDoc.id;
-                
-                console.log(`GitHub webhook: Found task ${taskId} for merged PR ${prUrl}. Updating status to 'Voltooid'.`);
-
-                const systemUserId = 'github-bot';
-                
-                await updateTaskAction(taskId, { status: 'Voltooid' }, systemUserId, organizationId);
-
-            } else {
-                 console.log(`GitHub webhook: No task found in org ${organizationId} for merged PR ${prUrl}.`);
+        } else if (event === 'push') {
+             for (const commit of payload.commits) {
+                if (commit.distinct) { // Only process distinct commits to avoid duplicates on rebase etc.
+                    const taskIds = findTaskIds(commit.message);
+                    if (taskIds.length > 0) {
+                        const newLink: GitHubLink = {
+                            url: commit.url,
+                            number: 0, // N/A for commits
+                            title: commit.message.split('\n')[0],
+                            state: 'closed',
+                            type: 'commit'
+                        };
+                        for (const taskId of taskIds) {
+                            await linkItemToTask(taskId, newLink, organizationId);
+                        }
+                    }
+                }
             }
         }
         

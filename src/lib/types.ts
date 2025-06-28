@@ -6,7 +6,7 @@ export type GitHubLink = {
   number: number;
   title: string;
   state: 'open' | 'closed' | 'merged';
-  type: 'issue' | 'pull-request';
+  type: 'issue' | 'pull-request' | 'commit';
 };
 
 export type GitLabLink = {
@@ -475,7 +475,7 @@ export const githubLinkSchema = z.object({
   number: z.number(),
   title: z.string(),
   state: z.enum(['open', 'closed', 'merged']),
-  type: z.enum(['issue', 'pull-request']),
+  type: z.enum(['issue', 'pull-request', 'commit']),
 });
 
 export const gitlabLinkSchema = z.object({
