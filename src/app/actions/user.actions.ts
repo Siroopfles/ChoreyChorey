@@ -1,15 +1,14 @@
-
-
 'use server';
 
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, runTransaction, getDoc, increment, collection, addDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
-import type { User, UserStatus } from '@/lib/types';
+import { doc, updateDoc, getDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import type { GlobalUserProfile, UserStatus } from '@/lib/types';
 import { authenticator } from 'otplib';
 import { getGoogleAuthClient, scopes } from '@/lib/google-auth';
-import { getMicrosoftAuthClient, scopes as microsoftScopes, redirectUri as microsoftRedirectUri } from '@/lib/microsoft-graph-auth';
+import { getMicrosoftAuthClient, scopes as microsoftScopes } from '@/lib/microsoft-graph-auth';
 
-export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken' | 'microsoftRefreshToken' | 'bio' | 'timezone' | 'website' | 'location' | 'togglApiToken' | 'clockifyApiToken' | 'workingHours' | 'dashboardLayout'>>) {
+// This action now only updates the global user profile.
+export async function updateUserProfile(userId: string, data: Partial<Omit<GlobalUserProfile, 'id' | 'organizationIds' | 'currentOrganizationId'>>) {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, data);
@@ -20,51 +19,10 @@ export async function updateUserProfile(userId: string, data: Partial<Pick<User,
     }
 }
 
-export async function toggleSkillEndorsement(targetUserId: string, skill: string, endorserId: string) {
-    if (targetUserId === endorserId) {
-        return { error: 'Je kunt je eigen vaardigheden niet onderschrijven.' };
-    }
-    
+export async function updateUserStatus(organizationId: string, userId: string, status: UserStatus) {
     try {
-        const targetUserRef = doc(db, 'users', targetUserId);
-        
-        await runTransaction(db, async (transaction) => {
-            const targetUserDoc = await transaction.get(targetUserRef);
-            if (!targetUserDoc.exists()) {
-                throw new Error("Doelgebruiker niet gevonden.");
-            }
-
-            const targetUserData = targetUserDoc.data() as User;
-            const endorsements = targetUserData.endorsements || {};
-            const skillEndorsers = endorsements[skill] || [];
-
-            const endorserUserRef = doc(db, 'users', endorserId);
-            const endorserUserDoc = await transaction.get(endorserUserRef);
-            if (!endorserUserDoc.exists()) {
-                throw new Error("Onderschrijver niet gevonden.");
-            }
-
-            const fieldPath = `endorsements.${skill}`;
-            if (skillEndorsers.includes(endorserId)) {
-                // User has already endorsed, so retract endorsement
-                transaction.update(targetUserRef, { [fieldPath]: arrayRemove(endorserId) });
-            } else {
-                // User has not endorsed, so add endorsement
-                transaction.update(targetUserRef, { [fieldPath]: arrayUnion(endorserId) });
-            }
-        });
-        
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error toggling skill endorsement:", error);
-        return { error: error.message };
-    }
-}
-
-export async function updateUserStatus(userId: string, status: UserStatus) {
-    try {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, { status });
+        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+        await updateDoc(memberRef, { status });
         return { success: true };
     } catch (error: any) {
         console.error("Error updating user status:", error);
@@ -72,59 +30,45 @@ export async function updateUserStatus(userId: string, status: UserStatus) {
     }
 }
 
-export async function purchaseTheme(userId: string, color: string, cost: number) {
-    if (cost < 0) {
-        return { error: 'Kosten kunnen niet negatief zijn.' };
-    }
-    
+export async function toggleMuteTask(organizationId: string, userId: string, taskId: string) {
     try {
-        await runTransaction(db, async (transaction) => {
-            const userRef = doc(db, 'users', userId);
-            const userDoc = await transaction.get(userRef);
+        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+        const memberDoc = await getDoc(memberRef);
+        if (!memberDoc.exists()) {
+            throw new Error("Lid niet gevonden in deze organisatie.");
+        }
+        const memberData = memberDoc.data();
+        const mutedTaskIds = memberData.mutedTaskIds || [];
+        const isMuted = mutedTaskIds.includes(taskId);
 
-            if (!userDoc.exists()) {
-                throw new Error("Gebruiker niet gevonden.");
-            }
-            
-            const userData = userDoc.data() as User;
-
-            if ((userData.points || 0) < cost) {
-                throw new Error("Je hebt niet genoeg punten voor dit thema.");
-            }
-
-            transaction.update(userRef, { 
-                points: increment(-cost),
-                'cosmetic.primaryColor': color 
-            });
+        await updateDoc(memberRef, {
+            mutedTaskIds: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
         });
         
-        return { success: true };
+        return { success: true, newState: isMuted ? 'unmuted' : 'muted' };
     } catch (error: any) {
-        console.error("Error purchasing theme:", error);
+        console.error("Error toggling task mute:", error);
         return { error: error.message };
     }
 }
 
 
-// --- Google Calendar Actions ---
+// --- Calendar & 2FA actions remain as they are global to the user ---
 
 export async function generateGoogleAuthUrl(userId: string) {
     const oauth2Client = getGoogleAuthClient();
     const url = oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: scopes,
-        prompt: 'consent', // Force to get a refresh token every time
-        state: userId, // Pass userId to identify the user in the callback
+        prompt: 'consent',
+        state: userId,
     });
     return { url };
 }
 
 export async function disconnectGoogleCalendar(userId: string) {
     try {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-            googleRefreshToken: null,
-        });
+        await updateUserProfile(userId, { googleRefreshToken: null });
         return { success: true };
     } catch (error: any) {
         console.error("Error disconnecting Google Calendar:", error);
@@ -132,15 +76,14 @@ export async function disconnectGoogleCalendar(userId: string) {
     }
 }
 
-// --- Microsoft Calendar Actions ---
-
 export async function generateMicrosoftAuthUrl(userId: string) {
+    const { redirectUri } = await import('@/lib/microsoft-graph-auth');
     const msalClient = getMicrosoftAuthClient();
     try {
         const authCodeUrlParameters = {
             scopes: microsoftScopes,
-            redirectUri: microsoftRedirectUri,
-            state: userId, // Pass userId to identify the user in the callback
+            redirectUri: redirectUri,
+            state: userId,
         };
         const url = await msalClient.getAuthCodeUrl(authCodeUrlParameters);
         return { url };
@@ -152,10 +95,7 @@ export async function generateMicrosoftAuthUrl(userId: string) {
 
 export async function disconnectMicrosoftCalendar(userId: string) {
     try {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-            microsoftRefreshToken: null,
-        });
+        await updateUserProfile(userId, { microsoftRefreshToken: null });
         return { success: true };
     } catch (error: any) {
         console.error("Error disconnecting Microsoft Calendar:", error);
@@ -163,15 +103,12 @@ export async function disconnectMicrosoftCalendar(userId: string) {
     }
 }
 
-// --- Two-Factor Authentication Actions ---
-
 export async function generateTwoFactorSecret(userId: string, email: string) {
     try {
         const secret = authenticator.generateSecret();
         const otpauth = authenticator.keyuri(email, 'Chorey', secret);
         
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, { twoFactorSecret: secret, twoFactorEnabled: false });
+        await updateUserProfile(userId, { twoFactorSecret: secret, twoFactorEnabled: false });
 
         return { otpauth };
     } catch (error: any) {
@@ -182,8 +119,7 @@ export async function generateTwoFactorSecret(userId: string, email: string) {
 
 export async function verifyAndEnableTwoFactor(userId: string, token: string) {
     try {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+        const userDoc = await getDoc(doc(db, 'users', userId));
         if (!userDoc.exists() || !userDoc.data()?.twoFactorSecret) {
             throw new Error('2FA secret not found for user.');
         }
@@ -199,7 +135,7 @@ export async function verifyAndEnableTwoFactor(userId: string, token: string) {
             Math.random().toString(36).substring(2, 12).toUpperCase()
         );
 
-        await updateDoc(userRef, {
+        await updateUserProfile(userId, {
             twoFactorEnabled: true,
             twoFactorRecoveryCodes: recoveryCodes
         });
@@ -214,13 +150,12 @@ export async function verifyAndEnableTwoFactor(userId: string, token: string) {
 
 export async function disableTwoFactor(userId: string, token: string) {
      try {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+        const userDoc = await getDoc(doc(db, 'users', userId));
         if (!userDoc.exists() || !userDoc.data()?.twoFactorSecret) {
             throw new Error('2FA is niet ingeschakeld.');
         }
 
-        const { twoFactorSecret, twoFactorRecoveryCodes } = userDoc.data() as User;
+        const { twoFactorSecret, twoFactorRecoveryCodes } = userDoc.data() as GlobalUserProfile;
         const isTokenValid = authenticator.verify({ token, secret: twoFactorSecret! });
         const isRecoveryCode = twoFactorRecoveryCodes?.includes(token);
 
@@ -228,7 +163,7 @@ export async function disableTwoFactor(userId: string, token: string) {
             return { error: 'Ongeldige code.' };
         }
 
-        await updateDoc(userRef, {
+        await updateUserProfile(userId, {
             twoFactorEnabled: false,
             twoFactorSecret: null,
             twoFactorRecoveryCodes: null
@@ -242,30 +177,26 @@ export async function disableTwoFactor(userId: string, token: string) {
     }
 }
 
-
 export async function verifyLoginCode(userId: string, code: string) {
     try {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-
+        const userDoc = await getDoc(doc(db, 'users', userId));
         if (!userDoc.exists() || !userDoc.data()?.twoFactorEnabled) {
             throw new Error("Gebruiker niet gevonden of 2FA is niet ingeschakeld.");
         }
         
-        const userData = userDoc.data() as User;
+        const userData = userDoc.data() as GlobalUserProfile;
+        const secret = userData.twoFactorSecret;
+        if (!secret) throw new Error("2FA secret is not configured.");
 
-        // Check TOTP
-        const isTokenValid = authenticator.verify({ token: code, secret: userData.twoFactorSecret! });
+        const isTokenValid = authenticator.verify({ token: code, secret });
         if (isTokenValid) {
             return { success: true };
         }
 
-        // Check recovery codes
         const recoveryCodes = userData.twoFactorRecoveryCodes || [];
         if (recoveryCodes.includes(code)) {
-            // Consume the recovery code
             const updatedRecoveryCodes = recoveryCodes.filter(rc => rc !== code);
-            await updateDoc(userRef, { twoFactorRecoveryCodes: updatedRecoveryCodes });
+            await updateUserProfile(userId, { twoFactorRecoveryCodes: updatedRecoveryCodes });
             return { success: true };
         }
         
@@ -273,31 +204,6 @@ export async function verifyLoginCode(userId: string, code: string) {
 
     } catch(error: any) {
         console.error("Error verifying login code:", error);
-        return { error: error.message };
-    }
-}
-
-export async function toggleMuteTask(userId: string, taskId: string) {
-    try {
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-
-        if (!userDoc.exists()) {
-            throw new Error("Gebruiker niet gevonden.");
-        }
-
-        const userData = userDoc.data() as User;
-        const mutedTaskIds = userData.mutedTaskIds || [];
-
-        const isMuted = mutedTaskIds.includes(taskId);
-
-        await updateDoc(userRef, {
-            mutedTaskIds: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
-        });
-        
-        return { success: true, newState: isMuted ? 'unmuted' : 'muted' };
-    } catch (error: any) {
-        console.error("Error toggling task mute:", error);
         return { error: error.message };
     }
 }

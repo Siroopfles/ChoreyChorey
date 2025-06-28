@@ -1,14 +1,11 @@
-
-
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc, deleteField } from 'firebase/firestore';
-import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project, Permission } from '@/lib/types';
+import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project, Permission, OrganizationMember } from '@/lib/types';
 import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { checkAndGrantTeamAchievements } from './gamification.actions';
 import { hasPermission } from '@/lib/permissions';
-
 
 export async function createOrganizationInvite(organizationId: string, inviterId: string, organizationName: string) {
     if (!await hasPermission(inviterId, organizationId, PERMISSIONS.MANAGE_MEMBERS)) {
@@ -73,8 +70,8 @@ export async function updateUserRoleInOrganization(organizationId: string, targe
              throw new Error("De eigenaar kan zijn eigen rol niet verlagen.");
         }
 
-        const memberPath = `members.${targetUserId}.role`;
-        await updateDoc(orgRef, { [memberPath]: newRole });
+        const memberRef = doc(db, 'organizations', organizationId, 'members', targetUserId);
+        await updateDoc(memberRef, { role: newRole });
 
         return { success: true };
 
@@ -102,7 +99,6 @@ export async function leaveOrganization(organizationId: string, userId: string) 
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
-
         if (!orgDoc.exists()) {
             throw new Error("Organisatie niet gevonden.");
         }
@@ -116,22 +112,15 @@ export async function leaveOrganization(organizationId: string, userId: string) 
              throw new Error("Gebruiker niet gevonden.");
         }
 
-        const userData = userDoc.data() as User;
-        const newOrgIds = userData.organizationIds?.filter(id => id !== organizationId) || [];
+        const batch = writeBatch(db);
+        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
         
-        const userUpdateData: any = {
-             organizationIds: arrayRemove(organizationId)
-        };
+        batch.delete(memberRef);
+        batch.update(userRef, {
+            organizationIds: arrayRemove(organizationId)
+        });
 
-        if (userData.currentOrganizationId === organizationId) {
-            userUpdateData.currentOrganizationId = newOrgIds.length > 0 ? newOrgIds[0] : null;
-        }
-        
-        const memberPath = `members.${userId}`;
-        const orgUpdateData = { [memberPath]: deleteField() };
-
-        await updateDoc(userRef, userUpdateData);
-        await updateDoc(orgRef, orgUpdateData);
+        await batch.commit();
 
         return { success: true };
     } catch (error: any) {
@@ -152,9 +141,14 @@ export async function deleteOrganization(organizationId: string, userId: string)
         const batch = writeBatch(db);
 
         // Delete associated collections
-        const collectionsToDelete = ['projects', 'teams', 'tasks', 'taskTemplates', 'invites', 'personalGoals', 'teamChallenges', 'ideas', 'activityFeed', 'webhooks', 'apiKeys'];
+        const collectionsToDelete = ['projects', 'teams', 'tasks', 'taskTemplates', 'invites', 'personalGoals', 'teamChallenges', 'ideas', 'activityFeed', 'webhooks', 'apiKeys', 'members'];
         for (const coll of collectionsToDelete) {
-            const q = query(collection(db, coll), where('organizationId', '==', organizationId));
+            let collectionPath = coll;
+            if (['members'].includes(coll)) {
+                collectionPath = `organizations/${organizationId}/${coll}`;
+            }
+
+            const q = query(collection(db, collectionPath), where('organizationId', '==', organizationId));
             const snapshot = await getDocs(q);
             snapshot.forEach(doc => batch.delete(doc.ref));
         }
@@ -165,12 +159,10 @@ export async function deleteOrganization(organizationId: string, userId: string)
         
         usersSnapshot.forEach(userDoc => {
             const userData = userDoc.data() as User;
-            const newOrgIds = userData.organizationIds?.filter(id => id !== organizationId) || [];
-            const updateData: any = { organizationIds: arrayRemove(organizationId) };
-            if (userData.currentOrganizationId === organizationId) {
-                updateData.currentOrganizationId = newOrgIds.length > 0 ? newOrgIds[0] : null;
-            }
-            batch.update(userDoc.ref, updateData);
+            batch.update(userDoc.ref, {
+                organizationIds: arrayRemove(organizationId),
+                currentOrganizationId: null // Reset current org
+            });
         });
 
         // Delete the organization itself
@@ -187,7 +179,7 @@ export async function deleteOrganization(organizationId: string, userId: string)
 
 
 export async function reassignTasks(organizationId: string, fromUserId: string, toUserId: string, currentUserId: string) {
-    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ROLES)) { // Re-using manage_roles perm
+    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ROLES)) {
         return { error: "Je hebt geen permissie om taken opnieuw toe te wijzen." };
     }
     
@@ -209,10 +201,9 @@ export async function reassignTasks(organizationId: string, fromUserId: string, 
         }
 
         const batch = writeBatch(db);
-        const usersRef = collection(db, 'users');
-        const fromUserDoc = await getDoc(doc(usersRef, fromUserId));
-        const toUserDoc = await getDoc(doc(usersRef, toUserId));
-        const currentUserDoc = await getDoc(doc(usersRef, currentUserId));
+        const fromUserDoc = await getDoc(doc(db, 'users', fromUserId));
+        const toUserDoc = await getDoc(doc(db, 'users', toUserId));
+        const currentUserDoc = await getDoc(doc(db, 'users', currentUserId));
 
         const fromUserName = fromUserDoc.data()?.name || 'Onbekende Gebruiker';
         const toUserName = toUserDoc.data()?.name || 'Onbekende Gebruiker';
@@ -336,8 +327,8 @@ export async function completeProject(projectId: string, organizationId: string,
         const notificationMessage = `Project '${projectData.name}' is voltooid! Je hebt de prestatie "${ACHIEVEMENTS.PROJECT_COMPLETED.name}" ontgrendeld.`;
 
         uniqueMemberIds.forEach(memberId => {
-            const userRef = doc(db, 'users', memberId);
-            batch.update(userRef, { achievements: arrayUnion(achievementId) });
+            const memberRef = doc(db, 'organizations', organizationId, 'members', memberId);
+            batch.update(memberRef, { achievements: arrayUnion(achievementId) });
 
             const notificationRef = doc(collection(db, 'notifications'));
             batch.set(notificationRef, {
@@ -360,6 +351,87 @@ export async function completeProject(projectId: string, organizationId: string,
 
     } catch (error: any) {
         console.error("Error completing project:", error);
+        return { error: error.message };
+    }
+}
+
+
+// --- Organization Member Profile Actions ---
+export async function updateMemberProfile(organizationId: string, userId: string, data: Partial<Omit<OrganizationMember, 'id' | 'role'>>) {
+    try {
+        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+        await updateDoc(memberRef, data);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error updating member profile:", error);
+        return { error: error.message };
+    }
+}
+
+export async function purchaseTheme(organizationId: string, userId: string, color: string, cost: number) {
+    if (cost < 0) {
+        return { error: 'Kosten kunnen niet negatief zijn.' };
+    }
+    
+    try {
+        await runTransaction(db, async (transaction) => {
+            const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+            const memberDoc = await transaction.get(memberRef);
+
+            if (!memberDoc.exists()) {
+                throw new Error("Lid niet gevonden.");
+            }
+            
+            const memberData = memberDoc.data() as OrganizationMember;
+
+            if ((memberData.points || 0) < cost) {
+                throw new Error("Je hebt niet genoeg punten voor dit thema.");
+            }
+
+            transaction.update(memberRef, { 
+                points: increment(-cost),
+                'cosmetic.primaryColor': color 
+            });
+        });
+        
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error purchasing theme:", error);
+        return { error: error.message };
+    }
+}
+
+export async function toggleSkillEndorsement(organizationId: string, targetUserId: string, skill: string, endorserId: string) {
+    if (targetUserId === endorserId) {
+        return { error: 'Je kunt je eigen vaardigheden niet onderschrijven.' };
+    }
+    
+    try {
+        const targetMemberRef = doc(db, 'organizations', organizationId, 'members', targetUserId);
+        
+        await runTransaction(db, async (transaction) => {
+            const targetMemberDoc = await transaction.get(targetMemberRef);
+            if (!targetMemberDoc.exists()) {
+                throw new Error("Doelgebruiker niet gevonden.");
+            }
+
+            const targetMemberData = targetMemberDoc.data() as OrganizationMember;
+            const endorsements = targetMemberData.endorsements || {};
+            const skillEndorsers = endorsements[skill] || [];
+
+            const fieldPath = `endorsements.${skill}`;
+            if (skillEndorsers.includes(endorserId)) {
+                // User has already endorsed, so retract endorsement
+                transaction.update(targetMemberRef, { [fieldPath]: arrayRemove(endorserId) });
+            } else {
+                // User has not endorsed, so add endorsement
+                transaction.update(targetMemberRef, { [fieldPath]: arrayUnion(endorserId) });
+            }
+        });
+        
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error toggling skill endorsement:", error);
         return { error: error.message };
     }
 }

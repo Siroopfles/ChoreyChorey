@@ -1,25 +1,23 @@
-
-
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, increment, arrayUnion, runTransaction, addDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
-import type { Task, User, Organization, ActivityFeedItem, Team } from '@/lib/types';
+import type { Task, User, Organization, ActivityFeedItem, Team, GlobalUserProfile, OrganizationMember } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { createNotification } from './notification.actions';
 
-async function grantAchievements(userId: string, type: 'completed' | 'thanked', task?: Task) {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-    if (!userDoc.exists()) return { granted: [] };
+async function grantAchievements(userId: string, organizationId: string, type: 'completed' | 'thanked', task?: Task) {
+    const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+    const memberDoc = await getDoc(memberRef);
+    if (!memberDoc.exists()) return { granted: [] };
 
-    const userData = userDoc.data() as User;
-    const userAchievements = userData.achievements || [];
+    const memberData = memberDoc.data() as OrganizationMember;
+    const userAchievements = memberData.achievements || [];
     const achievementsToGrant: { id: string, name: string }[] = [];
     const batch = writeBatch(db);
 
     if (type === 'completed' && task) {
-        const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeIds', 'array-contains', userId), where('status', '==', 'Voltooid'));
+        const completedTasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('assigneeIds', 'array-contains', userId), where('status', '==', 'Voltooid'));
         const completedTasksSnapshot = await getDocs(completedTasksQuery);
         const totalCompleted = completedTasksSnapshot.size;
 
@@ -43,24 +41,29 @@ async function grantAchievements(userId: string, type: 'completed' | 'thanked', 
     }
 
     if (achievementsToGrant.length > 0) {
-        batch.update(userRef, {
+        batch.update(memberRef, {
             achievements: arrayUnion(...achievementsToGrant.map(a => a.id))
         });
-        achievementsToGrant.forEach(ach => {
-            const activityRef = doc(collection(db, 'activityFeed'));
-            batch.set(activityRef, {
-                organizationId: task?.organizationId,
-                timestamp: new Date(),
-                type: 'achievement',
-                userId: userId,
-                userName: userData.name,
-                userAvatar: userData.avatar,
-                details: {
-                    achievementId: ach.id,
-                    achievementName: ach.name,
-                }
+        
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+            const userData = userDoc.data() as GlobalUserProfile;
+            achievementsToGrant.forEach(ach => {
+                const activityRef = doc(collection(db, 'activityFeed'));
+                batch.set(activityRef, {
+                    organizationId: organizationId,
+                    timestamp: new Date(),
+                    type: 'achievement',
+                    userId: userId,
+                    userName: userData.name,
+                    userAvatar: userData.avatar,
+                    details: {
+                        achievementId: ach.id,
+                        achievementName: ach.name,
+                    }
+                });
             });
-        });
+        }
         await batch.commit();
         return { granted: achievementsToGrant };
     }
@@ -84,13 +87,13 @@ export async function thankForTask(taskId: string, currentUserId: string, assign
         const batch = writeBatch(db);
         const points = 5;
         const fromUserDoc = await getDoc(doc(db, 'users', currentUserId));
-        const fromUserData = fromUserDoc.data() as User;
+        const fromUserData = fromUserDoc.data() as GlobalUserProfile;
         const taskDoc = await getDoc(doc(db, 'tasks', taskId));
         const taskData = taskDoc.data() as Task;
         
         assignees.forEach(assignee => {
-          const assigneeRef = doc(db, 'users', assignee.id);
-          batch.update(assigneeRef, { points: increment(points) });
+          const assigneeMemberRef = doc(db, 'organizations', organizationId, 'members', assignee.id);
+          batch.update(assigneeMemberRef, { points: increment(points) });
 
           const activityRef = doc(collection(db, 'activityFeed'));
           batch.set(activityRef, {
@@ -126,7 +129,7 @@ export async function thankForTask(taskId: string, currentUserId: string, assign
 
         await batch.commit();
 
-        const achievementPromises = assignees.map(assignee => grantAchievements(assignee.id, 'thanked'));
+        const achievementPromises = assignees.map(assignee => grantAchievements(assignee.id, organizationId, 'thanked'));
         await Promise.all(achievementPromises);
         
         return { success: true, points, assigneesNames };
@@ -175,11 +178,11 @@ export async function rateTask(taskId: string, rating: number, task: Task, curre
         const bonusPoints = rating;
         if (task.assigneeIds.length > 0) {
             task.assigneeIds.forEach(assigneeId => {
-                const userRef = doc(db, 'users', assigneeId);
-                batch.update(userRef, { points: increment(bonusPoints) });
+                const memberRef = doc(db, 'organizations', organizationId, 'members', assigneeId);
+                batch.update(memberRef, { points: increment(bonusPoints) });
             });
-             const fromUserDoc = await getDoc(doc(db, 'users', currentUserId));
-            const fromUserData = fromUserDoc.data() as User;
+            const fromUserDoc = await getDoc(doc(db, 'users', currentUserId));
+            const fromUserData = fromUserDoc.data() as GlobalUserProfile;
             const activityRef = doc(collection(db, 'activityFeed'));
             batch.set(activityRef, {
                 organizationId: organizationId,
@@ -204,7 +207,7 @@ export async function rateTask(taskId: string, rating: number, task: Task, curre
     }
 }
 
-export async function transferPoints(fromUserId: string, toUserId: string, amount: number, message: string, fromUserName: string) {
+export async function transferPoints(organizationId: string, fromUserId: string, toUserId: string, amount: number, message: string, fromUserName: string) {
     if (fromUserId === toUserId) {
         return { error: 'Je kunt geen punten aan jezelf geven.' };
     }
@@ -214,33 +217,28 @@ export async function transferPoints(fromUserId: string, toUserId: string, amoun
     
     try {
         await runTransaction(db, async (transaction) => {
-            const fromUserRef = doc(db, 'users', fromUserId);
-            const toUserRef = doc(db, 'users', toUserId);
+            const fromMemberRef = doc(db, 'organizations', organizationId, 'members', fromUserId);
+            const toMemberRef = doc(db, 'organizations', organizationId, 'members', toUserId);
 
-            const fromUserDoc = await transaction.get(fromUserRef);
+            const fromMemberDoc = await transaction.get(fromMemberRef);
 
-            if (!fromUserDoc.exists()) {
-                throw new Error("Verzender niet gevonden.");
+            if (!fromMemberDoc.exists()) {
+                throw new Error("Verzender niet gevonden in deze organisatie.");
             }
             
-            const fromUserData = fromUserDoc.data() as User;
+            const fromMemberData = fromMemberDoc.data() as OrganizationMember;
 
-            if ((fromUserData.points || 0) < amount) {
+            if ((fromMemberData.points || 0) < amount) {
                 throw new Error("Je hebt niet genoeg punten om te geven.");
             }
 
-            transaction.update(fromUserRef, { points: increment(-amount) });
-            transaction.update(toUserRef, { points: increment(amount) });
+            transaction.update(fromMemberRef, { points: increment(-amount) });
+            transaction.update(toMemberRef, { points: increment(amount) });
         });
 
         const notificationMessage = `${fromUserName} heeft je ${amount} punten gegeven! ${message ? `Bericht: "${message}"` : ''}`;
         
-        await addDoc(collection(db, 'notifications'), {
-            userId: toUserId,
-            message: notificationMessage,
-            read: false,
-            createdAt: new Date(),
-        });
+        await createNotification(toUserId, notificationMessage, null, organizationId, 'system');
 
         return { success: true, amount };
     } catch (error: any) {
@@ -293,28 +291,27 @@ export async function checkAndGrantTeamAchievements(teamId: string, organization
         const completedTasksCount = teamTasksSnapshot.size;
 
         if (completedTasksCount >= 50) {
-            const usersQuery = query(collection(db, 'users'), where('__name__', 'in', memberIds));
-            const usersSnapshot = await getDocs(usersQuery);
-            
             const batch = writeBatch(db);
             const achievementId = ACHIEVEMENTS.TEAM_EFFORT.id;
             
-            usersSnapshot.docs.forEach(userDoc => {
-                const userData = userDoc.data() as User;
-                if (!userData.achievements?.includes(achievementId)) {
-                    batch.update(userDoc.ref, { achievements: arrayUnion(achievementId) });
+            for (const memberId of memberIds) {
+                const memberRef = doc(db, 'organizations', organizationId, 'members', memberId);
+                const memberDoc = await getDoc(memberRef);
+
+                if (memberDoc.exists() && !memberDoc.data().achievements?.includes(achievementId)) {
+                     batch.update(memberRef, { achievements: arrayUnion(achievementId) });
                     
                     const notificationMessage = `Jullie team (${teamData.name}) is een geoliede machine! Prestatie ontgrendeld: "${ACHIEVEMENTS.TEAM_EFFORT.name}".`;
                     const notificationRef = doc(collection(db, 'notifications'));
                     batch.set(notificationRef, {
-                        userId: userDoc.id,
+                        userId: memberId,
                         message: notificationMessage,
                         read: false,
                         createdAt: new Date(),
                         organizationId: organizationId,
                     });
                 }
-            });
+            }
 
             await batch.commit();
         }
