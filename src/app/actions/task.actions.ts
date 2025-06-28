@@ -4,6 +4,7 @@
 
 
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -211,6 +212,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           history: history,
           order: Date.now(),
           storyPoints: taskData.storyPoints ?? null,
+          cost: taskData.cost ?? null,
           blockedBy: taskData.blockedBy || [],
           dependencyConfig: taskData.dependencyConfig || {},
           recurring: taskData.recurring ?? null,
@@ -330,7 +332,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
             finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);
         }
 
-        const fieldsToTrack: (keyof Task)[] = ['status', 'priority', 'dueDate', 'title', 'projectId', 'reviewerId'];
+        const fieldsToTrack: (keyof Task)[] = ['status', 'priority', 'dueDate', 'title', 'projectId', 'reviewerId', 'cost'];
         fieldsToTrack.forEach(field => {
             if (updates[field] !== undefined && JSON.stringify(updates[field]) !== JSON.stringify(taskToUpdate[field])) {
                 let oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');
@@ -901,5 +903,3 @@ export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtas
         return { error: e.message };
     }
 }
-
-    

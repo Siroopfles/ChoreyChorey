@@ -208,6 +208,8 @@ export type Project = {
   program?: string;
   isSensitive?: boolean;
   isPublic?: boolean;
+  budget?: number;
+  budgetType?: 'amount' | 'hours';
 };
 
 export type Team = {
@@ -444,6 +446,7 @@ export type Task = {
   completedAt?: Date;
   order: number;
   storyPoints?: number;
+  cost?: number;
   blockedBy?: string[];
   dependencyConfig?: { [taskId: string]: { lag: number; unit: 'days' | 'hours' } };
   recurring?: Recurring;
@@ -540,6 +543,7 @@ export const taskFormSchema = z.object({
   isSensitive: z.boolean().default(false),
   helpNeeded: z.boolean().default(false),
   storyPoints: z.coerce.number().optional(),
+  cost: z.coerce.number().optional(),
   blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
   dependencyConfig: z.record(z.string(), z.object({ lag: z.coerce.number(), unit: z.enum(['days', 'hours']) })).optional(),
   recurring: recurringSchema.optional(),

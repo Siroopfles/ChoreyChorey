@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2, Briefcase } from 'lucide-react';
-import type { Team, User, Project } from '@/lib/types';
+import type { Team, User, Project, Task } from '@/lib/types';
 import { ProjectDialog } from './project-dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -24,9 +24,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 
-export function ProjectCard({ project, allTeams }: { project: Project, usersInOrg: User[], allTeams: Team[] }) {
+export function ProjectCard({ project, allTeams, allTasks }: { project: Project, usersInOrg: User[], allTeams: Team[], allTasks: Task[] }) {
     const { toast } = useToast();
     const { user, currentUserPermissions } = useAuth();
     const [isCompleting, setIsCompleting] = useState(false);
@@ -36,6 +38,20 @@ export function ProjectCard({ project, allTeams }: { project: Project, usersInOr
     const assignedTeams = useMemo(() => {
         return (project.teamIds || []).map(id => allTeams.find(t => t.id === id)).filter(Boolean) as Team[];
     }, [project.teamIds, allTeams]);
+    
+    const { totalCostOrHours, budgetProgress } = useMemo(() => {
+        if (!project.budget || project.budget === 0) {
+            return { totalCostOrHours: 0, budgetProgress: 0 };
+        }
+        const total = allTasks
+            .filter(t => t.projectId === project.id)
+            .reduce((sum, task) => sum + (task.cost || 0), 0);
+        
+        return {
+            totalCostOrHours: total,
+            budgetProgress: (total / project.budget) * 100
+        };
+    }, [allTasks, project]);
     
     const handleShare = () => {
         const link = `${window.location.origin}/public/project/${project.id}`;
@@ -120,16 +136,31 @@ export function ProjectCard({ project, allTeams }: { project: Project, usersInOr
                 </div>
                 <CardDescription>{project.program || 'Geen programma'}</CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-between items-center">
-                {assignedTeams.length > 0 ? (
-                    <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">{assignedTeams.map(t => t.name).join(', ')}</span>
+            <CardContent className="space-y-4">
+                 {project.budget && project.budgetType && (
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                            <span className="font-semibold">Budget</span>
+                            <span>
+                                {project.budgetType === 'amount' ? '€' : ''}
+                                {totalCostOrHours.toLocaleString()} / {project.budget.toLocaleString()}
+                                {project.budgetType === 'hours' ? ' uur' : ''}
+                            </span>
+                        </div>
+                        <Progress value={budgetProgress} className={cn(budgetProgress > 100 && '[&>div]:bg-destructive')} />
                     </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground">Geen teams toegewezen.</p>
                 )}
-                 {project.isPublic && <Button variant="outline" size="sm" onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Deel Link</Button>}
+                <div className="flex justify-between items-center">
+                    {assignedTeams.length > 0 ? (
+                        <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">{assignedTeams.map(t => t.name).join(', ')}</span>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">Geen teams toegewezen.</p>
+                    )}
+                    {project.isPublic && <Button variant="outline" size="sm" onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Deel Link</Button>}
+                </div>
             </CardContent>
         </Card>
     );

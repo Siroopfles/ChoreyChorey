@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -20,15 +21,17 @@ import { TeamDialog } from '@/components/chorey/organization/team-dialog';
 import { ManageMembersPopover } from '@/components/chorey/organization/manage-members-popover';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useTasks } from '@/contexts/task-context';
 
 export default function OrganizationPage() {
     const { currentOrganization, loading: authLoading, currentUserPermissions, projects, teams, users: usersInOrg } = useAuth();
+    const { tasks, loading: tasksLoading } = useTasks();
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
     const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
 
 
-    if (authLoading) {
+    if (authLoading || tasksLoading) {
         return (
           <div className="flex h-full w-full items-center justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -120,7 +123,7 @@ export default function OrganizationPage() {
                          {projects.length > 0 ? (
                             <div className="grid gap-6 md:grid-cols-1">
                                 {projects.map(project => (
-                                    <ProjectCard key={project.id} project={project} usersInOrg={usersInOrg} allTeams={teams} />
+                                    <ProjectCard key={project.id} project={project} usersInOrg={usersInOrg} allTeams={teams} allTasks={tasks} />
                                 ))}
                             </div>
                         ) : (

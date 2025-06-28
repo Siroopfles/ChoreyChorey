@@ -3,7 +3,7 @@
 'use client';
 
 import type { User, Project, Task, SuggestPriorityOutput, CustomFieldDefinition } from '@/lib/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -17,7 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight, ThumbsUp, ThumbsDown, Settings2 } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight, ThumbsUp, ThumbsDown, Settings2, Euro, Clock } from 'lucide-react';
 import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -203,6 +203,11 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const description = form.watch('description');
   const debouncedTitle = useDebounce(title, 1500);
   const debouncedDescription = useDebounce(description, 1500);
+
+  const projectId = form.watch('projectId');
+  const selectedProject = useMemo(() => projects.find(p => p.id === projectId), [projectId, projects]);
+  const costLabel = selectedProject?.budgetType === 'amount' ? 'Kosten (€)' : 'Geregistreerde Uren';
+
 
   const currentBlockerIds = form.watch('blockedBy') || [];
   const availableTasksToBlock = tasks.filter(
@@ -602,6 +607,21 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
             </FormItem>
           )}
         />
+        {selectedProject?.budgetType && (
+            <FormField
+                control={form.control}
+                name="cost"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>{costLabel}</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="0" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
         <FormField
           control={form.control}
           name="teamId"

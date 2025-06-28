@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Loader2, Check, Users, X } from 'lucide-react';
+import { Loader2, Check, Users, X, Euro, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, updateDoc, doc } from 'firebase/firestore';
@@ -20,6 +21,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const projectSchema = z.object({
     name: z.string().min(2, 'Projectnaam moet minimaal 2 karakters bevatten.'),
@@ -27,6 +29,8 @@ const projectSchema = z.object({
     isSensitive: z.boolean().optional(),
     isPublic: z.boolean().optional(),
     teamIds: z.array(z.string()).optional(),
+    budget: z.coerce.number().optional(),
+    budgetType: z.enum(['amount', 'hours']).optional(),
 });
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
@@ -51,14 +55,14 @@ export function ProjectDialog({ organizationId, project, allTeams, children, ope
 
     const form = useForm<ProjectFormValues>({
         resolver: zodResolver(projectSchema),
-        defaultValues: { name: '', program: '', isSensitive: false, isPublic: false, teamIds: [] },
+        defaultValues: { name: '', program: '', isSensitive: false, isPublic: false, teamIds: [], budget: undefined, budgetType: undefined },
     });
     
     useEffect(() => {
         if (project) {
             form.reset(project);
         } else {
-            form.reset({ name: '', program: '', isSensitive: false, isPublic: false, teamIds: [] });
+            form.reset({ name: '', program: '', isSensitive: false, isPublic: false, teamIds: [], budget: undefined, budgetType: undefined });
         }
     }, [project, open, form]);
 
@@ -116,6 +120,36 @@ export function ProjectDialog({ organizationId, project, allTeams, children, ope
                                 </FormItem>
                             )}
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="budget"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Budget</FormLabel>
+                                        <FormControl><Input type="number" placeholder="bijv. 10000" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="budgetType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Budget Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Selecteer type..." /></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="amount"><Euro className="mr-2 h-4 w-4"/> Bedrag (€)</SelectItem>
+                                                <SelectItem value="hours"><Clock className="mr-2 h-4 w-4"/> Uren</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                          <FormField
                             control={form.control}
                             name="teamIds"
