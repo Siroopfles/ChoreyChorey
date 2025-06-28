@@ -3,14 +3,14 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, arrayRemove } from 'firebase/firestore';
+import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, arrayRemove, runTransaction, Timestamp } from 'firebase/firestore';
 import type { User, Task, TaskFormValues, Status, HistoryEntry, Recurring, Subtask, Organization } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils';
 import { grantAchievements } from './gamification.actions';
 import { createNotification } from './notification.actions';
 import { triggerWebhooks } from '@/lib/webhook-service';
 import Papa from 'papaparse';
-import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
+import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks, isToday, isYesterday } from 'date-fns';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar-service';
 import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/microsoft-graph-service';
 import { createTogglTimeEntry } from '@/lib/toggl-service';
@@ -367,14 +367,53 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
             finalUpdates.completedAt = new Date();
             if(showGamification && taskToUpdate.assigneeIds.length > 0) {
-                const points = calculatePoints(taskToUpdate.priority, taskToUpdate.storyPoints);
-                const batch = writeBatch(db);
-                taskToUpdate.assigneeIds.forEach(async (assigneeId) => {
-                    const userPointsRef = doc(db, 'users', assigneeId);
-                    batch.update(userPointsRef, { points: increment(points) });
-                    await grantAchievements(assigneeId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
-                });
-                await batch.commit();
+                const basePoints = calculatePoints(taskToUpdate.priority, taskToUpdate.storyPoints);
+                
+                await Promise.all(taskToUpdate.assigneeIds.map(async (assigneeId) => {
+                    await runTransaction(db, async (transaction) => {
+                        const userRef = doc(db, 'users', assigneeId);
+                        const userDoc = await transaction.get(userRef);
+
+                        if (!userDoc.exists()) {
+                            console.error(`User ${assigneeId} not found for streak calculation.`);
+                            // Still grant base points if user doesn't exist for some reason
+                            transaction.update(userRef, { points: increment(basePoints) });
+                            return;
+                        }
+
+                        const userData = userDoc.data() as User;
+                        const streakData = userData.streakData;
+                        const today = new Date();
+                        let newStreak = 1;
+                        let showStreakToast = true;
+
+                        if (streakData?.lastCompletionDate) {
+                            const lastCompletion = (streakData.lastCompletionDate as Timestamp).toDate();
+                            if (isToday(lastCompletion)) {
+                                newStreak = streakData.currentStreak;
+                                showStreakToast = false;
+                            } else if (isYesterday(lastCompletion)) {
+                                newStreak = (streakData.currentStreak || 0) + 1;
+                            } else {
+                                newStreak = 1;
+                            }
+                        }
+                        
+                        const bonusPoints = Math.min(newStreak * 5, 50);
+                        const totalPointsToAdd = basePoints + bonusPoints;
+                        
+                        transaction.update(userRef, {
+                            points: increment(totalPointsToAdd),
+                            streakData: { currentStreak: newStreak, lastCompletionDate: today }
+                        });
+
+                        if (showStreakToast && newStreak > 1) {
+                            const message = `Streak! 🔥 Je bent ${newStreak} dag(en) op rij bezig! +${bonusPoints} bonuspunten.`;
+                            createNotification(assigneeId, message, taskId, organizationId, 'system');
+                        }
+                    });
+                     await grantAchievements(assigneeId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
+                }));
             }
 
             if (taskToUpdate.recurring) {

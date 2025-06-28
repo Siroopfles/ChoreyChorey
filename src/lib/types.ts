@@ -282,6 +282,10 @@ export type User = {
   microsoftRefreshToken?: string | null;
   togglApiToken?: string;
   clockifyApiToken?: string;
+  streakData?: {
+    currentStreak: number;
+    lastCompletionDate: Date;
+  };
 };
 
 export type Session = {
