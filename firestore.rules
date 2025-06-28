@@ -1,41 +1,91 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isMember(orgId, userId) {
-      return get(/databases/$(database)/documents/organizations/$(orgId)).data.members[userId] != null;
+  
+    // Helper function to check if a user is a member of an organization
+    function isMemberOf(orgId) {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([orgId]);
     }
-
-    function isOwner(orgId, userId) {
-      return get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == userId;
-    }
-
-    // Rules for collections
+    
+    // Users can read and update their own document.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, update: if request.auth.uid == userId;
+      allow create, delete: if false; // Creation and deletion handled by backend.
     }
     
+    // Invites can be read by any authenticated user with the link.
     match /invites/{inviteId} {
-        allow read, create: if request.auth != null;
-        allow update: if request.auth != null && getAfter(/databases/$(database)/documents/invites/$(inviteId)).data.status == 'accepted';
-    }
-
-    match /organizations/{orgId} {
-      allow read: if request.auth != null && isMember(orgId, request.auth.uid);
-      allow create: if request.auth != null; // User must be in the members list on creation
-      allow update: if request.auth != null && isMember(orgId, request.auth.uid);
-      allow delete: if request.auth != null && isOwner(orgId, request.auth.uid);
+      allow read: if request.auth != null;
+      allow write: if false; // Accepted via server action.
     }
     
-    match /{collection}/{docId} {
-        allow read, write: if request.auth != null && isMember(request.resource.data.organizationId, request.auth.uid);
+    // Notifications are private to the user.
+    match /notifications/{notificationId} {
+      allow read, write, delete: if request.auth.uid == resource.data.userId;
     }
 
-    match /aiFeedback/{feedbackId} {
-      allow create: if request.auth != null && isMember(request.resource.data.organizationId, request.auth.uid);
+    // Sessions are private to the user.
+    match /sessions/{sessionId} {
+      allow read, write, delete: if request.auth.uid == resource.data.userId;
+    }
+    
+    // Personal goals are private to the user.
+    match /personalGoals/{goalId} {
+      allow read, write, delete: if request.auth.uid == resource.data.userId;
+    }
+    
+    // All organization-scoped documents should have an `organizationId` field.
+    // This function checks if the requesting user is a member of that organization.
+    function isOrgMemberByDoc(doc) {
+      return doc.organizationId != null && isMemberOf(doc.organizationId);
+    }
+
+    // --- Organization-Scoped Collections ---
+
+    // Organizations can be read by members. Writes are handled by trusted server actions.
+    match /organizations/{orgId} {
+      allow read: if isMemberOf(orgId);
+      allow write: if false; 
+    }
+    
+    // Tasks: Read allowed for members, with extra check for private tasks.
+    // Writes are allowed for members (server actions will enforce finer-grained permissions).
+    match /tasks/{taskId} {
+      allow read: if isOrgMemberByDoc(resource.data) && (
+                    resource.data.isPrivate == false || 
+                    request.auth.uid == resource.data.creatorId || 
+                    request.auth.uid in resource.data.assigneeIds
+                  );
+      allow create, update, delete: if isOrgMemberByDoc(request.resource.data);
+    }
+    
+    // Projects: Public projects are readable by anyone, otherwise by members.
+    match /projects/{projectId} {
+      allow read: if resource.data.isPublic == true || isOrgMemberByDoc(resource.data);
+      allow create, update, delete: if isOrgMemberByDoc(request.resource.data);
+    }
+    
+    // Generic read/write for other org-scoped collections. Server actions handle permissions.
+    match /teams/{docId} { allow read, write: if isOrgMemberByDoc(resource.data); }
+    match /taskTemplates/{docId} { allow read, write: if isOrgMemberByDoc(resource.data); }
+    match /teamChallenges/{docId} { allow read, write: if isOrgMemberByDoc(resource.data); }
+    match /ideas/{docId} { allow read, create, update: if isOrgMemberByDoc(resource.data); }
+    match /webhooks/{docId} { allow read, write, delete: if isOrgMemberByDoc(resource.data); }
+    match /apiKeys/{docId} { allow read, write, delete: if isOrgMemberByDoc(resource.data); }
+
+    // Activity feed is read-only for clients, write-only for server.
+    match /activityFeed/{docId} {
+      allow read: if isOrgMemberByDoc(resource.data);
+      allow write: if false;
+    }
+    
+    // Feedback can be created by anyone authenticated, but not read/updated.
+    match /aiFeedback/{docId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if false;
     }
   }
 }
