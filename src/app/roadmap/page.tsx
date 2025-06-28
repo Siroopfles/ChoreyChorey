@@ -3,7 +3,7 @@ import LandingFooter from "@/components/landing/footer"
 import LandingHeader from "@/components/landing/header"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { roadmapPhases } from "@/lib/roadmap-data"
+import { roadmapPhases } from "@/lib/roadmap"
 
 
 export default function RoadmapPage() {

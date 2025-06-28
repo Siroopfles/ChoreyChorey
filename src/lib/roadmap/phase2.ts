@@ -1,0 +1,26 @@
+import type { Phase } from '../types';
+
+export const phase2: Phase = {
+  name: "Fase 2: Intelligentie & Samenwerking (Voltooid)",
+  description: "In deze fase is Chorey slimmer en socialer gemaakt. De focus lag op AI-ondersteuning, gamification en functies die teamwerk en productiviteit bevorderen.",
+  features: [
+    { id: 2001, title: "AI-gestuurde Suggesties", description: "Laat de AI assisteren bij dagelijkse beslissingen. Ontvang slimme suggesties voor de meest geschikte persoon voor een taak (gebaseerd op vaardigheden en eerdere prestaties), een lijst van logische subtaken, een inschatting van de complexiteit in Story Points, en de meest relevante labels.", completed: true },
+    { id: 2002, title: "AI Risico & Duplicaat Detectie", description: "Laat de AI proactief meedenken. Het systeem analyseert nieuwe taken op potentiële risico's (zoals vage taal of afhankelijkheden) en controleert of er al een vergelijkbare taak bestaat om dubbel werk te voorkomen.", completed: true },
+    { id: 2003, title: "AI NLP Command Bar", description: "Praat met je takenlijst. Gebruik de commando-balk om in natuurlijke taal taken aan te maken, te zoeken of te bewerken (bijv. 'herinner me eraan om morgen om 10 uur de planten water te geven').", completed: true },
+    { id: 2004, title: "AI Generatieve Functies", description: "Maak de werkruimte visueel aantrekkelijker. Genereer unieke, abstracte avatars voor gebruikers en creëer relevante, professionele omslagfoto's voor taken op basis van de titel en beschrijving.", completed: true },
+    { id: 2005, title: "AI Audio & Spraak", description: "Verhoog de toegankelijkheid en efficiëntie. Converteer tekst naar spraak (TTS), laat notulen van een vergadering automatisch omzetten naar uitvoerbare taken, en gebruik spraakherkenning om commando's in te spreken.", completed: true },
+    { id: 2006, title: "AI Werkdruk Balancering", description: "Voorkom overbelasting. De AI kan de geplande taken van een gebruiker analyseren en, indien nodig, taken met een lagere prioriteit automatisch verplaatsen naar rustigere dagen om de werkdruk te egaliseren.", completed: true },
+    { id: 2007, title: "AI Headcount Planning", description: "Plan projecten effectiever. Geef de AI een projectomschrijving en een lijst van beschikbare medewerkers, en ontvang een gedetailleerd voorstel voor de benodigde teamgrootte en de ideale mix van rollen.", completed: true },
+    { id: 2008, title: "Gamification", description: "Maak werk leuker door spelelementen te introduceren. Gebruikers verdienen punten voor het voltooien van taken en ontgrendelen prestatie-badges voor het bereiken van mijlpalen.", completed: true },
+    { id: 2009, title: "Sociale Interacties", description: "Versterk de teamspirit. Gebruikers kunnen elkaar 'Kudos' (punten) geven als blijk van waardering, collega's bedanken voor voltooide taken, en elkaars vaardigheden onderschrijven om expertise te erkennen.", completed: true },
+    { id: 2010, title: "Ideeënbus met Upvotes", description: "Een democratisch platform voor innovatie. Gebruikers kunnen ideeën voor nieuwe features of verbeteringen indienen, en de community kan stemmen op de meest waardevolle voorstellen.", completed: true },
+    { id: 2011, title: "Mentorschap Programma", description: "Stimuleer kennisdeling. Een speciale pagina waar ervaren gebruikers (mentoren) en nieuwkomers (mentees) elkaar kunnen vinden op basis van vaardigheden en activiteit.", completed: true },
+    { id: 2012, title: "Team Room Visualisatie", description: "Een speelse, visuele weergave van de teamactiviteit. Avatars van teamleden bewegen door een virtuele ruimte op basis van de status van hun taken, wat een snel overzicht geeft van wie waarmee bezig is.", completed: true },
+    { id: 2013, title: "Doelen & Uitdagingen", description: "Stimuleer groei en competitie. Gebruikers kunnen persoonlijke doelen met mijlpalen instellen. Beheerders kunnen team-brede uitdagingen creëren met puntenbeloningen als het doel wordt behaald.", completed: true },
+    { id: 2014, title: "Puntenwinkel", description: "Wissel verdiende punten in voor cosmetische upgrades, zoals het aanpassen van de primaire kleur van de interface, wat een persoonlijk tintje geeft aan de gebruikerservaring.", completed: true },
+    { id: 2015, title: "Geavanceerde Views", description: "Krijg dieper inzicht in projectplanning met een interactief Gantt-diagram. Bouw je eigen visuele rapporten met de rapportagebouwer en analyseer de werkdruk van het team in de workload-kalender.", completed: true },
+    { id: 2016, title: "Geavanceerde Afhankelijkheden", description: "Definieer niet alleen welke taak een andere blokkeert, maar stel ook een 'wachttijd' (lag) in (in uren of dagen) die moet verstrijken nadat de blokkerende taak is voltooid, voordat de volgende kan beginnen.", completed: true },
+    { id: 2017, title: "Notificatiecentrum", description: "Een centrale inbox voor alle meldingen. Gebruikers kunnen notificaties snoozen en een prioriteitsdrempel instellen om alleen geïnformeerd te worden over de belangrijkste taken.", completed: true },
+    { id: 2018, title: "RACI Matrix", description: "Genereer automatisch een RACI-matrix (Responsible, Accountable, Consulted, Informed) voor alle taken. Dit geeft een helder overzicht van ieders rol en verantwoordelijkheid.", completed: true },
+  ]
+};

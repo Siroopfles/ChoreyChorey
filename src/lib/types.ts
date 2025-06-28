@@ -813,3 +813,17 @@ export const automationFormSchema = automationSchema.pick({
     action: true,
 });
 export type AutomationFormValues = z.infer<typeof automationFormSchema>;
+
+// Roadmap specific types
+export type Feature = {
+  id: number;
+  title: string;
+  description: string;
+  completed: boolean;
+};
+
+export type Phase = {
+  name: string;
+  description: string;
+  features: Feature[];
+};
