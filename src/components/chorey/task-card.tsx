@@ -761,3 +761,5 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
 };
 
 export default TaskCard;
+
+    
