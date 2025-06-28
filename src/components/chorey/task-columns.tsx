@@ -1,6 +1,6 @@
 
 'use client';
-import type { User, Task, Project } from '@/lib/types';
+import type { User, Task, Project, Priority } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -39,16 +39,21 @@ const TaskColumn = ({ title, tasks, users, currentUser, projects }: { title: str
   );
 };
 
+type GroupedTasks = {
+  title: string;
+  tasks: Task[];
+}
+
 type TaskColumnsProps = {
   users: User[];
-  tasks: Task[];
+  groupedTasks: GroupedTasks[];
+  groupBy: 'status' | 'assignee' | 'priority' | 'project';
   currentUser: User | null;
   projects: Project[];
 };
 
-const TaskColumns = ({ users, tasks: filteredTasks, currentUser, projects }: TaskColumnsProps) => {
+const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects }: TaskColumnsProps) => {
   const { tasks, updateTask, reorderTasks, addTask } = useTasks();
-  const { currentOrganization } = useAuth();
   const { toast } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -58,14 +63,6 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, projects }: Tas
     })
   );
   const [isDragOver, setIsDragOver] = useState(false);
-
-  const columns = currentOrganization?.settings?.customization?.statuses || [];
-
-  const tasksByStatus = (status: string) => {
-    return filteredTasks
-        .filter((task) => task.status === status)
-        .sort((a,b) => a.order - b.order);
-  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -80,7 +77,7 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, projects }: Tas
     const activeContainer = active.data.current?.sortable.containerId as string;
     const overContainer = (over.data.current?.sortable.containerId || over.id) as string;
     
-    if (!activeContainer || !overContainer || !columns.includes(overContainer)) {
+    if (!activeContainer || !overContainer) {
       return;
     }
     
@@ -95,41 +92,51 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, projects }: Tas
     if (activeContainer !== overContainer) {
       const isBlocked = activeTask.blockedBy?.some(blockerId => {
         const blockerTask = tasks.find(t => t.id === blockerId);
-        if (!blockerTask) return false; // Blocker task not found, assume not blocked
+        if (!blockerTask) return false;
+        if (blockerTask.status !== 'Voltooid') return true;
         
-        // If blocker is not complete, it's always blocking
-        if (blockerTask.status !== 'Voltooid') {
-            return true;
-        }
-        
-        // If blocker is complete, check for lag time
         const dependencyConfig = activeTask.dependencyConfig?.[blockerId];
         if (dependencyConfig && blockerTask.completedAt) {
             const { lag, unit } = dependencyConfig;
             const addFn = unit === 'hours' ? addHours : addDays;
             const unlockDate = addFn(blockerTask.completedAt, lag);
-            
-            // It's blocked if the unlock date is still in the future
             return isAfter(unlockDate, new Date());
         }
-        
-        // Default case: blocker is complete and no lag time, so it's not blocking.
         return false;
       });
 
-      if (isBlocked && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
+      if (isBlocked && groupBy === 'status' && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
         toast({
           title: 'Taak Geblokkeerd',
-          description: 'Deze taak kan niet worden gestart omdat een afhankelijke taak nog niet is voltooid of de wachttijd nog niet voorbij is.',
+          description: 'Deze taak kan niet worden gestart omdat een afhankelijke taak nog niet is voltooid.',
           variant: 'destructive',
         });
         return;
       }
       
-      updateTask(activeId, { status: overContainer, order: Date.now() });
+      let updates: Partial<Task> = { order: Date.now() };
+
+      switch (groupBy) {
+        case 'status':
+            updates.status = overContainer;
+            break;
+        case 'assignee':
+            const assignee = users.find(u => u.name === overContainer);
+            updates.assigneeIds = assignee ? [assignee.id] : [];
+            break;
+        case 'priority':
+            updates.priority = overContainer as Priority;
+            break;
+        case 'project':
+            const project = projects.find(p => p.name === overContainer);
+            updates.projectId = project ? project.id : null;
+            break;
+      }
+
+      updateTask(activeId, updates);
 
     } else { // Handle reordering WITHIN the same column
-      const itemsInColumn = tasksByStatus(activeContainer);
+      const itemsInColumn = groupedTasks.find(g => g.title === activeContainer)?.tasks || [];
       const oldIndex = itemsInColumn.findIndex((t) => t.id === activeId);
       const newIndex = itemsInColumn.findIndex((t) => t.id === overId);
 
@@ -196,8 +203,8 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, projects }: Tas
         >
           <ScrollArea className="w-full h-full">
           <div className="flex gap-6 pb-4 h-full">
-              {columns.map((status) => (
-                  <TaskColumn key={status} title={status} tasks={tasksByStatus(status)} users={users} currentUser={currentUser} projects={projects} />
+              {groupedTasks.map((group) => (
+                  <TaskColumn key={group.title} title={group.title} tasks={group.tasks} users={users} currentUser={currentUser} projects={projects} />
               ))}
           </div>
           <ScrollBar orientation="horizontal" />
@@ -214,5 +221,3 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, projects }: Tas
 };
 
 export default TaskColumns;
-
-    

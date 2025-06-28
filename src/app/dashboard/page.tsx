@@ -7,7 +7,7 @@ import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileDown, Download, FileText, HandHeart, MoreHorizontal } from 'lucide-react';
+import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefcase, ArrowUpNarrowWide, Columns } from 'lucide-react';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
@@ -27,10 +27,11 @@ import { GettingStartedGuide } from '@/components/chorey/getting-started-guide';
 
 export default function DashboardPage() {
   const { tasks, loading, searchTerm, setSearchTerm, filters } = useTasks();
-  const { user: currentUser, teams, currentOrganization, users } = useAuth();
+  const { user: currentUser, teams, currentOrganization, users, projects } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
+  const [groupBy, setGroupBy] = useState<'status' | 'assignee' | 'priority' | 'project'>('status');
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -49,8 +50,60 @@ export default function DashboardPage() {
   }, [tasks, searchTerm, filters]);
 
   const choreOfTheWeek = useMemo(() => filteredTasks.find(t => t.isChoreOfTheWeek), [filteredTasks]);
-  const regularTasks = useMemo(() => filteredTasks.filter(t => !t.isChoreOfTheWeek), [filteredTasks]);
-  const helpNeededTasks = useMemo(() => regularTasks.filter(t => t.helpNeeded), [regularTasks]);
+  const helpNeededTasks = useMemo(() => filteredTasks.filter(t => t.helpNeeded), [filteredTasks]);
+  
+  const groupedTasks = useMemo(() => {
+    const tasksToGroup = filteredTasks.filter(t => !t.isChoreOfTheWeek);
+
+    if (groupBy === 'status') {
+      const statuses = currentOrganization?.settings?.customization?.statuses || [];
+      return statuses.map(status => ({
+        title: status,
+        tasks: tasksToGroup.filter(task => task.status === status).sort((a,b) => a.order - b.order)
+      }));
+    }
+    if (groupBy === 'assignee') {
+      const tasksByAssignee: Record<string, Task[]> = {};
+      tasksToGroup.forEach(task => {
+        if (task.assigneeIds.length === 0) {
+          if (!tasksByAssignee['Niet toegewezen']) tasksByAssignee['Niet toegewezen'] = [];
+          tasksByAssignee['Niet toegewezen'].push(task);
+        } else {
+          task.assigneeIds.forEach(id => {
+            const user = users.find(u => u.id === id);
+            const name = user ? user.name : 'Onbekende gebruiker';
+            if (!tasksByAssignee[name]) tasksByAssignee[name] = [];
+            tasksByAssignee[name].push(task);
+          });
+        }
+      });
+      const sortedEntries = Object.entries(tasksByAssignee).sort(([a], [b]) => a.localeCompare(b));
+      return sortedEntries.map(([title, tasks]) => ({ title, tasks: tasks.sort((a,b) => a.order - b.order) }));
+    }
+    if (groupBy === 'priority') {
+      const priorities = currentOrganization?.settings?.customization?.priorities || [];
+      return priorities.map(priority => ({
+        title: priority,
+        tasks: tasksToGroup.filter(task => task.priority === priority).sort((a,b) => a.order - b.order)
+      }));
+    }
+    if (groupBy === 'project') {
+        const tasksByProject: Record<string, Task[]> = {};
+        tasksToGroup.forEach(task => {
+            const project = projects.find(p => p.id === task.projectId);
+            const projectName = project ? project.name : 'Geen Project';
+            if (!tasksByProject[projectName]) tasksByProject[projectName] = [];
+            tasksByProject[projectName].push(task);
+        });
+        const sortedEntries = Object.entries(tasksByProject).sort(([a], [b]) => a.localeCompare(b));
+        return sortedEntries.map(([title, tasks]) => ({ title, tasks: tasks.sort((a,b) => a.order - b.order) }));
+    }
+    return [];
+  }, [filteredTasks, groupBy, currentOrganization, users, projects]);
+
+  const regularTasks = useMemo(() => {
+    return filteredTasks.filter(t => !t.isChoreOfTheWeek && !t.helpNeeded);
+  }, [filteredTasks]);
 
   const showGettingStarted = useMemo(() => {
     return currentOrganization && users.length === 1 && currentUser?.id === currentOrganization.ownerId;
@@ -87,6 +140,14 @@ export default function DashboardPage() {
     }
   };
 
+  const groupByOptions = [
+    { value: 'status', label: 'Status', icon: Columns },
+    { value: 'assignee', label: 'Toegewezen aan', icon: Group },
+    { value: 'priority', label: 'Prioriteit', icon: ArrowUpNarrowWide },
+    { value: 'project', label: 'Project', icon: Briefcase },
+  ]
+  const CurrentGroupIcon = groupByOptions.find(o => o.value === groupBy)?.icon || Columns;
+
   if (loading) {
     return <TaskColumnsSkeleton />;
   }
@@ -96,7 +157,7 @@ export default function DashboardPage() {
       {showGettingStarted && <GettingStartedGuide />}
       {choreOfTheWeek && <ChoreOfTheWeekCard task={choreOfTheWeek} users={users} />}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Input
             placeholder="Zoek taken..."
             value={searchTerm}
@@ -104,6 +165,24 @@ export default function DashboardPage() {
             className="w-full sm:w-auto"
           />
           <FilterBar />
+           {activeTab === 'board' && (
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <CurrentGroupIcon className="mr-2 h-4 w-4" />
+                    Groeperen
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {groupByOptions.map(option => (
+                      <DropdownMenuItem key={option.value} onSelect={() => setGroupBy(option.value as any)}>
+                          <option.icon className="mr-2 h-4 w-4" />
+                          {option.label}
+                      </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+          )}
         </div>
         <div className="flex items-center gap-2">
             <DropdownMenu>
@@ -144,7 +223,14 @@ export default function DashboardPage() {
           <TabsTrigger value="gantt">Gantt</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="flex-1 mt-4 overflow-hidden">
-          <TaskColumns tasks={regularTasks} users={users} currentUser={currentUser} projects={[]} />
+          {groupedTasks.length > 0 ? (
+            <TaskColumns groupedTasks={groupedTasks} groupBy={groupBy} users={users} currentUser={currentUser} projects={projects} />
+          ) : (
+            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-full">
+                <h3 className="text-2xl font-bold tracking-tight">Geen taken gevonden</h3>
+                <p className="text-sm text-muted-foreground">Er zijn geen taken die aan de huidige filters voldoen.</p>
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="list" className="flex-1 mt-4 overflow-y-auto">
           <TaskListView tasks={regularTasks} users={users} />
