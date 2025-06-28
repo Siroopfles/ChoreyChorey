@@ -209,7 +209,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           storyPoints: taskData.storyPoints ?? null,
           blockedBy: taskData.blockedBy || [],
           dependencyConfig: taskData.dependencyConfig || {},
-          recurring: taskData.recurring ?? null,
+          recurring: taskData.recurring === undefined ? null : taskData.recurring,
           organizationId: organizationId,
           imageDataUri: taskData.imageDataUri ?? null,
           thanked: false,

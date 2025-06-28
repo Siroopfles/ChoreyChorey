@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, increment, arrayUnion, runTransaction, addDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
-import type { Task, User, Organization, ActivityFeedItem } from '@/lib/types';
+import type { Task, User, Organization, ActivityFeedItem, Team } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 
 async function grantAchievements(userId: string, type: 'completed' | 'thanked', task?: Task) {
