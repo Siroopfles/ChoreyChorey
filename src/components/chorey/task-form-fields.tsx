@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase } from 'lucide-react';
-import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
+import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels, handleFindDuplicateTask, handleSuggestProactiveHelp } from '@/app/actions/ai.actions';
@@ -38,6 +38,8 @@ import { GoogleDocEmbed } from './google-doc-embed';
 import { GitLabLinker } from './gitlab-linker';
 import { BitbucketLinker } from './bitbucket-linker';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useTasks } from '@/contexts/task-context';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -48,6 +50,7 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
   const { currentOrganization, teams } = useAuth();
+  const { tasks } = useTasks();
   const status = form.watch('status');
   const isPrivate = form.watch('isPrivate');
 
@@ -84,6 +87,9 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
     control: form.control,
     name: "blockedBy",
   });
+  
+  const [depPopoverOpen, setDepPopoverOpen] = useState(false);
+  const [depSearch, setDepSearch] = useState('');
 
   const handleRemoveBlockedBy = (index: number) => {
     const blockerId = form.getValues(`blockedBy.${index}`);
@@ -106,6 +112,11 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
   const description = form.watch('description');
   const debouncedTitle = useDebounce(title, 1500);
   const debouncedDescription = useDebounce(description, 1500);
+
+  const currentBlockerIds = form.watch('blockedBy') || [];
+  const availableTasksToBlock = tasks.filter(
+    task => !currentBlockerIds.includes(task.id) && task.title.toLowerCase().includes(depSearch.toLowerCase())
+  );
 
   useEffect(() => {
     if (!debouncedTitle || debouncedTitle.length < 10 || proactiveHelp || isCheckingComplexity) {
@@ -1052,16 +1063,13 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
             <div className="space-y-2 mt-2">
             {blockedByFields.map((field, index) => {
               const blockerId = form.watch(`blockedBy.${index}`);
+              const blockerTask = tasks.find(t => t.id === blockerId);
               return (
                 <div key={field.id} className="flex flex-col gap-2 rounded-md border p-2">
-                  <div className="flex items-center gap-2">
-                    <FormField
-                        control={form.control}
-                        name={`blockedBy.${index}`}
-                        render={({ field }) => (
-                          <Input {...field} value={field.value ?? ''} placeholder="Plak een taak ID..."/>
-                        )}
-                    />
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium truncate">
+                      {blockerTask ? blockerTask.title : <span className="text-muted-foreground italic">Taak niet gevonden</span>}
+                    </p>
                     <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveBlockedBy(index)}>
                       <Trash2 className="h-4 w-4 text-destructive"/>
                     </Button>
@@ -1071,7 +1079,16 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
                           control={form.control}
                           name={`dependencyConfig.${blockerId}.lag`}
                           render={({ field }) => (
-                             <Input type="number" placeholder="Wachttijd" {...field} value={field.value ?? ''} className="h-8 w-24" />
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Input type="number" placeholder="Wachttijd" {...field} value={field.value ?? ''} className="h-8 w-24" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Wachttijd na voltooiing van de blokkerende taak.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                       />
                       <FormField
@@ -1095,10 +1112,41 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
                 </div>
               )
             })}
-            <Button type="button" variant="outline" size="sm" onClick={() => appendBlockedBy('')}>
-              <LinkIcon className="mr-2 h-4 w-4" />
-              Blocker toevoegen
-            </Button>
+             <Popover open={depPopoverOpen} onOpenChange={setDepPopoverOpen}>
+                <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" size="sm" className="w-full justify-start">
+                    <LinkIcon className="mr-2 h-4 w-4" />
+                    Blocker toevoegen...
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                    <Command>
+                        <CommandInput 
+                            placeholder="Zoek taak op naam..." 
+                            value={depSearch}
+                            onValueChange={setDepSearch}
+                        />
+                        <CommandList>
+                            <CommandEmpty>Geen taken gevonden.</CommandEmpty>
+                            <CommandGroup>
+                                {availableTasksToBlock.map(task => (
+                                    <CommandItem
+                                        key={task.id}
+                                        value={task.title}
+                                        onSelect={() => {
+                                            appendBlockedBy(task.id);
+                                            setDepPopoverOpen(false);
+                                            setDepSearch('');
+                                        }}
+                                    >
+                                        {task.title}
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        </CommandList>
+                    </Command>
+                </PopoverContent>
+            </Popover>
           </div>
       </div>
       
