@@ -686,31 +686,24 @@ export async function toggleTaskTimerAction(taskId: string, userId: string, orga
             });
             await triggerWebhooks(organizationId, 'task.updated', {...task, timeLogged: newTimeLogged, activeTimerStartedAt: null, id: taskId});
             
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            const user = userDoc.data() as User;
+
             // Toggl Integration
-            if (organization.settings?.features?.toggl) {
-                const userDoc = await getDoc(doc(db, 'users', userId));
-                const user = userDoc.data() as User;
-                if (user.togglApiToken && task.togglWorkspaceId && task.togglProjectId) {
-                    try {
-                        await createTogglTimeEntry(user.togglApiToken, task.togglWorkspaceId, task, elapsed, startTime);
-                    } catch (togglError) {
-                        console.error('Failed to sync time entry to Toggl:', togglError);
-                        // Do not throw error to user, just log it
-                    }
+            if (organization.settings?.features?.toggl && user.togglApiToken && task.togglWorkspaceId && task.togglProjectId) {
+                try {
+                    await createTogglTimeEntry(user.togglApiToken, task.togglWorkspaceId, task, elapsed, startTime);
+                } catch (togglError) {
+                    console.error('Failed to sync time entry to Toggl:', togglError);
                 }
             }
 
             // Clockify Integration
-            if (organization.settings?.features?.clockify) {
-                const userDoc = await getDoc(doc(db, 'users', userId));
-                const user = userDoc.data() as User;
-                if (user.clockifyApiToken && task.clockifyWorkspaceId && task.clockifyProjectId) {
-                    try {
-                        await createClockifyTimeEntry(user.clockifyApiToken, task.clockifyWorkspaceId, task, elapsed, startTime);
-                    } catch (clockifyError) {
-                        console.error('Failed to sync time entry to Clockify:', clockifyError);
-                        // Do not throw error to user, just log it
-                    }
+            if (organization.settings?.features?.clockify && user.clockifyApiToken && task.clockifyWorkspaceId && task.clockifyProjectId) {
+                try {
+                    await createClockifyTimeEntry(user.clockifyApiToken, task.clockifyWorkspaceId, task, elapsed, startTime);
+                } catch (clockifyError) {
+                    console.error('Failed to sync time entry to Clockify:', clockifyError);
                 }
             }
 
