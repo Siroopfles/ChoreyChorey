@@ -39,7 +39,7 @@ import { GitLabLinker } from './gitlab-linker';
 import { BitbucketLinker } from './bitbucket-linker';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useTasks } from '@/contexts/task-context';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 
 type TaskFormFieldsProps = {
   users: User[];
