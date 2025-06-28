@@ -1,5 +1,7 @@
 
+
 import { z } from 'zod';
+import type { Layout } from 'react-grid-layout';
 
 export type GitHubLink = {
   url: string;
@@ -286,6 +288,7 @@ export type User = {
     currentStreak: number;
     lastCompletionDate: Date;
   };
+  dashboardLayout?: Layout[];
 };
 
 export type Session = {

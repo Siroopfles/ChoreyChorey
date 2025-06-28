@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { 
@@ -122,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             microsoftRefreshToken: rawData.microsoftRefreshToken,
             togglApiToken: rawData.togglApiToken,
             clockifyApiToken: rawData.clockifyApiToken,
+            dashboardLayout: rawData.dashboardLayout,
             streakData: rawData.streakData ? {
                 ...rawData.streakData,
                 lastCompletionDate: (rawData.streakData.lastCompletionDate as Timestamp).toDate(),
