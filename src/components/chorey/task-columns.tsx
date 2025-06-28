@@ -10,6 +10,7 @@ import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { FileUp } from 'lucide-react';
+import { addDays, addHours, isAfter } from 'date-fns';
 
 const TaskColumn = ({ title, tasks, users, currentUser, projects }: { title: string; tasks: Task[]; users: User[], currentUser: User | null, projects: Project[] }) => {
   const { setNodeRef } = useDroppable({
@@ -94,13 +95,32 @@ const TaskColumns = ({ users, tasks: filteredTasks, currentUser, projects }: Tas
     if (activeContainer !== overContainer) {
       const isBlocked = activeTask.blockedBy?.some(blockerId => {
         const blockerTask = tasks.find(t => t.id === blockerId);
-        return blockerTask && blockerTask.status !== 'Voltooid';
+        if (!blockerTask) return false; // Blocker task not found, assume not blocked
+        
+        // If blocker is not complete, it's always blocking
+        if (blockerTask.status !== 'Voltooid') {
+            return true;
+        }
+        
+        // If blocker is complete, check for lag time
+        const dependencyConfig = activeTask.dependencyConfig?.[blockerId];
+        if (dependencyConfig && blockerTask.completedAt) {
+            const { lag, unit } = dependencyConfig;
+            const addFn = unit === 'hours' ? addHours : addDays;
+            const unlockDate = addFn(blockerTask.completedAt, lag);
+            
+            // It's blocked if the unlock date is still in the future
+            return isAfter(unlockDate, new Date());
+        }
+        
+        // Default case: blocker is complete and no lag time, so it's not blocking.
+        return false;
       });
 
       if (isBlocked && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
         toast({
           title: 'Taak Geblokkeerd',
-          description: 'Deze taak kan niet worden gestart omdat een van de afhankelijke taken nog niet is voltooid.',
+          description: 'Deze taak kan niet worden gestart omdat een afhankelijke taak nog niet is voltooid of de wachttijd nog niet voorbij is.',
           variant: 'destructive',
         });
         return;

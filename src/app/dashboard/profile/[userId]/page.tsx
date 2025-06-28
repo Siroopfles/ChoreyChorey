@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { useParams, useRouter } from 'next/navigation';
@@ -15,6 +15,7 @@ import { ACHIEVEMENTS, statusStyles } from '@/lib/types';
 import TaskCard from '@/components/chorey/task-card';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { KudosDialog } from '@/components/chorey/kudos-dialog';
 
 const achievementIcons: Record<string, React.ElementType> = {
     'first_task': Rocket,
@@ -29,6 +30,7 @@ export default function UserProfilePage() {
     const router = useRouter();
     const { users, user: currentUser, loading: authLoading, projects } = useAuth();
     const { tasks, loading: tasksLoading } = useTasks();
+    const [kudosDialogOpen, setKudosDialogOpen] = useState(false);
 
     const user = useMemo(() => {
         if (!userId) return null;
@@ -94,6 +96,12 @@ export default function UserProfilePage() {
                                 <h2 className="text-2xl font-bold mt-4">{user.name}</h2>
                                 <p className="text-sm text-muted-foreground">{user.email}</p>
                                 {user.bio && <p className="mt-4 text-sm">{user.bio}</p>}
+                                {currentUser && currentUser.id !== user.id && (
+                                    <Button onClick={() => setKudosDialogOpen(true)} className="mt-4">
+                                        <HandHeart className="mr-2 h-4 w-4" />
+                                        Geef Kudos
+                                    </Button>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -167,6 +175,13 @@ export default function UserProfilePage() {
                     </Card>
                 </div>
             </div>
+             {currentUser && currentUser.id !== user.id && (
+                <KudosDialog
+                    open={kudosDialogOpen}
+                    onOpenChange={setKudosDialogOpen}
+                    recipient={user}
+                />
+            )}
         </div>
     );
 }
