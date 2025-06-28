@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -113,7 +106,7 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
             }
         });
 
-        const allUserEmails = Array.from(allUserEmails);
+        const allUserEmails = Array.from(allEmailsFromCsv);
         
         const usersByEmail: Record<string, User> = {};
         if (allUserEmails.length > 0) {
@@ -242,6 +235,16 @@ export async function createTaskAction(organizationId: string, creatorId: string
           customFieldValues: taskData.customFieldValues || {},
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
+
+        // Trigger automations for the new task
+        try {
+            const { processTriggers } = await import('@/lib/automation-service');
+            // We need to pass the full task object including the new ID
+            await processTriggers('task.created', { task: { ...firestoreTask, id: docRef.id } });
+        } catch (e) {
+            console.error("Error processing automations for new task:", e);
+            // Do not block the main flow if automations fail
+        }
 
         if (firestoreTask.assigneeIds.length > 0) {
             firestoreTask.assigneeIds.forEach(assigneeId => {

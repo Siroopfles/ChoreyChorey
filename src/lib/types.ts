@@ -1,5 +1,4 @@
 
-
 import { z } from 'zod';
 import type { Layout } from 'react-grid-layout';
 
@@ -759,3 +758,48 @@ export type ApiKey = {
   lastUsed?: Date;
   permissions: ApiPermission[];
 };
+
+export const AUTOMATION_TRIGGER_TYPES = {
+  'task.created': 'Taak Aangemaakt',
+} as const;
+export type AutomationTriggerType = keyof typeof AUTOMATION_TRIGGER_TYPES;
+
+export const AUTOMATION_ACTION_TYPES = {
+  'task.assign': 'Taak Toewijzen',
+} as const;
+export type AutomationActionType = keyof typeof AUTOMATION_ACTION_TYPES;
+
+export const automationTriggerSchema = z.object({
+  type: z.nativeEnum(Object.keys(AUTOMATION_TRIGGER_TYPES)),
+  filters: z.object({
+    priority: z.string().optional(),
+    label: z.string().optional(),
+  }).optional(),
+});
+
+export const automationActionSchema = z.object({
+  type: z.nativeEnum(Object.keys(AUTOMATION_ACTION_TYPES)),
+  params: z.object({
+    assigneeId: z.string().optional(),
+  }),
+});
+
+export const automationSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, 'Naam is vereist.'),
+  organizationId: z.string(),
+  creatorId: z.string(),
+  createdAt: z.date(),
+  enabled: z.boolean(),
+  trigger: automationTriggerSchema,
+  action: automationActionSchema,
+});
+export type Automation = z.infer<typeof automationSchema>;
+
+export const automationFormSchema = automationSchema.pick({
+    name: true,
+    enabled: true,
+    trigger: true,
+    action: true,
+});
+export type AutomationFormValues = z.infer<typeof automationFormSchema>;
