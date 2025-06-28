@@ -69,7 +69,6 @@ import { useAuth } from '@/contexts/auth-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useEffect, useMemo } from 'react';
-import EditTaskDialog from './edit-task-dialog';
 import { calculatePoints } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { handleTextToSpeech } from '@/app/actions/ai.actions';
@@ -137,9 +136,8 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
   const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
   const PriorityIcon = priorityConfig[task.priority as keyof typeof priorityConfig]?.icon || Equal;
   const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, navigateToUserProfile, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, navigateToUserProfile, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask } = useTasks();
   const { currentOrganization, currentUserRole } = useAuth();
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
 
@@ -287,7 +285,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
     if(target.closest('[data-state="open"], [data-state="closed"]')) {
         return;
     }
-    setIsEditDialogOpen(true);
+    setViewedTask(task);
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -298,7 +296,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
     
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault(); // Prevent scrolling on space
-      setIsEditDialogOpen(true);
+      setViewedTask(task);
     }
   }
 
@@ -757,16 +755,8 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
             </CardFooter>
         </div>
       </Card>
-      <EditTaskDialog 
-        isOpen={isEditDialogOpen} 
-        setIsOpen={setIsEditDialogOpen} 
-        task={task}
-        users={users} 
-      />
     </div>
   );
 };
 
 export default TaskCard;
-
-    

@@ -22,6 +22,7 @@ import AppHeader from '@/components/chorey/app-header';
 import CommandBar from '@/components/chorey/command-bar';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
+import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import Link from 'next/link';
 import AnnouncementBanner from '@/components/chorey/announcement-banner';
 import { PERMISSIONS } from '@/lib/types';
@@ -55,7 +56,7 @@ const UserCosmeticStyle = () => {
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
-    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen } = useTasks();
+    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask } = useTasks();
     const { currentUserRole, currentOrganization, users, currentUserPermissions } = useAuth();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -210,6 +211,14 @@ function AppShell({ children }: { children: React.ReactNode }) {
             </SidebarInset>
             
             <AddTaskDialog users={users} open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
+            {viewedTask && (
+                <EditTaskDialog
+                  isOpen={!!viewedTask}
+                  setIsOpen={(isOpen) => { if (!isOpen) setViewedTask(null); }}
+                  task={viewedTask}
+                  users={users}
+                />
+            )}
         </SidebarProvider>
     );
 }

@@ -70,6 +70,8 @@ type TaskContextType = {
   navigateToUserProfile: (userId: string) => void;
   isAddTaskDialogOpen: boolean;
   setIsAddTaskDialogOpen: (open: boolean) => void;
+  viewedTask: Task | null;
+  setViewedTask: (task: Task | null) => void;
   personalGoals: PersonalGoal[];
   addPersonalGoal: (goalData: PersonalGoalFormValues) => Promise<boolean>;
   updatePersonalGoal: (goalId: string, goalData: PersonalGoalFormValues) => Promise<boolean>;
@@ -102,6 +104,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null });
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
+  const [viewedTask, setViewedTask] = useState<Task | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -436,7 +439,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       cloneTask, splitTask, deleteTaskPermanently, filters, setFilters, clearFilters,
       activeFilterCount, notifications, markAllNotificationsAsRead, markSingleNotificationAsRead,
       archiveNotification, snoozeNotification, navigateToUserProfile, isAddTaskDialogOpen,
-      setIsAddTaskDialogOpen, personalGoals, addPersonalGoal, updatePersonalGoal,
+      setIsAddTaskDialogOpen, viewedTask, setViewedTask, personalGoals, addPersonalGoal, updatePersonalGoal,
       deletePersonalGoal, toggleMilestoneCompletion, ideas, addIdea, toggleIdeaUpvote,
       updateIdeaStatus, teamChallenges, addTeamChallenge, updateTeamChallenge,
       deleteTeamChallenge, completeTeamChallenge, toggleMuteTask,
