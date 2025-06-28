@@ -70,10 +70,18 @@ export function TourProvider({ children }: { children: ReactNode }) {
         }}
         styles={{
           options: {
-            zIndex: 10000,
+            arrowColor: 'hsl(var(--popover))',
+            backgroundColor: 'hsl(var(--popover))',
             primaryColor: 'hsl(var(--primary))',
-            textColor: 'hsl(var(--foreground))',
+            textColor: 'hsl(var(--popover-foreground))',
+            zIndex: 10000,
           },
+          buttonClose: {
+            color: 'hsl(var(--popover-foreground))'
+          },
+          buttonBack: {
+            color: 'hsl(var(--popover-foreground))'
+          }
         }}
       />
     </TourContext.Provider>
