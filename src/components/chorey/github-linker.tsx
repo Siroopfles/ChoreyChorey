@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,19 +9,48 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Trash2, Github, GitPullRequest, AlertCircle, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getGithubItemFromUrl, addCommentToGithubItem } from '@/app/actions/github.actions';
+import { getGithubItemFromUrl, addCommentToGithubItem, getGithubComments } from '@/app/actions/github.actions';
 import { useAuth } from '@/contexts/auth-context';
 import type { GitHubLink } from '@/lib/types';
 import Link from 'next/link';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Textarea } from '../ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { ScrollArea } from '../ui/scroll-area';
+import { formatDistanceToNow } from 'date-fns';
+import { nl } from 'date-fns/locale';
 
 function GitHubCommentPopover({ item }: { item: GitHubLink }) {
     const [comment, setComment] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [comments, setComments] = useState<any[]>([]);
+    const [isFetchingComments, setIsFetchingComments] = useState(false);
     const { toast } = useToast();
     const { user } = useAuth();
+
+    const fetchComments = useCallback(async () => {
+        setIsFetchingComments(true);
+        const urlParts = item.url.match(/github\.com\/([^/]+)\/([^/]+)\/(issues|pull)\/(\d+)/);
+        if (!urlParts) {
+            setIsFetchingComments(false);
+            return;
+        }
+        const [, owner, repo] = urlParts;
+        const result = await getGithubComments(owner, repo, item.number);
+        if (result.comments) {
+            setComments(result.comments);
+        }
+        setIsFetchingComments(false);
+    }, [item.number, item.url]);
+
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchComments();
+        }
+    }, [isOpen, fetchComments]);
+
 
     const handleCommentSubmit = async () => {
         if (!comment.trim() || !user) return;
@@ -35,15 +64,15 @@ function GitHubCommentPopover({ item }: { item: GitHubLink }) {
 
         setIsSubmitting(true);
         const result = await addCommentToGithubItem(owner, repo, item.number, comment, user.name);
-        setIsSubmitting(false);
 
         if (result.error) {
             toast({ title: "Fout bij verzenden", description: result.error, variant: "destructive" });
         } else {
             toast({ title: "Reactie geplaatst", description: "Je reactie is op GitHub geplaatst." });
             setComment('');
-            setIsOpen(false);
+            await fetchComments();
         }
+        setIsSubmitting(false);
     };
 
     return (
@@ -53,7 +82,7 @@ function GitHubCommentPopover({ item }: { item: GitHubLink }) {
                     <MessageSquare className="h-4 w-4" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80" onClick={e => e.stopPropagation()}>
+            <PopoverContent className="w-96" onClick={e => e.stopPropagation()}>
                 <div className="grid gap-4">
                     <div className="space-y-2">
                         <h4 className="font-medium leading-none">Reageer op GitHub</h4>
@@ -65,6 +94,33 @@ function GitHubCommentPopover({ item }: { item: GitHubLink }) {
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Verstuur
                         </Button>
+                    </div>
+                     <Separator className="my-2" />
+                    <div className="space-y-2">
+                        <h5 className="text-xs font-semibold text-muted-foreground">Recente Reacties</h5>
+                        {isFetchingComments ? (
+                            <div className="flex justify-center p-2"><Loader2 className="h-4 w-4 animate-spin"/></div>
+                        ) : (
+                            <ScrollArea className="h-[150px]">
+                                <div className="space-y-3 pr-2">
+                                {comments.length > 0 ? comments.map(c => (
+                                    <div key={c.id} className="flex items-start gap-2 text-xs">
+                                        <Avatar className="h-6 w-6">
+                                            <AvatarImage src={c.user.avatar_url} />
+                                            <AvatarFallback>{c.user.login.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 space-y-1 rounded-md bg-muted p-2">
+                                            <div className="flex items-center justify-between">
+                                                <p className="font-semibold">{c.user.login}</p>
+                                                <p className="text-muted-foreground">{formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: nl })}</p>
+                                            </div>
+                                            <div className="prose prose-sm max-w-none prose-p:my-1" dangerouslySetInnerHTML={{ __html: c.body_html }} />
+                                        </div>
+                                    </div>
+                                )) : <p className="text-center text-muted-foreground text-xs py-4">Nog geen reacties.</p>}
+                                </div>
+                            </ScrollArea>
+                        )}
                     </div>
                 </div>
             </PopoverContent>

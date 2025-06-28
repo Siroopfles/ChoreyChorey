@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getIssueOrPr, searchIssuesAndPRs, addComment } from '@/lib/github-service';
+import { getIssueOrPr, searchIssuesAndPRs, addComment, getComments } from '@/lib/github-service';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Organization } from '@/lib/types';
@@ -55,6 +55,15 @@ export async function addCommentToGithubItem(owner: string, repo: string, itemNu
         const formattedBody = `*Reactie vanuit Chorey door ${userName}:*\n\n${commentBody}`;
         await addComment(owner, repo, itemNumber, formattedBody);
         return { success: true };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function getGithubComments(owner: string, repo: string, itemNumber: number) {
+    try {
+        const comments = await getComments(owner, repo, itemNumber);
+        return { comments };
     } catch (e: any) {
         return { error: e.message };
     }

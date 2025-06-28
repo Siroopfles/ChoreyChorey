@@ -64,3 +64,26 @@ export async function addComment(owner: string, repo: string, issue_number: numb
         throw new Error('Failed to add comment to GitHub item.');
     }
 }
+
+export async function getComments(owner: string, repo: string, issue_number: number) {
+    try {
+        const response = await octokit.issues.listComments({
+            owner,
+            repo,
+            issue_number,
+            per_page: 5,
+        });
+        return response.data.map(comment => ({
+            id: comment.id,
+            user: {
+                login: comment.user?.login || 'unknown',
+                avatar_url: comment.user?.avatar_url || '',
+            },
+            body_html: comment.body_html,
+            created_at: comment.created_at,
+        }));
+    } catch (error) {
+        console.error('GitHub API list comments error:', error);
+        throw new Error('Failed to get GitHub comments.');
+    }
+}
