@@ -105,6 +105,10 @@ export type OrganizationSettings = {
     maxMembers?: number;
     maxTasks?: number;
     maxProjects?: number;
+  },
+  sessionPolicy?: {
+    idleTimeoutSeconds?: number;
+    absoluteTimeoutSeconds?: number;
   }
 }
 
@@ -301,11 +305,15 @@ export type User = {
   microsoftRefreshToken?: string | null;
   togglApiToken?: string;
   clockifyApiToken?: string;
+  dashboardLayout?: Record<string, Layout[]>;
   streakData?: {
     currentStreak: number;
     lastCompletionDate: Date;
   };
-  dashboardLayout?: Record<string, Layout[]>;
+  sessionPolicy?: {
+    idleTimeoutSeconds?: number;
+    absoluteTimeoutSeconds?: number;
+  };
 };
 
 export type Session = {

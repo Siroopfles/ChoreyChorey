@@ -22,7 +22,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, microsoftProvider } from '@/lib/firebase';
-import type { User, Organization, Team, RoleName, UserStatus, Permission, Project } from '@/lib/types';
+import type { User, Organization, Team, RoleName, UserStatus, Permission, Project, Session } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
@@ -42,7 +42,7 @@ type AuthContextType = {
     signupWithEmail: (email: string, pass: string, name: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
     loginWithMicrosoft: () => Promise<void>;
-    logout: () => void;
+    logout: (message?: { title: string, description: string }) => void;
     completeMfa: () => void;
     refreshUser: () => Promise<void>;
     organizations: Organization[];
@@ -86,6 +86,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             variant: 'destructive',
         });
     }
+
+    const logout = useCallback(async (message?: { title: string, description: string }) => {
+        try {
+            if (user?.id) {
+              await updateUserStatusAction(user.id, { type: 'Offline', until: null });
+            }
+            if (currentSessionId) {
+                const sessionRef = doc(db, 'sessions', currentSessionId);
+                await updateDoc(sessionRef, { isActive: false }).catch(console.error);
+            }
+            setCurrentSessionId('');
+            setMfaRequired(false);
+            await signOut(auth);
+            if (message) {
+                toast(message);
+            }
+            router.push('/login');
+        } catch (error) {
+            handleError(error, 'uitloggen');
+        }
+    }, [user?.id, currentSessionId, setCurrentSessionId, toast, router]);
 
     const fetchUserAndOrgData = useCallback(async (firebaseUser: FirebaseUser) => {
         if (isDebugMode) console.log('[DEBUG] AuthContext: Running fetchUserAndOrgData for', firebaseUser.uid);
@@ -418,32 +439,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const logout = async () => {
-        try {
-            if (user?.id) {
-              await updateUserStatusAction(user.id, { type: 'Offline', until: null });
-            }
-            if (currentSessionId) {
-                const sessionRef = doc(db, 'sessions', currentSessionId);
-                await updateDoc(sessionRef, { isActive: false }).catch(console.error);
-            }
-            setCurrentSessionId('');
-            setMfaRequired(false);
-            await signOut(auth);
-            router.push('/login');
-        } catch (error) {
-            handleError(error, 'uitloggen');
-        }
-    };
-
     useEffect(() => {
         if (!currentSessionId || !db || !authUser) return;
 
         const sessionRef = doc(db, 'sessions', currentSessionId);
         const unsubscribe = onSnapshot(sessionRef, (docSnap) => {
             if (docSnap.exists() && docSnap.data().isActive === false) {
-                logout();
-                toast({
+                logout({
                     title: 'Sessie beëindigd',
                     description: 'U bent op afstand uitgelogd vanuit deze sessie.',
                     variant: 'destructive',
@@ -463,7 +465,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             unsubscribe();
             clearInterval(interval);
         };
-    }, [currentSessionId, authUser, logout, toast]);
+    }, [currentSessionId, authUser, logout]);
+
+    // Effect for handling session policies (timeout)
+    useEffect(() => {
+        if (!user || !currentOrganization || !currentSessionId) return;
+
+        const policy = currentOrganization.settings?.sessionPolicy;
+        if (!policy || (!policy.absoluteTimeoutSeconds && !policy.idleTimeoutSeconds)) {
+            return; // No policy to enforce
+        }
+
+        const interval = setInterval(async () => {
+            try {
+                const sessionRef = doc(db, 'sessions', currentSessionId);
+                const sessionDoc = await getDoc(sessionRef);
+                if (!sessionDoc.exists()) {
+                    logout({ title: 'Sessie verlopen', description: 'Uw sessie is niet langer geldig.', variant: 'destructive' });
+                    return;
+                }
+                const sessionData = sessionDoc.data() as Session;
+                const now = Date.now();
+
+                // Check absolute timeout
+                if (policy.absoluteTimeoutSeconds) {
+                    const createdAt = (sessionData.createdAt as Timestamp).toMillis();
+                    if (now > createdAt + policy.absoluteTimeoutSeconds * 1000) {
+                        logout({ title: 'Sessie Verlopen', description: 'Uw sessie is verlopen vanwege het organisatiebeleid.', variant: 'destructive' });
+                        return;
+                    }
+                }
+                // Check idle timeout
+                if (policy.idleTimeoutSeconds) {
+                    const lastAccessed = (sessionData.lastAccessed as Timestamp).toMillis();
+                    if (now > lastAccessed + policy.idleTimeoutSeconds * 1000) {
+                       logout({ title: 'Sessie Verlopen door Inactiviteit', description: 'U bent uitgelogd vanwege inactiviteit.', variant: 'destructive' });
+                       return;
+                    }
+                }
+
+            } catch(e) {
+                console.error("Error checking session policy:", e);
+            }
+        }, 30000); // Check every 30 seconds
+
+        return () => clearInterval(interval);
+
+    }, [user, currentOrganization, currentSessionId, logout]);
 
 
     const refreshUser = useCallback(async () => {

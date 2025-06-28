@@ -17,6 +17,7 @@ import LimitSettings from '@/components/chorey/settings/limit-settings';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import CustomFieldsSettings from '@/components/chorey/settings/custom-fields-settings';
+import SessionPolicySettings from '@/components/chorey/settings/session-policy-settings';
 
 export default function OrganizationSettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
@@ -63,6 +64,7 @@ export default function OrganizationSettingsPage() {
         <OrganizationSettings organization={currentOrganization} />
         <AnnouncementSettings organization={currentOrganization} />
         <BrandingSettings organization={currentOrganization} />
+        <SessionPolicySettings organization={currentOrganization} />
         <LimitSettings organization={currentOrganization} />
         <WebhookSettings />
         {canManageApiKeys && <ApiKeySettings />}
