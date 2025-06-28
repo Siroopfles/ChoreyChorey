@@ -5,6 +5,7 @@
 
 
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -20,6 +21,7 @@ import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@
 import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/microsoft-graph-service';
 import { createTogglTimeEntry } from '@/lib/toggl-service';
 import { createClockifyTimeEntry } from '@/lib/clockify-service';
+import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
 
 // --- Internal Helper Functions ---
 
@@ -670,6 +672,43 @@ export async function addCommentAction(taskId: string, text: string, userId: str
         
         const updatedTask = { ...taskData, id: taskId, comments: [...taskData.comments, newComment] };
         await triggerWebhooks(organizationId, 'task.updated', updatedTask);
+        
+        // After adding a comment, suggest a status update
+        try {
+            const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+            if (orgDoc.exists()) {
+                const orgData = orgDoc.data() as Organization;
+                const availableStatuses = orgData.settings?.customization?.statuses || [];
+                
+                const suggestionResult = await suggestStatusUpdate({
+                    taskId,
+                    organizationId,
+                    currentStatus: taskData.status,
+                    availableStatuses,
+                    taskTitle: taskData.title,
+                    event: {
+                        type: 'comment_added',
+                        comment: text.replace(/<[^>]*>?/gm, ''), // send plain text
+                    },
+                });
+
+                if (suggestionResult.shouldUpdate && suggestionResult.newStatus) {
+                    // For now, let's just create a notification for the creator and assignees
+                    const notificationRecipients = new Set([...taskData.assigneeIds, taskData.creatorId]);
+                    const notificationMessage = `AI stelt voor om de status van "${taskData.title}" te wijzigen naar "${suggestionResult.newStatus}" op basis van een recente opmerking. Reden: ${suggestionResult.reasoning}`;
+                    
+                    notificationRecipients.forEach(recipientId => {
+                        if (recipientId) {
+                            createNotification(recipientId, notificationMessage, taskId, organizationId, 'system');
+                        }
+                    });
+                }
+            }
+        } catch (aiError: any) {
+            console.warn("AI status suggestion failed after comment:", aiError.message);
+            // Do not block the main action if AI fails
+        }
+
         return { success: true };
     } catch (e: any) {
         return { error: e.message };

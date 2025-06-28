@@ -22,7 +22,8 @@ import { generateNotificationDigest } from '@/ai/flows/notification-digest-flow'
 import { levelWorkload } from '@/ai/flows/level-workload-flow';
 import { suggestHeadcount } from '@/ai/flows/suggest-headcount-flow';
 import { suggestProactiveHelp } from '@/ai/flows/suggest-proactive-help-flow';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput, LevelWorkloadInput, SuggestHeadcountInput, SuggestHeadcountOutput, SuggestProactiveHelpInput, SuggestProactiveHelpOutput } from '@/ai/schemas';
+import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput, LevelWorkloadInput, SuggestHeadcountInput, SuggestHeadcountOutput, SuggestProactiveHelpInput, SuggestProactiveHelpOutput, SuggestStatusUpdateInput, SuggestStatusUpdateOutput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -277,6 +278,15 @@ export async function handleSuggestHeadcount(organizationId: string, projectDesc
 export async function handleSuggestProactiveHelp(input: SuggestProactiveHelpInput): Promise<{ suggestion: SuggestProactiveHelpOutput | null, error?: string }> {
     try {
         const suggestion = await suggestProactiveHelp(input);
+        return { suggestion };
+    } catch (e: any) {
+        return { error: e.message, suggestion: null };
+    }
+}
+
+export async function handleSuggestStatusUpdate(input: SuggestStatusUpdateInput): Promise<{ suggestion: SuggestStatusUpdateOutput | null, error?: string }> {
+    try {
+        const suggestion = await suggestStatusUpdate(input);
         return { suggestion };
     } catch (e: any) {
         return { error: e.message, suggestion: null };

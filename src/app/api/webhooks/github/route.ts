@@ -6,7 +6,8 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, writeBatch } from 'firebase/firestore';
 import crypto from 'crypto';
 import type { Organization, Task, GitHubLink } from '@/lib/types';
-import { getGithubItemDetailsFromUrl } from '@/lib/github-service';
+import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
+import { createNotification } from '@/app/actions/notification.actions';
 
 async function verifySignature(request: NextRequest): Promise<{ isValid: boolean; body?: any }> {
   try {
@@ -99,13 +100,44 @@ export async function POST(request: NextRequest) {
                     where('githubLinkUrls', 'array-contains', pr.html_url)
                 );
                 const snapshot = await getDocs(q);
-                if (!snapshot.empty) {
-                    const batch = writeBatch(db);
-                    snapshot.forEach(taskDoc => {
-                        console.log(`Webhook: Found task ${taskDoc.id} for merged PR ${pr.html_url}. Updating status to 'Voltooid'.`);
-                        batch.update(taskDoc.ref, { status: 'Voltooid' });
-                    });
-                    await batch.commit();
+
+                const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+                if (!orgDoc.exists()) {
+                    console.warn(`Webhook: Organization ${organizationId} not found.`);
+                    return NextResponse.json({ success: true, message: 'Webhook processed, but org not found.' });
+                }
+                const orgData = orgDoc.data() as Organization;
+                const availableStatuses = orgData.settings?.customization?.statuses || [];
+
+                for (const taskDoc of snapshot.docs) {
+                    const task = taskDoc.data() as Task;
+                    try {
+                        const suggestion = await suggestStatusUpdate({
+                            taskId: task.id,
+                            organizationId,
+                            currentStatus: task.status,
+                            availableStatuses,
+                            taskTitle: task.title,
+                            event: {
+                                type: 'pr_merged',
+                                prTitle: pr.title,
+                            },
+                        });
+
+                        if (suggestion.shouldUpdate && suggestion.newStatus) {
+                            await updateDoc(doc(db, 'tasks', task.id), { status: suggestion.newStatus });
+
+                            const recipients = new Set([...task.assigneeIds, task.creatorId]);
+                            const notificationMessage = `De status van "${task.title}" is automatisch bijgewerkt naar "${suggestion.newStatus}" na het mergen van een pull request.`;
+                            recipients.forEach(recipientId => {
+                                if (recipientId) {
+                                    createNotification(recipientId, notificationMessage, task.id, organizationId, 'system');
+                                }
+                            });
+                        }
+                    } catch(e) {
+                         console.error(`Webhook: Failed to process AI suggestion for task ${task.id}`, e);
+                    }
                 }
             } 
             // Logic for when a PR is opened
@@ -136,8 +168,45 @@ export async function POST(request: NextRequest) {
                             state: 'closed',
                             type: 'commit'
                         };
+                        
+                        const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+                        if (!orgDoc.exists()) continue; 
+                        const orgData = orgDoc.data() as Organization;
+                        const availableStatuses = orgData.settings?.customization?.statuses || [];
+
                         for (const taskId of taskIds) {
                             await linkItemToTask(taskId, newLink, organizationId);
+                            
+                            const taskDoc = await getDoc(doc(db, 'tasks', taskId));
+                            if (taskDoc.exists() && taskDoc.data().organizationId === organizationId) {
+                                const task = taskDoc.data() as Task;
+                                try {
+                                    const suggestion = await suggestStatusUpdate({
+                                        taskId,
+                                        organizationId,
+                                        currentStatus: task.status,
+                                        availableStatuses,
+                                        taskTitle: task.title,
+                                        event: {
+                                            type: 'commit_pushed',
+                                            commitMessage: commit.message,
+                                        }
+                                    });
+
+                                    if (suggestion.shouldUpdate && suggestion.newStatus) {
+                                        const recipients = new Set([...task.assigneeIds, task.creatorId]);
+                                        const notificationMessage = `AI stelt voor om de status van "${task.title}" te wijzigen naar "${suggestion.newStatus}" n.a.v. een nieuwe commit.`;
+                                        recipients.forEach(recipientId => {
+                                            if (recipientId) {
+                                                createNotification(recipientId, notificationMessage, taskId, organizationId, 'system');
+                                            }
+                                        });
+                                    }
+
+                                } catch(e) {
+                                    console.error(`Webhook: Failed to process AI suggestion for commit on task ${taskId}`, e);
+                                }
+                            }
                         }
                     }
                 }

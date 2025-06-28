@@ -260,6 +260,40 @@ export const SuggestProactiveHelpOutputSchema = z.object({
 });
 export type SuggestProactiveHelpOutput = z.infer<typeof SuggestProactiveHelpOutputSchema>;
 
+// From suggest-status-update-flow.ts
+const StatusUpdateEventSchema = z.union([
+  z.object({
+    type: z.literal('comment_added'),
+    comment: z.string().describe('The content of the comment that was added.'),
+  }),
+  z.object({
+    type: z.literal('pr_merged'),
+    prTitle: z.string().describe('The title of the pull request that was merged.'),
+  }),
+  z.object({
+    type: z.literal('commit_pushed'),
+    commitMessage: z.string().describe('The commit message.'),
+  }),
+]);
+
+export const SuggestStatusUpdateInputSchema = z.object({
+  taskId: z.string(),
+  organizationId: z.string(),
+  currentStatus: z.string(),
+  availableStatuses: z.array(z.string()),
+  taskTitle: z.string(),
+  event: StatusUpdateEventSchema,
+});
+export type SuggestStatusUpdateInput = z.infer<typeof SuggestStatusUpdateInputSchema>;
+
+export const SuggestStatusUpdateOutputSchema = z.object({
+  shouldUpdate: z.boolean().describe('Whether a status update is suggested.'),
+  newStatus: z.string().optional().describe('The suggested new status for the task.'),
+  reasoning: z.string().describe('The reasoning behind the suggestion.'),
+});
+export type SuggestStatusUpdateOutput = z.infer<typeof SuggestStatusUpdateOutputSchema>;
+
+
 // From feedback.actions.ts
 export const AiFeedbackInputSchema = z.object({
   flowName: z.string().describe('The name of the AI flow that generated the suggestion.'),
