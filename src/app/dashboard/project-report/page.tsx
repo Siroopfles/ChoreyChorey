@@ -1,23 +1,28 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ClipboardList, Bot } from 'lucide-react';
+import { Loader2, ClipboardList, Bot, FileDown } from 'lucide-react';
 import { handleGenerateProjectReport } from '@/app/actions/ai.actions';
 import type { GenerateProjectReportOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Project } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function ProjectReportPage() {
     const { projects, currentOrganization, loading } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [result, setResult] = useState<GenerateProjectReportOutput | null>(null);
     const [error, setError] = useState('');
+    const reportRef = useRef<HTMLDivElement>(null);
 
     const handleAnalysis = async () => {
         if (!currentOrganization || !selectedProject) return;
@@ -34,6 +39,52 @@ export default function ProjectReportPage() {
             setResult(response.result);
         }
         setIsLoading(false);
+    };
+
+    const handleExport = async () => {
+        if (!reportRef.current || !selectedProject) return;
+        setIsExporting(true);
+        
+        try {
+            const canvas = await html2canvas(reportRef.current, {
+                scale: 2, // Improve quality
+                backgroundColor: null, // Use transparent background
+                useCORS: true,
+            });
+            const imgData = canvas.toDataURL('image/png');
+            
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: 'a4',
+            });
+            
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = imgWidth / imgHeight;
+            
+            let newWidth = pdfWidth - 20; // with some margin
+            let newHeight = newWidth / ratio;
+            
+            if (newHeight > pdfHeight - 20) {
+              newHeight = pdfHeight - 20;
+              newWidth = newHeight * ratio;
+            }
+
+            const x = (pdfWidth - newWidth) / 2;
+            const y = 10;
+
+            pdf.addImage(imgData, 'PNG', x, y, newWidth, newHeight);
+            pdf.save(`Rapport-${selectedProject.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`);
+
+        } catch (e: any) {
+            console.error(e);
+            setError('Fout bij het exporteren van de PDF.');
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     if (loading) {
@@ -100,10 +151,14 @@ export default function ProjectReportPage() {
 
             {result?.report && (
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Rapport voor: {selectedProject?.name}</CardTitle>
+                         <Button onClick={handleExport} disabled={isExporting} variant="outline">
+                            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                            Exporteer als PDF
+                        </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent ref={reportRef} className="bg-card text-card-foreground p-6">
                         <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: result.report.replace(/\n/g, '<br />') }} />
                     </CardContent>
                 </Card>
