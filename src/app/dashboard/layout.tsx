@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap, MessageSquare } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -71,6 +71,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
     const mainNavItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        ...(!isGuest ? [{ href: '/dashboard/chat', icon: MessageSquare, label: 'Chat' }] : []),
         ...(!isGuest ? [{ href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' }] : []),
         ...(!isGuest ? [{ href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' }] : []),
     ];
