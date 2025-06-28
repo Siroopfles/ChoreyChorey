@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -15,7 +16,7 @@ function hashKey(key: string): string {
  * @param apiKey The plain text API key from the request header.
  * @returns An object with organizationId and permissions, or null if authentication fails.
  */
-export async function authenticateApiKey(apiKey: string): Promise<{ organizationId: string; permissions: ApiPermission[] } | null> {
+export async function authenticateApiKey(apiKey: string): Promise<{ organizationId: string; permissions: ApiPermission[], creatorId: string } | null> {
     if (!apiKey || !apiKey.startsWith('chorey_sk_')) {
         return null;
     }
@@ -42,6 +43,7 @@ export async function authenticateApiKey(apiKey: string): Promise<{ organization
         return {
             organizationId: keyData.organizationId,
             permissions: keyData.permissions || [],
+            creatorId: keyData.creatorId,
         };
 
     } catch (error) {

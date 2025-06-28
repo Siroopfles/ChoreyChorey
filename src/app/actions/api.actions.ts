@@ -39,6 +39,7 @@ export async function generateApiKey(organizationId: string, userId: string, nam
         const newApiKeyData: Omit<ApiKey, 'id'> = {
             name,
             organizationId,
+            creatorId: userId,
             hashedKey,
             keyPrefix,
             createdAt: new Date(),
@@ -66,6 +67,7 @@ export async function getApiKeys(organizationId: string, userId: string): Promis
             return {
                 id: doc.id,
                 name: data.name,
+                creatorId: data.creatorId,
                 keyPrefix: data.keyPrefix,
                 createdAt: (data.createdAt as Timestamp).toDate(),
                 lastUsed: (data.lastUsed as Timestamp)?.toDate(),

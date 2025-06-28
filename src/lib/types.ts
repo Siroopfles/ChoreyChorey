@@ -618,6 +618,7 @@ export type ApiPermission = keyof typeof API_PERMISSIONS;
 export type ApiKey = {
   id: string;
   organizationId: string;
+  creatorId: string;
   name: string;
   hashedKey: string;
   keyPrefix: string;
