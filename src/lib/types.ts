@@ -446,6 +446,7 @@ export type Task = {
   googleEventId?: string | null;
   microsoftEventId?: string | null;
   githubLinks?: GitHubLink[];
+  githubLinkUrls?: string[];
   gitlabLinks?: GitLabLink[];
   bitbucketLinks?: BitbucketLink[];
   jiraLinks?: JiraLink[];
@@ -531,6 +532,7 @@ export const taskFormSchema = z.object({
   consultedUserIds: z.array(z.string()).optional(),
   informedUserIds: z.array(z.string()).optional(),
   githubLinks: z.array(githubLinkSchema).optional(),
+  githubLinkUrls: z.array(z.string()).optional(),
   gitlabLinks: z.array(gitlabLinkSchema).optional(),
   bitbucketLinks: z.array(bitbucketLinkSchema).optional(),
   jiraLinks: z.array(jiraLinkSchema).optional(),

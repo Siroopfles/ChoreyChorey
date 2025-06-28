@@ -1,6 +1,7 @@
 
 
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -107,7 +108,7 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
             }
         });
 
-        const allUserEmails = Array.from(allEmailsFromCsv);
+        const allUserEmails = Array.from(allUserEmails);
         
         const usersByEmail: Record<string, User> = {};
         if (allUserEmails.length > 0) {
@@ -223,6 +224,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           informedUserIds: taskData.informedUserIds || [],
           teamId: taskData.teamId || null,
           githubLinks: taskData.githubLinks || [],
+          githubLinkUrls: (taskData.githubLinks || []).map(link => link.url),
           jiraLinks: taskData.jiraLinks || [],
           jiraLinkKeys: (taskData.jiraLinks || []).map(link => link.key),
           togglWorkspaceId: taskData.togglWorkspaceId ?? null,
@@ -318,7 +320,9 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
         
-        // When jiraLinks are updated, also update jiraLinkKeys
+        if (updates.githubLinks) {
+            finalUpdates.githubLinkUrls = updates.githubLinks.map(link => link.url);
+        }
         if (updates.jiraLinks) {
             finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);
         }
