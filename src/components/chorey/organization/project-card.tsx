@@ -5,7 +5,7 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2, Briefcase } from 'lucide-react';
+import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2, Briefcase, UserPlus } from 'lucide-react';
 import type { Team, User, Project, Task } from '@/lib/types';
 import { ProjectDialog } from './project-dialog';
 import { Button } from '@/components/ui/button';
@@ -26,14 +26,17 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { InviteGuestDialog } from './invite-guest-dialog';
 
 
 export function ProjectCard({ project, allTeams, allTasks }: { project: Project, usersInOrg: User[], allTeams: Team[], allTasks: Task[] }) {
     const { toast } = useToast();
     const { user, currentUserPermissions } = useAuth();
     const [isCompleting, setIsCompleting] = useState(false);
+    const [isGuestInviteOpen, setIsGuestInviteOpen] = useState(false);
     
     const canManageProjects = currentUserPermissions.includes(PERMISSIONS.MANAGE_PROJECTS);
+    const canInviteGuests = currentUserPermissions.includes(PERMISSIONS.MANAGE_MEMBERS);
 
     const assignedTeams = useMemo(() => {
         return (project.teamIds || []).map(id => allTeams.find(t => t.id === id)).filter(Boolean) as Team[];
@@ -76,6 +79,7 @@ export function ProjectCard({ project, allTeams, allTasks }: { project: Project,
 
 
     return (
+        <>
         <Card>
             <CardHeader>
                 <div className="flex justify-between items-start">
@@ -100,6 +104,16 @@ export function ProjectCard({ project, allTeams, allTasks }: { project: Project,
                         )}
                     </CardTitle>
                     <div className="flex items-center gap-2">
+                         {canInviteGuests && (
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsGuestInviteOpen(true)}><UserPlus className="h-4 w-4 text-muted-foreground"/></Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Nodig Gast uit</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                         )}
                          {canManageProjects && (
                             <AlertDialog>
                                 <TooltipProvider>
@@ -163,5 +177,7 @@ export function ProjectCard({ project, allTeams, allTasks }: { project: Project,
                 </div>
             </CardContent>
         </Card>
+        <InviteGuestDialog open={isGuestInviteOpen} onOpenChange={setIsGuestInviteOpen} projectId={project.id} projectName={project.name} />
+        </>
     );
 }

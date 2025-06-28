@@ -94,7 +94,7 @@ type TaskContextType = {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { user, currentOrganization, currentUserPermissions, projects, teams: allTeams, refreshUser } = useAuth();
+  const { user, currentOrganization, currentUserRole, currentUserPermissions, projects, teams: allTeams, refreshUser } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -131,10 +131,22 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
     setLoading(true);
 
-    const commonQuery = (collectionName: string) => query(collection(db, collectionName), where("organizationId", "==", currentOrganization.id));
-    const userSpecificQuery = (collectionName: string) => query(commonQuery(collectionName), where("userId", "==", user.id));
+    const isGuest = currentUserRole === 'Guest';
+    let tasksQuery;
 
-    const unsubTasks = onSnapshot(commonQuery('tasks'), (snapshot) => {
+    if (isGuest) {
+      const guestAccess = currentOrganization.settings?.guestAccess?.[user.id];
+      const projectIds = guestAccess?.projectIds || [];
+      if (projectIds.length > 0) {
+        tasksQuery = query(collection(db, 'tasks'), where("projectId", "in", projectIds));
+      } else {
+        tasksQuery = query(collection(db, 'tasks'), where('id', '==', 'guest-has-no-access'));
+      }
+    } else {
+      tasksQuery = query(collection(db, 'tasks'), where("organizationId", "==", currentOrganization.id));
+    }
+
+    const unsubTasks = onSnapshot(tasksQuery, (snapshot) => {
       let tasksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: (doc.data().createdAt as Timestamp)?.toDate(), dueDate: (doc.data().dueDate as Timestamp)?.toDate(), completedAt: (doc.data().completedAt as Timestamp)?.toDate(), activeTimerStartedAt: (doc.data().activeTimerStartedAt as Timestamp)?.toDate(), history: (doc.data().history || []).map((h: any) => ({ ...h, timestamp: (h.timestamp as Timestamp)?.toDate() })), comments: (doc.data().comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate(), readBy: c.readBy || [] })) } as Task));
       
       const canViewSensitive = currentUserPermissions.includes(PERMISSIONS.VIEW_SENSITIVE_DATA);
@@ -152,6 +164,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }, (e) => handleError(e, 'laden van taken'));
 
+    const commonQuery = (collectionName: string) => query(collection(db, collectionName), where("organizationId", "==", currentOrganization.id));
+    const userSpecificQuery = (collectionName: string) => query(commonQuery(collectionName), where("userId", "==", user.id));
+
     const unsubTemplates = onSnapshot(commonQuery('taskTemplates'), (s) => setTemplates(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as TaskTemplate))), (e) => handleError(e, 'laden van templates'));
     const unsubGoals = onSnapshot(userSpecificQuery('personalGoals'), (s) => setPersonalGoals(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), targetDate: (d.data().targetDate as Timestamp)?.toDate(), milestones: d.data().milestones || [] } as PersonalGoal)).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van doelen'));
     const unsubIdeas = onSnapshot(commonQuery('ideas'), (s) => setIdeas(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as Idea))), (e) => handleError(e, 'laden van ideeën'));
@@ -159,7 +174,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const unsubNotifications = onSnapshot(query(collection(db, "notifications"), where("userId", "==", user.id), where("organizationId", "==", currentOrganization.id)), (s) => setNotifications(s.docs.map(d => ({ id: d.id, ...d.data(), createdAt: (d.data().createdAt as Timestamp).toDate(), snoozedUntil: (d.data().snoozedUntil as Timestamp)?.toDate() } as Notification)).filter(n => !n.archived).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van notificaties'));
 
     return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubGoals(); unsubIdeas(); unsubChallenges(); };
-  }, [user, currentOrganization, currentUserPermissions, projects]);
+  }, [user, currentOrganization, currentUserRole, currentUserPermissions, projects]);
 
   const markAllNotificationsAsRead = async () => {
     if (!user) return;

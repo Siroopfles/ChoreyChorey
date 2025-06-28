@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -29,6 +30,29 @@ export async function createOrganizationInvite(organizationId: string, inviterId
         return { error: error.message };
     }
 }
+
+export async function createProjectGuestInvite(organizationId: string, projectId: string, inviterId: string, organizationName: string) {
+    if (!await hasPermission(inviterId, organizationId, PERMISSIONS.MANAGE_MEMBERS)) {
+        return { error: "Je hebt geen permissie om gasten uit te nodigen." };
+    }
+     try {
+        const newInviteRef = doc(collection(db, 'invites'));
+        const newInvite: Omit<Invite, 'id'> = {
+            organizationId,
+            organizationName,
+            inviterId,
+            projectId, // Add projectId to the invite
+            status: 'pending',
+            createdAt: new Date(),
+        };
+        await setDoc(newInviteRef, newInvite);
+        return { success: true, inviteId: newInviteRef.id };
+    } catch (error: any) {
+        console.error("Error creating guest invite:", error);
+        return { error: error.message };
+    }
+}
+
 
 export async function updateUserRoleInOrganization(organizationId: string, targetUserId: string, newRole: RoleName, currentUserId: string) {
     if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ROLES)) {

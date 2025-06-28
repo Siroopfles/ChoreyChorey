@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -64,12 +65,24 @@ export default function InvitePage() {
                     throw new Error("Uitnodiging is ongeldig of al gebruikt.");
                 }
 
-                const memberPath = `members.${user.id}`;
-                
-                transaction.update(organizationRef, {
-                    [memberPath]: { role: 'Member' }
-                });
+                if (invite.projectId) {
+                    // This is a guest invite for a specific project
+                    const guestMemberPath = `members.${user.id}`;
+                    const guestAccessPath = `settings.guestAccess.${user.id}.projectIds`;
+                    
+                    transaction.update(organizationRef, {
+                        [guestMemberPath]: { role: 'Guest' },
+                        [guestAccessPath]: arrayUnion(invite.projectId)
+                    });
 
+                } else {
+                    // This is a regular member invite
+                    const memberPath = `members.${user.id}`;
+                    transaction.update(organizationRef, {
+                        [memberPath]: { role: 'Member' }
+                    });
+                }
+                
                 transaction.update(userRef, {
                     organizationIds: arrayUnion(invite.organizationId),
                     currentOrganizationId: invite.organizationId,
@@ -144,7 +157,7 @@ export default function InvitePage() {
                 <CardHeader>
                     <CardTitle>Je bent uitgenodigd!</CardTitle>
                     <CardDescription>
-                       Je bent uitgenodigd om lid te worden van de organisatie **{invite?.organizationName}**.
+                       Je bent uitgenodigd om {invite?.projectId ? 'als gast deel te nemen aan een project' : 'lid te worden'} van de organisatie **{invite?.organizationName}**.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

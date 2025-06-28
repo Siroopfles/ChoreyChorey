@@ -109,6 +109,11 @@ export type OrganizationSettings = {
   sessionPolicy?: {
     idleTimeoutSeconds?: number;
     absoluteTimeoutSeconds?: number;
+  },
+  guestAccess?: {
+    [userId: string]: {
+        projectIds: string[];
+    }
   }
 }
 
@@ -200,6 +205,10 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.EDIT_TASK, // Note: Rules should enforce editing only assigned/created tasks
       PERMISSIONS.VIEW_ALL_TASKS,
     ],
+  },
+  Guest: {
+    name: 'Gast',
+    permissions: [], // Permissions for guests are handled by data scoping, not a permission flag.
   },
 };
 export type RoleName = string;
@@ -649,6 +658,7 @@ export type Invite = {
     inviterId: string;
     status: 'pending' | 'accepted';
     createdAt: Date;
+    projectId?: string;
 };
 
 export const WEBHOOK_EVENTS = {

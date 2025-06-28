@@ -62,6 +62,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const searchParams = useSearchParams();
     const announcement = currentOrganization?.settings?.announcement;
     
+    const isGuest = currentUserRole === 'Guest';
     const features = currentOrganization?.settings?.features;
     const showGamification = features?.gamification !== false;
     const showGoals = features?.goals !== false;
@@ -70,11 +71,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
     const mainNavItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' },
-        { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
+        ...(!isGuest ? [{ href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' }] : []),
+        ...(!isGuest ? [{ href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' }] : []),
     ];
     
-    const planningNavItems = [
+    const planningNavItems = isGuest ? [] : [
         ...(showGoals ? [{ href: '/dashboard/goals', icon: Trophy, label: 'Doelen' }] : []),
         ...(showIdeas ? [{ href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' }] : []),
         { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
@@ -82,7 +83,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/templates', icon: SquareStack, label: 'Templates' },
     ];
     
-    const communityNavItems = [
+    const communityNavItems = isGuest ? [] : [
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
         ...(showGamification ? [
@@ -92,12 +93,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
         ] : []),
     ];
 
-    const aiToolsNavItems = [
+    const aiToolsNavItems = isGuest ? [] : [
         { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
         { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
     ];
     
-    const adminNavItems = [
+    const adminNavItems = isGuest ? [] : [
         { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS) ? [{ href: '/dashboard/settings/integrations', icon: Plug, label: 'Integraties' }] : []),
         ...(currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) ? [{ href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }] : []),
@@ -146,7 +147,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                             </SidebarMenuItem>
                         ))}
 
-                        <SidebarSeparator className="my-2" />
+                        {planningNavItems.length > 0 && <SidebarSeparator className="my-2" />}
                         {planningNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
@@ -158,7 +159,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                             </SidebarMenuItem>
                         ))}
                         
-                        <SidebarSeparator className="my-2" />
+                        {communityNavItems.length > 0 && <SidebarSeparator className="my-2" />}
                         {communityNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
@@ -170,7 +171,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                             </SidebarMenuItem>
                         ))}
 
-                        <SidebarSeparator className="my-2" />
+                        {aiToolsNavItems.length > 0 && <SidebarSeparator className="my-2" />}
                         {aiToolsNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
@@ -182,7 +183,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                             </SidebarMenuItem>
                         ))}
 
-                         {(currentUserRole === 'Owner' || currentUserRole === 'Admin') && (
+                         {adminNavItems.length > 0 && (
                             <>
                                 <SidebarSeparator className="my-2" />
                                 {adminNavItems.map((item) => (
