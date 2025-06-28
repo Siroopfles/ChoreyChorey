@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import type { Task, Priority } from '@/lib/types';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, ClipboardCopy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const COLORS: Record<string, string> = {
     'Urgent': 'hsl(var(--chart-1))',
@@ -16,6 +18,8 @@ const COLORS: Record<string, string> = {
 };
 
 export function TasksByPriorityWidget({ tasks }: { tasks: Task[] }) {
+    const { toast } = useToast();
+
     const data = useMemo(() => {
         const priorityCounts = tasks.reduce((acc, task) => {
             acc[task.priority] = (acc[task.priority] || 0) + 1;
@@ -27,6 +31,15 @@ export function TasksByPriorityWidget({ tasks }: { tasks: Task[] }) {
             .filter(item => item.value > 0);
     }, [tasks]);
 
+    const handleCopyData = () => {
+        try {
+            navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+            toast({ title: "Data Gekopieerd", description: "De widgetdata is naar je klembord gekopieerd." });
+        } catch (err) {
+            toast({ title: "Fout", description: "Kon de data niet kopiëren.", variant: 'destructive' });
+        }
+    }
+
     return (
         <Card className="h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -34,8 +47,13 @@ export function TasksByPriorityWidget({ tasks }: { tasks: Task[] }) {
                     <CardTitle>Prioriteit Distributie</CardTitle>
                     <CardDescription>Hoe taken zijn verdeeld op basis van prioriteit.</CardDescription>
                 </div>
-                <div className="react-grid-drag-handle cursor-grab active:cursor-grabbing">
-                    <GripVertical />
+                <div className="flex items-center">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopyData} aria-label="Kopieer data">
+                        <ClipboardCopy className="h-4 w-4" />
+                    </Button>
+                    <div className="react-grid-drag-handle cursor-grab active:cursor-grabbing p-1">
+                        <GripVertical />
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="flex-grow">
