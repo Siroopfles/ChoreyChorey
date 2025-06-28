@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc, deleteField } from 'firebase/firestore';
 import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
+import { checkAndGrantTeamAchievements } from './gamification.actions';
 
 
 export async function createOrganizationInvite(organizationId: string, inviterId: string, organizationName: string) {
@@ -347,6 +348,11 @@ export async function completeProject(projectId: string, organizationId: string,
         });
         
         await batch.commit();
+
+        // After granting individual project completion badges, check for team-level achievements.
+        for (const teamId of teamIds) {
+            checkAndGrantTeamAchievements(teamId, organizationId).catch(console.error);
+        }
 
         return { success: true, message: `${uniqueMemberIds.length} lid / leden hebben een prestatie ontvangen.` };
 
