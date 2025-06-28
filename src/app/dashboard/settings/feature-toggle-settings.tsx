@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe, Clock } from 'lucide-react';
+import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe, Clock, Gitlab } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
@@ -39,6 +39,7 @@ const featureSchema = z.object({
   toggl: z.boolean().default(false),
   clockify: z.boolean().default(false),
   jira: z.boolean().default(false),
+  gitlab: z.boolean().default(false),
 });
 type FeatureFormValues = z.infer<typeof featureSchema>;
 
@@ -79,6 +80,7 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       toggl: organization.settings?.features?.toggl ?? false,
       clockify: organization.settings?.features?.clockify ?? false,
       jira: organization.settings?.features?.jira ?? false,
+      gitlab: organization.settings?.features?.gitlab ?? false,
     },
   });
 
@@ -117,6 +119,7 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       { name: 'toggl', icon: Clock, label: 'Toggl Integratie', description: 'Sta gebruikers toe om hun Toggl-account te koppelen voor tijdregistratie.' },
       { name: 'clockify', icon: ClockifyIcon, label: 'Clockify Integratie', description: 'Sta gebruikers toe om hun Clockify-account te koppelen voor tijdregistratie.' },
       { name: 'jira', icon: JiraIcon, label: 'Jira Integratie', description: 'Sta toe dat taken gekoppeld worden aan Jira issues.' },
+      { name: 'gitlab', icon: Gitlab, label: 'GitLab Integratie', description: 'Sta toe dat taken gekoppeld worden aan GitLab issues en MRs.' },
   ];
 
   return (

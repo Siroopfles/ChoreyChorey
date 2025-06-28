@@ -36,6 +36,7 @@ import { TogglProjectSelector } from './toggl-project-selector';
 import { ClockifyProjectSelector } from './clockify-project-selector';
 import { FigmaEmbed } from './figma-embed';
 import { GoogleDocEmbed } from './google-doc-embed';
+import { GitLabLinker } from './gitlab-linker';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -902,6 +903,7 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
       )}
 
       <GitHubLinker />
+      <GitLabLinker />
       <JiraLinearLinker />
 
       <Separator />

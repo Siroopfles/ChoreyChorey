@@ -60,6 +60,7 @@ import {
   Bell,
   BellOff,
   Github,
+  Gitlab,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -719,6 +720,12 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                         <div className="flex items-center gap-1">
                             <Github className="h-3 w-3" />
                             <span>{task.githubLinks.length}</span>
+                        </div>
+                    )}
+                     {task.gitlabLinks && task.gitlabLinks.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            <Gitlab className="h-3 w-3" />
+                            <span>{task.gitlabLinks.length}</span>
                         </div>
                     )}
                      {task.jiraLinks && task.jiraLinks.length > 0 && (

@@ -9,6 +9,14 @@ export type GitHubLink = {
   type: 'issue' | 'pull-request';
 };
 
+export type GitLabLink = {
+  url: string;
+  iid: number; // Internal ID for issues/MRs in GitLab
+  title: string;
+  state: 'opened' | 'closed' | 'locked' | 'merged';
+  type: 'issue' | 'merge_request';
+};
+
 export type JiraLink = {
   url: string;
   key: string;
@@ -36,6 +44,7 @@ export type OrganizationSettings = {
     toggl?: boolean;
     clockify?: boolean;
     jira?: boolean;
+    gitlab?: boolean;
   },
   branding?: {
     primaryColor?: string;
@@ -54,6 +63,9 @@ export type OrganizationSettings = {
   github?: {
     owner: string;
     repos: string[];
+  };
+  gitlab?: {
+    projects: string[];
   };
   teams?: {
     enabled: boolean;
@@ -403,6 +415,7 @@ export type Task = {
   googleEventId?: string | null;
   microsoftEventId?: string | null;
   githubLinks?: GitHubLink[];
+  gitlabLinks?: GitLabLink[];
   jiraLinks?: JiraLink[];
   jiraLinkKeys?: string[];
   togglWorkspaceId?: number;
@@ -429,6 +442,14 @@ export const githubLinkSchema = z.object({
   title: z.string(),
   state: z.enum(['open', 'closed', 'merged']),
   type: z.enum(['issue', 'pull-request']),
+});
+
+export const gitlabLinkSchema = z.object({
+  url: z.string().url(),
+  iid: z.number(),
+  title: z.string(),
+  state: z.enum(['opened', 'closed', 'locked', 'merged']),
+  type: z.enum(['issue', 'merge_request']),
 });
 
 export const jiraLinkSchema = z.object({
@@ -470,6 +491,7 @@ export const taskFormSchema = z.object({
   consultedUserIds: z.array(z.string()).optional(),
   informedUserIds: z.array(z.string()).optional(),
   githubLinks: z.array(githubLinkSchema).optional(),
+  gitlabLinks: z.array(gitlabLinkSchema).optional(),
   jiraLinks: z.array(jiraLinkSchema).optional(),
   jiraLinkKeys: z.array(z.string()).optional(),
   togglWorkspaceId: z.coerce.number().optional(),
