@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -218,6 +219,9 @@ export async function createTaskAction(organizationId: string, creatorId: string
           consultedUserIds: taskData.consultedUserIds || [],
           informedUserIds: taskData.informedUserIds || [],
           teamId: taskData.teamId || null,
+          githubLinks: taskData.githubLinks || [],
+          jiraLinks: taskData.jiraLinks || [],
+          jiraLinkKeys: (taskData.jiraLinks || []).map(link => link.key),
           togglWorkspaceId: taskData.togglWorkspaceId,
           togglProjectId: taskData.togglProjectId,
           clockifyWorkspaceId: taskData.clockifyWorkspaceId,
@@ -308,6 +312,11 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
 
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory: HistoryEntry[] = [];
+        
+        // When jiraLinks are updated, also update jiraLinkKeys
+        if (updates.jiraLinks) {
+            finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);
+        }
 
         const fieldsToTrack: (keyof Task)[] = ['status', 'priority', 'dueDate', 'title', 'projectId', 'reviewerId'];
         fieldsToTrack.forEach(field => {
@@ -770,4 +779,5 @@ export async function setChoreOfTheWeekAction(taskId: string, organizationId: st
         return { error: e.message };
     }
 }
+
 

@@ -76,10 +76,19 @@ export function JiraLinearLinker() {
             toast({ title: 'Al gekoppeld', description: `Jira issue ${item.key} is al gekoppeld.`, variant: 'default' });
         } else {
             appendJira(item);
+            const currentKeys = getValues('jiraLinkKeys') || [];
+            setValue('jiraLinkKeys', [...currentKeys, item.key]);
             toast({ title: 'Item gekoppeld!', description: `Jira issue ${item.key} is gekoppeld.` });
         }
     };
     
+    const handleRemoveJira = (index: number) => {
+      const linkToRemove = getValues(`jiraLinks.${index}`);
+      const currentKeys = getValues('jiraLinkKeys') || [];
+      setValue('jiraLinkKeys', currentKeys.filter((k: string) => k !== linkToRemove.key));
+      removeJira(index);
+    }
+
     const handleSelectSearchResult = (item: JiraLink) => {
         appendJiraLink(item);
         setSearchOpen(false);
@@ -106,7 +115,7 @@ export function JiraLinearLinker() {
                                         <span className="text-muted-foreground">{item.key}</span> <span className="truncate">{item.summary}</span>
                                     </Link>
                                 </div>
-                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeJira(index)}>
+                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveJira(index)}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                             </div>

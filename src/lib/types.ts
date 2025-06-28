@@ -404,6 +404,7 @@ export type Task = {
   microsoftEventId?: string | null;
   githubLinks?: GitHubLink[];
   jiraLinks?: JiraLink[];
+  jiraLinkKeys?: string[];
   togglWorkspaceId?: number;
   togglProjectId?: number;
   clockifyWorkspaceId?: string;
@@ -470,6 +471,7 @@ export const taskFormSchema = z.object({
   informedUserIds: z.array(z.string()).optional(),
   githubLinks: z.array(githubLinkSchema).optional(),
   jiraLinks: z.array(jiraLinkSchema).optional(),
+  jiraLinkKeys: z.array(z.string()).optional(),
   togglWorkspaceId: z.coerce.number().optional(),
   togglProjectId: z.coerce.number().optional(),
   clockifyWorkspaceId: z.string().optional(),

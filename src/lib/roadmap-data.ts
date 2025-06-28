@@ -82,7 +82,7 @@ export const roadmapPhases: Phase[] = [
       { id: 3011, title: "Discord Integratie", description: "Verbind met Discord voor notificaties en gebruik het nieuwe `/api/v1/command` endpoint om slash-commando's en bots te bouwen.", completed: true },
       { id: 3012, title: "Toggl/Clockify Integratie", description: "Start en stop de timer in Chorey en synchroniseer de tijdregistratie met uw favoriete tool.", completed: true },
       { id: 3013, title: "Browser Extensie (Bookmarklet)", description: "Maak een taak aan van de huidige webpagina met één klik.", completed: true },
-      { id: 3014, title: "Jira Integratie", description: "Koppel taken aan Jira issues door te zoeken op trefwoord of een URL te plakken. (Linear-integratie is momenteel on hold vanwege technische problemen).", completed: true },
+      { id: 3014, title: "Jira Twee-weg Synchronisatie", description: "Koppel taken aan Jira issues. Synchroniseert nu ook reacties die in Jira worden geplaatst automatisch naar de gekoppelde taak in Chorey.", completed: true },
     ]
   },
     {
