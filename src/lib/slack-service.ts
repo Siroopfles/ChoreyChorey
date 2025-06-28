@@ -6,7 +6,7 @@ const token = process.env.SLACK_BOT_TOKEN;
 const web = token ? new WebClient(token) : null;
 
 /**
- * Sends a message to a Slack channel.
+ * Sends a message to a Slack channel using Block Kit.
  * @param channelId The ID of the channel to post in.
  * @param text The message text to send.
  */
@@ -17,9 +17,30 @@ export async function sendSlackMessage(channelId: string, text: string): Promise
   }
 
   try {
+    // Using Block Kit for a richer message format
     await web.chat.postMessage({
       channel: channelId,
-      text: text,
+      text: `Chorey Notificatie: ${text}`, // Fallback for notifications
+      blocks: [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": `*Chorey Notificatie*`
+          }
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "plain_text",
+            "text": text,
+            "emoji": true
+          }
+        }
+      ]
     });
   } catch (error) {
     console.error('Fout bij verzenden van Slack-bericht:', error);
