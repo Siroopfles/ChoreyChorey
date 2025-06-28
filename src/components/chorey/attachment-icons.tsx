@@ -11,6 +11,36 @@ const GoogleDriveIcon = () => (
     </svg>
 );
 
+const GoogleDocIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-blue-500">
+    <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor" fillOpacity="0.1"/>
+    <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+    <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const GoogleSheetIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-green-600">
+    <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor" fillOpacity="0.1"/>
+    <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+    <path d="M8 12H16V18H8V12Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+    <path d="M12 12V18" stroke="currentColor" strokeWidth="2"/>
+    <path d="M8 15H16" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+);
+
+const GoogleSlideIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-yellow-500">
+    <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="currentColor" fillOpacity="0.1"/>
+    <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+    <path d="M16 14H8V18H16V14Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+    <path d="M12 10V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+
 const DropboxIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M4 2.5L0 5.5L4 8.5L8 5.5L4 2.5Z" fill="#0061FE"/>
@@ -44,6 +74,9 @@ const GitLabIcon = () => <Gitlab className="h-4 w-4 text-orange-600"/>;
 
 export const AttachmentIcon = ({ source }: { source: AttachmentSource }) => {
   switch (source) {
+    case 'google-doc': return <GoogleDocIcon />;
+    case 'google-sheet': return <GoogleSheetIcon />;
+    case 'google-slide': return <GoogleSlideIcon />;
     case 'google-drive': return <GoogleDriveIcon />;
     case 'dropbox': return <DropboxIcon />;
     case 'onedrive': return <OneDriveIcon />;

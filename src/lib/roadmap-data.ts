@@ -74,7 +74,7 @@ export const roadmapPhases: Phase[] = [
       { id: 3003, title: "GitHub Integratie", description: "Koppel taken aan issues en pull requests. Synchroniseer statusupdates.", completed: true },
       { id: 3004, title: "Microsoft Teams Integratie", description: "Verbind met Teams voor notificaties en gebruik het nieuwe `/api/v1/command` endpoint om bots en andere interacties te bouwen.", completed: true },
       { id: 3005, title: "Zapier / Make (Integromat) Integratie", description: "Verbind Chorey met duizenden andere apps via de API en het webhook-systeem.", completed: true },
-      { id: 3006, title: "Cloud Storage Integraties", description: "Koppel bestanden direct vanuit Google Drive, OneDrive en Dropbox.", completed: false },
+      { id: 3006, title: "Rijke Previews voor Cloud-bestanden", description: "Toon interactieve previews voor Google Workspace (Docs, Sheets, Slides) en Figma bestanden direct in de taakdetails.", completed: true },
       { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek project- of gebruikersadres.", completed: true },
       { id: 3008, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket issues en merge requests.", completed: true },
       { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden toe aan taken. Figma-bestanden worden getoond met een interactieve live-preview en Adobe XD-links worden visueel herkend met een eigen icoon.", completed: true },

@@ -35,6 +35,7 @@ import { AttachmentIcon } from './attachment-icons';
 import { TogglProjectSelector } from './toggl-project-selector';
 import { ClockifyProjectSelector } from './clockify-project-selector';
 import { FigmaEmbed } from './figma-embed';
+import { GoogleDocEmbed } from './google-doc-embed';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -937,6 +938,7 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
           {attachmentFields.map((field, index) => {
              const urlValue = form.watch(`attachments.${index}.url`);
              const source = getAttachmentSource(urlValue);
+             const isEmbeddable = source.startsWith('google-') || source === 'figma';
              return (
                 <div key={field.id} className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -961,7 +963,8 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
                             <Trash2 className="h-4 w-4 text-destructive"/>
                         </Button>
                     </div>
-                    {source === 'figma' && urlValue && <FigmaEmbed url={urlValue} />}
+                    {isEmbeddable && urlValue && source === 'figma' && <FigmaEmbed url={urlValue} />}
+                    {isEmbeddable && urlValue && source.startsWith('google-') && <GoogleDocEmbed url={urlValue} />}
                 </div>
              )
           })}
