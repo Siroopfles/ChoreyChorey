@@ -41,7 +41,7 @@ export default function FilterBar() {
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <Button variant="outline" size="sm" onClick={handleSetMyTasks}>
+      <Button variant="outline" size="sm" onClick={handleSetMyTasks} data-tour-id="my-tasks-filter">
           <UserIcon className="mr-2 h-4 w-4"/>
           Mijn Taken
       </Button>

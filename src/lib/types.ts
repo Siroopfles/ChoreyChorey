@@ -128,6 +128,7 @@ export type Organization = {
 
 export type OrganizationMember = {
   role: RoleName;
+  hasCompletedOnboarding?: boolean;
 };
 
 export const PERMISSIONS = {

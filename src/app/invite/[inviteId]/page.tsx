@@ -71,7 +71,7 @@ export default function InvitePage() {
                     const guestAccessPath = `settings.guestAccess.${user.id}.projectIds`;
                     
                     transaction.update(organizationRef, {
-                        [guestMemberPath]: { role: 'Guest' },
+                        [guestMemberPath]: { role: 'Guest', hasCompletedOnboarding: false },
                         [guestAccessPath]: arrayUnion(invite.projectId)
                     });
 
@@ -79,7 +79,7 @@ export default function InvitePage() {
                     // This is a regular member invite
                     const memberPath = `members.${user.id}`;
                     transaction.update(organizationRef, {
-                        [memberPath]: { role: 'Member' }
+                        [memberPath]: { role: 'Member', hasCompletedOnboarding: false }
                     });
                 }
                 

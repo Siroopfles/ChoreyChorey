@@ -26,6 +26,7 @@ import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import Link from 'next/link';
 import AnnouncementBanner from '@/components/chorey/announcement-banner';
 import { PERMISSIONS } from '@/lib/types';
+import { TourProvider } from '@/contexts/tour-context';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useAuth();
@@ -86,7 +87,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     ];
     
     const communityNavItems = isGuest ? [] : [
-        { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
+        { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden', 'data-tour-id': 'organization-link' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
         { href: '/dashboard/team-health', icon: ShieldAlert, label: 'Team Welzijn'},
         ...(showGamification ? [
@@ -104,7 +105,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     ];
     
     const adminNavItems = isGuest ? [] : [
-        { href: '/dashboard/settings', icon: Settings, label: 'Instellingen' },
+        { href: '/dashboard/settings', icon: Settings, label: 'Instellingen', 'data-tour-id': 'settings-link' },
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS) ? [{ href: '/dashboard/settings/integrations', icon: Plug, label: 'Integraties' }] : []),
         ...(currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) ? [{ href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }] : []),
     ];
@@ -168,7 +169,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                         {communityNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} data-tour-id={item['data-tour-id'] as string}>
                                         <item.icon />
                                         <span>{item.label}</span>
                                     </SidebarMenuButton>
@@ -194,7 +195,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                                 {adminNavItems.map((item) => (
                                     <SidebarMenuItem key={item.href}>
                                         <Link href={item.href} passHref>
-                                            <SidebarMenuButton tooltip={item.label} isActive={pathname.startsWith(item.href)}>
+                                            <SidebarMenuButton tooltip={item.label} isActive={pathname.startsWith(item.href)} data-tour-id={item['data-tour-id'] as string}>
                                                 <item.icon />
                                                 <span>{item.label}</span>
                                             </SidebarMenuButton>
@@ -309,7 +310,9 @@ export default function DashboardLayout({
   return (
     <TaskProvider>
       <AuthGuard>
-        {children}
+        <TourProvider>
+            {children}
+        </TourProvider>
       </AuthGuard>
     </TaskProvider>
   );

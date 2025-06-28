@@ -126,7 +126,7 @@ export default function AppHeader() {
             </TooltipProvider>
           )}
 
-          <Button onClick={() => setIsAddTaskDialogOpen(true)}>
+          <Button onClick={() => setIsAddTaskDialogOpen(true)} data-tour-id="add-task-button">
             <PlusCircle className="mr-2 h-4 w-4" /> Taak Toevoegen
           </Button>
 

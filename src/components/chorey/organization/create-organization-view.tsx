@@ -57,7 +57,7 @@ export function CreateOrganizationView({ onCreated, inDialog = false }: CreateOr
                     ownerId: user.id,
                     dataResidency: 'US', // Default, as this is a simulated setting.
                     members: {
-                        [user.id]: { role: 'Owner' }
+                        [user.id]: { role: 'Owner', hasCompletedOnboarding: false }
                     },
                     settings: {
                         customization: {

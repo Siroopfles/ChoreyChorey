@@ -40,7 +40,7 @@ export function KudosDialog({
   onOpenChange: (open: boolean) => void;
   recipient: User;
 }) {
-  const { user: sender, refreshUser } = useAuth();
+  const { user: sender, currentOrganization, refreshUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -50,10 +50,10 @@ export function KudosDialog({
   });
   
   const onSubmit = async (data: KudosFormValues) => {
-    if (!sender) return;
+    if (!sender || !currentOrganization) return;
     setIsSubmitting(true);
     
-    const result = await transferPoints(sender.id, recipient.id, data.amount, data.message || '', sender.name);
+    const result = await transferPoints(currentOrganization.id, sender.id, recipient.id, data.amount, data.message || '', sender.name);
     
     if (result.error) {
         toast({ title: 'Fout', description: result.error, variant: 'destructive' });
@@ -73,7 +73,7 @@ export function KudosDialog({
         <DialogHeader>
           <DialogTitle>Stuur Kudos naar {recipient.name}</DialogTitle>
           <DialogDescription>
-            Geef een deel van je punten als blijk van waardering. Je hebt momenteel {sender?.points.toLocaleString() || 0} punten.
+            Geef een deel van je punten als blijk van waardering. Je hebt momenteel {(sender?.points || 0).toLocaleString()} punten.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

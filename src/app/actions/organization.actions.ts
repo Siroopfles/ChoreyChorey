@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -432,6 +433,18 @@ export async function toggleSkillEndorsement(organizationId: string, targetUserI
         return { success: true };
     } catch (error: any) {
         console.error("Error toggling skill endorsement:", error);
+        return { error: error.message };
+    }
+}
+
+
+export async function markOnboardingComplete(organizationId: string, userId: string) {
+    try {
+        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+        await updateDoc(memberRef, { hasCompletedOnboarding: true });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error marking onboarding as complete:", error);
         return { error: error.message };
     }
 }
