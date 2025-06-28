@@ -15,6 +15,7 @@ import TeamsSettings from '@/components/chorey/settings/teams-settings';
 import DiscordSettings from '@/components/chorey/settings/discord-settings';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import GitLabSettings from '@/components/chorey/settings/gitlab-settings';
+import BitbucketSettings from '@/components/chorey/settings/bitbucket-settings';
 
 export default function IntegrationsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserPermissions } = useAuth();
@@ -95,6 +96,7 @@ export default function IntegrationsPage() {
         <SlackSettings organization={currentOrganization} />
         <GitHubSettings organization={currentOrganization} />
         <GitLabSettings organization={currentOrganization} />
+        <BitbucketSettings organization={currentOrganization} />
         <TeamsSettings organization={currentOrganization} />
         <DiscordSettings organization={currentOrganization} />
 

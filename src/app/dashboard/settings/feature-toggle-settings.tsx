@@ -27,6 +27,13 @@ const JiraIcon = () => (
     </svg>
 );
 
+const BitbucketIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-blue-600">
+        <path d="M2.531 2.375l8.594 19.25-2.093 0.938-6.5-14.563v13.625h-2.125v-19.25h2.125zM22.563 15.188l-4.125-2.531-2.031 3.406 6.156-3.75zM12.969 4.313l-1.031 2.313-4.5-2.75 5.531-3.625z"></path>
+    </svg>
+);
+
+
 const featureSchema = z.object({
   gamification: z.boolean().default(true),
   storyPoints: z.boolean().default(true),
@@ -40,6 +47,7 @@ const featureSchema = z.object({
   clockify: z.boolean().default(false),
   jira: z.boolean().default(false),
   gitlab: z.boolean().default(false),
+  bitbucket: z.boolean().default(false),
 });
 type FeatureFormValues = z.infer<typeof featureSchema>;
 
@@ -81,6 +89,7 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       clockify: organization.settings?.features?.clockify ?? false,
       jira: organization.settings?.features?.jira ?? false,
       gitlab: organization.settings?.features?.gitlab ?? false,
+      bitbucket: organization.settings?.features?.bitbucket ?? false,
     },
   });
 
@@ -120,6 +129,7 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       { name: 'clockify', icon: ClockifyIcon, label: 'Clockify Integratie', description: 'Sta gebruikers toe om hun Clockify-account te koppelen voor tijdregistratie.' },
       { name: 'jira', icon: JiraIcon, label: 'Jira Integratie', description: 'Sta toe dat taken gekoppeld worden aan Jira issues.' },
       { name: 'gitlab', icon: Gitlab, label: 'GitLab Integratie', description: 'Sta toe dat taken gekoppeld worden aan GitLab issues en MRs.' },
+      { name: 'bitbucket', icon: BitbucketIcon, label: 'Bitbucket Integratie', description: 'Sta toe dat taken gekoppeld worden aan Bitbucket issues.' },
   ];
 
   return (

@@ -43,7 +43,7 @@ export function BitbucketLinker() {
     const [searchResults, setSearchResults] = useState<BitbucketLink[]>([]);
     const [isSearching, setIsSearching] = useState(false);
 
-    const isConfigured = !!currentOrganization?.settings?.bitbucket?.repos?.length;
+    const isConfigured = !!currentOrganization?.settings?.features?.bitbucket && !!currentOrganization?.settings?.bitbucket?.repos?.length;
     const configuredRepos = currentOrganization?.settings?.bitbucket?.repos || [];
 
     useEffect(() => {
