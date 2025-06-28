@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import type { User, Project } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -21,13 +20,13 @@ import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Lo
 import { TaskAssignmentSuggestion } from '@/components/chorey/task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels, handleFindDuplicateTask } from '@/app/actions/ai.actions';
+import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels, handleFindDuplicateTask, handleSuggestProactiveHelp } from '@/app/actions/ai.actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
-import type { FindDuplicateTaskOutput } from '@/ai/schemas';
+import type { FindDuplicateTaskOutput, SuggestProactiveHelpOutput } from '@/ai/schemas';
 import { GitHubLinker } from './github-linker';
 import { JiraLinearLinker } from './jira-linear-linker';
 import { getAttachmentSource } from '@/lib/utils';
@@ -38,6 +37,7 @@ import { FigmaEmbed } from './figma-embed';
 import { GoogleDocEmbed } from './google-doc-embed';
 import { GitLabLinker } from './gitlab-linker';
 import { BitbucketLinker } from './bitbucket-linker';
+import { useDebounce } from '@/hooks/use-debounce';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -66,6 +66,9 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
   const [isSuggestingLabels, setIsSuggestingLabels] = useState(false);
   const [isCheckingForDuplicates, setIsCheckingForDuplicates] = useState(false);
   const [duplicateResult, setDuplicateResult] = useState<FindDuplicateTaskOutput | null>(null);
+  
+  const [proactiveHelp, setProactiveHelp] = useState<SuggestProactiveHelpOutput | null>(null);
+  const [isCheckingComplexity, setIsCheckingComplexity] = useState(false);
 
   const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
     control: form.control,
@@ -98,6 +101,34 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
   const recurring = form.watch('recurring');
   const recurringFrequency = recurring?.frequency;
   const monthlyRecurringType = recurring?.monthly?.type;
+  
+  const title = form.watch('title');
+  const description = form.watch('description');
+  const debouncedTitle = useDebounce(title, 1500);
+  const debouncedDescription = useDebounce(description, 1500);
+
+  useEffect(() => {
+    if (!debouncedTitle || debouncedTitle.length < 10 || proactiveHelp || isCheckingComplexity) {
+      if (proactiveHelp && (!debouncedTitle || debouncedTitle.length < 10)) {
+        setProactiveHelp(null);
+      }
+      return;
+    }
+
+    const checkForHelp = async () => {
+      setIsCheckingComplexity(true);
+      const result = await handleSuggestProactiveHelp({ title: debouncedTitle, description: debouncedDescription });
+      if (result.suggestion?.shouldOfferHelp) {
+        setProactiveHelp(result.suggestion);
+      } else {
+        setProactiveHelp(null);
+      }
+      setIsCheckingComplexity(false);
+    };
+
+    checkForHelp();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedTitle, debouncedDescription]);
 
   const onSuggestSubtasks = async () => {
     const title = form.getValues('title');
@@ -294,6 +325,41 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
           </FormItem>
         )}
       />
+
+      {proactiveHelp && (
+        <Alert className="mt-4">
+          <Bot className="h-4 w-4" />
+          <AlertTitle className="flex items-center justify-between">
+            <span>AI Assistent</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setProactiveHelp(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </AlertTitle>
+          <AlertDescription>
+            {proactiveHelp.reason}
+            <div className="mt-2">
+              {proactiveHelp.suggestionType === 'subtasks' && (
+                <Button type="button" size="sm" onClick={onSuggestSubtasks} disabled={isSuggestingSubtasks}>
+                  {isSuggestingSubtasks ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
+                  Genereer Subtaken
+                </Button>
+              )}
+              {proactiveHelp.suggestionType === 'story_points' && (
+                <Button type="button" size="sm" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints}>
+                  {isSuggestingPoints ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
+                  Schat Story Points
+                </Button>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="space-y-2">
          <Button type="button" variant="outline" size="sm" onClick={onIdentifyRisk} disabled={isIdentifyingRisk}>

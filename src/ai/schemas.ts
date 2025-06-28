@@ -239,3 +239,17 @@ export type EmailToTaskInput = z.infer<typeof EmailToTaskInputSchema>;
 
 export const EmailToTaskOutputSchema = z.string().describe("A summary of the result, e.g., 'Task created' or an error message.");
 export type EmailToTaskOutput = z.infer<typeof EmailToTaskOutputSchema>;
+
+// From suggest-proactive-help-flow.ts
+export const SuggestProactiveHelpInputSchema = z.object({
+  title: z.string().describe('The title of the task.'),
+  description: z.string().optional().describe('The description of the task.'),
+});
+export type SuggestProactiveHelpInput = z.infer<typeof SuggestProactiveHelpInputSchema>;
+
+export const SuggestProactiveHelpOutputSchema = z.object({
+  shouldOfferHelp: z.boolean().describe('Whether or not the AI should proactively offer help for this task.'),
+  reason: z.string().describe('A short, encouraging reason why help might be useful. Empty if shouldOfferHelp is false.'),
+  suggestionType: z.enum(['subtasks', 'story_points', 'none']).describe('The most relevant type of suggestion to offer.'),
+});
+export type SuggestProactiveHelpOutput = z.infer<typeof SuggestProactiveHelpOutputSchema>;
