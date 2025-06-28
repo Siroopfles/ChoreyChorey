@@ -221,10 +221,10 @@ export async function createTaskAction(organizationId: string, creatorId: string
           githubLinks: taskData.githubLinks || [],
           jiraLinks: taskData.jiraLinks || [],
           jiraLinkKeys: (taskData.jiraLinks || []).map(link => link.key),
-          togglWorkspaceId: taskData.togglWorkspaceId,
-          togglProjectId: taskData.togglProjectId,
-          clockifyWorkspaceId: taskData.clockifyWorkspaceId,
-          clockifyProjectId: taskData.clockifyProjectId,
+          togglWorkspaceId: taskData.togglWorkspaceId ?? null,
+          togglProjectId: taskData.togglProjectId ?? null,
+          clockifyWorkspaceId: taskData.clockifyWorkspaceId ?? null,
+          clockifyProjectId: taskData.clockifyProjectId ?? null,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -845,4 +845,4 @@ export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtas
     }
 }
 
-
+    
