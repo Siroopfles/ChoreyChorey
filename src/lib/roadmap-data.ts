@@ -105,7 +105,7 @@ export const roadmapPhases: Phase[] = [
       { id: 5002, title: "Resource Management", description: "Geavanceerde capaciteitsplanning en workload-inzichten over langere periodes.", completed: true },
       { id: 5003, title: "Custom Fields", description: "Voeg eigen velden (tekst, getal, datum, dropdown) toe aan taken voor maximale flexibiliteit.", completed: true },
       { id: 5004, title: "Single Sign-On (SSO)", description: "Integratie met SAML, Google Workspace, Azure AD voor enterprise-grade authenticatie.", completed: true },
-      { id: 5005, title: "Data Residency Opties", description: "Kies de geografische locatie voor dataopslag (EU/US).", completed: false },
+      { id: 5005, title: "Data Residency Opties", description: "Kies de geografische locatie voor dataopslag (EU/US). Dit vereist het opzetten van meerdere Firebase projecten in verschillende regio's.", completed: false },
       { id: 5006, title: "Gast- / Klanttoegang", description: "Geef externe gebruikers beperkte, read-only toegang tot specifieke projecten of taken.", completed: true },
       { id: 5007, title: "IP Whitelisting", description: "Beperk toegang tot de organisatie tot specifieke IP-adressen voor extra beveiliging.", completed: true },
       { id: 5008, title: "Geavanceerde Automatisering", description: "Een ingebouwde 'Zapier'-light voor het automatiseren van workflows binnen Chorey.", completed: false },

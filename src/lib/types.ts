@@ -122,6 +122,7 @@ export type Organization = {
   id: string;
   name: string;
   ownerId: string;
+  dataResidency?: 'EU' | 'US';
   members: Record<string, OrganizationMember>; // Map of userId to their role info
   settings?: OrganizationSettings;
 };

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -10,12 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Building, Users } from 'lucide-react';
+import { Loader2, Building, Users, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { runTransaction, doc, collection, arrayUnion } from 'firebase/firestore';
 import type { Organization } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const orgCreationSchema = z.object({
   name: z.string().min(3, 'Naam moet minimaal 3 karakters bevatten.'),
@@ -52,6 +55,7 @@ export function CreateOrganizationView({ onCreated, inDialog = false }: CreateOr
                 const newOrgData: Omit<Organization, 'id'> = {
                     name: data.name,
                     ownerId: user.id,
+                    dataResidency: 'US', // Default, as this is a simulated setting.
                     members: {
                         [user.id]: { role: 'Owner' }
                     },
@@ -113,6 +117,19 @@ export function CreateOrganizationView({ onCreated, inDialog = false }: CreateOr
                           </FormItem>
                       )}
                   />
+                  <div className="space-y-2">
+                    <Label htmlFor="data-location">Data Locatie</Label>
+                    <Select defaultValue="US" disabled>
+                        <SelectTrigger id="data-location">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="US">Verenigde Staten (Standaard)</SelectItem>
+                            <SelectItem value="EU">Europese Unie</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Info className="h-3 w-3 shrink-0" /> Echte data residency vereist het opzetten van een apart Firebase project in de gewenste regio.</p>
+                  </div>
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
                       {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Organisatie Aanmaken
