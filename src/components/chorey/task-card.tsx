@@ -103,6 +103,12 @@ const statusConfig: Record<string, { icon?: JSX.Element; color: string }> = {
     'Geannuleerd': { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-destructive' },
 };
 
+const JiraIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 text-[#0052CC]">
+      <path d="M22.516 13.313l-9.219-9.219c-.438-.438-1.125-.438-1.563 0l-9.219 9.219c-.438.438-.438 1.125 0 1.563l9.219 9.219c.438.438 1.125.438 1.563 0l9.219-9.219c.438-.438.438-1.125 0-1.563zm-10.781 7.438l-7.438-7.438 7.438-7.438 7.438 7.438-7.438 7.438z"></path>
+    </svg>
+);
+
 const Highlight = ({ text, highlight }: { text: string, highlight: string }) => {
     if (!highlight.trim() || text.startsWith('[')) { // Don't highlight masked tasks
       return <>{text}</>;
@@ -715,6 +721,12 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                         <div className="flex items-center gap-1">
                             <Github className="h-3 w-3" />
                             <span>{task.githubLinks.length}</span>
+                        </div>
+                    )}
+                     {task.jiraLinks && task.jiraLinks.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            <JiraIcon />
+                            <span>{task.jiraLinks.length}</span>
                         </div>
                     )}
                     <div className="flex items-center gap-1">

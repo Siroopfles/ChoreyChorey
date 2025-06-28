@@ -27,13 +27,6 @@ const JiraIcon = () => (
     </svg>
 );
 
-const LinearIcon = () => (
-     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
-        <path d="M10.833 2.1a.5.5 0 01.334 0l10.833 6.25a.5.5 0 01.25.433v12.434a.5.5 0 01-.25.433l-10.833 6.25a.5.5 0 01-.5 0L1.75 21.65a.5.5 0 01-.25-.433V8.783a.5.5 0 01.25-.433L9 2.1a.5.5 0 011.833 0zM11 3.93v7.054l-5.5-3.172L11 3.93zm.167 16.14l5.5-3.172v-6.353L11.167 17.6V5.4l5.5 3.173v6.354l-5.5 3.173z"></path>
-    </svg>
-);
-
-
 const featureSchema = z.object({
   gamification: z.boolean().default(true),
   storyPoints: z.boolean().default(true),
@@ -46,7 +39,6 @@ const featureSchema = z.object({
   toggl: z.boolean().default(false),
   clockify: z.boolean().default(false),
   jira: z.boolean().default(false),
-  linear: z.boolean().default(false),
 });
 type FeatureFormValues = z.infer<typeof featureSchema>;
 
@@ -87,7 +79,6 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       toggl: organization.settings?.features?.toggl ?? false,
       clockify: organization.settings?.features?.clockify ?? false,
       jira: organization.settings?.features?.jira ?? false,
-      linear: organization.settings?.features?.linear ?? false,
     },
   });
 
@@ -97,7 +88,10 @@ export default function FeatureToggleSettings({ organization }: { organization: 
     
     const newSettings = {
         ...organization.settings,
-        features: data
+        features: {
+            ...organization.settings?.features,
+            ...data
+        }
     };
 
     const result = await updateOrganization(organization.id, user.id, { settings: newSettings });
@@ -123,7 +117,6 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       { name: 'toggl', icon: Clock, label: 'Toggl Integratie', description: 'Sta gebruikers toe om hun Toggl-account te koppelen voor tijdregistratie.' },
       { name: 'clockify', icon: ClockifyIcon, label: 'Clockify Integratie', description: 'Sta gebruikers toe om hun Clockify-account te koppelen voor tijdregistratie.' },
       { name: 'jira', icon: JiraIcon, label: 'Jira Integratie', description: 'Sta toe dat taken gekoppeld worden aan Jira issues.' },
-      { name: 'linear', icon: LinearIcon, label: 'Linear Integratie', description: 'Sta toe dat taken gekoppeld worden aan Linear issues.' },
   ];
 
   return (

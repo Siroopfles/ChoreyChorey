@@ -24,11 +24,12 @@ import { Separator } from '@/components/ui/separator';
 import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels, handleFindDuplicateTask } from '@/app/actions/ai.actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
 import type { FindDuplicateTaskOutput } from '@/ai/schemas';
 import { GitHubLinker } from './github-linker';
+import { JiraLinearLinker } from './jira-linear-linker';
 import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from './attachment-icons';
 import { TogglProjectSelector } from './toggl-project-selector';
@@ -899,6 +900,7 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
       )}
 
       <GitHubLinker />
+      <JiraLinearLinker />
 
       <Separator />
 

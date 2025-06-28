@@ -9,6 +9,14 @@ export type GitHubLink = {
   type: 'issue' | 'pull-request';
 };
 
+export type JiraLink = {
+  url: string;
+  key: string;
+  summary: string;
+  status: string;
+  iconUrl: string;
+};
+
 export type OrganizationSettings = {
   customization: {
     statuses: string[];
@@ -27,6 +35,7 @@ export type OrganizationSettings = {
     publicSharing?: boolean;
     toggl?: boolean;
     clockify?: boolean;
+    jira?: boolean;
   },
   branding?: {
     primaryColor?: string;
@@ -394,6 +403,7 @@ export type Task = {
   googleEventId?: string | null;
   microsoftEventId?: string | null;
   githubLinks?: GitHubLink[];
+  jiraLinks?: JiraLink[];
   togglWorkspaceId?: number;
   togglProjectId?: number;
   clockifyWorkspaceId?: string;
@@ -418,6 +428,14 @@ export const githubLinkSchema = z.object({
   title: z.string(),
   state: z.enum(['open', 'closed', 'merged']),
   type: z.enum(['issue', 'pull-request']),
+});
+
+export const jiraLinkSchema = z.object({
+  url: z.string().url(),
+  key: z.string(),
+  summary: z.string(),
+  status: z.string(),
+  iconUrl: z.string().url(),
 });
 
 export const subtaskSchema = z.object({
@@ -451,6 +469,7 @@ export const taskFormSchema = z.object({
   consultedUserIds: z.array(z.string()).optional(),
   informedUserIds: z.array(z.string()).optional(),
   githubLinks: z.array(githubLinkSchema).optional(),
+  jiraLinks: z.array(jiraLinkSchema).optional(),
   togglWorkspaceId: z.coerce.number().optional(),
   togglProjectId: z.coerce.number().optional(),
   clockifyWorkspaceId: z.string().optional(),
