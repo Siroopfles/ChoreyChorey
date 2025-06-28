@@ -34,6 +34,7 @@ import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from './attachment-icons';
 import { TogglProjectSelector } from './toggl-project-selector';
 import { ClockifyProjectSelector } from './clockify-project-selector';
+import { FigmaEmbed } from './figma-embed';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -937,27 +938,30 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
              const urlValue = form.watch(`attachments.${index}.url`);
              const source = getAttachmentSource(urlValue);
              return (
-                <div key={field.id} className="flex items-center gap-2">
-                    <div className="p-2 bg-muted rounded-md">
-                        <AttachmentIcon source={source} />
+                <div key={field.id} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-muted rounded-md">
+                            <AttachmentIcon source={source} />
+                        </div>
+                        <FormField
+                            control={form.control}
+                            name={`attachments.${index}.name`}
+                            render={({ field }) => (
+                                <Input {...field} placeholder="Naam bijlage" className="w-1/3"/>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name={`attachments.${index}.url`}
+                            render={({ field }) => (
+                                <Input {...field} placeholder="https://..."/>
+                            )}
+                        />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive"/>
+                        </Button>
                     </div>
-                    <FormField
-                        control={form.control}
-                        name={`attachments.${index}.name`}
-                        render={({ field }) => (
-                            <Input {...field} placeholder="Naam bijlage" className="w-1/3"/>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name={`attachments.${index}.url`}
-                        render={({ field }) => (
-                            <Input {...field} placeholder="https://..."/>
-                        )}
-                    />
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(index)}>
-                        <Trash2 className="h-4 w-4 text-destructive"/>
-                    </Button>
+                    {source === 'figma' && urlValue && <FigmaEmbed url={urlValue} />}
                 </div>
              )
           })}
