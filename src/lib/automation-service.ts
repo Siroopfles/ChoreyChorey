@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
-import type { Automation, Task, Priority, Label } from './types';
+import type { Automation, Task, Priority, Label, Comment } from './types';
 import { createNotification } from '@/app/actions/notification.actions';
 
 function addHistoryEntry(userId: string | null, action: string, details?: string) {
@@ -62,6 +62,38 @@ async function executeAddLabelAction(task: Task, automation: Automation) {
     });
 }
 
+async function executeAddCommentAction(task: Task, automation: Automation) {
+    if (!automation.action.params.commentText) return;
+
+    const taskRef = doc(db, 'tasks', task.id);
+    const newComment: Omit<Comment, 'id'> = {
+        userId: 'system', // Comments from automations are from the system
+        text: automation.action.params.commentText,
+        createdAt: new Date(),
+        readBy: [],
+    };
+    const historyEntry = addHistoryEntry('system', 'Reactie toegevoegd via automatisering', `"${automation.action.params.commentText}"`);
+
+    await updateDoc(taskRef, {
+        comments: arrayUnion({ ...newComment, id: crypto.randomUUID() }),
+        history: arrayUnion(historyEntry)
+    });
+
+    // Notify relevant people
+    const recipients = new Set([...task.assigneeIds, task.creatorId]);
+    recipients.forEach(recipientId => {
+      if (recipientId) {
+        createNotification(
+            recipientId,
+            `Automatisering "${automation.name}" heeft een reactie geplaatst op: "${task.title}"`,
+            task.id,
+            task.organizationId,
+            'system'
+        );
+      }
+    });
+}
+
 export async function processTriggers(event: 'task.created' | 'task.updated', data: { task: Task, oldTask?: Task }) {
     const { task, oldTask } = data;
     const { organizationId } = task;
@@ -111,6 +143,15 @@ export async function processTriggers(event: 'task.created' | 'task.updated', da
                     }
                 }
                 break;
+            case 'task.label.added':
+                if (event === 'task.updated' && oldTask) {
+                    const addedLabels = task.labels.filter(l => !oldTask.labels.includes(l));
+                    const filterLabel = automation.trigger.filters?.label;
+                    if (addedLabels.length > 0 && (!filterLabel || addedLabels.includes(filterLabel))) {
+                        triggerFired = true;
+                    }
+                }
+                break;
         }
         
         if (triggerFired) {
@@ -124,6 +165,9 @@ export async function processTriggers(event: 'task.created' | 'task.updated', da
                     break;
                 case 'task.add.label':
                     await executeAddLabelAction(task, automation);
+                    break;
+                case 'task.add.comment':
+                    await executeAddCommentAction(task, automation);
                     break;
                 default:
                     console.warn(`Unknown automation action type: ${automation.action.type}`);

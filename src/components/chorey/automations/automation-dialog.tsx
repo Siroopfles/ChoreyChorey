@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2, Save, Zap } from 'lucide-react';
 import type { Automation, AutomationFormValues } from '@/lib/types';
 import { automationFormSchema, AUTOMATION_TRIGGER_TYPES, AUTOMATION_ACTION_TYPES } from '@/lib/types';
+import { Textarea } from '@/components/ui/textarea';
 
 interface AutomationDialogProps {
   open: boolean;
@@ -107,6 +108,14 @@ export function AutomationDialog({ open, onOpenChange, automation }: AutomationD
                         </div>
                     </div>
                 )}
+                {triggerType === 'task.label.added' && (
+                    <div className="pl-4 border-l-2 ml-2 space-y-4 pt-4">
+                        <h4 className="text-sm font-semibold">Alleen als... (optionele filters)</h4>
+                        <FormField control={form.control} name="trigger.filters.label" render={({ field }) => (
+                            <FormItem><FormLabel>Label is</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Elk label"/></SelectTrigger></FormControl><SelectContent>{allLabels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                    </div>
+                )}
                 {triggerType === 'task.status.changed' && (
                     <div className="pl-4 border-l-2 ml-2 space-y-4 pt-4">
                         <h4 className="text-sm font-semibold">Alleen als... (optionele filters)</h4>
@@ -162,6 +171,19 @@ export function AutomationDialog({ open, onOpenChange, automation }: AutomationD
                     <div className="pl-4 border-l-2 ml-2 space-y-4 pt-4">
                         <FormField control={form.control} name="action.params.label" render={({ field }) => (
                             <FormItem><FormLabel>Voeg label toe</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Kies een label..."/></SelectTrigger></FormControl><SelectContent>{allLabels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                    </div>
+                )}
+                 {actionType === 'task.add.comment' && (
+                    <div className="pl-4 border-l-2 ml-2 space-y-4 pt-4">
+                        <FormField control={form.control} name="action.params.commentText" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Reactie Tekst</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="bijv. @manager, dit vereist uw aandacht." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
                         )}/>
                     </div>
                 )}
