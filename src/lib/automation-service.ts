@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
-import type { Automation, Task } from './types';
+import type { Automation, Task, Priority, Label } from './types';
 import { createNotification } from '@/app/actions/notification.actions';
 
 function addHistoryEntry(userId: string | null, action: string, details?: string) {
@@ -36,16 +36,41 @@ async function executeTaskAssignAction(task: Task, automation: Automation) {
     );
 }
 
-export async function processTriggers(event: 'task.created', data: { task: Task }) {
-    const { task } = data;
+async function executeSetPriorityAction(task: Task, automation: Automation) {
+    if (!automation.action.params.priority) return;
+
+    const taskRef = doc(db, 'tasks', task.id);
+    const newPriority = automation.action.params.priority as Priority;
+
+    await updateDoc(taskRef, {
+        priority: newPriority,
+        history: arrayUnion(addHistoryEntry('system', 'Prioriteit ingesteld via automatisering', `"${automation.name}"`))
+    });
+}
+
+async function executeAddLabelAction(task: Task, automation: Automation) {
+    if (!automation.action.params.label) return;
+
+    const taskRef = doc(db, 'tasks', task.id);
+    const newLabel = automation.action.params.label as Label;
+
+    if (task.labels.includes(newLabel)) return; // Don't add if it already exists
+
+    await updateDoc(taskRef, {
+        labels: arrayUnion(newLabel),
+        history: arrayUnion(addHistoryEntry('system', 'Label toegevoegd via automatisering', `"${automation.name}"`))
+    });
+}
+
+export async function processTriggers(event: 'task.created' | 'task.updated', data: { task: Task, oldTask?: Task }) {
+    const { task, oldTask } = data;
     const { organizationId } = task;
 
-    // Fetch all enabled automations for this organization and event type
+    // Fetch all enabled automations for this organization
     const automationsQuery = query(
         collection(db, 'automations'),
         where('organizationId', '==', organizationId),
-        where('enabled', '==', true),
-        where('trigger.type', '==', event)
+        where('enabled', '==', true)
     );
     const snapshot = await getDocs(automationsQuery);
     if (snapshot.empty) return;
@@ -53,28 +78,56 @@ export async function processTriggers(event: 'task.created', data: { task: Task 
     const automations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Automation));
 
     for (const automation of automations) {
-        // Check filters
-        let filtersMatch = true;
-        const filters = automation.trigger.filters;
-        if (filters) {
-            if (filters.priority && filters.priority !== task.priority) {
-                filtersMatch = false;
-            }
-            if (filters.label && !task.labels.includes(filters.label)) {
-                filtersMatch = false;
-            }
+        let triggerFired = false;
+        
+        // Check if this automation's trigger matches the event
+        switch(automation.trigger.type) {
+            case 'task.created':
+                if (event === 'task.created') {
+                    const filters = automation.trigger.filters;
+                    let filtersMatch = true;
+                    if (filters) {
+                        if (filters.priority && filters.priority !== task.priority) filtersMatch = false;
+                        if (filters.label && !task.labels.includes(filters.label)) filtersMatch = false;
+                    }
+                    if (filtersMatch) triggerFired = true;
+                }
+                break;
+            case 'task.status.changed':
+                if (event === 'task.updated' && oldTask && task.status !== oldTask.status) {
+                    const filters = automation.trigger.filters;
+                    // If a status filter is set, it must match the new status
+                    if (!filters?.status || filters.status === task.status) {
+                        triggerFired = true;
+                    }
+                }
+                break;
+            case 'task.priority.changed':
+                if (event === 'task.updated' && oldTask && task.priority !== oldTask.priority) {
+                     const filters = automation.trigger.filters;
+                    // If a priority filter is set, it must match the new priority
+                    if (!filters?.priority || filters.priority === task.priority) {
+                        triggerFired = true;
+                    }
+                }
+                break;
         }
         
-        if (!filtersMatch) continue;
-        
-        // Execute action
-        switch (automation.action.type) {
-            case 'task.assign':
-                await executeTaskAssignAction(task, automation);
-                break;
-            // Future actions here...
-            default:
-                console.warn(`Unknown automation action type: ${automation.action.type}`);
+        if (triggerFired) {
+            // Execute action
+            switch (automation.action.type) {
+                case 'task.assign':
+                    await executeTaskAssignAction(task, automation);
+                    break;
+                case 'task.set.priority':
+                    await executeSetPriorityAction(task, automation);
+                    break;
+                case 'task.add.label':
+                    await executeAddLabelAction(task, automation);
+                    break;
+                default:
+                    console.warn(`Unknown automation action type: ${automation.action.type}`);
+            }
         }
     }
 }

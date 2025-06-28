@@ -27,6 +27,7 @@ export function AutomationDialog({ open, onOpenChange, automation }: AutomationD
   const { users, currentOrganization } = useAuth();
   const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
+  const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AutomationFormValues>({
@@ -106,6 +107,22 @@ export function AutomationDialog({ open, onOpenChange, automation }: AutomationD
                         </div>
                     </div>
                 )}
+                {triggerType === 'task.status.changed' && (
+                    <div className="pl-4 border-l-2 ml-2 space-y-4 pt-4">
+                        <h4 className="text-sm font-semibold">Alleen als... (optionele filters)</h4>
+                        <FormField control={form.control} name="trigger.filters.status" render={({ field }) => (
+                            <FormItem><FormLabel>Status verandert naar</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Elke status"/></SelectTrigger></FormControl><SelectContent>{allStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                    </div>
+                )}
+                {triggerType === 'task.priority.changed' && (
+                    <div className="pl-4 border-l-2 ml-2 space-y-4 pt-4">
+                        <h4 className="text-sm font-semibold">Alleen als... (optionele filters)</h4>
+                        <FormField control={form.control} name="trigger.filters.priority" render={({ field }) => (
+                            <FormItem><FormLabel>Prioriteit verandert naar</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Elke prioriteit"/></SelectTrigger></FormControl><SelectContent>{allPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                    </div>
+                )}
             </div>
 
              <div className="p-4 border rounded-md space-y-4 bg-muted/50">
@@ -134,6 +151,20 @@ export function AutomationDialog({ open, onOpenChange, automation }: AutomationD
                         )}/>
                     </div>
                  )}
+                 {actionType === 'task.set.priority' && (
+                    <div className="pl-4 border-l-2 ml-2 space-y-4 pt-4">
+                        <FormField control={form.control} name="action.params.priority" render={({ field }) => (
+                            <FormItem><FormLabel>Stel prioriteit in op</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Kies een prioriteit..."/></SelectTrigger></FormControl><SelectContent>{allPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                    </div>
+                )}
+                {actionType === 'task.add.label' && (
+                    <div className="pl-4 border-l-2 ml-2 space-y-4 pt-4">
+                        <FormField control={form.control} name="action.params.label" render={({ field }) => (
+                            <FormItem><FormLabel>Voeg label toe</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Kies een label..."/></SelectTrigger></FormControl><SelectContent>{allLabels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                    </div>
+                )}
             </div>
 
             <DialogFooter>

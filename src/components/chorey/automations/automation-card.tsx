@@ -33,20 +33,47 @@ export function AutomationCard({ automation }: { automation: Automation }) {
   const triggerText = AUTOMATION_TRIGGER_TYPES[automation.trigger.type];
   const actionText = AUTOMATION_ACTION_TYPES[automation.action.type];
   
-  const getFilterDescription = () => {
-      const filters = automation.trigger.filters;
+  const getTriggerDescription = () => {
+      const trigger = automation.trigger;
+      const filters = trigger.filters;
       if (!filters) return null;
+
       const parts = [];
-      if (filters.priority) parts.push(`met prioriteit '${filters.priority}'`);
-      if (filters.label) parts.push(`met label '${filters.label}'`);
-      return parts.length > 0 ? `Indien ${parts.join(' en ')}` : null;
+      if (trigger.type === 'task.created') {
+          if (filters.priority) parts.push(`met prioriteit '${filters.priority}'`);
+          if (filters.label) parts.push(`met label '${filters.label}'`);
+      } else if (trigger.type === 'task.status.changed') {
+          if (filters.status) parts.push(`naar '${filters.status}'`);
+      } else if (trigger.type === 'task.priority.changed') {
+          if (filters.priority) parts.push(`naar '${filters.priority}'`);
+      }
+      
+      if (parts.length === 0) return null;
+      
+      return trigger.type === 'task.created' ? `Indien ${parts.join(' en ')}` : parts.join(' ');
   }
   
   const getActionDescription = () => {
-      const params = automation.action.params;
-      if (automation.action.type === 'task.assign' && params.assigneeId) {
-          const user = users.find(u => u.id === params.assigneeId);
-          return `aan ${user?.name || 'onbekende gebruiker'}`;
+      const action = automation.action;
+      const params = action.params;
+      
+      switch (action.type) {
+          case 'task.assign':
+              if (params.assigneeId) {
+                  const user = users.find(u => u.id === params.assigneeId);
+                  return `aan ${user?.name || 'onbekende gebruiker'}`;
+              }
+              break;
+          case 'task.set.priority':
+              if (params.priority) {
+                  return `naar '${params.priority}'`;
+              }
+              break;
+          case 'task.add.label':
+              if (params.label) {
+                  return `'${params.label}'`;
+              }
+              break;
       }
       return '';
   }
@@ -96,7 +123,7 @@ export function AutomationCard({ automation }: { automation: Automation }) {
                 <div className="p-3 bg-muted rounded-md w-full">
                     <p className="font-semibold text-muted-foreground text-xs uppercase">Wanneer...</p>
                     <p className="font-semibold">{triggerText}</p>
-                    {getFilterDescription() && <p className="text-xs text-muted-foreground">{getFilterDescription()}</p>}
+                    {getTriggerDescription() && <p className="text-xs text-muted-foreground">{getTriggerDescription()}</p>}
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground" />
                  <div className="p-3 bg-muted rounded-md w-full">

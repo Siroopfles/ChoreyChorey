@@ -468,6 +468,16 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         
         await updateDoc(taskRef, finalUpdates);
         const updatedTask = { ...taskToUpdate, ...finalUpdates, id: taskId };
+
+        // Trigger automations for the updated task
+        try {
+            const { processTriggers } = await import('@/lib/automation-service');
+            await processTriggers('task.updated', { task: updatedTask, oldTask: taskToUpdate });
+        } catch (e) {
+            console.error("Error processing automations for updated task:", e);
+            // Do not block the main flow if automations fail
+        }
+
         await triggerWebhooks(organizationId, 'task.updated', updatedTask);
 
         const dueDateChanged = 'dueDate' in updates;
