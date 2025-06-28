@@ -34,11 +34,16 @@ interface ProjectDialogProps {
   organizationId: string;
   project?: Project;
   allTeams: Team[];
-  children: ReactNode;
+  children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function ProjectDialog({ organizationId, project, allTeams, children }: ProjectDialogProps) {
-    const [open, setOpen] = useState(false);
+export function ProjectDialog({ organizationId, project, allTeams, children, open: controlledOpen, onOpenChange: controlledOnOpenChange }: ProjectDialogProps) {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const open = controlledOpen ?? internalOpen;
+    const setOpen = controlledOnOpenChange ?? setInternalOpen;
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
     const { currentOrganization } = useAuth();
@@ -82,7 +87,7 @@ export function ProjectDialog({ organizationId, project, allTeams, children }: P
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
+            {children && <DialogTrigger asChild>{children}</DialogTrigger>}
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{project ? 'Project Bewerken' : 'Nieuw Project Aanmaken'}</DialogTitle>

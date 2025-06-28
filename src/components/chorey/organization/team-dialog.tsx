@@ -31,10 +31,15 @@ type TeamFormValues = z.infer<typeof teamFormSchema>;
 interface TeamDialogProps {
   children: ReactNode;
   team?: Team;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function TeamDialog({ children, team }: TeamDialogProps) {
-  const [open, setOpen] = useState(false);
+export function TeamDialog({ children, team, open: controlledOpen, onOpenChange: controlledOnOpenChange }: TeamDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { currentOrganization } = useAuth();
   const { toast } = useToast();
@@ -77,7 +82,7 @@ export function TeamDialog({ children, team }: TeamDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{team ? 'Team Bewerken' : 'Nieuw Team Aanmaken'}</DialogTitle>

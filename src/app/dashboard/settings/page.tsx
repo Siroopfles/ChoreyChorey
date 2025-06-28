@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { User, Building, ArrowRight, Plug } from 'lucide-react';
+import { User, Building, ArrowRight, Plug, Shield } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { PERMISSIONS } from '@/lib/types';
 
@@ -43,6 +43,25 @@ export default function SettingsPage() {
                                 Profielinstellingen <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
+                    </div>
+                </Card>
+                
+                 <Card className="hover:border-primary/50 transition-colors">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                            <Shield className="h-6 w-6 text-primary" />
+                            Mijn Permissies
+                        </CardTitle>
+                        <CardDescription>
+                            Bekijk een gedetailleerd overzicht van de acties die jij mag uitvoeren met jouw huidige rol.
+                        </CardDescription>
+                    </CardHeader>
+                    <div className="p-6 pt-0">
+                        <Button asChild>
+                        <Link href="/dashboard/settings/my-permissions">
+                            Bekijk Mijn Permissies <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                    </Button>
                     </div>
                 </Card>
 

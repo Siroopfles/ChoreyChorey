@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -44,11 +44,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 export function TemplateDialog({
   template,
   children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   template?: TaskTemplate;
-  children: ReactNode;
+  children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
+  
   const { toast } = useToast();
   const { addTemplate, updateTemplate } = useTasks();
   const { currentOrganization } = useAuth();
@@ -72,6 +79,28 @@ export function TemplateDialog({
       isSensitive: false,
     },
   });
+  
+  useEffect(() => {
+    if (open) {
+      if (template) {
+        form.reset(template);
+      } else {
+        form.reset({
+          name: '',
+          title: '',
+          description: '',
+          priority: allPriorities[1] || 'Midden',
+          labels: [],
+          subtasks: [],
+          attachments: [],
+          storyPoints: undefined,
+          recurring: undefined,
+          isPrivate: false,
+          isSensitive: false,
+        });
+      }
+    }
+  }, [template, open, form, allPriorities]);
 
   const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
     control: form.control,
@@ -104,7 +133,7 @@ export function TemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{template ? 'Template Bewerken' : 'Nieuw Template Aanmaken'}</DialogTitle>

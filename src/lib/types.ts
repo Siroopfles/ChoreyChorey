@@ -123,6 +123,7 @@ export const PERMISSIONS = {
   MANAGE_IDEAS: 'MANAGE_IDEAS',
   MANAGE_API_KEYS: 'MANAGE_API_KEYS',
   MANAGE_INTEGRATIONS: 'MANAGE_INTEGRATIONS',
+  MANAGE_TEMPLATES: 'MANAGE_TEMPLATES',
   MANAGE_TIME_TRACKING_INTEGRATIONS: 'MANAGE_TIME_TRACKING_INTEGRATIONS',
 } as const;
 
@@ -144,6 +145,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.MANAGE_IDEAS]: { name: 'Ideeën Beheren', description: 'Kan de status van ideeën in de ideeënbus aanpassen.' },
   [PERMISSIONS.MANAGE_API_KEYS]: { name: 'API Sleutels Beheren', description: 'Kan API-sleutels voor de organisatie aanmaken, inzien en intrekken.' },
   [PERMISSIONS.MANAGE_INTEGRATIONS]: { name: 'Integraties Beheren', description: 'Kan integraties met externe services zoals Slack en GitHub configureren.' },
+  [PERMISSIONS.MANAGE_TEMPLATES]: { name: 'Templates Beheren', description: 'Kan taaktemplates voor de organisatie aanmaken, bewerken en verwijderen.' },
   [PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS]: { name: 'Tijdregistratie Integraties Beheren', description: 'Kan integraties met tijdregistratietools zoals Toggl configureren.' },
 };
 
@@ -170,6 +172,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.MANAGE_IDEAS,
       PERMISSIONS.MANAGE_API_KEYS,
       PERMISSIONS.MANAGE_INTEGRATIONS,
+      PERMISSIONS.MANAGE_TEMPLATES,
       PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS,
     ],
   },

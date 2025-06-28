@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Loader2, Mail, Copy, Check } from 'lucide-react';
@@ -10,9 +10,22 @@ import { useAuth } from '@/contexts/auth-context';
 import { Input } from '@/components/ui/input';
 import { createOrganizationInvite } from '@/app/actions/organization.actions';
 
-export function InviteMembersDialog({ organizationId }: { organizationId: string }) {
+export function InviteMembersDialog({ 
+  organizationId,
+  children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange 
+}: { 
+  organizationId: string, 
+  children?: ReactNode,
+  open?: boolean, 
+  onOpenChange?: (open: boolean) => void 
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
+    
     const { user, currentOrganization } = useAuth();
-    const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [inviteLink, setInviteLink] = useState('');
     const [hasCopied, setHasCopied] = useState(false);
@@ -50,12 +63,7 @@ export function InviteMembersDialog({ organizationId }: { organizationId: string
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-                <Button variant="outline">
-                    <Mail className="mr-2 h-4 w-4" />
-                    Nodig Leden Uit
-                </Button>
-            </DialogTrigger>
+            {children && <DialogTrigger asChild>{children}</DialogTrigger>}
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Leden Uitnodigen</DialogTitle>
