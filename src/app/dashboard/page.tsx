@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, Suspense, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,7 +11,7 @@ import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefca
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
-import type { Task, User, Label, Priority, Project } from '@/lib/types';
+import type { Task, User, Label, Priority, Project, ActivityFeedItem } from '@/lib/types';
 import ImportTasksDialog from '@/components/chorey/import-tasks-dialog';
 import MeetingImportDialog from '@/components/chorey/meeting-import-dialog';
 import DashboardView from '@/components/chorey/dashboard-view';
@@ -24,6 +24,8 @@ import TaskListView from '@/components/chorey/task-list-view';
 import Papa from 'papaparse';
 import { ChoreOfTheWeekCard } from '@/components/chorey/chore-of-the-week-card';
 import { GettingStartedGuide } from '@/components/chorey/getting-started-guide';
+import { getPublicActivityFeed } from '@/app/actions/gamification.actions';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
   const { tasks, loading, searchTerm, setSearchTerm, filters } = useTasks();
@@ -32,6 +34,24 @@ export default function DashboardPage() {
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
   const [groupBy, setGroupBy] = useState<'status' | 'assignee' | 'priority' | 'project'>('status');
+  const [activityFeedItems, setActivityFeedItems] = useState<ActivityFeedItem[]>([]);
+  const [isFeedLoading, setIsFeedLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (currentOrganization) {
+        setIsFeedLoading(true);
+        getPublicActivityFeed(currentOrganization.id)
+            .then(result => {
+                if (result.error) {
+                    toast({ title: "Fout bij laden feed", description: result.error, variant: 'destructive'});
+                } else if (result.feed) {
+                    setActivityFeedItems(result.feed);
+                }
+            })
+            .finally(() => setIsFeedLoading(false));
+    }
+  }, [currentOrganization, toast]);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -240,7 +260,12 @@ export default function DashboardPage() {
         </TabsContent>
         <TabsContent value="dashboard" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<DashboardViewSkeleton />}>
-              <DashboardView tasks={filteredTasks} users={users} />
+              <DashboardView
+                tasks={filteredTasks}
+                users={users}
+                activityFeedItems={activityFeedItems}
+                isFeedLoading={isFeedLoading}
+              />
            </Suspense>
         </TabsContent>
         <TabsContent value="calendar" className="flex-1 mt-4 overflow-y-auto">

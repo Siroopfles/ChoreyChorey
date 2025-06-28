@@ -2,8 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, increment, arrayUnion, runTransaction, addDoc } from 'firebase/firestore';
-import type { Task, User, Organization } from '@/lib/types';
+import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, increment, arrayUnion, runTransaction, addDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
+import type { Task, User, Organization, ActivityFeedItem } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 
 async function grantAchievements(userId: string, type: 'completed' | 'thanked', task?: Task) {
@@ -14,6 +14,7 @@ async function grantAchievements(userId: string, type: 'completed' | 'thanked', 
     const userData = userDoc.data() as User;
     const userAchievements = userData.achievements || [];
     const achievementsToGrant: { id: string, name: string }[] = [];
+    const batch = writeBatch(db);
 
     if (type === 'completed' && task) {
         const completedTasksQuery = query(collection(db, 'tasks'), where('assigneeIds', 'array-contains', userId), where('status', '==', 'Voltooid'));
@@ -40,9 +41,25 @@ async function grantAchievements(userId: string, type: 'completed' | 'thanked', 
     }
 
     if (achievementsToGrant.length > 0) {
-        await updateDoc(userRef, {
+        batch.update(userRef, {
             achievements: arrayUnion(...achievementsToGrant.map(a => a.id))
         });
+        achievementsToGrant.forEach(ach => {
+            const activityRef = doc(collection(db, 'activityFeed'));
+            batch.set(activityRef, {
+                organizationId: task?.organizationId,
+                timestamp: new Date(),
+                type: 'achievement',
+                userId: userId,
+                userName: userData.name,
+                userAvatar: userData.avatar,
+                details: {
+                    achievementId: ach.id,
+                    achievementName: ach.name,
+                }
+            });
+        });
+        await batch.commit();
         return { granted: achievementsToGrant };
     }
     return { granted: [] };
@@ -63,11 +80,32 @@ export async function thankForTask(taskId: string, currentUserId: string, assign
         }
 
         const batch = writeBatch(db);
-        const points = 5; // Bonus points for being thanked
+        const points = 5;
+        const fromUserDoc = await getDoc(doc(db, 'users', currentUserId));
+        const fromUserData = fromUserDoc.data() as User;
+        const taskDoc = await getDoc(doc(db, 'tasks', taskId));
+        const taskData = taskDoc.data() as Task;
         
         assignees.forEach(assignee => {
           const assigneeRef = doc(db, 'users', assignee.id);
           batch.update(assigneeRef, { points: increment(points) });
+
+          const activityRef = doc(collection(db, 'activityFeed'));
+          batch.set(activityRef, {
+              organizationId: organizationId,
+              timestamp: new Date(),
+              type: 'kudos',
+              userId: currentUserId,
+              userName: fromUserData.name,
+              userAvatar: fromUserData.avatar,
+              details: {
+                  recipientId: assignee.id,
+                  recipientName: assignee.name,
+                  taskId: taskId,
+                  taskTitle: taskData.title,
+                  points: points,
+              }
+          });
         });
         
         const assigneesNames = assignees.map(u => u.name).join(', ');
@@ -138,6 +176,23 @@ export async function rateTask(taskId: string, rating: number, task: Task, curre
                 const userRef = doc(db, 'users', assigneeId);
                 batch.update(userRef, { points: increment(bonusPoints) });
             });
+             const fromUserDoc = await getDoc(doc(db, 'users', currentUserId));
+            const fromUserData = fromUserDoc.data() as User;
+            const activityRef = doc(collection(db, 'activityFeed'));
+            batch.set(activityRef, {
+                organizationId: organizationId,
+                timestamp: new Date(),
+                type: 'rating',
+                userId: currentUserId,
+                userName: fromUserData.name,
+                userAvatar: fromUserData.avatar,
+                details: {
+                    recipientIds: task.assigneeIds,
+                    taskId: taskId,
+                    taskTitle: task.title,
+                    rating: rating,
+                }
+            });
         }
         
         await batch.commit();
@@ -192,5 +247,27 @@ export async function transferPoints(fromUserId: string, toUserId: string, amoun
     }
 }
 
+export async function getPublicActivityFeed(organizationId: string): Promise<{ feed?: ActivityFeedItem[], error?: string }> {
+    try {
+        const q = query(
+            collection(db, 'activityFeed'),
+            where('organizationId', '==', organizationId),
+            orderBy('timestamp', 'desc'),
+            limit(20)
+        );
+        const snapshot = await getDocs(q);
+        const feed = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp).toDate(),
+            } as ActivityFeedItem;
+        });
+        return { feed };
+    } catch(e: any) {
+        return { error: e.message };
+    }
+}
 
 export { grantAchievements };

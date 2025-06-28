@@ -650,6 +650,27 @@ export const ideaFormSchema = z.object({
 });
 export type IdeaFormValues = z.infer<typeof ideaFormSchema>;
 
+export type ActivityFeedItem = {
+  id: string;
+  organizationId: string;
+  timestamp: Date;
+  type: 'achievement' | 'kudos' | 'rating';
+  userId: string; // The user who performed the action
+  userName: string;
+  userAvatar: string;
+  details: {
+    recipientId?: string;
+    recipientName?: string;
+    recipientIds?: string[];
+    taskId?: string;
+    taskTitle?: string;
+    achievementId?: string;
+    achievementName?: string;
+    rating?: number;
+    points?: number;
+  };
+};
+
 export const API_PERMISSIONS = {
   'read:tasks': 'Lezen: Taken',
   'write:tasks': 'Schrijven: Taken',
