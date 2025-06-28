@@ -62,6 +62,7 @@ import {
   Github,
   Gitlab,
   CornerUpRight,
+  GitBranch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -205,6 +206,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
       return false;
     });
   }, [task.blockedBy, task.dependencyConfig, allTasks]);
+
+  const blockingTasks = useMemo(() => {
+    return allTasks.filter(otherTask => otherTask.blockedBy?.includes(task.id));
+  }, [allTasks, task.id]);
 
 
   useEffect(() => {
@@ -457,38 +462,6 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                 </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            {isBlocked && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1.5 text-xs text-red-500 mt-1 font-semibold cursor-help">
-                        <LinkIcon className="h-3 w-3" />
-                        <span>Geblokkeerd</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="p-1">
-                        <p className="font-semibold mb-1">Geblokkeerd door:</p>
-                        <ul className="list-disc list-inside text-xs space-y-1">
-                          {task.blockedBy
-                            ?.map(blockerId => {
-                                const blockerTask = allTasks.find(t => t.id === blockerId)
-                                const depConfig = task.dependencyConfig?.[blockerId];
-                                return { blockerTask, depConfig }
-                            })
-                            .filter((item): item is { blockerTask: Task, depConfig: any } => !!item.blockerTask)
-                            .map(({ blockerTask, depConfig }) => (
-                              <li key={blockerTask.id} className={cn(blockerTask.status === 'Voltooid' && 'text-muted-foreground')}>
-                                {blockerTask.title} ({blockerTask.status})
-                                {depConfig && <span className="text-xs italic"> (Wachttijd: {depConfig.lag} {depConfig.unit === 'days' ? 'dagen' : 'uren'})</span>}
-                              </li>
-                            ))}
-                        </ul>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-            )}
             </CardHeader>
             <CardContent className="p-3 pt-1 pl-9">
             <div className="flex flex-wrap gap-1 mb-2">
@@ -714,6 +687,56 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                     <PriorityIcon className="h-3 w-3" />
                     <span>{task.priority}</span>
                     </div>
+                    {isBlocked && (
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-destructive font-semibold">
+                                    <LinkIcon className="h-3 w-3" />
+                                    <span>Geblokkeerd</span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <div className="p-1">
+                                <p className="font-semibold mb-1">Geblokkeerd door:</p>
+                                <ul className="list-disc list-inside text-xs space-y-1">
+                                    {task.blockedBy
+                                    ?.map(blockerId => {
+                                        const blockerTask = allTasks.find(t => t.id === blockerId)
+                                        const depConfig = task.dependencyConfig?.[blockerId];
+                                        return { blockerTask, depConfig }
+                                    })
+                                    .filter((item): item is { blockerTask: Task, depConfig: any } => !!item.blockerTask)
+                                    .map(({ blockerTask, depConfig }) => (
+                                        <li key={blockerTask.id} className={cn(blockerTask.status === 'Voltooid' && 'text-muted-foreground')}>
+                                        {blockerTask.title} ({blockerTask.status})
+                                        {depConfig && <span className="text-xs italic"> (Wachttijd: {depConfig.lag} {depConfig.unit === 'days' ? 'dagen' : 'uren'})</span>}
+                                        </li>
+                                    ))}
+                                </ul>
+                                </div>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                    {blockingTasks.length > 0 && (
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-blue-500 font-semibold">
+                                    <GitBranch className="h-3 w-3" />
+                                    <span>Blokkeert {blockingTasks.length}</span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p className="font-semibold mb-1">Blokkeert de volgende taken:</p>
+                                <ul className="list-disc list-inside text-xs space-y-1">
+                                {blockingTasks.map(t => <li key={t.id}>{t.title}</li>)}
+                                </ul>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                     {showTimeTracking && (totalTimeLogged > 0 || task.activeTimerStartedAt) && (
                       <div className={cn("flex items-center gap-1", task.activeTimerStartedAt && "text-primary animate-pulse font-semibold")}>
                           <Timer className="h-3 w-3" />
