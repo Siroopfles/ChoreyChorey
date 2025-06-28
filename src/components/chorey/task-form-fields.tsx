@@ -677,24 +677,24 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
         <div className="col-span-1 md:col-span-2">
            <FormField
               control={form.control}
-              name="recurring.frequency"
+              name="recurring"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Herhaling</FormLabel>
                   <Select
-                     onValueChange={(value) => {
+                    onValueChange={(value) => {
                       if (value === 'none') {
-                        form.setValue('recurring', undefined);
+                        field.onChange(undefined);
                       } else if (value === 'monthly') {
-                        form.setValue('recurring', { 
+                        field.onChange({ 
                           frequency: 'monthly',
                           monthly: { type: 'day_of_month', day: 1 }
                         });
                       } else {
-                        form.setValue('recurring', { frequency: value as 'daily' | 'weekly' });
+                        field.onChange({ frequency: value as 'daily' | 'weekly' });
                       }
                     }}
-                    value={field.value || 'none'}
+                    value={field.value?.frequency || 'none'}
                   >
                     <FormControl>
                       <SelectTrigger>
