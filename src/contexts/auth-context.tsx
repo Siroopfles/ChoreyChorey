@@ -113,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ...rawData.status,
                 until: (rawData.status.until as Timestamp | null)?.toDate() ?? null,
             } : { type: 'Offline', until: null },
+            workingHours: rawData.workingHours,
             mutedTaskIds: rawData.mutedTaskIds || [],
             twoFactorEnabled: rawData.twoFactorEnabled,
             twoFactorSecret: rawData.twoFactorSecret,

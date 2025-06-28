@@ -262,6 +262,10 @@ export type User = {
   timezone?: string;
   website?: string;
   location?: string;
+  workingHours?: {
+    startTime: string; // "HH:mm" format
+    endTime: string; // "HH:mm" format
+  };
   achievements: string[]; // Achievement IDs
   organizationIds?: string[];
   currentOrganizationId?: string | null;
@@ -354,18 +358,14 @@ export type Status = string;
 export type Label = string;
 export const ALL_SKILLS: string[] = ["Koken", "Schoonmaken", "Tuinieren", "Techniek", "Administratie", "Organiseren", "Boodschappen", "Dierenverzorging", "Planning", "Communicatie"];
 
-export const monthlyRecurringSchema = z.union([
-  z.object({
-    type: z.literal('day_of_month'),
-    day: z.number().min(1).max(31),
-  }),
-  z.object({
-    type: z.literal('day_of_week'),
-    week: z.enum(['first', 'second', 'third', 'fourth', 'last']),
-    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    weekday: z.number().min(0).max(6),
-  })
-]);
+export const monthlyRecurringSchema = z.object({
+  type: z.literal('day_of_month'),
+  day: z.number().min(1).max(31),
+}).or(z.object({
+  type: z.literal('day_of_week'),
+  week: z.enum(['first', 'second', 'third', 'fourth', 'last']),
+  weekday: z.number().min(0).max(6),
+}));
 
 export const recurringSchema = z.object({
   frequency: z.enum(['daily', 'weekly', 'monthly']),

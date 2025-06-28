@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, User, Bot, Tags, Check, X, Star, Bell, Globe, MapPin, Building } from 'lucide-react';
+import { Loader2, User, Bot, Tags, Check, X, Star, Bell, Globe, MapPin, Building, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/app/actions/user.actions';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
@@ -25,6 +26,7 @@ import type { User as UserType } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Naam moet minimaal 2 karakters bevatten.'),
@@ -33,6 +35,10 @@ const profileSchema = z.object({
   timezone: z.string().optional(),
   website: z.string().url('Voer een geldige URL in.').or(z.literal('')).optional(),
   location: z.string().optional(),
+  workingHours: z.object({
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+  }).optional(),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
@@ -53,6 +59,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
       timezone: user.timezone || '',
       website: user.website || '',
       location: user.location || '',
+      workingHours: user.workingHours || { startTime: '09:00', endTime: '17:00' },
     },
   });
 
@@ -125,20 +132,21 @@ export default function ProfileSettings({ user }: { user: UserType }) {
           <CardDescription>Beheer hier je profielinstellingen.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center gap-4 text-center mb-8">
-            <Avatar className="h-24 w-24 border-2 border-primary">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>
-                <User className="h-12 w-12" />
-              </AvatarFallback>
-            </Avatar>
-            <Button onClick={onGenerateAvatar} disabled={isGeneratingAvatar} variant="outline">
-              {isGeneratingAvatar ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-              Nieuwe AI Avatar
-            </Button>
-          </div>
           <Form {...profileForm}>
-            <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4 max-w-md mx-auto">
+            <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4 max-w-lg mx-auto">
+              <div className="flex flex-col items-center gap-4 text-center mb-8">
+                <Avatar className="h-24 w-24 border-2 border-primary">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback>
+                    <User className="h-12 w-12" />
+                  </AvatarFallback>
+                </Avatar>
+                <Button onClick={onGenerateAvatar} disabled={isGeneratingAvatar} variant="outline">
+                  {isGeneratingAvatar ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                  Nieuwe AI Avatar
+                </Button>
+              </div>
+
               <FormField
                 control={profileForm.control}
                 name="name"
@@ -276,10 +284,49 @@ export default function ProfileSettings({ user }: { user: UserType }) {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isSubmittingProfile}>
-                {isSubmittingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Profiel Opslaan
-              </Button>
+
+              <Separator className="my-4" />
+                <div className="space-y-2">
+                    <FormLabel className="flex items-center gap-2"><Clock/> Werkuren</FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                        Stel je typische werkuren in om workload en notificaties te verfijnen.
+                    </p>
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                    control={profileForm.control}
+                    name="workingHours.startTime"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Starttijd</FormLabel>
+                        <FormControl>
+                            <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={profileForm.control}
+                    name="workingHours.endTime"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Eindtijd</FormLabel>
+                        <FormControl>
+                            <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+              
+              <div className="pt-4">
+                <Button type="submit" disabled={isSubmittingProfile} className="w-full">
+                  {isSubmittingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Profiel Opslaan
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>

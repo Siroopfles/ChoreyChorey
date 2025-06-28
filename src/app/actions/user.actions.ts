@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -8,7 +9,7 @@ import { authenticator } from 'otplib';
 import { getGoogleAuthClient, scopes } from '@/lib/google-auth';
 import { getMicrosoftAuthClient, scopes as microsoftScopes, redirectUri as microsoftRedirectUri } from '@/lib/microsoft-graph-auth';
 
-export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken' | 'microsoftRefreshToken' | 'bio' | 'timezone' | 'website' | 'location' | 'togglApiToken' | 'clockifyApiToken'>>) {
+export async function updateUserProfile(userId: string, data: Partial<Pick<User, 'name' | 'avatar' | 'skills' | 'notificationSettings' | 'googleRefreshToken' | 'microsoftRefreshToken' | 'bio' | 'timezone' | 'website' | 'location' | 'togglApiToken' | 'clockifyApiToken' | 'workingHours'>>) {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, data);
@@ -300,4 +301,3 @@ export async function toggleMuteTask(userId: string, taskId: string) {
         return { error: error.message };
     }
 }
-
