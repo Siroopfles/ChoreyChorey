@@ -66,20 +66,19 @@ export const roadmapPhases: Phase[] = [
     name: "Fase 3: Ecosysteem & Integraties (Voltooid)",
     description: "Chorey verbinden met de tools die u al gebruikt. Deze fase richt zich op het openen van het platform en het bouwen van naadloze verbindingen met andere diensten.",
     features: [
-      { id: 3001, title: "Public API v2", description: "Uitbreiding van de API met meer endpoints (projecten, teams, gebruikers) en webhook management.", completed: true },
-      { id: 3002, title: "Slack Integratie", description: "Verbind met Slack voor notificaties en gebruik het nieuwe `/api/v1/command` endpoint om slash-commando's (`/chorey taak...`) en andere interacties te bouwen.", completed: true },
-      { id: 3003, title: "GitHub Integratie", description: "Koppel taken aan issues en pull requests. Synchroniseer statusupdates.", completed: true },
-      { id: 3004, title: "Microsoft Teams Integratie", description: "Verbind met Teams voor notificaties en gebruik het nieuwe `/api/v1/command` endpoint om bots en andere interacties te bouwen.", completed: true },
-      { id: 3005, title: "Zapier / Make (Integromat) Integratie", description: "Verbind Chorey met duizenden andere apps via de API en het webhook-systeem.", completed: true },
+      { id: 3001, title: "Public API v1 & Webhooks", description: "Uitbreiding van de API met meer endpoints (projecten, teams, gebruikers) en webhook management. Dit vormt de basis voor Zapier/Make integraties.", completed: true },
+      { id: 3002, title: "Slack Integratie", description: "Verbind met Slack voor notificaties en gebruik het `/api/v1/command` endpoint om slash-commando's (`/chorey taak...`) te bouwen.", completed: true },
+      { id: 3003, title: "GitHub Integratie & Webhooks", description: "Koppel taken aan issues/PRs en synchroniseer statusupdates automatisch via webhooks.", completed: true },
+      { id: 3004, title: "Microsoft Teams Integratie", description: "Verbind met Teams voor notificaties en gebruik het `/api/v1/command` endpoint om bots en andere interacties te bouwen.", completed: true },
       { id: 3006, title: "Rijke Previews voor Cloud-bestanden", description: "Toon interactieve previews voor Google Workspace (Docs, Sheets, Slides) en Figma bestanden direct in de taakdetails.", completed: true },
       { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek project- of gebruikersadres.", completed: true },
       { id: 3008, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket issues en merge requests.", completed: true },
-      { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden toe aan taken. Figma-bestanden worden getoond met een interactieve live-preview en Adobe XD-links worden visueel herkend met een eigen icoon.", completed: true },
+      { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden toe aan taken. Figma-bestanden worden getoond met een interactieve live-preview.", completed: true },
       { id: 3010, title: "Outlook Calendar Integratie", description: "Synchroniseer deadlines met je Outlook agenda.", completed: true },
-      { id: 3011, title: "Discord Integratie", description: "Verbind met Discord voor notificaties en gebruik het nieuwe `/api/v1/command` endpoint om slash-commando's en bots te bouwen.", completed: true },
+      { id: 3011, title: "Discord Integratie", description: "Verbind met Discord voor notificaties en gebruik het `/api/v1/command` endpoint om slash-commando's en bots te bouwen.", completed: true },
       { id: 3012, title: "Toggl/Clockify Integratie", description: "Start en stop de timer in Chorey en synchroniseer de tijdregistratie met uw favoriete tool.", completed: true },
       { id: 3013, title: "Browser Extensie (Bookmarklet)", description: "Maak een taak aan van de huidige webpagina met één klik.", completed: true },
-      { id: 3014, title: "Jira Twee-weg Synchronisatie", description: "Koppel taken aan Jira issues. Synchroniseert nu ook reacties die in Jira worden geplaatst automatisch naar de gekoppelde taak in Chorey.", completed: true },
+      { id: 3014, title: "Jira Twee-weg Synchronisatie", description: "Koppel taken aan Jira issues. Reacties die in Jira worden geplaatst, verschijnen nu automatisch in de gekoppelde Chorey-taak.", completed: true },
     ]
   },
    {
@@ -104,11 +103,9 @@ export const roadmapPhases: Phase[] = [
       { id: 5001, title: "Budgettering & Kostentracering", description: "Wijs budgetten toe aan projecten en houd de kosten per taak bij.", completed: true },
       { id: 5002, title: "Resource Management", description: "Geavanceerde capaciteitsplanning en workload-inzichten over langere periodes.", completed: true },
       { id: 5003, title: "Custom Fields", description: "Voeg eigen velden (tekst, getal, datum, dropdown) toe aan taken voor maximale flexibiliteit.", completed: true },
-      { id: 5004, title: "Single Sign-On (SSO)", description: "Integratie met SAML, Google Workspace, Azure AD voor enterprise-grade authenticatie.", completed: false },
-      { id: 5005, title: "Data Residency Opties", description: "Kies de geografische locatie voor dataopslag (EU/US). Dit vereist het opzetten van meerdere Firebase projecten in verschillende regio's.", completed: false },
       { id: 5006, title: "Gast- / Klanttoegang", description: "Geef externe gebruikers beperkte, read-only toegang tot specifieke projecten of taken.", completed: true },
       { id: 5007, title: "IP Whitelisting", description: "Beperk toegang tot de organisatie tot specifieke IP-adressen voor extra beveiliging.", completed: true },
-      { id: 5008, title: "Geavanceerde Automatisering", description: "Een ingebouwde 'Zapier'-light voor het automatiseren van workflows binnen Chorey.", completed: true },
+      { id: 5008, title: "Geavanceerde Ingebouwde Automatisering", description: "Een ingebouwde 'Zapier'-light voor het automatiseren van workflows binnen Chorey, compleet met triggers en acties.", completed: true },
       { id: 5009, title: "AI Predictive Analysis", description: "Waarschuwt proactief voor projectvertragingen en budgetoverschrijdingen op basis van historische data.", completed: true },
       { id: 5010, title: "AI Burnout Voorspelling", description: "Signaleert risico op overbelasting op basis van werkpatronen en taken.", completed: true },
       { id: 5011, title: "AI Automatische Status Updates", description: "Stelt statuswijzigingen voor op basis van gekoppelde commits, comments en activiteit.", completed: true },
@@ -201,6 +198,7 @@ export const roadmapPhases: Phase[] = [
       { id: 13002, title: "Geavanceerde Audit Logs", description: "Maak het mogelijk om audit logs te filteren, exporteren en te streamen naar externe SIEM-systemen (Security Information and Event Management).", completed: false },
       { id: 13003, title: "Data Loss Prevention (DLP)", description: "Ontwikkel regels om te voorkomen dat gevoelige informatie (bv. creditcardnummers) per ongeluk in taken wordt opgeslagen.", completed: false },
       { id: 13004, title: "E-discovery & Legal Hold", description: "Bied beheerders de mogelijkheid om data van specifieke gebruikers of projecten te bevriezen en te exporteren voor juridische doeleinden.", completed: false },
+       { id: 5005, title: "Data Residency Opties", description: "Kies de geografische locatie voor dataopslag (EU/US). Dit vereist het opzetten van meerdere Firebase projecten in verschillende regio's.", completed: false },
     ]
   },
   {
@@ -225,3 +223,4 @@ export const roadmapPhases: Phase[] = [
     ]
   }
 ];
+
