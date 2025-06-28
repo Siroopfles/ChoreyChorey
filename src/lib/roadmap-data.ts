@@ -118,44 +118,53 @@ export const roadmapPhases: Phase[] = [
     name: "Fase 6: 'Quality of Life' & Onboarding",
     description: "Focus op de initiële gebruikerservaring en het verfijnen van bestaande workflows om dagelijks gebruik nog aangenamer en efficiënter te maken.",
     features: [
-      { id: 6001, title: "Interactieve Onboarding Tour", description: "Een stapsgewijze gids voor nieuwe gebruikers en organisaties om de belangrijkste functies te ontdekken.", completed: false },
-      { id: 6002, title: "Contextuele Help & Documentatie", description: "Integreer help-icoontjes en tooltips door de hele app die linken naar een kennisbank.", completed: false },
-      { id: 6003, title: "Notificatie Bundeling", description: "Combineer meerdere gerelateerde notificaties (bv. meerdere comments op één taak) in één overzichtelijke melding.", completed: false },
-      { id: 6004, title: "Taak Relaties", description: "Markeer taken als 'gerelateerd aan', 'duplicaat van' of 'gevolg van' een andere taak voor meer context.", completed: false },
-      { id: 6005, title: "Geavanceerd Zoeken met Filters", description: "Maak complexe zoekopdrachten met booleaanse logica (AND/OR/NOT) en sla deze op als 'Smart Views'.", completed: false },
-      { id: 6006, title: "Gebruikers-specifieke Thema's", description: "Sta gebruikers toe om persoonlijke thema's te kiezen die alleen voor hen zichtbaar zijn, los van de organisatie-branding.", completed: false },
+      { id: 6001, title: "Interactieve Onboarding Tour", description: "Een stapsgewijze gids voor nieuwe gebruikers, met rol-specifieke checklists, om de belangrijkste functies te ontdekken.", completed: false },
+      { id: 6002, title: "Contextuele Help & Kennisbank", description: "Integreer help-icoontjes door de app die linken naar een centrale, doorzoekbare kennisbank.", completed: false },
+      { id: 6003, title: "Notificatie Bundeling", description: "Combineer meerdere gerelateerde notificaties (bv. meerdere comments op één taak) in één overzichtelijke melding in de inbox.", completed: false },
+      { id: 6004, title: "Taak Relaties", description: "Markeer taken expliciet als 'gerelateerd aan', 'duplicaat van' of 'gevolg van' een andere taak voor meer context.", completed: false },
+      { id: 6005, title: "Geavanceerd Zoeken (Smart Views)", description: "Maak complexe zoekopdrachten met booleaanse logica (AND/OR/NOT) en sla deze op als permanente, deelbare 'Smart Views'.", completed: false },
+      { id: 6006, title: "Aanpasbare Notificatiegeluiden", description: "Laat gebruikers kiezen uit een selectie van geluiden voor verschillende notificatietypes voor een persoonlijke touch.", completed: false },
+      { id: 6007, title: "Focus Modus", description: "Een afleidingsvrije, full-screen weergave voor een enkele taak, die alleen de essentiële informatie toont.", completed: false },
+      { id: 6008, title: "Vastgezette Taken & Projecten", description: "Gebruikers kunnen belangrijke taken of projecten 'vastpinnen' voor snelle toegang vanaf hun dashboard.", completed: false },
     ]
   },
   {
     name: "Fase 7: 'Real-time' Samenwerking",
     description: "De app transformeren van een reactieve naar een proactieve, live samenwerkingsomgeving.",
     features: [
-      { id: 7001, title: "Real-time Aanwezigheid", description: "Zie wie er op dit moment online is, een specifieke taak bekijkt, of aan het typen is in een commentaarveld.", completed: false },
-      { id: 7002, title: "Live Cursors (Optioneel)", description: "Een optionele functie voor het live zien van de muisbewegingen van andere gebruikers op een projectbord.", completed: false },
-      { id: 7003, title: "Gedeelde Concepten", description: "Werk samen aan een taakbeschrijving of notitie voordat deze wordt opgeslagen.", completed: false },
-      { id: 7004, title: "Verbeterde Notificatie-engine", description: "Directe push-notificaties naar de browser of desktop-app voor @mentions en belangrijke updates.", completed: false },
-      { id: 7005, title: "Real-time Bord Updates", description: "Geen 'pull-to-refresh' meer; het kanbanbord en andere views updaten direct en vloeiend wanneer een teamlid een wijziging maakt.", completed: false },
+      { id: 7001, title: "Live Aanwezigheidsindicatoren", description: "Zie wie er op dit moment online is en welke specifieke taak of projectpagina ze bekijken.", completed: false },
+      { id: 7002, title: "Real-time Bord & Lijst Updates", description: "Vervang polling door WebSockets om het kanbanbord en andere views direct en vloeiend te updaten wanneer een teamlid een wijziging maakt.", completed: false },
+      { id: 7003, title: "'Aan het typen...' Indicatoren", description: "Toon real-time feedback in commentaarvelden om te zien wanneer andere gebruikers actief een reactie typen.", completed: false },
+      { id: 7004, title: "Commentaar naar Taak Converteren", description: "Converteer elk commentaar met één klik naar een nieuwe, gekoppelde subtaak, inclusief de inhoud van het commentaar.", completed: false },
+      { id: 7005, title: "In-app Audio Huddles", description: "Start een snelle, spontane voice-chat binnen de context van een taak of project, zonder de noodzaak voor een externe tool.", completed: false },
+      { id: 7006, title: "Collaboratief Tekstbewerken", description: "Sta meerdere gebruikers toe om tegelijkertijd, in Google Docs-stijl, een taakbeschrijving of notitie te bewerken.", completed: false },
+      { id: 7007, title: "Threaded Comments", description: "Maak het mogelijk om direct op specifieke comments te reageren, waardoor overzichtelijke discussies ontstaan.", completed: false },
     ]
   },
   {
     name: "Fase 8: Mobiele Ervaring & PWA",
     description: "Een naadloze en krachtige ervaring creëren voor gebruikers die onderweg zijn.",
     features: [
-      { id: 8001, title: "Progressive Web App (PWA) Optimalisatie", description: "Verbeter de offline mogelijkheden, voeg native-like 'add to home screen' functionaliteit toe en zorg voor een snelle, app-achtige ervaring.", completed: false },
-      { id: 8002, title: "Mobiel-specifieke UI/UX", description: "Ontwikkel specifieke componenten en layouts die geoptimaliseerd zijn voor kleinere schermen, zoals een 'bottom navigation bar'.", completed: false },
-      { id: 8003, title: "Push Notificaties", description: "Implementeer web push notificaties voor belangrijke updates, zelfs als de app niet geopend is.", completed: false },
-      { id: 8004, title: "Mobiele Widgets", description: "Ontwikkel home screen widgets (voor iOS/Android) die een overzicht van taken of een 'add task' knop tonen.", completed: false },
+      { id: 8001, title: "PWA Offline First Architectuur", description: "Verbeter de offline mogelijkheden, sta volledige taakcreatie en -bewerking offline toe, met naadloze achtergrondsynchronisatie.", completed: false },
+      { id: 8002, title: "Mobiel-specifieke UI/UX", description: "Ontwikkel specifieke componenten zoals een 'bottom navigation bar' voor snelle toegang tot 'Mijn Taken', 'Inbox' en 'Taak Toevoegen'.", completed: false },
+      { id: 8003, title: "Web Push Notificaties", description: "Implementeer push-notificaties voor @mentions en belangrijke updates, zelfs als de app gesloten is.", completed: false },
+      { id: 8004, title: "Mobiele Home Screen Widgets", description: "Ontwikkel widgets voor iOS/Android die een overzicht van taken of een 'add task' knop tonen.", completed: false },
+      { id: 8005, title: "'Deel naar Chorey' Functionaliteit", description: "Integreer met het native 'share sheet' van mobiele besturingssystemen om een taak te maken van elke link, afbeelding of tekst.", completed: false },
+      { id: 8006, title: "Haptische Feedback", description: "Voeg subtiele trillingen toe bij belangrijke acties zoals het voltooien van een taak of het ontvangen van 'kudos'.", completed: false },
+      { id: 8007, title: "Mobiele Spraakcommando's", description: "Activeer de microfoon in de mobiele app om taken aan te maken of te bewerken via spraak.", completed: false },
     ]
   },
   {
     name: "Fase 9: Geavanceerde Analyse & Inzichten",
     description: "Gebruikers en managers voorzien van diepere, actiegerichte inzichten in hun productiviteit en projectvoortgang.",
     features: [
-      { id: 9001, title: "Deelbare Dashboards", description: "Maak een dashboard met specifieke rapporten en deel deze via een (beveiligde) link met belanghebbenden.", completed: false },
-      { id: 9002, title: "Geplande Rapporten", description: "Configureer rapporten die automatisch op een vast tijdstip (bv. elke maandag) per e-mail als PDF worden verstuurd.", completed: false },
+      { id: 9001, title: "Deelbare & In te sluiten Dashboards", description: "Genereer een veilige, read-only link naar een dashboard, perfect voor het delen met stakeholders of voor het insluiten in Confluence/Notion.", completed: false },
+      { id: 9002, title: "Geplande Rapporten via E-mail", description: "Configureer rapporten die automatisch als PDF worden gemaild op een vast schema (bv. elke maandagochtend).", completed: false },
       { id: 9003, title: "Cycle & Lead Time Analyse", description: "Genereer grafieken die de doorlooptijd van taken tonen, van creatie tot voltooiing, per project of team.", completed: false },
-      { id: 9004, title: "Individuele Productiviteitsinzichten", description: "Een persoonlijk dashboard met statistieken over voltooide taken, focus-tijd en meest productieve dagen/uren.", completed: false },
-      { id: 9005, title: "AI-gestuurde Inzichten", description: "De AI analyseert data en presenteert opmerkelijke trends, zoals 'Taken met label X duren gemiddeld 30% langer'.", completed: false },
+      { id: 9004, title: "Individuele Productiviteitsinzichten", description: "Een persoonlijk dashboard met statistieken over voltooide taken, focustijd en meest productieve dagen/uren.", completed: false },
+      { id: 9005, title: "AI-gestuurde 'Wat-als' Scenario's", description: "Een AI-tool die de impact van veranderingen simuleert, zoals het toevoegen van teamleden of het wijzigen van deadlines.", completed: false },
+      { id: 9006, title: "Team Velocity Tracking", description: "Monitor de hoeveelheid werk (in story points) die een team per sprint voltooit om toekomstige planning te verbeteren.", completed: false },
+      { id: 9007, title: "AI Inzichten & Trends", description: "De AI analyseert data en presenteert opmerkelijke trends, zoals 'Taken met label X duren gemiddeld 30% langer'.", completed: false },
     ]
   },
   {
@@ -167,6 +176,8 @@ export const roadmapPhases: Phase[] = [
       { id: 10003, title: "CI/CD Pipeline Integratie", description: "Zorg ervoor dat alle tests automatisch worden uitgevoerd bij elke code-wijziging via GitHub Actions.", completed: false },
       { id: 10004, title: "Visuele Regressietesten", description: "Implementeer een tool (bv. Chromatic) om onbedoelde visuele wijzigingen in UI-componenten te detecteren.", completed: false },
       { id: 10005, title: "Performance Budgetting", description: "Stel prestatie-eisen in (bv. max. laadtijd, bundle-grootte) en laat de CI-pipeline falen als deze worden overschreden.", completed: false },
+      { id: 10006, title: "Geautomatiseerde Toegankelijkheidstesten", description: "Integreer `axe-core` in de CI/CD pipeline om automatisch toegankelijkheidsfouten te detecteren.", completed: false },
+      { id: 10007, title: "Beveiligings- & Afhankelijkheidsscans", description: "Implementeer Snyk of Dependabot om proactief te scannen op kwetsbaarheden in project-dependencies.", completed: false },
     ]
   },
   {
@@ -178,6 +189,8 @@ export const roadmapPhases: Phase[] = [
       { id: 11003, title: "Next.js Caching Strategieën", description: "Implementeer geavanceerde caching (ISR, data revalidation) voor statische en dynamische content.", completed: false },
       { id: 11004, title: "Load Testing", description: "Simuleer een groot aantal gelijktijdige gebruikers om knelpunten in de backend en database te identificeren.", completed: false },
       { id: 11005, title: "Edge Functies", description: "Verplaats bepaalde logica (zoals authenticatie-checks) naar de 'edge' voor lagere latency.", completed: false },
+      { id: 11006, title: "Gevirtualiseerde Lijsten & Borden", description: "Implementeer 'windowing' voor lange taaklijsten om alleen zichtbare items te renderen, wat de prestaties drastisch verbetert.", completed: false },
+      { id: 11007, title: "Firebase App Check", description: "Bescherm backend resources (Firestore, Cloud Functions) door te verifiëren dat verzoeken van uw authentieke app komen.", completed: false },
     ]
   },
   {
@@ -188,27 +201,33 @@ export const roadmapPhases: Phase[] = [
       { id: 12002, title: "Developer Documentatie", description: "Een interactieve documentatiesite (docs.chorey.app) voor de v1 API met codevoorbeelden en een 'Try it out'-functie.", completed: false },
       { id: 12003, title: "Publicatie TypeScript/JS SDK", description: "Publiceer een NPM-pakket dat het eenvoudig maakt om vanuit een JavaScript-omgeving met de Chorey API te interageren.", completed: false },
       { id: 12004, title: "Storybook voor Componenten", description: "Documenteer alle UI-componenten in Storybook, wat de ontwikkeling en het onderhoud van de UI versnelt.", completed: false },
+      { id: 12005, title: "Openbare Postman Collectie", description: "Publiceer een uitgebreide Postman-collectie die de volledige Chorey v1 API documenteert en testbaar maakt.", completed: false },
+      { id: 12006, title: "Developer Blog", description: "Start een technische blog over ontwikkelingsuitdagingen en architecturale keuzes om ontwikkelaars te betrekken.", completed: false },
     ]
   },
   {
     name: "Fase 13: Geavanceerde Enterprise Beveiliging",
     description: "Functies implementeren die voldoen aan de strenge beveiligingseisen van grote organisaties.",
     features: [
-      { id: 13001, title: "Single Sign-On (SSO)", description: "Implementeer ondersteuning voor SAML 2.0- en OpenID Connect-protocollen voor integratie met identity providers zoals Okta en Azure AD.", completed: false },
+      { id: 13001, title: "Single Sign-On (SSO)", description: "Implementeer ondersteuning voor SAML 2.0 en OpenID Connect voor integratie met identity providers zoals Okta en Azure AD.", completed: false },
       { id: 13002, title: "Geavanceerde Audit Logs", description: "Maak het mogelijk om audit logs te filteren, exporteren en te streamen naar externe SIEM-systemen (Security Information and Event Management).", completed: false },
       { id: 13003, title: "Data Loss Prevention (DLP)", description: "Ontwikkel regels om te voorkomen dat gevoelige informatie (bv. creditcardnummers) per ongeluk in taken wordt opgeslagen.", completed: false },
       { id: 13004, title: "E-discovery & Legal Hold", description: "Bied beheerders de mogelijkheid om data van specifieke gebruikers of projecten te bevriezen en te exporteren voor juridische doeleinden.", completed: false },
-       { id: 5005, title: "Data Residency Opties", description: "Kies de geografische locatie voor dataopslag (EU/US). Dit vereist het opzetten van meerdere Firebase projecten in verschillende regio's.", completed: false },
+      { id: 13005, title: "Configureerbaar Sessiebeleid", description: "Geef beheerders de mogelijkheid om organisatie-breed beleid in te stellen voor idle- en absolute sessie-timeouts.", completed: false },
+      { id: 13006, title: "SCIM User Provisioning", description: "Ondersteun SCIM om het onboarden en offboarden van gebruikers vanuit identity providers te automatiseren.", completed: false },
+      { id: 13007, title: "Data Residency Opties", description: "Kies de geografische locatie voor dataopslag (EU/US). Dit vereist het opzetten van meerdere Firebase projecten in verschillende regio's.", completed: false },
     ]
   },
   {
     name: "Fase 14: AI Agent Autonomie",
     description: "De AI evolueren van een reactieve assistent naar een proactieve, autonome teamgenoot.",
     features: [
-      { id: 14001, title: "Autonome Taakuitvoering", description: "De AI kan, na goedkeuring, zelfstandig taken uitvoeren die via de API kunnen worden aangestuurd, zoals het uitvoeren van een script of het versturen van een e-mail.", completed: false },
+      { id: 14001, title: "AI-gestuurde 'Goal-to-Project' Converter", description: "Geef de AI een hoog-over doel en het genereert een compleet projectplan met taken, afhankelijkheden en voorgestelde deadlines.", completed: false },
       { id: 14002, title: "Continue Modelverbetering", description: "Implementeer een systeem waarbij de AI-modellen periodiek worden gefinetuned op basis van geanonimiseerde feedback en succesvolle interacties.", completed: false },
-      { id: 14003, title: "Doelgerichte AI Agenten", description: "Gebruikers kunnen een doel instellen (bv. 'Lanceer de marketingcampagne voor Q4'), waarna de AI zelfstandig een compleet projectplan met taken, afhankelijkheden en deadlines opstelt.", completed: false },
-      { id: 14004, title: "Multi-Agent Samenwerking", description: "Laat gespecialiseerde AI-agenten (bv. een 'planning-agent' en een 'risico-agent') samenwerken aan complexe projecten.", completed: false },
+      { id: 14003, title: "AI Vergadering Planner", description: "Een AI-agent die de optimale tijd vindt in agenda's van deelnemers, rekening houdend met hun huidige werklast in Chorey.", completed: false },
+      { id: 14004, title: "AI Project Archivist", description: "Een agent die periodiek inactieve projecten identificeert en voorstelt voor archivering om de werkruimte opgeruimd te houden.", completed: false },
+      { id: 14005, title: "AI Sentiment Analyse", description: "Monitort commentaarthreads op tekenen van frictie of frustratie en waarschuwt discreet projectmanagers voor mogelijke team-issues.", completed: false },
+      { id: 14006, title: "AI 'Daily Stand-up' Assistent", description: "De AI vraagt dagelijks teamleden om hun updates en stelt een beknopt samenvattend rapport op voor de manager.", completed: false },
     ]
   },
   {
@@ -218,8 +237,10 @@ export const roadmapPhases: Phase[] = [
       { id: 15001, title: "Feature Freeze & RC-periode", description: "Een periode waarin geen nieuwe features worden toegevoegd en alle focus ligt op het oplossen van de laatste bugs.", completed: false },
       { id: 15002, title: "Uitgebreide Browser- en Apparaattesten", description: "Verifieer de werking en weergave op alle belangrijke browsers (Chrome, Firefox, Safari, Edge) en apparaten (desktop, tablet, mobiel).", completed: false },
       { id: 15003, title: "Definitieve Documentatie Review", description: "Zorg ervoor dat alle publieke documentatie (kennisbank, API-docs) compleet, accuraat en up-to-date is.", completed: false },
-      { id: 15004, title: "Lancering Marketingmateriaal", description: "Voorbereiden van de website, blogposts en social media aankondigingen voor de v1.0 release.", completed: false },
-      { id: 15005, title: "Versie 1.0 Release", description: "De officiële, stabiele release van Chorey v1.0.", completed: false },
+      { id: 15004, title: "Gebruikersacceptatietest (UAT) Programma", description: "Voer een gestructureerd beta-programma uit met een selecte groep power users om finale feedback te verzamelen.", completed: false },
+      { id: 15005, title: "Internationalisatie (i18n) & Lokalisatie (l10n)", description: "Zorg dat de app volledig vertaald kan worden en dat datums en getallen zich aanpassen aan de locale van de gebruiker.", completed: false },
+      { id: 15006, title: "Product Hunt Lancering", description: "Bereid een strategische lancering voor op Product Hunt om de v1.0 release aan te kondigen en nieuwe gebruikers aan te trekken.", completed: false },
+      { id: 15007, title: "Versie 1.0 Release", description: "De officiële, stabiele release van Chorey v1.0.", completed: false },
     ]
   }
 ];
