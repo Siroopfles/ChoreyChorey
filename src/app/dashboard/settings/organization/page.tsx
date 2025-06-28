@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -15,6 +16,7 @@ import { PERMISSIONS } from '@/lib/types';
 import LimitSettings from '@/components/chorey/settings/limit-settings';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import CustomFieldsSettings from '@/components/chorey/settings/custom-fields-settings';
 
 export default function OrganizationSettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
@@ -65,6 +67,7 @@ export default function OrganizationSettingsPage() {
         <WebhookSettings />
         {canManageApiKeys && <ApiKeySettings />}
         <WorkflowSettings organization={currentOrganization} />
+        <CustomFieldsSettings organization={currentOrganization} />
         <FeatureToggleSettings organization={currentOrganization} />
         <DangerZone
             organization={currentOrganization}

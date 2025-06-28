@@ -3,6 +3,16 @@
 import { z } from 'zod';
 import type { Layout } from 'react-grid-layout';
 
+export const customFieldDefinitionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(['text', 'number', 'date', 'select']),
+  options: z.array(z.string()).optional(), // Only for 'select' type
+});
+
+export type CustomFieldDefinition = z.infer<typeof customFieldDefinitionSchema>;
+
+
 export type GitHubLink = {
   url: string;
   number: number;
@@ -41,6 +51,7 @@ export type OrganizationSettings = {
     labels: string[];
     priorities: string[];
     customRoles?: Record<string, { name: string; permissions: Permission[] }>;
+    customFields?: CustomFieldDefinition[];
   },
   features?: {
     gamification: boolean;
@@ -459,6 +470,7 @@ export type Task = {
   togglProjectId?: number;
   clockifyWorkspaceId?: string;
   clockifyProjectId?: string;
+  customFieldValues?: Record<string, any>;
 };
 
 export type Notification = {
@@ -545,6 +557,7 @@ export const taskFormSchema = z.object({
   togglProjectId: z.coerce.number().optional(),
   clockifyWorkspaceId: z.string().optional(),
   clockifyProjectId: z.string().optional(),
+  customFieldValues: z.record(z.any()).optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

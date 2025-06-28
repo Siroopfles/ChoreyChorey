@@ -3,6 +3,7 @@
 
 
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -234,6 +235,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           clockifyProjectId: taskData.clockifyProjectId ?? null,
           helpNeeded: taskData.helpNeeded ?? false,
           isChoreOfTheWeek: false,
+          customFieldValues: taskData.customFieldValues || {},
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 

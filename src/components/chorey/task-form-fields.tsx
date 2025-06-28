@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { User, Project, Task, SuggestPriorityOutput } from '@/lib/types';
+import type { User, Project, Task, SuggestPriorityOutput, CustomFieldDefinition } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight, ThumbsUp, ThumbsDown, Settings2 } from 'lucide-react';
 import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -49,6 +49,91 @@ type TaskFormFieldsProps = {
   task?: Task;
 };
 
+const CustomFieldInput = ({ fieldDef }: { fieldDef: CustomFieldDefinition }) => {
+    const form = useFormContext();
+    const fieldName = `customFieldValues.${fieldDef.id}`;
+    
+    switch (fieldDef.type) {
+        case 'text':
+            return (
+                <FormField
+                    control={form.control}
+                    name={fieldName}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>{fieldDef.name}</FormLabel>
+                            <FormControl><Input placeholder="..." {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            );
+        case 'number':
+            return (
+                 <FormField
+                    control={form.control}
+                    name={fieldName}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>{fieldDef.name}</FormLabel>
+                            <FormControl><Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            );
+        case 'date':
+            return (
+                <FormField
+                    control={form.control}
+                    name={fieldName}
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>{fieldDef.name}</FormLabel>
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}>
+                                    {field.value ? format(new Date(field.value), 'PPP') : <span>Kies een datum</span>}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar mode="single" selected={field.value ? new Date(field.value) : undefined} onSelect={field.onChange} initialFocus />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            );
+        case 'select':
+            return (
+                <FormField
+                    control={form.control}
+                    name={fieldName}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>{fieldDef.name}</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Selecteer een optie..." /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {(fieldDef.options || []).map(option => (
+                                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            );
+        default:
+            return null;
+    }
+}
+
 export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
@@ -59,6 +144,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
 
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
   const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+  const customFields = currentOrganization?.settings?.customization?.customFields || [];
   const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
 
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
@@ -878,6 +964,20 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
         </div>
       </div>
       
+      {customFields.length > 0 && (
+          <>
+            <Separator />
+            <div>
+                <h3 className="text-lg font-semibold mb-4">Eigen Velden</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {customFields.map(fieldDef => (
+                    <CustomFieldInput key={fieldDef.id} fieldDef={fieldDef} />
+                ))}
+                </div>
+            </div>
+          </>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <FormField
           control={form.control}
