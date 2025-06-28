@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getJiraIssue } from '@/lib/jira-service';
+import { getJiraIssue, searchJiraIssues } from '@/lib/jira-service';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Organization } from '@/lib/types';
@@ -19,6 +19,14 @@ async function getJiraConfig(organizationId: string) {
     }
 }
 
+export async function searchJiraItems(organizationId: string, query: string) {
+    try {
+        await getJiraConfig(organizationId);
+        return await searchJiraIssues(query);
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
 
 export async function getJiraItemFromUrl(organizationId: string, url: string) {
      try {

@@ -81,8 +81,8 @@ export const roadmapPhases: Phase[] = [
       { id: 3010, title: "Outlook Calendar Integratie", description: "Synchroniseer deadlines met je Outlook agenda.", completed: true },
       { id: 3011, title: "Discord Integratie", description: "Ontvang notificaties in een Discord kanaal en beheer taken met slash-commando's.", completed: true },
       { id: 3012, title: "Toggl/Clockify Integratie", description: "Start en stop de timer in Chorey en synchroniseer de tijdregistratie met uw favoriete tool.", completed: true },
-      { id: 3013, title: "Browser Extensie (Chrome/Firefox)", description: "Maak een taak aan van de huidige webpagina met één klik.", completed: true },
-      { id: 3014, title: "Jira / Linear Two-Way Sync", description: "Houd taken in Chorey en issues in Jira of Linear gesynchroniseerd.", completed: true },
+      { id: 3013, title: "Browser Extensie (Bookmarklet)", description: "Maak een taak aan van de huidige webpagina met één klik.", completed: true },
+      { id: 3014, title: "Jira Integratie", description: "Koppel taken aan Jira issues door te zoeken op trefwoord of een URL te plakken. (Linear-integratie is momenteel on hold vanwege technische problemen).", completed: true },
     ]
   },
     {

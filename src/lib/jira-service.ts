@@ -46,3 +46,25 @@ export async function getJiraIssue(issueKey: string): Promise<JiraLink> {
         throw new Error('Failed to get Jira issue.');
     }
 }
+
+export async function searchJiraIssues(query: string): Promise<JiraLink[]> {
+    if (!query.trim()) {
+        return [];
+    }
+
+    try {
+        const jql = `text ~ "${query.replace(/"/g, '\\"')}" ORDER BY updated DESC`;
+        const response = await fetchJira(`search?jql=${encodeURIComponent(jql)}&fields=summary,status,issuetype`);
+
+        return response.issues.map((issue: any) => ({
+            key: issue.key,
+            url: `${baseUrl}/browse/${issue.key}`,
+            summary: issue.fields.summary,
+            status: issue.fields.status.name,
+            iconUrl: issue.fields.issuetype.iconUrl,
+        }));
+    } catch (error) {
+        console.error('Jira API search error:', error);
+        throw new Error('Failed to search Jira issues.');
+    }
+}
