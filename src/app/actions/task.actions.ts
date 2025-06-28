@@ -217,7 +217,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           reviewerId: taskData.reviewerId ?? null,
           consultedUserIds: taskData.consultedUserIds || [],
           informedUserIds: taskData.informedUserIds || [],
-          helpNeeded: taskData.helpNeeded || false,
+          teamId: taskData.teamId || null,
           togglWorkspaceId: taskData.togglWorkspaceId,
           togglProjectId: taskData.togglProjectId,
           clockifyWorkspaceId: taskData.clockifyWorkspaceId,
