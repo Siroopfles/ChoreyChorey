@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { User, Project, Task } from '@/lib/types';
+import type { User, Project, Task, SuggestPriorityOutput } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -27,7 +27,7 @@ import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
-import type { FindDuplicateTaskOutput, SuggestProactiveHelpOutput } from '@/ai/schemas';
+import type { FindDuplicateTaskOutput, SuggestProactiveHelpOutput, SuggestStoryPointsOutput } from '@/ai/schemas';
 import { GitHubLinker } from './github-linker';
 import { JiraLinearLinker } from './jira-linear-linker';
 import { getAttachmentSource } from '@/lib/utils';
@@ -41,6 +41,7 @@ import { BitbucketLinker } from './bitbucket-linker';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useTasks } from '@/contexts/task-context';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '../ui/tooltip';
+import { submitAiFeedback } from '@/app/actions/feedback.actions';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -51,7 +52,7 @@ type TaskFormFieldsProps = {
 export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
-  const { currentOrganization, teams } = useAuth();
+  const { user, currentOrganization, teams } = useAuth();
   const { tasks, promoteSubtaskToTask } = useTasks();
   const status = form.watch('status');
   const isPrivate = form.watch('isPrivate');
@@ -62,10 +63,12 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
 
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
-  const [pointsSuggestion, setPointsSuggestion] = useState('');
+  const [pointsSuggestion, setPointsSuggestion] = useState<SuggestStoryPointsOutput | null>(null);
+  const [pointsFeedbackGiven, setPointsFeedbackGiven] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isSuggestingPriority, setIsSuggestingPriority] = useState(false);
-  const [prioritySuggestion, setPrioritySuggestion] = useState('');
+  const [prioritySuggestion, setPrioritySuggestion] = useState<SuggestPriorityOutput | null>(null);
+  const [priorityFeedbackGiven, setPriorityFeedbackGiven] = useState(false);
   const [isIdentifyingRisk, setIsIdentifyingRisk] = useState(false);
   const [riskAnalysis, setRiskAnalysis] = useState<{ hasRisk: boolean; riskLevel: string; analysis: string; } | null>(null);
   const [isSuggestingLabels, setIsSuggestingLabels] = useState(false);
@@ -143,6 +146,27 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedTitle, debouncedDescription]);
 
+  const handleFeedback = async (flowName: string, output: any, feedback: 'positive' | 'negative') => {
+    if (!user || !currentOrganization) return;
+    
+    // Determine which state to update
+    if (flowName === 'suggestStoryPoints') setPointsFeedbackGiven(true);
+    if (flowName === 'suggestPriority') setPriorityFeedbackGiven(true);
+    // ... other flows can be added here
+
+    await submitAiFeedback({
+        flowName,
+        input: { title: form.getValues('title'), description: form.getValues('description') },
+        output,
+        feedback,
+        userId: user.id,
+        organizationId: currentOrganization.id,
+    });
+
+    toast({ title: 'Feedback ontvangen!', description: 'Bedankt voor je hulp om de AI te verbeteren.' });
+  };
+
+
   const onSuggestSubtasks = async () => {
     const title = form.getValues('title');
     const description = form.getValues('description');
@@ -174,7 +198,8 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
         toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
     } else if (result.suggestion) {
         form.setValue('storyPoints', result.suggestion.points);
-        setPointsSuggestion(result.suggestion.reasoning);
+        setPointsSuggestion(result.suggestion);
+        setPointsFeedbackGiven(false);
     }
     setIsSuggestingPoints(false);
   };
@@ -187,13 +212,14 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
         return;
     }
     setIsSuggestingPriority(true);
-    setPrioritySuggestion('');
+    setPrioritySuggestion(null);
     const result = await handleSuggestPriority({ title, description });
     if (result.error) {
         toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
     } else if (result.suggestion) {
         form.setValue('priority', result.suggestion.priority);
-        setPrioritySuggestion(result.suggestion.reasoning);
+        setPrioritySuggestion(result.suggestion);
+        setPriorityFeedbackGiven(false);
     }
     setIsSuggestingPriority(false);
   };
@@ -580,7 +606,20 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                     {isSuggestingPriority ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
                 </Button>
               </div>
-              {prioritySuggestion && <Alert className="mt-2"><AlertDescription>{prioritySuggestion}</AlertDescription></Alert>}
+              {prioritySuggestion && (
+                <Alert className="mt-2">
+                  <AlertDescription>{prioritySuggestion.reasoning}</AlertDescription>
+                  {!priorityFeedbackGiven ? (
+                    <div className="flex items-center gap-1 mt-2 pt-2 border-t">
+                      <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestPriority', prioritySuggestion, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestPriority', prioritySuggestion, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>
+                  )}
+                </Alert>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -668,7 +707,20 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                                 {isSuggestingPoints ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
                             </Button>
                         </div>
-                        {pointsSuggestion && <Alert className="mt-2"><AlertDescription>{pointsSuggestion}</AlertDescription></Alert>}
+                        {pointsSuggestion && (
+                            <Alert className="mt-2">
+                                <AlertDescription>{pointsSuggestion.reasoning}</AlertDescription>
+                                {!pointsFeedbackGiven ? (
+                                    <div className="flex items-center gap-1 mt-2 pt-2 border-t">
+                                        <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestStoryPoints', pointsSuggestion, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestStoryPoints', pointsSuggestion, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>
+                                )}
+                            </Alert>
+                        )}
                         <FormMessage />
                     </FormItem>
                 )}
