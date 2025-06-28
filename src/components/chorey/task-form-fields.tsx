@@ -37,6 +37,7 @@ import { ClockifyProjectSelector } from './clockify-project-selector';
 import { FigmaEmbed } from './figma-embed';
 import { GoogleDocEmbed } from './google-doc-embed';
 import { GitLabLinker } from './gitlab-linker';
+import { BitbucketLinker } from './bitbucket-linker';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -904,6 +905,7 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
 
       <GitHubLinker />
       <GitLabLinker />
+      <BitbucketLinker />
       <JiraLinearLinker />
 
       <Separator />

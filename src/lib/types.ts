@@ -17,6 +17,14 @@ export type GitLabLink = {
   type: 'issue' | 'merge_request';
 };
 
+export type BitbucketLink = {
+  url: string;
+  id: string; // Issue ID in Bitbucket
+  title: string;
+  state: string; // e.g., 'new', 'open', 'resolved'
+  type: 'issue';
+};
+
 export type JiraLink = {
   url: string;
   key: string;
@@ -45,6 +53,7 @@ export type OrganizationSettings = {
     clockify?: boolean;
     jira?: boolean;
     gitlab?: boolean;
+    bitbucket?: boolean;
   },
   branding?: {
     primaryColor?: string;
@@ -66,6 +75,10 @@ export type OrganizationSettings = {
   };
   gitlab?: {
     projects: string[];
+  };
+   bitbucket?: {
+    workspace: string;
+    repos: string[];
   };
   teams?: {
     enabled: boolean;
@@ -416,6 +429,7 @@ export type Task = {
   microsoftEventId?: string | null;
   githubLinks?: GitHubLink[];
   gitlabLinks?: GitLabLink[];
+  bitbucketLinks?: BitbucketLink[];
   jiraLinks?: JiraLink[];
   jiraLinkKeys?: string[];
   togglWorkspaceId?: number;
@@ -450,6 +464,14 @@ export const gitlabLinkSchema = z.object({
   title: z.string(),
   state: z.enum(['opened', 'closed', 'locked', 'merged']),
   type: z.enum(['issue', 'merge_request']),
+});
+
+export const bitbucketLinkSchema = z.object({
+  url: z.string().url(),
+  id: z.string(),
+  title: z.string(),
+  state: z.string(),
+  type: z.literal('issue'),
 });
 
 export const jiraLinkSchema = z.object({
@@ -492,6 +514,7 @@ export const taskFormSchema = z.object({
   informedUserIds: z.array(z.string()).optional(),
   githubLinks: z.array(githubLinkSchema).optional(),
   gitlabLinks: z.array(gitlabLinkSchema).optional(),
+  bitbucketLinks: z.array(bitbucketLinkSchema).optional(),
   jiraLinks: z.array(jiraLinkSchema).optional(),
   jiraLinkKeys: z.array(z.string()).optional(),
   togglWorkspaceId: z.coerce.number().optional(),
