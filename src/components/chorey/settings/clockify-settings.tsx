@@ -87,3 +87,4 @@ export default function ClockifySettings({ user }: { user: User }) {
     </Card>
   );
 }
+

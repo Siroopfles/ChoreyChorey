@@ -770,3 +770,4 @@ export async function setChoreOfTheWeekAction(taskId: string, organizationId: st
         return { error: e.message };
     }
 }
+

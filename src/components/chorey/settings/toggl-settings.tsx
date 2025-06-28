@@ -80,3 +80,4 @@ export default function TogglSettings({ user }: { user: User }) {
     </Card>
   );
 }
+
