@@ -37,16 +37,16 @@ const RichTextEditor = React.forwardRef<HTMLDivElement, RichTextEditorProps>(
     return (
       <div className={cn('w-full rounded-md border border-input bg-background ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2', className)}>
         <div className="p-1 border-b flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('bold')}>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('bold')} aria-label="Vetgedrukt">
               <Bold className="h-4 w-4" />
             </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('italic')}>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('italic')} aria-label="Cursief">
               <Italic className="h-4 w-4" />
             </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('insertUnorderedList')}>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('insertUnorderedList')} aria-label="Ongeordende lijst">
               <List className="h-4 w-4" />
             </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('insertOrderedList')}>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => execCommand('insertOrderedList')} aria-label="Geordende lijst">
               <ListOrdered className="h-4 w-4" />
             </Button>
         </div>

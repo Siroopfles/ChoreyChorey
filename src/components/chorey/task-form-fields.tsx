@@ -610,7 +610,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                     {allPriorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                     </SelectContent>
                 </Select>
-                 <Button type="button" variant="outline" size="icon" onClick={onSuggestPriority} disabled={isSuggestingPriority}>
+                 <Button type="button" variant="outline" size="icon" onClick={onSuggestPriority} disabled={isSuggestingPriority} aria-label="Stel prioriteit voor met AI">
                     {isSuggestingPriority ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
                 </Button>
               </div>
@@ -677,7 +677,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                         </Command>
                         </PopoverContent>
                     </Popover>
-                    <Button type="button" variant="outline" size="icon" onClick={onSuggestLabels} disabled={isSuggestingLabels}>
+                    <Button type="button" variant="outline" size="icon" onClick={onSuggestLabels} disabled={isSuggestingLabels} aria-label="Stel labels voor met AI">
                         {isSuggestingLabels ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
                     </Button>
                 </div>
@@ -711,7 +711,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                             <FormControl>
                                 <Input type="number" placeholder="bijv. 5" {...field} value={field.value ?? ''} onChange={event => field.onChange(event.target.value === '' ? undefined : +event.target.value)} />
                             </FormControl>
-                            <Button type="button" variant="outline" size="icon" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints}>
+                            <Button type="button" variant="outline" size="icon" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints} aria-label="Stel Story Points voor met AI">
                                 {isSuggestingPoints ? <Loader2 className="h-4 w-4 animate-spin"/> : <Bot className="h-4 w-4"/>}
                             </Button>
                         </div>
@@ -1061,6 +1061,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                 size="icon" 
                 className="absolute top-2 right-2 h-7 w-7"
                 onClick={() => form.setValue('imageDataUri', undefined)}
+                aria-label="Verwijder omslagfoto"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -1102,7 +1103,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                                 <Input {...field} placeholder="https://..."/>
                             )}
                         />
-                        <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(index)}>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeAttachment(index)} aria-label="Verwijder bijlage">
                             <Trash2 className="h-4 w-4 text-destructive"/>
                         </Button>
                     </div>
@@ -1132,7 +1133,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                     <p className="text-sm font-medium truncate">
                       {blockerTask ? blockerTask.title : <span className="text-muted-foreground italic">Taak niet gevonden</span>}
                     </p>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveBlockedBy(index)}>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveBlockedBy(index)} aria-label="Verwijder blokkering">
                       <Trash2 className="h-4 w-4 text-destructive"/>
                     </Button>
                   </div>
@@ -1232,6 +1233,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                                                 checked={field.value}
                                                 onCheckedChange={field.onChange}
                                                 className="data-[state=checked]:bg-yellow-500"
+                                                aria-label="Markeer subtaak als privé"
                                             />
                                         </FormControl>
                                     </TooltipTrigger>
@@ -1261,11 +1263,12 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                         promoteSubtaskToTask(task.id, subtask);
                       }
                     }}
+                    aria-label="Promoveer subtaak naar nieuwe taak"
                   >
                     <CornerUpRight className="h-4 w-4" />
                   </Button>
                 )}
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)} aria-label="Verwijder subtaak">
                     <Trash2 className="h-4 w-4 text-destructive"/>
                 </Button>
             </div>

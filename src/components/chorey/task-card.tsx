@@ -501,7 +501,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                     <p className="text-xs font-medium text-muted-foreground mb-1">Beoordeel deze taak:</p>
                     <div className="flex items-center" onMouseLeave={() => setHoverRating(0)}>
                         {[1, 2, 3, 4, 5].map(star => (
-                            <button key={star} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); rateTask(task.id, star); }}>
+                            <button key={star} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); rateTask(task.id, star); }} aria-label={`Geef ${star} sterren`}>
                                 <Star className={cn('h-5 w-5', (hoverRating || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
                             </button>
                         ))}
@@ -585,6 +585,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                                     className="h-6 w-6"
                                     onClick={(e) => { e.stopPropagation(); promoteSubtaskToTask(task.id, subtask); }}
                                     title="Promoveer naar taak"
+                                    aria-label="Promoveer subtaak naar taak"
                                 >
                                     <CornerUpRight className="h-4 w-4" />
                                 </Button>
@@ -629,6 +630,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                                   type="button"
                                   className="rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                                   onClick={(e) => { e.stopPropagation(); navigateToUserProfile(assignee.id); }}
+                                  aria-label={`Bekijk profiel van ${assignee.name}`}
                                 >
                                   <Avatar className="h-6 w-6 border-2 border-background">
                                     <AvatarImage src={assignee.avatar} alt={assignee.name} />
@@ -659,6 +661,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                                 type="button"
                                 className="rounded-full hover:scale-110 transition-transform focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex items-center gap-1"
                                 onClick={(e) => { e.stopPropagation(); navigateToUserProfile(reviewer.id); }}
+                                aria-label={`Bekijk profiel van reviewer ${reviewer.name}`}
                                 >
                                 <Eye className="h-3 w-3 text-status-in-review" />
                                 <Avatar className="h-6 w-6 border-2 border-background">

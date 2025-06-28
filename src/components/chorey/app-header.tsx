@@ -76,7 +76,7 @@ export default function AppHeader() {
           {currentOrganization && (
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-[180px] sm:w-[220px] justify-between">
+                      <Button variant="outline" className="w-[180px] sm:w-[220px] justify-between" aria-label={`Geselecteerde organisatie: ${currentOrganization.name}. Klik om te wisselen.`}>
                           <Building className="mr-2 h-4 w-4 shrink-0" />
                           <span className="truncate font-medium">{currentOrganization.name}</span>
                           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
@@ -192,7 +192,7 @@ export default function AppHeader() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full relative">
+                    <Button variant="ghost" size="icon" className="rounded-full relative" aria-label="Gebruikersmenu en status">
                       <Avatar className="h-8 w-8">
                         {user ? (
                           <>
