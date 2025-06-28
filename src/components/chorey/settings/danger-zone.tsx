@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { leaveOrganization, deleteOrganization } from '@/app/actions/organization.actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import type { Organization } from '@/lib/types';
+import { PERMISSIONS } from '@/lib/types';
 
 type DangerZoneProps = {
   organization: Organization;
@@ -18,11 +19,13 @@ type DangerZoneProps = {
 };
 
 export default function DangerZone({ organization, isOwner }: DangerZoneProps) {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, currentUserPermissions } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isLeaving, setIsLeaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const canManageOrg = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
 
   const onLeaveOrg = async () => {
     if (!user) return;
@@ -98,7 +101,7 @@ export default function DangerZone({ organization, isOwner }: DangerZoneProps) {
             </div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="mt-2 sm:mt-0">
+                <Button variant="destructive" className="mt-2 sm:mt-0" disabled={!canManageOrg}>
                   Organisatie Verwijderen
                 </Button>
               </AlertDialogTrigger>

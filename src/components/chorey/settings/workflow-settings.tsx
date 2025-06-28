@@ -13,6 +13,7 @@ import { Loader2, PlusCircle, Trash2, Palette, Save, GripVertical } from 'lucide
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
+import { PERMISSIONS } from '@/lib/types';
 import {
   DndContext,
   closestCenter,
@@ -36,7 +37,7 @@ const workflowSchema = z.object({
 });
 type WorkflowFormValues = z.infer<typeof workflowSchema>;
 
-function SortableStatusItem({ id, onRemove }: { id: string, onRemove: (id: string) => void }) {
+function SortableStatusItem({ id, onRemove, canManage }: { id: string, onRemove: (id: string) => void, canManage: boolean }) {
   const {
     attributes,
     listeners,
@@ -53,7 +54,7 @@ function SortableStatusItem({ id, onRemove }: { id: string, onRemove: (id: strin
   return (
     <div ref={setNodeRef} style={style} className="flex items-center justify-between gap-2 rounded-md border p-2 bg-background">
       <div className="flex items-center gap-2">
-        <button type="button" {...attributes} {...listeners} className="cursor-grab p-1">
+        <button type="button" {...attributes} {...listeners} className="cursor-grab p-1" disabled={!canManage}>
             <GripVertical className="h-5 w-5 text-muted-foreground" />
         </button>
         <span>{id}</span>
@@ -64,6 +65,7 @@ function SortableStatusItem({ id, onRemove }: { id: string, onRemove: (id: strin
           size="icon"
           className="h-6 w-6"
           onClick={() => onRemove(id)}
+          disabled={!canManage}
         >
           <Trash2 className="h-4 w-4 text-destructive" />
       </Button>
@@ -75,10 +77,12 @@ const ListManager = ({
   title,
   items,
   setItems,
+  canManage,
 }: {
   title: string;
   items: string[];
   setItems: (items: string[]) => void;
+  canManage: boolean;
 }) => {
   const [newItem, setNewItem] = useState('');
 
@@ -106,6 +110,7 @@ const ListManager = ({
               size="icon"
               className="h-6 w-6"
               onClick={() => handleRemoveItem(item)}
+              disabled={!canManage}
             >
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
@@ -123,8 +128,9 @@ const ListManager = ({
               handleAddItem();
             }
           }}
+          disabled={!canManage}
         />
-        <Button type="button" onClick={handleAddItem}>
+        <Button type="button" onClick={handleAddItem} disabled={!canManage}>
           <PlusCircle className="mr-2 h-4 w-4" /> Toevoegen
         </Button>
       </div>
@@ -133,20 +139,21 @@ const ListManager = ({
 };
 
 export default function WorkflowSettings({ organization }: { organization: Organization }) {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, currentUserPermissions } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statuses, setStatuses] = useState(organization.settings?.customization?.statuses || []);
+  
+  const canManageWorkflow = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
+  const initialStatuses = organization.settings?.customization?.statuses || [];
+  const [statuses, setStatuses] = useState(initialStatuses);
   const [newStatus, setNewStatus] = useState('');
   
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-  );
+  const sensors = useSensors(useSensor(PointerSensor));
 
   const form = useForm<WorkflowFormValues>({
     resolver: zodResolver(workflowSchema),
     values: {
-      statuses: statuses,
+      statuses: initialStatuses,
       labels: organization.settings?.customization?.labels || [],
       priorities: organization.settings?.customization?.priorities || [],
     },
@@ -155,12 +162,11 @@ export default function WorkflowSettings({ organization }: { organization: Organ
   function handleDragEnd(event: any) {
     const {active, over} = event;
     if (active.id !== over.id) {
-      setStatuses((items) => {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-      form.setValue('statuses', arrayMove(statuses, statuses.indexOf(active.id), statuses.indexOf(over.id)), { shouldDirty: true });
+      const oldIndex = statuses.indexOf(active.id);
+      const newIndex = statuses.indexOf(over.id);
+      const newStatuses = arrayMove(statuses, oldIndex, newIndex);
+      setStatuses(newStatuses);
+      form.setValue('statuses', newStatuses, { shouldDirty: true });
     }
   }
 
@@ -181,12 +187,13 @@ export default function WorkflowSettings({ organization }: { organization: Organ
 
 
   const onSubmit = async (data: WorkflowFormValues) => {
-    if (!user) return;
+    if (!user || !canManageWorkflow) return;
     setIsSubmitting(true);
     
     const newSettings = {
         ...organization.settings,
         customization: {
+            ...organization.settings?.customization,
             ...data,
             statuses: statuses,
         }
@@ -199,6 +206,7 @@ export default function WorkflowSettings({ organization }: { organization: Organ
     } else {
       await refreshUser();
       toast({ title: 'Gelukt!', description: 'Workflow instellingen zijn bijgewerkt.' });
+      form.reset(data); // Reset form state to new values
     }
     setIsSubmitting(false);
   };
@@ -220,7 +228,7 @@ export default function WorkflowSettings({ organization }: { organization: Organ
                 <div className="space-y-2">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                         <SortableContext items={statuses} strategy={verticalListSortingStrategy}>
-                            {statuses.map(status => <SortableStatusItem key={status} id={status} onRemove={handleRemoveStatus} />)}
+                            {statuses.map(status => <SortableStatusItem key={status} id={status} onRemove={handleRemoveStatus} canManage={canManageWorkflow} />)}
                         </SortableContext>
                     </DndContext>
                 </div>
@@ -235,8 +243,9 @@ export default function WorkflowSettings({ organization }: { organization: Organ
                             handleAddStatus();
                             }
                         }}
+                        disabled={!canManageWorkflow}
                         />
-                    <Button type="button" onClick={handleAddStatus}>
+                    <Button type="button" onClick={handleAddStatus} disabled={!canManageWorkflow}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Toevoegen
                     </Button>
                 </div>
@@ -245,14 +254,16 @@ export default function WorkflowSettings({ organization }: { organization: Organ
             title="Labels"
             items={form.watch('labels')}
             setItems={(newLabels) => form.setValue('labels', newLabels, { shouldDirty: true })}
+            canManage={canManageWorkflow}
           />
           <ListManager
             title="Prioriteiten"
             items={form.watch('priorities')}
             setItems={(newPriorities) => form.setValue('priorities', newPriorities, { shouldDirty: true })}
+            canManage={canManageWorkflow}
           />
           <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
+            <Button type="submit" disabled={isSubmitting || !form.formState.isDirty || !canManageWorkflow}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Instellingen Opslaan
             </Button>

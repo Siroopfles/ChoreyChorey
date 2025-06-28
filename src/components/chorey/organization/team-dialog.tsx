@@ -29,7 +29,7 @@ const teamFormSchema = z.object({
 type TeamFormValues = z.infer<typeof teamFormSchema>;
 
 interface TeamDialogProps {
-  children: ReactNode;
+  children?: ReactNode;
   team?: Team;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -41,7 +41,7 @@ export function TeamDialog({ children, team, open: controlledOpen, onOpenChange:
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { currentOrganization } = useAuth();
+  const { user, currentOrganization } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<TeamFormValues>({
@@ -58,17 +58,16 @@ export function TeamDialog({ children, team, open: controlledOpen, onOpenChange:
   }, [team, open, form]);
 
   const onSubmit = async (data: TeamFormValues) => {
-    if (!currentOrganization) return;
+    if (!currentOrganization || !user) return;
     setIsSubmitting(true);
     
     const action = team ? 'update' : 'create';
     const payload = {
-        organizationId: currentOrganization.id,
         teamId: team?.id,
         name: data.name
     };
 
-    const result = await manageTeam(action, payload);
+    const result = await manageTeam(action, currentOrganization.id, user.id, payload);
     
     if (result.error) {
         toast({ title: 'Fout', description: result.error, variant: 'destructive' });

@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { authenticateApiKey } from '@/lib/api-auth';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import type { Task } from '@/lib/types';
+import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
 
 // Helper to serialize Firestore Timestamps to ISO strings for JSON response
 const serializeTask = (data: any) => {
@@ -22,28 +23,15 @@ const serializeTask = (data: any) => {
     return serializedData;
 };
 
-
-// GET a single task
-export async function GET(request: NextRequest, { params }: { params: { taskId: string } }) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
-
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
-    }
-    
-    if (!authResult.permissions.includes('read:tasks')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks read permissions for tasks.' }, { status: 403 });
-    }
-
+const getTaskHandler = async (
+    request: NextRequest,
+    context: AuthenticatedApiHandlerContext,
+    authResult: AuthenticatedApiHandlerAuthResult
+) => {
     const { organizationId } = authResult;
+    const { taskId } = context.params;
 
     try {
-        const { taskId } = params;
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
 
@@ -63,29 +51,17 @@ export async function GET(request: NextRequest, { params }: { params: { taskId: 
         console.error("API Error fetching task:", error);
         return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
-}
+};
 
-// PUT (update) a task
-export async function PUT(request: NextRequest, { params }: { params: { taskId: string } }) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
-
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
-    }
-
-    if (!authResult.permissions.includes('write:tasks')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks write permissions for tasks.' }, { status: 403 });
-    }
-
+const updateTaskHandler = async (
+    request: NextRequest,
+    context: AuthenticatedApiHandlerContext,
+    authResult: AuthenticatedApiHandlerAuthResult
+) => {
     const { organizationId } = authResult;
-    
+    const { taskId } = context.params;
+
     try {
-        const { taskId } = params;
         const body = await request.json();
 
         // Prevent updating critical fields
@@ -118,29 +94,17 @@ export async function PUT(request: NextRequest, { params }: { params: { taskId: 
         }
         return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
-}
+};
 
-// DELETE a task
-export async function DELETE(request: NextRequest, { params }: { params: { taskId: string } }) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
-    
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
-    }
-
-    if (!authResult.permissions.includes('delete:tasks')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks delete permissions for tasks.' }, { status: 403 });
-    }
-    
+const deleteTaskHandler = async (
+    request: NextRequest,
+    context: AuthenticatedApiHandlerContext,
+    authResult: AuthenticatedApiHandlerAuthResult
+) => {
     const { organizationId } = authResult;
+    const { taskId } = context.params;
 
     try {
-        const { taskId } = params;
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
 
@@ -159,4 +123,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { taskI
         console.error("API Error deleting task:", error);
         return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
-}
+};
+
+export const GET = withApiKeyAuth(getTaskHandler, ['read:tasks']);
+export const PUT = withApiKeyAuth(updateTaskHandler, ['write:tasks']);
+export const DELETE = withApiKeyAuth(deleteTaskHandler, ['delete:tasks']);

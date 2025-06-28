@@ -14,6 +14,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
+import { PERMISSIONS } from '@/lib/types';
 
 const orgSettingsSchema = z.object({
   name: z.string().min(2, 'Organisatienaam moet minimaal 2 karakters bevatten.'),
@@ -21,9 +22,11 @@ const orgSettingsSchema = z.object({
 type OrgSettingsFormValues = z.infer<typeof orgSettingsSchema>;
 
 export default function OrganizationSettings({ organization }: { organization: Organization }) {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, currentUserPermissions } = useAuth();
   const { toast } = useToast();
   const [isSubmittingOrg, setIsSubmittingOrg] = useState(false);
+
+  const canManageOrg = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
 
   const orgForm = useForm<OrgSettingsFormValues>({
     resolver: zodResolver(orgSettingsSchema),
@@ -61,13 +64,13 @@ export default function OrganizationSettings({ organization }: { organization: O
                 <FormItem>
                   <FormLabel>Organisatienaam</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} disabled={!canManageOrg} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmittingOrg}>
+            <Button type="submit" disabled={isSubmittingOrg || !canManageOrg}>
               {isSubmittingOrg && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Naam Wijzigen
             </Button>

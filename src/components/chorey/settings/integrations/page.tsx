@@ -70,7 +70,7 @@ export default function IntegrationsPage() {
                     <ol className="list-decimal list-inside text-sm space-y-1 pl-2">
                         <li>In Zapier/Make, kies "Webhooks" als de trigger en selecteer "Catch Hook".</li>
                         <li>Kopieer de unieke webhook URL die u krijgt.</li>
-                        <li>Ga naar <Button variant="link" asChild className="p-0 h-auto"><Link href="/dashboard/settings/organization">Webhook Instellingen</Link></Button> in Chorey.</li>
+                        <li>Ga naar <Button variant="link" asChild className="p-0 h-auto text-sm"><Link href="/dashboard/settings/organization">Webhook Instellingen</Link></Button> in Chorey.</li>
                         <li>Maak een nieuwe webhook aan, plak de URL, en selecteer de gebeurtenissen (bv. "Taak Aangemaakt").</li>
                     </ol>
                 </div>
@@ -80,7 +80,7 @@ export default function IntegrationsPage() {
                      <ol className="list-decimal list-inside text-sm space-y-1 pl-2">
                         <li>In Zapier/Make, kies "Webhooks" als de actie en selecteer "Custom Request" of "POST".</li>
                         <li>Gebruik de Chorey API-documentatie om de juiste URL en data op te geven.</li>
-                        <li>Ga naar <Button variant="link" asChild className="p-0 h-auto"><Link href="/dashboard/settings/organization">API Sleutel Instellingen</Link></Button> in Chorey.</li>
+                        <li>Ga naar <Button variant="link" asChild className="p-0 h-auto text-sm"><Link href="/dashboard/settings/organization">API Sleutel Instellingen</Link></Button> in Chorey.</li>
                         <li>Genereer een API-sleutel en voeg deze toe in Zapier/Make als een "Authorization" header in de vorm: `Bearer UW_API_SLEUTEL`.</li>
                     </ol>
                 </div>

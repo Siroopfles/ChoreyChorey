@@ -4,17 +4,25 @@
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { Team } from '@/lib/types';
+import { hasPermission } from '@/lib/permissions';
+import { PERMISSIONS } from '@/lib/types';
+import { useAuth } from '@/contexts/auth-context';
 
 export async function manageTeam(
   action: 'create' | 'update' | 'delete',
+  organizationId: string,
+  currentUserId: string,
   payload: {
-    organizationId: string;
     teamId?: string;
     name?: string;
   }
 ) {
+    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_TEAMS)) {
+        return { error: "Je hebt geen permissie om teams te beheren." };
+    }
+
   try {
-    const { organizationId, teamId, name } = payload;
+    const { teamId, name } = payload;
     if (!organizationId) {
         throw new Error('Organization ID is required.');
     }

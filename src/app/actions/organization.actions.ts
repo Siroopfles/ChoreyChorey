@@ -1,15 +1,18 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc, deleteField } from 'firebase/firestore';
-import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project } from '@/lib/types';
-import { ACHIEVEMENTS } from '@/lib/types';
+import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project, Permission } from '@/lib/types';
+import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { checkAndGrantTeamAchievements } from './gamification.actions';
+import { hasPermission } from '@/lib/permissions';
 
 
 export async function createOrganizationInvite(organizationId: string, inviterId: string, organizationName: string) {
+    if (!await hasPermission(inviterId, organizationId, PERMISSIONS.MANAGE_MEMBERS)) {
+        return { error: "Je hebt geen permissie om leden uit te nodigen." };
+    }
     try {
         const newInviteRef = doc(collection(db, 'invites'));
         const newInvite: Omit<Invite, 'id'> = {
@@ -28,17 +31,17 @@ export async function createOrganizationInvite(organizationId: string, inviterId
 }
 
 export async function updateUserRoleInOrganization(organizationId: string, targetUserId: string, newRole: RoleName, currentUserId: string) {
+    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ROLES)) {
+        return { error: "Je hebt geen permissie om rollen aan te passen." };
+    }
+    
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
         if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
         
         const orgData = orgDoc.data() as Organization;
-        const currentUserRole = (orgData.members || {})[currentUserId]?.role;
 
-        if (currentUserRole !== 'Owner' && currentUserRole !== 'Admin') {
-            throw new Error("Je hebt geen permissie om rollen aan te passen.");
-        }
         if (orgData.ownerId === targetUserId) {
             throw new Error("De rol van de eigenaar kan niet worden gewijzigd.");
         }
@@ -58,23 +61,11 @@ export async function updateUserRoleInOrganization(organizationId: string, targe
 }
 
 export async function updateOrganization(organizationId: string, userId: string, data: Partial<Pick<Organization, 'name' | 'settings'>>) {
+    if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_ORGANIZATION)) {
+        return { error: "Alleen een Eigenaar of Beheerder kan deze organisatie bijwerken." };
+    }
     try {
         const orgRef = doc(db, 'organizations', organizationId);
-        const orgDoc = await getDoc(orgRef);
-        
-        if (!orgDoc.exists()) {
-             throw new Error("Organisatie niet gevonden.");
-        }
-        
-        const orgData = orgDoc.data() as Organization;
-        const member = orgData.members?.[userId];
-        const isOwnerOrAdmin = member?.role === 'Owner' || member?.role === 'Admin';
-
-
-        if (!isOwnerOrAdmin) {
-            throw new Error("Alleen een Eigenaar of Beheerder kan deze organisatie bijwerken.");
-        }
-
         await updateDoc(orgRef, data);
         return { success: true };
     } catch (error: any) {
@@ -137,7 +128,7 @@ export async function deleteOrganization(organizationId: string, userId: string)
         const batch = writeBatch(db);
 
         // Delete associated collections
-        const collectionsToDelete = ['projects', 'teams', 'tasks', 'taskTemplates', 'invites'];
+        const collectionsToDelete = ['projects', 'teams', 'tasks', 'taskTemplates', 'invites', 'personalGoals', 'teamChallenges', 'ideas', 'activityFeed', 'webhooks', 'apiKeys'];
         for (const coll of collectionsToDelete) {
             const q = query(collection(db, coll), where('organizationId', '==', organizationId));
             const snapshot = await getDocs(q);
@@ -172,22 +163,15 @@ export async function deleteOrganization(organizationId: string, userId: string)
 
 
 export async function reassignTasks(organizationId: string, fromUserId: string, toUserId: string, currentUserId: string) {
+    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ROLES)) { // Re-using manage_roles perm
+        return { error: "Je hebt geen permissie om taken opnieuw toe te wijzen." };
+    }
+    
     if (fromUserId === toUserId) {
         return { error: "Je kunt geen taken naar dezelfde gebruiker toewijzen." };
     }
     
     try {
-        const orgRef = doc(db, 'organizations', organizationId);
-        const orgDoc = await getDoc(orgRef);
-        if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
-        
-        const orgData = orgDoc.data() as Organization;
-        const currentUserRole = (orgData.members || {})[currentUserId]?.role;
-
-        if (currentUserRole !== 'Owner' && currentUserRole !== 'Admin') {
-            throw new Error("Je hebt geen permissie om taken opnieuw toe te wijzen.");
-        }
-        
         const tasksQuery = query(
             collection(db, 'tasks'), 
             where('organizationId', '==', organizationId),
@@ -274,9 +258,10 @@ export async function manageSavedFilter(
         throw new Error('Filter ID is vereist om te verwijderen.');
       }
       const filterToDelete = currentFilters.find(f => f.id === payload.filterId);
-      const memberRole = (orgData.members || {})[userId]?.role;
+      
+      const canDelete = filterToDelete && (filterToDelete.creatorId === userId || await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_ORGANIZATION));
 
-      if (filterToDelete && filterToDelete.creatorId !== userId && memberRole !== 'Owner' && memberRole !== 'Admin') {
+      if (!canDelete) {
           throw new Error("Je hebt geen permissie om dit filter te verwijderen.");
       }
       newFiltersList = currentFilters.filter(f => f.id !== payload.filterId);
@@ -293,18 +278,11 @@ export async function manageSavedFilter(
 }
 
 export async function completeProject(projectId: string, organizationId: string, currentUserId: string) {
+    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_PROJECTS)) {
+        return { error: "Je hebt geen permissie om een project te voltooien." };
+    }
+
     try {
-        const orgRef = doc(db, 'organizations', organizationId);
-        const orgDoc = await getDoc(orgRef);
-        if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
-        
-        const orgData = orgDoc.data() as Organization;
-        const currentUserRole = (orgData.members || {})[currentUserId]?.role;
-
-        if (currentUserRole !== 'Owner' && currentUserRole !== 'Admin') {
-            throw new Error("Je hebt geen permissie om een project te voltooien.");
-        }
-
         const projectRef = doc(db, 'projects', projectId);
         const projectDoc = await getDoc(projectRef);
         if (!projectDoc.exists()) throw new Error("Project niet gevonden.");
@@ -361,5 +339,3 @@ export async function completeProject(projectId: string, organizationId: string,
         return { error: error.message };
     }
 }
-
-    

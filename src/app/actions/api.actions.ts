@@ -4,30 +4,16 @@
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
-import type { ApiKey, Organization, Permission, ApiPermission } from '@/lib/types';
-import { PERMISSIONS, DEFAULT_ROLES } from '@/lib/types';
-
-// Simplified permission check for server actions
-async function checkPermission(userId: string, organizationId: string, permission: Permission): Promise<boolean> {
-    const orgRef = doc(db, 'organizations', organizationId);
-    const orgDoc = await getDoc(orgRef);
-    if (!orgDoc.exists()) return false;
-
-    const orgData = orgDoc.data() as Organization;
-    const roleId = orgData.members?.[userId]?.role;
-    if (!roleId) return false;
-
-    const allRoles = { ...DEFAULT_ROLES, ...(orgData.settings?.customization?.customRoles || {}) };
-    const userRole = allRoles[roleId];
-    return userRole?.permissions?.includes(permission) ?? false;
-}
+import type { ApiKey, ApiPermission } from '@/lib/types';
+import { hasPermission } from '@/lib/permissions';
+import { PERMISSIONS } from '@/lib/types';
 
 function hashKey(key: string): string {
     return crypto.createHash('sha256').update(key).digest('hex');
 }
 
 export async function generateApiKey(organizationId: string, userId: string, name: string, permissions: ApiPermission[]): Promise<{ plainTextKey: string } | { error: string }> {
-    if (!await checkPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
+    if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
         return { error: 'Geen permissie om API sleutels aan te maken.' };
     }
 
@@ -55,7 +41,7 @@ export async function generateApiKey(organizationId: string, userId: string, nam
 }
 
 export async function getApiKeys(organizationId: string, userId: string): Promise<{ keys: Omit<ApiKey, 'hashedKey' | 'organizationId'>[] } | { error: string }> {
-    if (!await checkPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
+    if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
         return { error: 'Geen permissie om API sleutels te bekijken.' };
     }
     
@@ -82,7 +68,7 @@ export async function getApiKeys(organizationId: string, userId: string): Promis
 }
 
 export async function revokeApiKey(keyId: string, organizationId: string, userId: string): Promise<{ success: boolean } | { error: string }> {
-    if (!await checkPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
+    if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
         return { error: 'Geen permissie om API sleutels in te trekken.' };
     }
 

@@ -1,92 +1,74 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { authenticateApiKey } from '@/lib/api-auth';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import type { Project } from '@/lib/types';
+import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
 
-export async function GET(request: NextRequest) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
 
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
+const getProjectsHandler = async (
+  request: NextRequest,
+  context: AuthenticatedApiHandlerContext,
+  authResult: AuthenticatedApiHandlerAuthResult
+) => {
+  const { organizationId } = authResult;
+
+  try {
+    const { searchParams } = request.nextUrl;
+    const queryConstraints: any[] = [where('organizationId', '==', organizationId)];
+
+    if (searchParams.get('name')) {
+      queryConstraints.push(where('name', '==', searchParams.get('name')));
     }
     
-    if (!authResult.permissions.includes('read:projects')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks read permissions for projects.' }, { status: 403 });
+    const projectsQuery = query(collection(db, 'projects'), ...queryConstraints);
+    const snapshot = await getDocs(projectsQuery);
+
+    const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    return NextResponse.json({ data: projects });
+
+  } catch (error: any) {
+    console.error("API Error fetching projects:", error);
+    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+  }
+};
+
+const createProjectHandler = async (
+  request: NextRequest,
+  context: AuthenticatedApiHandlerContext,
+  authResult: AuthenticatedApiHandlerAuthResult
+) => {
+  const { organizationId } = authResult;
+
+  try {
+    const body = await request.json();
+
+    if (!body.name) {
+      return NextResponse.json({ error: 'Bad Request: name is required.' }, { status: 400 });
     }
 
-    const { organizationId } = authResult;
+    const newProject: Omit<Project, 'id'> = {
+      name: body.name,
+      organizationId,
+      program: body.program || '',
+      teamIds: body.teamIds || [],
+      isSensitive: body.isSensitive || false,
+      isPublic: body.isPublic || false,
+    };
 
-    try {
-        const { searchParams } = request.nextUrl;
-        const queryConstraints: any[] = [where('organizationId', '==', organizationId)];
+    const docRef = await addDoc(collection(db, 'projects'), newProject);
+    
+    return NextResponse.json({ id: docRef.id, ...newProject }, { status: 201 });
 
-        if (searchParams.get('name')) {
-            queryConstraints.push(where('name', '==', searchParams.get('name')));
-        }
-        
-        const projectsQuery = query(collection(db, 'projects'), ...queryConstraints);
-        const snapshot = await getDocs(projectsQuery);
-
-        const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        return NextResponse.json({ data: projects });
-
-    } catch (error: any) {
-        console.error("API Error fetching projects:", error);
-        return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+  } catch (error: any) {
+    console.error("API Error creating project:", error);
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'Bad Request: Invalid JSON body.' }, { status: 400 });
     }
-}
+    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+  }
+};
 
-export async function POST(request: NextRequest) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
-
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
-    }
-
-    if (!authResult.permissions.includes('write:projects')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks write permissions for projects.' }, { status: 403 });
-    }
-
-    const { organizationId } = authResult;
-
-    try {
-        const body = await request.json();
-
-        if (!body.name) {
-            return NextResponse.json({ error: 'Bad Request: name is required.' }, { status: 400 });
-        }
-
-        const newProject: Omit<Project, 'id'> = {
-            name: body.name,
-            organizationId,
-            program: body.program || '',
-            teamIds: body.teamIds || [],
-            isSensitive: body.isSensitive || false,
-            isPublic: body.isPublic || false,
-        };
-
-        const docRef = await addDoc(collection(db, 'projects'), newProject);
-        
-        return NextResponse.json({ id: docRef.id, ...newProject }, { status: 201 });
-
-    } catch (error: any) {
-        console.error("API Error creating project:", error);
-        if (error instanceof SyntaxError) {
-             return NextResponse.json({ error: 'Bad Request: Invalid JSON body.' }, { status: 400 });
-        }
-        return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
-    }
-}
+export const GET = withApiKeyAuth(getProjectsHandler, ['read:projects']);
+export const POST = withApiKeyAuth(createProjectHandler, ['write:projects']);

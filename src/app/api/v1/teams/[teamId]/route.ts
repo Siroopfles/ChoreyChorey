@@ -1,29 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { authenticateApiKey } from '@/lib/api-auth';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { Team } from '@/lib/types';
+import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
 
-export async function GET(request: NextRequest, { params }: { params: { teamId: string } }) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
-
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
-    }
-    
-    if (!authResult.permissions.includes('read:teams')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks read permissions for teams.' }, { status: 403 });
-    }
-
+const getTeamHandler = async (
+    request: NextRequest,
+    context: AuthenticatedApiHandlerContext,
+    authResult: AuthenticatedApiHandlerAuthResult
+) => {
     const { organizationId } = authResult;
+    const { teamId } = context.params;
 
     try {
-        const { teamId } = params;
         const teamRef = doc(db, 'teams', teamId);
         const teamDoc = await getDoc(teamRef);
 
@@ -42,28 +32,18 @@ export async function GET(request: NextRequest, { params }: { params: { teamId: 
         console.error("API Error fetching team:", error);
         return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
-}
+};
 
-export async function PUT(request: NextRequest, { params }: { params: { teamId: string } }) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
 
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
-    }
-
-    if (!authResult.permissions.includes('write:teams')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks write permissions for teams.' }, { status: 403 });
-    }
-
+const updateTeamHandler = async (
+    request: NextRequest,
+    context: AuthenticatedApiHandlerContext,
+    authResult: AuthenticatedApiHandlerAuthResult
+) => {
     const { organizationId } = authResult;
-    
+    const { teamId } = context.params;
+
     try {
-        const { teamId } = params;
         const body = await request.json();
 
         // Prevent updating critical fields
@@ -92,28 +72,17 @@ export async function PUT(request: NextRequest, { params }: { params: { teamId: 
         }
         return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
-}
+};
 
-export async function DELETE(request: NextRequest, { params }: { params: { teamId: string } }) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
-    
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
-    }
-
-    if (!authResult.permissions.includes('delete:teams')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks delete permissions for teams.' }, { status: 403 });
-    }
-    
+const deleteTeamHandler = async (
+    request: NextRequest,
+    context: AuthenticatedApiHandlerContext,
+    authResult: AuthenticatedApiHandlerAuthResult
+) => {
     const { organizationId } = authResult;
+    const { teamId } = context.params;
 
     try {
-        const { teamId } = params;
         const teamRef = doc(db, 'teams', teamId);
         const teamDoc = await getDoc(teamRef);
 
@@ -132,4 +101,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { teamI
         console.error("API Error deleting team:", error);
         return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
-}
+};
+
+export const GET = withApiKeyAuth(getTeamHandler, ['read:teams']);
+export const PUT = withApiKeyAuth(updateTeamHandler, ['write:teams']);
+export const DELETE = withApiKeyAuth(deleteTeamHandler, ['delete:teams']);

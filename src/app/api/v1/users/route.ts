@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { authenticateApiKey } from '@/lib/api-auth';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+
 
 const serializeUser = (data: any) => {
     // Return a public-safe user object
@@ -16,22 +18,11 @@ const serializeUser = (data: any) => {
     };
 };
 
-export async function GET(request: NextRequest) {
-    const authHeader = request.headers.get('Authorization');
-    const apiKey = authHeader?.split('Bearer ')[1];
-    if (!apiKey) {
-        return NextResponse.json({ error: 'Unauthorized: API key is missing.' }, { status: 401 });
-    }
-
-    const authResult = await authenticateApiKey(apiKey);
-    if (!authResult) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid API key.' }, { status: 401 });
-    }
-    
-    if (!authResult.permissions.includes('read:users')) {
-        return NextResponse.json({ error: 'Forbidden: Your API key lacks read permissions for users.' }, { status: 403 });
-    }
-
+const getUsersHandler = async (
+    request: NextRequest,
+    context: AuthenticatedApiHandlerContext,
+    authResult: AuthenticatedApiHandlerAuthResult
+) => {
     const { organizationId } = authResult;
 
     try {
@@ -56,4 +47,7 @@ export async function GET(request: NextRequest) {
         console.error("API Error fetching users:", error);
         return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
-}
+};
+
+
+export const GET = withApiKeyAuth(getUsersHandler, ['read:users']);
