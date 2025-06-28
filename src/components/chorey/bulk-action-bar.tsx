@@ -8,17 +8,23 @@ import {
     DropdownMenu, 
     DropdownMenuContent, 
     DropdownMenuItem, 
-    DropdownMenuTrigger 
+    DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuPortal,
+    DropdownMenuSubContent,
+    DropdownMenuSeparator as DdSeparator
 } from "@/components/ui/dropdown-menu";
-import { Replace, Trash2, X, UserPlus, ArrowUpNarrowWide } from "lucide-react";
+import { Replace, Trash2, X, UserPlus, ArrowUpNarrowWide, Briefcase, Tags } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 export default function BulkActionBar() {
     const { selectedTaskIds, bulkUpdateTasks, setSelectedTaskIds } = useTasks();
-    const { currentOrganization, users } = useAuth();
+    const { currentOrganization, users, projects } = useAuth();
     
     const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
     const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+    const allLabels = currentOrganization?.settings?.customization?.labels || [];
 
 
     if (selectedTaskIds.length === 0) {
@@ -75,6 +81,70 @@ export default function BulkActionBar() {
                         >
                             Niemand
                         </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                            <Briefcase className="mr-2 h-4 w-4" />
+                            Project
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                         <DropdownMenuItem onSelect={() => bulkUpdateTasks(selectedTaskIds, { projectId: null })}>
+                            Geen project
+                        </DropdownMenuItem>
+                        <DdSeparator/>
+                        {projects.map(project => (
+                            <DropdownMenuItem 
+                                key={project.id}
+                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { projectId: project.id })}
+                            >
+                                {project.name}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                            <Tags className="mr-2 h-4 w-4" />
+                            Labels
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>Label Toevoegen</DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                                {allLabels.map(label => (
+                                    <DropdownMenuItem 
+                                        key={label}
+                                        onSelect={() => bulkUpdateTasks(selectedTaskIds, { addLabels: [label] })}
+                                    >
+                                        {label}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>Label Verwijderen</DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                                {allLabels.map(label => (
+                                    <DropdownMenuItem 
+                                        key={label}
+                                        onSelect={() => bulkUpdateTasks(selectedTaskIds, { removeLabels: [label] })}
+                                    >
+                                        {label}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                        </DropdownMenuSub>
                     </DropdownMenuContent>
                 </DropdownMenu>
 

@@ -12,6 +12,8 @@ import {
   updateDoc,
   query,
   where,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus, TeamChallenge, TeamChallengeFormValues } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
@@ -36,7 +38,7 @@ type TaskContextType = {
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   rateTask: (taskId: string, rating: number) => Promise<void>;
-  bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments'>>) => void;
+  bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments' | 'labels'>> & { addLabels?: string[], removeLabels?: string[] }) => void;
   cloneTask: (taskId: string) => void;
   splitTask: (taskId: string) => Promise<void>;
   deleteTaskPermanently: (taskId: string) => void;
@@ -274,10 +276,47 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     else { toast({ title: 'Klus van de Week ingesteld!' }); }
   };
 
-  const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id'>>) => {
-      await updateTask(taskIds[0], updates); // Simplified for now
-      setSelectedTaskIds([]);
+  const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments' | 'labels'>> & { addLabels?: string[], removeLabels?: string[] }) => {
+    if (!user || !currentOrganization) return;
+    
+    const batch = writeBatch(db);
+    const historyEntry = {
+        id: crypto.randomUUID(),
+        userId: user.id,
+        timestamp: new Date(),
+        action: 'Bulk bewerking',
+        details: `Taken bijgewerkt.`,
+    };
+    
+    taskIds.forEach(taskId => {
+      const taskRef = doc(db, 'tasks', taskId);
+      const { addLabels, removeLabels, ...otherUpdates } = updates;
+      const finalUpdates: any = { ...otherUpdates, history: arrayUnion(historyEntry) };
+
+      if (addLabels && addLabels.length > 0) {
+        finalUpdates.labels = arrayUnion(...addLabels);
+      }
+      if (removeLabels && removeLabels.length > 0) {
+        // Firestore does not allow arrayUnion and arrayRemove on the same field in the same write.
+        // The UI should prevent this, but we handle it here by prioritizing addition.
+        if (finalUpdates.labels) {
+            console.warn("Cannot add and remove labels in the same bulk update. Add operation will take precedence.");
+        } else {
+             finalUpdates.labels = arrayRemove(...removeLabels);
+        }
+      }
+      
+      batch.update(taskRef, finalUpdates);
+    });
+
+    try {
+      await batch.commit();
       toast({ title: 'Bulk actie succesvol!', description: `${taskIds.length} taken zijn bijgewerkt.` });
+    } catch (e) {
+      handleError(e, 'bulk bijwerken taken');
+    }
+    
+    setSelectedTaskIds([]);
   };
   
   const addTemplate = async (templateData: TaskTemplateFormValues) => {
