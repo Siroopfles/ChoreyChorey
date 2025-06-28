@@ -292,7 +292,7 @@ export type User = {
     currentStreak: number;
     lastCompletionDate: Date;
   };
-  dashboardLayout?: Layout[];
+  dashboardLayout?: Record<string, Layout[]>;
 };
 
 export type Session = {

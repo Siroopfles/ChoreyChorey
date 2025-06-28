@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import type { Task, Status } from '@/lib/types';
+import { GripVertical } from 'lucide-react';
 
 const COLORS: Record<string, string> = {
     'Te Doen': 'hsl(var(--status-todo))',
@@ -29,13 +30,18 @@ export function TasksByStatusWidget({ tasks }: { tasks: Task[] }) {
     }, [tasks]);
 
     return (
-        <Card className="h-full">
-            <CardHeader>
-                <CardTitle>Taak Status</CardTitle>
-                <CardDescription>Distributie van taken per status.</CardDescription>
+        <Card className="h-full flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Taak Status</CardTitle>
+                    <CardDescription>Distributie van taken per status.</CardDescription>
+                </div>
+                 <div className="react-grid-drag-handle cursor-grab active:cursor-grabbing">
+                    <GripVertical />
+                </div>
             </CardHeader>
-            <CardContent>
-                <ChartContainer config={{}} className="mx-auto aspect-square h-[250px]">
+            <CardContent className="flex-grow">
+                <ChartContainer config={{}} className="mx-auto aspect-square h-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <ChartTooltip content={<ChartTooltipContent hideLabel />} />

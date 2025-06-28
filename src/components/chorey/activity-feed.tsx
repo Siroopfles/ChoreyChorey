@@ -1,13 +1,13 @@
 
+
 'use client';
 
 import type { ActivityFeedItem, User, Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Trophy, Heart, Star, Activity } from 'lucide-react';
+import { Trophy, Heart, Star, Activity, GripVertical } from 'lucide-react';
 import { Button } from '../ui/button';
 
 const ICONS: Record<ActivityFeedItem['type'], React.ElementType> = {
@@ -75,11 +75,14 @@ export function ActivityFeed({
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
             <Activity />
             Recente Activiteit
         </CardTitle>
+        <div className="react-grid-drag-handle cursor-grab active:cursor-grabbing">
+            <GripVertical />
+        </div>
       </CardHeader>
       <CardContent className="flex-grow min-h-0">
         <ScrollArea className="h-full pr-4">

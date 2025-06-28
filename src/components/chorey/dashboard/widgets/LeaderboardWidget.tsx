@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { User } from '@/lib/types';
+import { GripVertical } from 'lucide-react';
 
 export function LeaderboardWidget({ users }: { users: User[] }) {
     const { resolvedTheme } = useTheme();
@@ -24,13 +25,18 @@ export function LeaderboardWidget({ users }: { users: User[] }) {
     }, [users, resolvedTheme]);
 
     return (
-        <Card className="h-full">
-            <CardHeader>
-                <CardTitle>Scorebord</CardTitle>
-                <CardDescription>Totaal aantal punten per gebruiker.</CardDescription>
+        <Card className="h-full flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Scorebord</CardTitle>
+                    <CardDescription>Totaal aantal punten per gebruiker.</CardDescription>
+                </div>
+                <div className="react-grid-drag-handle cursor-grab active:cursor-grabbing">
+                    <GripVertical />
+                </div>
             </CardHeader>
-            <CardContent>
-                <ChartContainer config={{}} className="h-[250px] w-full">
+            <CardContent className="flex-grow">
+                <ChartContainer config={{}} className="h-full w-full">
                     <ResponsiveContainer>
                         <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20 }}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />

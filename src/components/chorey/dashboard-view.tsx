@@ -4,7 +4,7 @@
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { Responsive, WidthProvider } from 'react-grid-layout';
-import type { Layout } from 'react-grid-layout';
+import type { Layouts } from 'react-grid-layout';
 
 // Import Widgets
 import { TasksByStatusWidget } from './dashboard/widgets/TasksByStatusWidget';
@@ -15,7 +15,8 @@ import { ActivityFeedWidget } from './dashboard/widgets/ActivityFeedWidget';
 // Import Types
 import type { Task, User, ActivityFeedItem } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
-import { useMemo } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
+import { updateUserProfile } from '@/app/actions/user.actions';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -35,7 +36,7 @@ const WIDGETS = {
   activityFeed: 'activityFeed',
 };
 
-const defaultLayouts: { [key: string]: Layout[] } = {
+const defaultLayouts: Layouts = {
   lg: [
     { i: WIDGETS.tasksByStatus, x: 0, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
     { i: WIDGETS.leaderboard, x: 1, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
@@ -59,9 +60,26 @@ const defaultLayouts: { [key: string]: Layout[] } = {
 
 export default function DashboardView({ tasks, users, activityFeedItems, isFeedLoading, setViewedTask, navigateToUserProfile }: DashboardViewProps) {
   const { user } = useAuth();
+  const layoutChangeTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // In a future step, this would be saved to the user's profile
-  const layouts = user?.dashboardLayout || defaultLayouts;
+  const layouts = useMemo(() => user?.dashboardLayout || defaultLayouts, [user?.dashboardLayout]);
+  
+  const handleLayoutChange = useCallback(
+    (_currentLayout: any, allLayouts: Layouts) => {
+      if (layoutChangeTimer.current) {
+        clearTimeout(layoutChangeTimer.current);
+      }
+      layoutChangeTimer.current = setTimeout(async () => {
+        if (user) {
+          const hasLayoutChanged = JSON.stringify(allLayouts) !== JSON.stringify(layouts);
+          if (hasLayoutChanged) {
+            await updateUserProfile(user.id, { dashboardLayout: allLayouts });
+          }
+        }
+      }, 500);
+    },
+    [user, layouts]
+  );
 
   const memoizedWidgets = useMemo(() => ({
     [WIDGETS.tasksByStatus]: <TasksByStatusWidget tasks={tasks} />,
@@ -87,8 +105,10 @@ export default function DashboardView({ tasks, users, activityFeedItems, isFeedL
       breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
       cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }}
       rowHeight={150}
-      isDraggable={false} // Customization disabled for now
-      isResizable={false} // Customization disabled for now
+      isDraggable={true}
+      isResizable={true}
+      onLayoutChange={handleLayoutChange}
+      draggableHandle=".react-grid-drag-handle"
     >
         {Object.keys(WIDGETS).map(key => (
             <div key={key}>
