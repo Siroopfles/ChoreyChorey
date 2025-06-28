@@ -227,6 +227,7 @@ export type Project = {
   isPublic?: boolean;
   budget?: number;
   budgetType?: 'amount' | 'hours';
+  deadline?: Date;
 };
 
 export type Team = {

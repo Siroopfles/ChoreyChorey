@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Loader2, Check, Users, X, Euro, Clock } from 'lucide-react';
+import { Loader2, Check, Users, X, Euro, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, updateDoc, doc } from 'firebase/firestore';
@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 const projectSchema = z.object({
     name: z.string().min(2, 'Projectnaam moet minimaal 2 karakters bevatten.'),
@@ -31,6 +33,7 @@ const projectSchema = z.object({
     teamIds: z.array(z.string()).optional(),
     budget: z.coerce.number().optional(),
     budgetType: z.enum(['amount', 'hours']).optional(),
+    deadline: z.date().optional(),
 });
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
@@ -55,14 +58,17 @@ export function ProjectDialog({ organizationId, project, allTeams, children, ope
 
     const form = useForm<ProjectFormValues>({
         resolver: zodResolver(projectSchema),
-        defaultValues: { name: '', program: '', isSensitive: false, isPublic: false, teamIds: [], budget: undefined, budgetType: undefined },
+        defaultValues: { name: '', program: '', isSensitive: false, isPublic: false, teamIds: [], budget: undefined, budgetType: undefined, deadline: undefined },
     });
     
     useEffect(() => {
         if (project) {
-            form.reset(project);
+            form.reset({
+              ...project,
+              deadline: project.deadline ? new Date(project.deadline) : undefined
+            });
         } else {
-            form.reset({ name: '', program: '', isSensitive: false, isPublic: false, teamIds: [], budget: undefined, budgetType: undefined });
+            form.reset({ name: '', program: '', isSensitive: false, isPublic: false, teamIds: [], budget: undefined, budgetType: undefined, deadline: undefined });
         }
     }, [project, open, form]);
 
@@ -116,6 +122,29 @@ export function ProjectDialog({ organizationId, project, allTeams, children, ope
                                 <FormItem>
                                     <FormLabel>Programma (Optioneel)</FormLabel>
                                     <FormControl><Input placeholder="bijv. Marketing Q3" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="deadline"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Deadline (Optioneel)</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button variant={'outline'} className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}>
+                                                    {field.value ? format(field.value, 'PPP') : <span>Kies een deadline</span>}
+                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                        </PopoverContent>
+                                    </Popover>
                                     <FormMessage />
                                 </FormItem>
                             )}

@@ -1,8 +1,9 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, Timestamp, getDoc, doc, orderBy, limit } from 'firebase/firestore';
-import type { User, Organization, SuggestStoryPointsInput } from '@/lib/types';
+import type { User, Organization, SuggestStoryPointsInput, Project } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
 import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
@@ -25,7 +26,8 @@ import { suggestProactiveHelp } from '@/ai/flows/suggest-proactive-help-flow';
 import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
 import { predictBurnoutRisk } from '@/ai/flows/predict-burnout-risk-flow';
 import { generateProjectReport } from '@/ai/flows/generate-project-report-flow';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput, LevelWorkloadInput, SuggestHeadcountInput, SuggestHeadcountOutput, SuggestProactiveHelpInput, SuggestProactiveHelpOutput, SuggestStatusUpdateInput, SuggestStatusUpdateOutput, PredictBurnoutRiskOutput, GenerateProjectReportOutput } from '@/ai/schemas';
+import { predictProjectOutcome } from '@/ai/flows/predict-project-outcome-flow';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput, LevelWorkloadInput, SuggestHeadcountInput, SuggestHeadcountOutput, SuggestProactiveHelpInput, SuggestProactiveHelpOutput, SuggestStatusUpdateInput, SuggestStatusUpdateOutput, PredictBurnoutRiskOutput, GenerateProjectReportOutput, PredictProjectOutcomeOutput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -308,6 +310,69 @@ export async function handleGenerateProjectReport(projectId: string, projectName
     try {
         const result = await generateProjectReport({ projectId, projectName, organizationId });
         return { result };
+    } catch (e: any) {
+        return { error: e.message, result: null };
+    }
+}
+
+export async function handlePredictProjectOutcome(projectId: string, organizationId: string): Promise<{ result: PredictProjectOutcomeOutput | null, error?: string }> {
+    try {
+        // 1. Get project details
+        const projectDoc = await getDoc(doc(db, 'projects', projectId));
+        if (!projectDoc.exists()) {
+            return { error: 'Project niet gevonden.', result: null };
+        }
+        const projectData = projectDoc.data() as Project;
+
+        // 2. Get all tasks for the project
+        const projectTasksQuery = query(collection(db, 'tasks'), where('projectId', '==', projectId));
+        const projectTasksSnapshot = await getDocs(projectTasksQuery);
+        const projectTasks = projectTasksSnapshot.docs.map(d => {
+            const data = d.data();
+            // Basic serialization for the prompt
+            return {
+                title: data.title,
+                status: data.status,
+                priority: data.priority,
+                storyPoints: data.storyPoints,
+                cost: data.cost,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+                dueDate: (data.dueDate as Timestamp)?.toDate()?.toISOString(),
+                completedAt: (data.completedAt as Timestamp)?.toDate()?.toISOString(),
+            };
+        });
+
+        // 3. Get recent historical tasks from the whole org for velocity context (RAG)
+        const historicalTasksQuery = query(
+            collection(db, 'tasks'),
+            where('organizationId', '==', organizationId),
+            where('status', '==', 'Voltooid'),
+            orderBy('completedAt', 'desc'),
+            limit(100)
+        );
+        const historicalTasksSnapshot = await getDocs(historicalTasksQuery);
+        const historicalTasks = historicalTasksSnapshot.docs.map(d => {
+            const data = d.data();
+            return {
+                title: data.title,
+                storyPoints: data.storyPoints,
+                cost: data.cost,
+                completionTimeHours: data.completedAt && data.createdAt ? ((data.completedAt as Timestamp).toMillis() - (data.createdAt as Timestamp).toMillis()) / 3600000 : null,
+            };
+        });
+
+        // 4. Call the AI flow with all the context
+        const result = await predictProjectOutcome({
+            projectName: projectData.name,
+            projectDeadline: projectData.deadline?.toISOString().split('T')[0],
+            projectBudget: projectData.budget,
+            projectBudgetType: projectData.budgetType,
+            projectTasks,
+            historicalTasks,
+        });
+
+        return { result };
+
     } catch (e: any) {
         return { error: e.message, result: null };
     }

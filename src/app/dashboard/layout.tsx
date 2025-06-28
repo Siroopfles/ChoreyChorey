@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -98,6 +98,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
         { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
         { href: '/dashboard/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
+        { href: '/dashboard/predictive-analysis', icon: BrainCircuit, label: 'AI Voorspellende Analyse' },
     ];
     
     const adminNavItems = isGuest ? [] : [

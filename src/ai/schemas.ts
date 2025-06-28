@@ -1,3 +1,4 @@
+
 import { z } from 'genkit';
 import { ALL_PRIORITIES } from '@/lib/types';
 
@@ -333,3 +334,24 @@ export const GenerateProjectReportOutputSchema = z.object({
     report: z.string().describe('A comprehensive project status report in Markdown format. The report should be written in Dutch.'),
 });
 export type GenerateProjectReportOutput = z.infer<typeof GenerateProjectReportOutputSchema>;
+
+// From predict-project-outcome-flow.ts
+export const PredictProjectOutcomeInputSchema = z.object({
+  projectName: z.string(),
+  projectDeadline: z.string().optional(),
+  projectBudget: z.number().optional(),
+  projectBudgetType: z.enum(['amount', 'hours']).optional(),
+  projectTasks: z.any().describe("A JSON array of all tasks associated with the project."),
+  historicalTasks: z.any().describe("A JSON array of recently completed tasks from the entire organization for context and velocity calculation."),
+});
+export type PredictProjectOutcomeInput = z.infer<typeof PredictProjectOutcomeInputSchema>;
+
+export const PredictProjectOutcomeOutputSchema = z.object({
+  onTrackStatus: z.enum(['ON_TRACK', 'AT_RISK', 'OFF_TRACK']).describe("A classification of the project's current status based on the prediction."),
+  predictedCompletionDate: z.string().describe("The AI's best estimate for the project completion date in YYYY-MM-DD format."),
+  budgetPrediction: z.string().describe("A short summary of the budget forecast (e.g., 'Likely to stay within budget', 'At risk of overspending by 15%')."),
+  confidenceScore: z.number().min(0).max(100).describe("A confidence score (0-100) for the overall prediction."),
+  reasoning: z.string().describe("A detailed explanation of the prediction, including analysis of burn rate, velocity, and potential risks."),
+  recommendations: z.array(z.string()).describe("A list of actionable recommendations to mitigate risks or improve project outcomes."),
+});
+export type PredictProjectOutcomeOutput = z.infer<typeof PredictProjectOutcomeOutputSchema>;

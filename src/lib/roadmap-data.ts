@@ -109,7 +109,7 @@ export const roadmapPhases: Phase[] = [
       { id: 5006, title: "Gast- / Klanttoegang", description: "Geef externe gebruikers beperkte, read-only toegang tot specifieke projecten of taken.", completed: true },
       { id: 5007, title: "IP Whitelisting", description: "Beperk toegang tot de organisatie tot specifieke IP-adressen voor extra beveiliging.", completed: true },
       { id: 5008, title: "Geavanceerde Automatisering", description: "Een ingebouwde 'Zapier'-light voor het automatiseren van workflows binnen Chorey.", completed: false },
-      { id: 5009, title: "AI Predictive Analysis", description: "Waarschuwt proactief voor projectvertragingen en budgetoverschrijdingen op basis van historische data.", completed: false },
+      { id: 5009, title: "AI Predictive Analysis", description: "Waarschuwt proactief voor projectvertragingen en budgetoverschrijdingen op basis van historische data.", completed: true },
       { id: 5010, title: "AI Burnout Voorspelling", description: "Signaleert risico op overbelasting op basis van werkpatronen en taken.", completed: true },
       { id: 5011, title: "AI Automatische Status Updates", description: "Stelt statuswijzigingen voor op basis van gekoppelde commits, comments en activiteit.", completed: true },
       { id: 5012, title: "Conversational UI", description: "Een chat-first interface als primair interactiemodel, naast de visuele interface.", completed: false },
