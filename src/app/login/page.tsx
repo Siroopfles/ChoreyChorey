@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,8 +20,14 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+const MicrosoftIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 23" fill="currentColor" className="mr-2 h-4 w-4">
+        <path d="M1 1h10v10H1V1zm11 0h10v10H12V1zM1 12h10v10H1V12zm11 0h10v10H12V12z" />
+    </svg>
+);
+
 export default function LoginPage() {
-  const { loginWithEmail, loginWithGoogle, user, loading: authLoading } = useAuth();
+  const { loginWithEmail, loginWithGoogle, loginWithMicrosoft, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,6 +59,16 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
         await loginWithGoogle();
+    } catch (e) {
+        // Error is handled in context
+    }
+    setIsSubmitting(false);
+  }
+
+  const handleMicrosoftLogin = async () => {
+    setIsSubmitting(true);
+    try {
+        await loginWithMicrosoft();
     } catch (e) {
         // Error is handled in context
     }
@@ -127,6 +144,10 @@ export default function LoginPage() {
                <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 21.2 172.9 65.6l-58.3 52.7C338.6 97.2 297.9 80 248 80c-82.8 0-150.5 67.7-150.5 150.5S165.2 406 248 406c45.3 0 82.2-22.4 102.3-43.2l-64.8-49.9h-98.2v-73.3h175.4c1.6 9.3 2.6 19.1 2.6 29.5z"></path></svg>
                }
                Google
+            </Button>
+            <Button variant="outline" className="w-full mt-2" onClick={handleMicrosoftLogin} disabled={isSubmitting}>
+               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MicrosoftIcon />}
+               Microsoft
             </Button>
           </CardContent>
           <CardFooter className="justify-center text-sm">

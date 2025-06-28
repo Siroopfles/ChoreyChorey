@@ -21,7 +21,7 @@ import {
     getAdditionalUserInfo,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
+import { auth, db, googleProvider, microsoftProvider } from '@/lib/firebase';
 import type { User, Organization, Team, RoleName, UserStatus, Permission, Project } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +41,7 @@ type AuthContextType = {
     loginWithEmail: (email: string, pass: string) => Promise<void>;
     signupWithEmail: (email: string, pass: string, name: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
+    loginWithMicrosoft: () => Promise<void>;
     logout: () => void;
     completeMfa: () => void;
     refreshUser: () => Promise<void>;
@@ -377,6 +378,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const loginWithMicrosoft = async (): Promise<void> => {
+        setLoading(true);
+        try {
+            const userCredential = await signInWithPopup(auth, microsoftProvider);
+            const firebaseUser = userCredential.user;
+            const additionalInfo = getAdditionalUserInfo(userCredential);
+
+            if (additionalInfo?.isNewUser) {
+                let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
+                 try {
+                    const { avatarDataUri } = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                    if (avatarDataUri) {
+                        avatarUrl = avatarDataUri;
+                    }
+                } catch (aiError) {
+                    console.error("Failed to generate AI avatar, using placeholder.", aiError);
+                }
+
+                const newUser: Omit<User, 'id'> = {
+                    name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
+                    email: firebaseUser.email!,
+                    points: 0,
+                    avatar: avatarUrl,
+                    achievements: [],
+                    organizationIds: [],
+                    currentOrganizationId: null,
+                    status: { type: 'Online', until: null },
+                };
+                await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+            }
+
+            await handleLoginSuccess(firebaseUser);
+        } catch (error: any) {
+            handleError(error, 'inloggen met Microsoft');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logout = async () => {
         try {
             if (user?.id) {
@@ -475,6 +516,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithEmail,
         signupWithEmail,
         loginWithGoogle,
+        loginWithMicrosoft,
         logout,
         completeMfa,
         refreshUser,
