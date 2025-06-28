@@ -1,12 +1,13 @@
 
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, arrayRemove, runTransaction, Timestamp } from 'firebase/firestore';
 import type { User, Task, TaskFormValues, Status, HistoryEntry, Recurring, Subtask, Organization } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils';
-import { grantAchievements } from './gamification.actions';
+import { grantAchievements, checkAndGrantTeamAchievements } from './gamification.actions';
 import { createNotification } from './notification.actions';
 import { triggerWebhooks } from '@/lib/webhook-service';
 import Papa from 'papaparse';
@@ -209,7 +210,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           storyPoints: taskData.storyPoints ?? null,
           blockedBy: taskData.blockedBy || [],
           dependencyConfig: taskData.dependencyConfig || {},
-          recurring: taskData.recurring === undefined ? null : taskData.recurring,
+          recurring: taskData.recurring ?? null,
           organizationId: organizationId,
           imageDataUri: taskData.imageDataUri ?? null,
           thanked: false,
@@ -440,6 +441,9 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                     })
                 }
                 await triggerWebhooks(organizationId, 'task.created', { ...newTaskData, id: docRef.id });
+            }
+             if (taskToUpdate.teamId) {
+                checkAndGrantTeamAchievements(taskToUpdate.teamId, organizationId).catch(console.error);
             }
         }
         

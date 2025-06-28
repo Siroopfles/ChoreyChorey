@@ -24,6 +24,8 @@ const achievementIcons: Record<string, React.ElementType> = {
     'community_helper': Users,
     'appreciated': Heart,
     'project_completed': Medal,
+    'team_effort': Users,
+    'project_dominators': Briefcase,
 };
 
 export default function UserProfilePage() {

@@ -1,10 +1,12 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, increment, arrayUnion, runTransaction, addDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, User, Organization, ActivityFeedItem, Team } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
+import { createNotification } from './notification.actions';
 
 async function grantAchievements(userId: string, type: 'completed' | 'thanked', task?: Task) {
     const userRef = doc(db, 'users', userId);
@@ -267,6 +269,60 @@ export async function getPublicActivityFeed(organizationId: string): Promise<{ f
         return { feed };
     } catch(e: any) {
         return { error: e.message };
+    }
+}
+
+export async function checkAndGrantTeamAchievements(teamId: string, organizationId: string) {
+    try {
+        const teamRef = doc(db, 'teams', teamId);
+        const teamDoc = await getDoc(teamRef);
+        if (!teamDoc.exists()) return;
+
+        const teamData = teamDoc.data() as Team;
+        const memberIds = teamData.memberIds;
+        if (memberIds.length === 0) return;
+
+        // --- Check for "TEAM_EFFORT" achievement ---
+        const teamTasksQuery = query(
+            collection(db, 'tasks'),
+            where('organizationId', '==', organizationId),
+            where('teamId', '==', teamId),
+            where('status', '==', 'Voltooid')
+        );
+        const teamTasksSnapshot = await getDocs(teamTasksQuery);
+        const completedTasksCount = teamTasksSnapshot.size;
+
+        if (completedTasksCount >= 50) {
+            const usersQuery = query(collection(db, 'users'), where('__name__', 'in', memberIds));
+            const usersSnapshot = await getDocs(usersQuery);
+            
+            const batch = writeBatch(db);
+            const achievementId = ACHIEVEMENTS.TEAM_EFFORT.id;
+            
+            usersSnapshot.docs.forEach(userDoc => {
+                const userData = userDoc.data() as User;
+                if (!userData.achievements?.includes(achievementId)) {
+                    batch.update(userDoc.ref, { achievements: arrayUnion(achievementId) });
+                    
+                    const notificationMessage = `Jullie team (${teamData.name}) is een geoliede machine! Prestatie ontgrendeld: "${ACHIEVEMENTS.TEAM_EFFORT.name}".`;
+                    const notificationRef = doc(collection(db, 'notifications'));
+                    batch.set(notificationRef, {
+                        userId: userDoc.id,
+                        message: notificationMessage,
+                        read: false,
+                        createdAt: new Date(),
+                        organizationId: organizationId,
+                    });
+                }
+            });
+
+            await batch.commit();
+        }
+        
+        // --- Placeholder for other team achievements like PROJECT_DOMINATORS ---
+
+    } catch (e: any) {
+        console.error(`Error checking team achievements for team ${teamId}:`, e);
     }
 }
 

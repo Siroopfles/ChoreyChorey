@@ -328,6 +328,18 @@ export const ACHIEVEMENTS = {
     description: 'Je hebt met succes bijgedragen aan de voltooiing van een project.',
     icon: 'Medal',
   },
+  TEAM_EFFORT: { 
+    id: 'team_effort', 
+    name: 'Geoliede Machine', 
+    description: 'Voltooi als team 50 taken samen.',
+    icon: 'Users',
+  },
+  PROJECT_DOMINATORS: { 
+    id: 'project_dominators', 
+    name: 'Project Dominators', 
+    description: 'Voltooi als team 3 projecten.',
+    icon: 'Briefcase',
+  },
 };
 
 export type Priority = string;
