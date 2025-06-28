@@ -23,6 +23,7 @@ import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import Link from 'next/link';
 import AnnouncementBanner from '@/components/chorey/announcement-banner';
+import { PERMISSIONS } from '@/lib/types';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useAuth();
