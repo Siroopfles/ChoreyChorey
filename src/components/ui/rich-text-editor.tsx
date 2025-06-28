@@ -16,6 +16,15 @@ const RichTextEditor = React.forwardRef<HTMLDivElement, RichTextEditorProps>(
   ({ value, onChange, placeholder, className }, ref) => {
     const editorRef = React.useRef<HTMLDivElement>(null);
 
+    // This effect synchronizes the external `value` prop with the editor's content.
+    // It only updates the content if it's different, preventing the cursor from jumping
+    // during normal typing.
+    React.useEffect(() => {
+      if (editorRef.current && value !== editorRef.current.innerHTML) {
+        editorRef.current.innerHTML = value;
+      }
+    }, [value]);
+
     const handleInput = (event: React.FormEvent<HTMLDivElement>) => {
       onChange(event.currentTarget.innerHTML);
     };
@@ -24,17 +33,6 @@ const RichTextEditor = React.forwardRef<HTMLDivElement, RichTextEditorProps>(
       document.execCommand(command, false, value);
       editorRef.current?.focus();
     };
-    
-    const [isMounted, setIsMounted] = React.useState(false);
-    React.useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-    React.useEffect(() => {
-        if(editorRef.current && value !== editorRef.current.innerHTML) {
-            editorRef.current.innerHTML = value;
-        }
-    }, [value]);
 
     return (
       <div className={cn('w-full rounded-md border border-input bg-background ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2', className)}>
@@ -52,18 +50,15 @@ const RichTextEditor = React.forwardRef<HTMLDivElement, RichTextEditorProps>(
               <ListOrdered className="h-4 w-4" />
             </Button>
         </div>
-        {isMounted ? (
-            <div
-            ref={editorRef}
-            contentEditable
-            onInput={handleInput}
-            data-placeholder={placeholder}
-            dangerouslySetInnerHTML={{ __html: value }}
-            className="min-h-[120px] w-full rounded-b-md px-3 py-2 text-base placeholder:text-muted-foreground [&[data-placeholder]:empty:before]:content-[attr(data-placeholder)] [&[data-placeholder]:empty:before]:text-muted-foreground [&[data-placeholder]:empty:before]:pointer-events-none"
-            />
-        ) : (
-            <div className="min-h-[120px] w-full px-3 py-2 text-base"></div>
-        )}
+        <div
+          ref={editorRef}
+          contentEditable
+          onInput={handleInput}
+          data-placeholder={placeholder}
+          // IMPORTANT: dangerouslySetInnerHTML is removed to prevent cursor jumps.
+          // The useEffect hook now manages the content.
+          className="min-h-[120px] w-full rounded-b-md px-3 py-2 text-base placeholder:text-muted-foreground [&[data-placeholder]:empty:before]:content-[attr(data-placeholder)] [&[data-placeholder]:empty:before]:text-muted-foreground [&[data-placeholder]:empty:before]:pointer-events-none"
+        />
       </div>
     );
   }
