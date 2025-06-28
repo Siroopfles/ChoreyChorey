@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { User, TaskFormValues, Task, Label, Project } from '@/lib/types';
@@ -127,7 +128,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col min-h-0">
                     <ScrollArea className="flex-1 pr-4 -mr-4">
-                        <TaskFormFields users={users} projects={projects} />
+                        <TaskFormFields users={users} projects={projects} task={task} />
                     </ScrollArea>
                     <div className="flex justify-end gap-2 pt-4 border-t mt-4">
                         <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>

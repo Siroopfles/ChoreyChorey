@@ -1,10 +1,9 @@
 
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment } from 'firebase/firestore';
+import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, arrayRemove } from 'firebase/firestore';
 import type { User, Task, TaskFormValues, Status, HistoryEntry, Recurring, Subtask, Organization } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils';
 import { grantAchievements } from './gamification.actions';
@@ -776,6 +775,72 @@ export async function setChoreOfTheWeekAction(taskId: string, organizationId: st
         }
         return { success: true };
     } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtask, userId: string) {
+    try {
+        const batch = writeBatch(db);
+        const parentTaskRef = doc(db, 'tasks', parentTaskId);
+        const parentTaskDoc = await getDoc(parentTaskRef);
+
+        if (!parentTaskDoc.exists()) {
+            throw new Error("Oudertaak niet gevonden.");
+        }
+        const parentTask = parentTaskDoc.data() as Task;
+
+        // 1. Create the new task from the subtask
+        const newTaskRef = doc(collection(db, 'tasks'));
+        const newTaskData: Omit<Task, 'id'> = {
+            title: subtask.text,
+            description: `Gepromoveerd vanuit subtaak van: "${parentTask.title}"`,
+            status: 'Te Doen',
+            priority: parentTask.priority, // Inherit priority
+            assigneeIds: parentTask.assigneeIds, // Inherit assignees
+            creatorId: userId,
+            organizationId: parentTask.organizationId,
+            projectId: parentTask.projectId,
+            teamId: parentTask.teamId,
+            labels: parentTask.labels, // Inherit labels
+            createdAt: new Date(),
+            order: Date.now(),
+            history: [addHistoryEntry(userId, 'Aangemaakt', `door promotie van subtaak uit taak #${parentTaskId}`)],
+            subtasks: [],
+            attachments: [],
+            comments: [],
+            isPrivate: subtask.isPrivate || parentTask.isPrivate,
+            isSensitive: parentTask.isSensitive,
+            storyPoints: undefined,
+            blockedBy: [],
+            recurring: undefined,
+            thanked: false,
+            timeLogged: 0,
+            activeTimerStartedAt: null,
+            completedAt: null,
+            rating: null,
+            reviewerId: null,
+            consultedUserIds: [],
+            informedUserIds: [],
+        };
+        batch.set(newTaskRef, newTaskData);
+
+        // 2. Remove the subtask from the parent task
+        const updatedSubtasks = parentTask.subtasks.filter(s => s.id !== subtask.id);
+        const parentHistoryEntry = addHistoryEntry(userId, 'Subtaak gepromoveerd', `Subtaak "${subtask.text}" is omgezet naar een nieuwe taak.`);
+        batch.update(parentTaskRef, {
+            subtasks: updatedSubtasks,
+            history: arrayUnion(parentHistoryEntry)
+        });
+
+        await batch.commit();
+
+        await triggerWebhooks(parentTask.organizationId, 'task.created', { ...newTaskData, id: newTaskRef.id });
+        await triggerWebhooks(parentTask.organizationId, 'task.updated', { ...parentTask, id: parentTask.id, subtasks: updatedSubtasks });
+        
+        return { success: true, newTaskId: newTaskRef.id, newTastTitle: newTaskData.title };
+
+    } catch(e: any) {
         return { error: e.message };
     }
 }

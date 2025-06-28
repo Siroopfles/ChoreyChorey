@@ -1,7 +1,7 @@
 
 
 'use client';
-import type { Task, User, Project } from '@/lib/types';
+import type { Task, User, Project, Subtask } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +61,7 @@ import {
   BellOff,
   Github,
   Gitlab,
+  CornerUpRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -142,7 +143,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
   const reviewer = useMemo(() => users.find(u => u.id === task.reviewerId), [task.reviewerId, users]);
   const PriorityIcon = priorityConfig[task.priority as keyof typeof priorityConfig]?.icon || Equal;
   const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, navigateToUserProfile, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, navigateToUserProfile, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask } = useTasks();
   const { currentOrganization, currentUserRole } = useAuth();
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const { toast } = useToast();
@@ -604,20 +605,31 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                                 {subtask.text}
                               </label>
                             </div>
-                            {subtask.completed && (
+                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleSubtaskCompletion(task.id, subtask.id);
-                                    }}
-                                    title="Reset subtaak"
+                                    className="h-6 w-6"
+                                    onClick={(e) => { e.stopPropagation(); promoteSubtaskToTask(task.id, subtask); }}
+                                    title="Promoveer naar taak"
                                 >
-                                    <RefreshCw className="h-3 w-3" />
+                                    <CornerUpRight className="h-4 w-4" />
                                 </Button>
-                            )}
+                                {subtask.completed && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleSubtaskCompletion(task.id, subtask.id);
+                                        }}
+                                        title="Reset subtaak"
+                                    >
+                                        <RefreshCw className="h-3 w-3" />
+                                    </Button>
+                                )}
+                            </div>
                           </div>
                         ))}
                          {hiddenSubtasksCount > 0 && (

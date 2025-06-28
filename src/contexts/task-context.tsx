@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -15,7 +16,7 @@ import {
   arrayUnion,
   arrayRemove,
 } from 'firebase/firestore';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus, TeamChallenge, TeamChallengeFormValues } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus, TeamChallenge, TeamChallengeFormValues, Subtask } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +54,7 @@ type TaskContextType = {
   updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
   deleteTemplate: (templateId: string) => Promise<void>;
   setChoreOfTheWeek: (taskId: string) => Promise<void>;
+  promoteSubtaskToTask: (parentTaskId: string, subtask: Subtask) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   selectedTaskIds: string[];
@@ -279,6 +281,19 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     else { toast({ title: 'Klus van de Week ingesteld!' }); }
   };
 
+  const promoteSubtaskToTask = async (parentTaskId: string, subtask: Subtask) => {
+    if (!user) return;
+    const result = await TaskActions.promoteSubtaskToTask(parentTaskId, subtask, user.id);
+    if (result.error) {
+      handleError({ message: result.error }, 'promoveren subtaak');
+    } else {
+      toast({
+        title: 'Subtaak Gepromoveerd!',
+        description: `"${result.newTastTitle}" is nu een losstaande taak.`
+      });
+    }
+  };
+
   const bulkUpdateTasks = async (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments' | 'labels'>> & { addLabels?: string[], removeLabels?: string[] }) => {
     if (!user || !currentOrganization) return;
     
@@ -434,7 +449,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     <TaskContext.Provider value={{ 
       tasks, templates, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
       toggleTaskTimer, reorderTasks, resetSubtasks, addComment, markCommentAsRead, thankForTask,
-      addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, searchTerm, 
+      addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask, searchTerm, 
       setSearchTerm, selectedTaskIds, setSelectedTaskIds, toggleTaskSelection, bulkUpdateTasks,
       cloneTask, splitTask, deleteTaskPermanently, filters, setFilters, clearFilters,
       activeFilterCount, notifications, markAllNotificationsAsRead, markSingleNotificationAsRead,

@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import type { User, Project } from '@/lib/types';
+import type { User, Project, Task } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight } from 'lucide-react';
 import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -44,13 +45,14 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '../ui/
 type TaskFormFieldsProps = {
   users: User[];
   projects: Project[];
+  task?: Task;
 };
 
-export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
+export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
   const { currentOrganization, teams } = useAuth();
-  const { tasks } = useTasks();
+  const { tasks, promoteSubtaskToTask } = useTasks();
   const status = form.watch('status');
   const isPrivate = form.watch('isPrivate');
 
@@ -1188,6 +1190,21 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
                         <Input {...field} placeholder="Beschrijf subtaak..."/>
                     )}
                 />
+                {task && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const subtask = task.subtasks[index];
+                      if (task && subtask) {
+                        promoteSubtaskToTask(task.id, subtask);
+                      }
+                    }}
+                  >
+                    <CornerUpRight className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
                     <Trash2 className="h-4 w-4 text-destructive"/>
                 </Button>
