@@ -1,13 +1,14 @@
 
 'use client';
 
-import type { ActivityFeedItem, User } from '@/lib/types';
+import type { ActivityFeedItem, User, Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Trophy, Heart, Star, Activity } from 'lucide-react';
+import { Button } from '../ui/button';
 
 const ICONS: Record<ActivityFeedItem['type'], React.ElementType> = {
   achievement: Trophy,
@@ -48,7 +49,30 @@ const renderDetails = (item: ActivityFeedItem, users: User[]) => {
   }
 };
 
-export function ActivityFeed({ items, users }: { items: ActivityFeedItem[]; users: User[] }) {
+export function ActivityFeed({ 
+  items, 
+  users, 
+  tasks, 
+  setViewedTask, 
+  navigateToUserProfile 
+}: { 
+  items: ActivityFeedItem[], 
+  users: User[], 
+  tasks: Task[], 
+  setViewedTask: (task: Task | null) => void, 
+  navigateToUserProfile: (userId: string) => void 
+}) {
+  const handleItemClick = (item: ActivityFeedItem) => {
+    if ((item.type === 'kudos' || item.type === 'rating') && item.details.taskId) {
+      const task = tasks.find(t => t.id === item.details.taskId);
+      if (task) {
+        setViewedTask(task);
+      }
+    } else if (item.type === 'achievement' && item.userId) {
+      navigateToUserProfile(item.userId);
+    }
+  };
+
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
@@ -65,15 +89,21 @@ export function ActivityFeed({ items, users }: { items: ActivityFeedItem[]; user
               const color = COLORS[item.type];
               return (
                 <div key={item.id} className="flex items-start gap-3">
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-secondary ${color}`}>
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary ${color}`}>
                     <Icon className="h-4 w-4" />
                   </div>
-                  <div className="flex-1 text-sm">
-                    {renderDetails(item, users)}
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatDistanceToNow(item.timestamp, { addSuffix: true, locale: nl })}
-                    </p>
-                  </div>
+                  <Button
+                    variant="link"
+                    className="flex-1 text-sm text-left h-auto p-0 m-0 text-foreground hover:no-underline"
+                    onClick={() => handleItemClick(item)}
+                  >
+                    <div className="hover:text-primary transition-colors">
+                      {renderDetails(item, users)}
+                      <p className="text-xs text-muted-foreground mt-0.5 text-left">
+                        {formatDistanceToNow(item.timestamp, { addSuffix: true, locale: nl })}
+                      </p>
+                    </div>
+                  </Button>
                 </div>
               );
             }) : (

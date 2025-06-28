@@ -34,9 +34,11 @@ type DashboardViewProps = {
   users: User[];
   activityFeedItems: ActivityFeedItem[];
   isFeedLoading: boolean;
+  setViewedTask: (task: Task | null) => void;
+  navigateToUserProfile: (userId: string) => void;
 };
 
-export default function DashboardView({ tasks, users, activityFeedItems, isFeedLoading }: DashboardViewProps) {
+export default function DashboardView({ tasks, users, activityFeedItems, isFeedLoading, setViewedTask, navigateToUserProfile }: DashboardViewProps) {
   const { resolvedTheme } = useTheme();
 
   const tasksByStatus = useMemo(() => {
@@ -136,7 +138,7 @@ export default function DashboardView({ tasks, users, activityFeedItems, isFeedL
         </Card>
       </div>
       <div className="lg:col-span-1">
-        {isFeedLoading ? <ActivityFeedSkeleton /> : <ActivityFeed items={activityFeedItems} users={users} />}
+        {isFeedLoading ? <ActivityFeedSkeleton /> : <ActivityFeed items={activityFeedItems} users={users} tasks={tasks} setViewedTask={setViewedTask} navigateToUserProfile={navigateToUserProfile} />}
       </div>
     </div>
   );

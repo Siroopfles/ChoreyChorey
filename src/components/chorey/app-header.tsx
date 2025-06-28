@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer } from 'lucide-react';
+import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTasks } from '@/contexts/task-context';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +62,10 @@ export default function AppHeader() {
   } else if (currentStatus === 'Niet storen' && !dndUntil) {
     statusLabel = 'Niet storen';
   }
+  
+  const showGamification = currentOrganization?.settings?.features?.gamification !== false;
+  const currentStreak = user?.streakData?.currentStreak;
+
 
   return (
     <>
@@ -106,6 +110,22 @@ export default function AppHeader() {
         <div className="flex-1" />
 
         <div className="flex items-center gap-2">
+          {showGamification && currentStreak && currentStreak > 1 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="flex items-center gap-1.5 border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Flame className="h-4 w-4" />
+                    <span className="font-bold">{currentStreak}</span>
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Je hebt een streak van {currentStreak} dagen!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
           <Button onClick={() => setIsAddTaskDialogOpen(true)}>
             <PlusCircle className="mr-2 h-4 w-4" /> Taak Toevoegen
           </Button>
@@ -241,7 +261,7 @@ export default function AppHeader() {
                 </DropdownMenuPortal>
               </DropdownMenuSub>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">
+                <Link href="/dashboard/settings/profile">
                   <UserIcon className="mr-2 h-4 w-4" />
                   <span>Profiel</span>
                 </Link>

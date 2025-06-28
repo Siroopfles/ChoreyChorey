@@ -120,6 +120,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             lastDigestSentAt: (rawData.lastDigestSentAt as Timestamp | null)?.toDate() ?? undefined,
             googleRefreshToken: rawData.googleRefreshToken,
             microsoftRefreshToken: rawData.microsoftRefreshToken,
+            togglApiToken: rawData.togglApiToken,
+            clockifyApiToken: rawData.clockifyApiToken,
+            streakData: rawData.streakData ? {
+                ...rawData.streakData,
+                lastCompletionDate: (rawData.streakData.lastCompletionDate as Timestamp).toDate(),
+            } : undefined,
         };
         setUser(userData);
 

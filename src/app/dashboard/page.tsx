@@ -28,7 +28,7 @@ import { getPublicActivityFeed } from '@/app/actions/gamification.actions';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
-  const { tasks, loading, searchTerm, setSearchTerm, filters } = useTasks();
+  const { tasks, loading, searchTerm, setSearchTerm, filters, setViewedTask, navigateToUserProfile } = useTasks();
   const { user: currentUser, teams, currentOrganization, users, projects } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
@@ -265,6 +265,8 @@ export default function DashboardPage() {
                 users={users}
                 activityFeedItems={activityFeedItems}
                 isFeedLoading={isFeedLoading}
+                setViewedTask={setViewedTask}
+                navigateToUserProfile={navigateToUserProfile}
               />
            </Suspense>
         </TabsContent>
