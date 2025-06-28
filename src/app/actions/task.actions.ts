@@ -236,6 +236,29 @@ export async function createTaskAction(organizationId: string, creatorId: string
               );
             });
         }
+        if (firestoreTask.consultedUserIds.length > 0) {
+            firestoreTask.consultedUserIds.forEach(userId => {
+              createNotification(
+                  userId,
+                  `${creatorName} wil je raadplegen over: "${firestoreTask.title}"`,
+                  docRef.id,
+                  organizationId,
+                  creatorId,
+              );
+            });
+        }
+        if (firestoreTask.informedUserIds.length > 0) {
+            firestoreTask.informedUserIds.forEach(userId => {
+              createNotification(
+                  userId,
+                  `Je bent ter informatie toegevoegd aan: "${firestoreTask.title}"`,
+                  docRef.id,
+                  organizationId,
+                  creatorId,
+              );
+            });
+        }
+
         await triggerWebhooks(organizationId, 'task.created', { ...firestoreTask, id: docRef.id });
 
         if (taskData.dueDate) {
@@ -302,6 +325,22 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                  createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId, organizationId, userId);
              });
              newHistory.push(addHistoryEntry(userId, `Toegewezenen gewijzigd`));
+        }
+
+        if (updates.consultedUserIds) {
+             const added = updates.consultedUserIds.filter(id => !(taskToUpdate.consultedUserIds || []).includes(id));
+             added.forEach(id => {
+                 createNotification(id, `Je wordt geraadpleegd over taak: "${taskToUpdate.title}"`, taskId, organizationId, userId);
+             });
+             newHistory.push(addHistoryEntry(userId, `Geraadpleegden gewijzigd`));
+        }
+
+        if (updates.informedUserIds) {
+             const added = updates.informedUserIds.filter(id => !(taskToUpdate.informedUserIds || []).includes(id));
+             added.forEach(id => {
+                 createNotification(id, `Je wordt geïnformeerd over taak: "${taskToUpdate.title}"`, taskId, organizationId, userId);
+             });
+             newHistory.push(addHistoryEntry(userId, `Geïnformeerden gewijzigd`));
         }
         
         if (updates.reviewerId && updates.reviewerId !== taskToUpdate.reviewerId) {

@@ -1024,6 +1024,56 @@ export function TaskFormFields({ users, projects }: TaskFormFieldsProps) {
             </Button>
           </div>
       </div>
+      
+       <Separator />
+
+      <div>
+        <UiLabel>Subtaken</UiLabel>
+        <div className="space-y-2 mt-2">
+          {subtaskFields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-2">
+                <FormField
+                    control={form.control}
+                    name={`subtasks.${index}.isPrivate`}
+                    render={({ field }) => (
+                        <FormItem>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                className="data-[state=checked]:bg-yellow-500"
+                                            />
+                                        </FormControl>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Markeer als privé subtaak</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name={`subtasks.${index}.text`}
+                    render={({ field }) => (
+                        <Input {...field} placeholder="Beschrijf subtaak..."/>
+                    )}
+                />
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)}>
+                    <Trash2 className="h-4 w-4 text-destructive"/>
+                </Button>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={onSuggestSubtasks} disabled={isSuggestingSubtasks}>
+            {isSuggestingSubtasks ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
+            Suggesteer subtaken (AI)
+          </Button>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
