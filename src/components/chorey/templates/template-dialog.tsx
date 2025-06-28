@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, type ReactNode, useEffect } from 'react';
@@ -330,7 +331,7 @@ export function TemplateDialog({
                 
                 <FormField
                   control={form.control}
-                  name="recurring.frequency"
+                  name="recurring"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Herhaling</FormLabel>
@@ -347,7 +348,7 @@ export function TemplateDialog({
                             form.setValue('recurring', { frequency: value as 'daily' | 'weekly' });
                           }
                         }}
-                        value={field.value || 'none'}
+                        value={field.value?.frequency || 'none'}
                       >
                         <FormControl>
                           <SelectTrigger>
