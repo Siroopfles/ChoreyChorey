@@ -112,7 +112,7 @@ export const roadmapPhases: Phase[] = [
       { id: 5009, title: "AI Predictive Analysis", description: "Waarschuwt proactief voor projectvertragingen en budgetoverschrijdingen op basis van historische data.", completed: true },
       { id: 5010, title: "AI Burnout Voorspelling", description: "Signaleert risico op overbelasting op basis van werkpatronen en taken.", completed: true },
       { id: 5011, title: "AI Automatische Status Updates", description: "Stelt statuswijzigingen voor op basis van gekoppelde commits, comments en activiteit.", completed: true },
-      { id: 5012, title: "Conversational UI", description: "Een chat-first interface als primair interactiemodel, naast de visuele interface.", completed: false },
+      { id: 5012, title: "Conversational UI", description: "Een chat-first interface als primair interactiemodel, naast de visuele interface.", completed: true },
       { id: 5013, title: "AI Project Coördinator", description: "Een AI-agent die basis follow-ups doet, vergaderingen plant en rapportages opstelt.", completed: true },
       { id: 5014, title: "Geëxporteerde PDF Rapporten", description: "Genereer professioneel opgemaakte PDF-rapporten van dashboards en projecten.", completed: true },
     ]
