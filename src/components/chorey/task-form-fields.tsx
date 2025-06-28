@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import type { User, Project, Task, SuggestPriorityOutput } from '@/lib/types';
@@ -253,9 +251,13 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
         toast({ title: 'Titel is vereist om een afbeelding te genereren.', variant: 'destructive' });
         return;
     }
+    if (!currentOrganization) {
+      toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
+      return;
+    }
     setIsGeneratingImage(true);
     try {
-        const result = await handleGenerateTaskImage({ title, description });
+        const result = await handleGenerateTaskImage({ title, description }, currentOrganization.id);
         if (result.imageDataUri) {
             form.setValue('imageDataUri', result.imageDataUri);
             toast({ title: 'Afbeelding gegenereerd en toegevoegd als omslagfoto!' });

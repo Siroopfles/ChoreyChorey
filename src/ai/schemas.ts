@@ -86,6 +86,7 @@ export type GenerateAvatarOutput = z.infer<typeof GenerateAvatarOutputSchema>;
 export const GenerateTaskImageInputSchema = z.object({
   title: z.string().describe('The title of the task.'),
   description: z.string().optional().describe('The description of the task.'),
+  primaryColor: z.string().optional().describe('The primary branding color of the organization, in HSL format (e.g., "221.2 83.2% 53.3%").'),
 });
 export type GenerateTaskImageInput = z.infer<typeof GenerateTaskImageInputSchema>;
 

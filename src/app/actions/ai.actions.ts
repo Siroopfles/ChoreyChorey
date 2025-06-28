@@ -139,9 +139,12 @@ export async function handleGenerateAvatar(name: string) {
     }
 }
 
-export async function handleGenerateTaskImage(input: GenerateTaskImageInput) {
+export async function handleGenerateTaskImage(input: Omit<GenerateTaskImageInput, 'primaryColor'>, organizationId: string) {
     try {
-        const result = await generateTaskImage(input);
+        const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+        const primaryColor = orgDoc.exists() ? (orgDoc.data() as Organization).settings?.branding?.primaryColor : undefined;
+
+        const result = await generateTaskImage({ ...input, primaryColor });
         return { imageDataUri: result.imageDataUri };
     } catch (e: any) {
         return { error: e.message };

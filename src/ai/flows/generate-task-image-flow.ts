@@ -18,8 +18,12 @@ const generateTaskImageFlow = ai.defineFlow(
     inputSchema: GenerateTaskImageInputSchema,
     outputSchema: GenerateTaskImageOutputSchema,
   },
-  async ({ title, description }) => {
-    const promptText = `You are a creative visual artist. Generate a single, compelling, photorealistic image that visually represents the following task. The image should be clean, professional, and directly related to the task's content. Do not include any text in the image.
+  async ({ title, description, primaryColor }) => {
+    const colorInstruction = primaryColor
+      ? `The image should subtly incorporate the primary brand color hsl(${primaryColor}) as an accent or in the overall color palette to maintain a consistent visual style.`
+      : '';
+
+    const promptText = `You are a creative visual artist. Generate a single, compelling, photorealistic image that visually represents the following task. The image should be clean, professional, and directly related to the task's content. Do not include any text in the image. ${colorInstruction}
 
 Task Title: ${title}
 ${description ? `Task Description: ${description}` : ''}
