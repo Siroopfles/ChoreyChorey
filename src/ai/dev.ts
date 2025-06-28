@@ -19,3 +19,4 @@ import '@/ai/flows/suggest-headcount-flow.ts';
 import '@/ai/flows/email-to-task-flow.ts';
 import '@/ai/flows/suggest-proactive-help-flow.ts';
 import '@/ai/flows/suggest-status-update-flow.ts';
+import '@/ai/flows/predict-burnout-risk-flow.ts';

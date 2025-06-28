@@ -304,3 +304,19 @@ export const AiFeedbackInputSchema = z.object({
   organizationId: z.string(),
 });
 export type AiFeedbackInput = z.infer<typeof AiFeedbackInputSchema>;
+
+// From predict-burnout-risk-flow.ts
+export const PredictBurnoutRiskInputSchema = z.object({
+  userId: z.string(),
+  userName: z.string(),
+  organizationId: z.string(),
+});
+export type PredictBurnoutRiskInput = z.infer<typeof PredictBurnoutRiskInputSchema>;
+
+export const PredictBurnoutRiskOutputSchema = z.object({
+  isAtRisk: z.boolean().describe('Indicates whether the user is considered at risk of burnout.'),
+  riskLevel: z.enum(['Geen', 'Laag', 'Midden', 'Hoog']).describe('The assessed level of burnout risk.'),
+  reasoning: z.string().describe('A detailed analysis explaining the risk assessment, based on workload, task types, and patterns.'),
+  suggestions: z.array(z.string()).describe('A list of actionable suggestions for managers to mitigate the identified risk.'),
+});
+export type PredictBurnoutRiskOutput = z.infer<typeof PredictBurnoutRiskOutputSchema>;

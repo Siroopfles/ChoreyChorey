@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -86,6 +86,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const communityNavItems = isGuest ? [] : [
         { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden' },
         { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
+        { href: '/dashboard/team-health', icon: ShieldAlert, label: 'Team Welzijn'},
         ...(showGamification ? [
             { href: '/dashboard/leaderboard', icon: Award, label: 'Prestaties' },
             ...(showMentorship ? [{ href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' }] : []),

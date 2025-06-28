@@ -23,7 +23,8 @@ import { levelWorkload } from '@/ai/flows/level-workload-flow';
 import { suggestHeadcount } from '@/ai/flows/suggest-headcount-flow';
 import { suggestProactiveHelp } from '@/ai/flows/suggest-proactive-help-flow';
 import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
-import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput, LevelWorkloadInput, SuggestHeadcountInput, SuggestHeadcountOutput, SuggestProactiveHelpInput, SuggestProactiveHelpOutput, SuggestStatusUpdateInput, SuggestStatusUpdateOutput } from '@/ai/schemas';
+import { predictBurnoutRisk } from '@/ai/flows/predict-burnout-risk-flow';
+import type { MultiSpeakerTextToSpeechInput, SuggestPriorityInput, IdentifyRiskInput, GenerateTaskImageInput, SuggestLabelsInput, MeetingToTasksInput, FindDuplicateTaskInput, NotificationDigestInput, LevelWorkloadInput, SuggestHeadcountInput, SuggestHeadcountOutput, SuggestProactiveHelpInput, SuggestProactiveHelpOutput, SuggestStatusUpdateInput, SuggestStatusUpdateOutput, PredictBurnoutRiskOutput } from '@/ai/schemas';
 
 async function getTaskHistory(organizationId: string) {
     const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
@@ -290,5 +291,14 @@ export async function handleSuggestStatusUpdate(input: SuggestStatusUpdateInput)
         return { suggestion };
     } catch (e: any) {
         return { error: e.message, suggestion: null };
+    }
+}
+
+export async function handlePredictBurnoutRisk(userId: string, userName: string, organizationId: string): Promise<{ result: PredictBurnoutRiskOutput | null, error?: string }> {
+    try {
+        const result = await predictBurnoutRisk({ userId, userName, organizationId });
+        return { result };
+    } catch (e: any) {
+        return { error: e.message, result: null };
     }
 }
