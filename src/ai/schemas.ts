@@ -320,3 +320,16 @@ export const PredictBurnoutRiskOutputSchema = z.object({
   suggestions: z.array(z.string()).describe('A list of actionable suggestions for managers to mitigate the identified risk.'),
 });
 export type PredictBurnoutRiskOutput = z.infer<typeof PredictBurnoutRiskOutputSchema>;
+
+// From generate-project-report-flow.ts
+export const GenerateProjectReportInputSchema = z.object({
+  projectId: z.string(),
+  projectName: z.string(),
+  organizationId: z.string(),
+});
+export type GenerateProjectReportInput = z.infer<typeof GenerateProjectReportInputSchema>;
+
+export const GenerateProjectReportOutputSchema = z.object({
+    report: z.string().describe('A comprehensive project status report in Markdown format. The report should be written in Dutch.'),
+});
+export type GenerateProjectReportOutput = z.infer<typeof GenerateProjectReportOutputSchema>;
