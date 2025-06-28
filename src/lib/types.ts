@@ -114,7 +114,8 @@ export type OrganizationSettings = {
     [userId: string]: {
         projectIds: string[];
     }
-  }
+  },
+  ipWhitelist?: string[];
 }
 
 export type Organization = {
@@ -147,6 +148,7 @@ export const PERMISSIONS = {
   MANAGE_INTEGRATIONS: 'MANAGE_INTEGRATIONS',
   MANAGE_TEMPLATES: 'MANAGE_TEMPLATES',
   MANAGE_TIME_TRACKING_INTEGRATIONS: 'MANAGE_TIME_TRACKING_INTEGRATIONS',
+  MANAGE_IP_WHITELIST: 'MANAGE_IP_WHITELIST',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -169,6 +171,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.MANAGE_INTEGRATIONS]: { name: 'Integraties Beheren', description: 'Kan integraties met externe services zoals Slack en GitHub configureren.' },
   [PERMISSIONS.MANAGE_TEMPLATES]: { name: 'Templates Beheren', description: 'Kan taaktemplates voor de organisatie aanmaken, bewerken en verwijderen.' },
   [PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS]: { name: 'Tijdregistratie Integraties Beheren', description: 'Kan integraties met tijdregistratietools zoals Toggl configureren.' },
+  [PERMISSIONS.MANAGE_IP_WHITELIST]: { name: 'IP Whitelist Beheren', description: 'Kan de lijst met toegestane IP-adressen voor de organisatie beheren.' },
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
@@ -196,6 +199,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.MANAGE_INTEGRATIONS,
       PERMISSIONS.MANAGE_TEMPLATES,
       PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS,
+      PERMISSIONS.MANAGE_IP_WHITELIST,
     ],
   },
   Member: {

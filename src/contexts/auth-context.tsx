@@ -472,11 +472,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!user || !currentOrganization || !currentSessionId) return;
 
         const policy = currentOrganization.settings?.sessionPolicy;
-        if (!policy || (!policy.absoluteTimeoutSeconds && !policy.idleTimeoutSeconds)) {
-            return; // No policy to enforce
-        }
+        const ipWhitelist = currentOrganization.settings?.ipWhitelist;
 
-        const interval = setInterval(async () => {
+        const checkPolicies = async () => {
+            // IP Whitelist Check
+            if (ipWhitelist && ipWhitelist.length > 0) {
+                try {
+                    const response = await fetch('/api/ip');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.ip && !ipWhitelist.includes(data.ip)) {
+                            logout({ title: 'Toegang Geweigerd', description: 'Uw IP-adres heeft geen toegang tot deze organisatie.', variant: 'destructive' });
+                            return; // Stop further checks if IP is denied
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error fetching IP for whitelist check:", e);
+                }
+            }
+            
+            // Session Timeout Check
+            if (!policy || (!policy.absoluteTimeoutSeconds && !policy.idleTimeoutSeconds)) {
+                return; // No policy to enforce
+            }
             try {
                 const sessionRef = doc(db, 'sessions', currentSessionId);
                 const sessionDoc = await getDoc(sessionRef);
@@ -507,7 +525,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch(e) {
                 console.error("Error checking session policy:", e);
             }
-        }, 30000); // Check every 30 seconds
+        };
+
+        checkPolicies(); // Initial check
+        const interval = setInterval(checkPolicies, 30000); // Check every 30 seconds
 
         return () => clearInterval(interval);
 

@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import CustomFieldsSettings from '@/components/chorey/settings/custom-fields-settings';
 import SessionPolicySettings from '@/components/chorey/settings/session-policy-settings';
+import IpWhitelistSettings from '@/components/chorey/settings/ip-whitelist-settings';
 
 export default function OrganizationSettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
@@ -32,6 +33,7 @@ export default function OrganizationSettingsPage() {
 
   const isOwnerOrAdmin = currentUserRole === 'Owner' || currentUserRole === 'Admin';
   const canManageApiKeys = currentUserPermissions.includes(PERMISSIONS.MANAGE_API_KEYS);
+  const canManageIpWhitelist = currentUserPermissions.includes(PERMISSIONS.MANAGE_IP_WHITELIST);
   
   if (!currentOrganization) {
     return (
@@ -65,6 +67,7 @@ export default function OrganizationSettingsPage() {
         <AnnouncementSettings organization={currentOrganization} />
         <BrandingSettings organization={currentOrganization} />
         <SessionPolicySettings organization={currentOrganization} />
+        {canManageIpWhitelist && <IpWhitelistSettings organization={currentOrganization} />}
         <LimitSettings organization={currentOrganization} />
         <WebhookSettings />
         {canManageApiKeys && <ApiKeySettings />}
@@ -73,7 +76,7 @@ export default function OrganizationSettingsPage() {
         <FeatureToggleSettings organization={currentOrganization} />
         <DangerZone
             organization={currentOrganization}
-            isOwner={currentUserRole === 'Owner'}
+            isOwner={currentOrganization.ownerId === user.id}
         />
     </div>
   );
