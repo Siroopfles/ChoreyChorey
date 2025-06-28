@@ -541,10 +541,8 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                 </div>
             )}
 
-
             {task.attachments.length > 0 && (
-                <div className="mb-2 space-y-2 pt-2 mt-2 border-t">
-                    <h4 className="text-xs font-semibold uppercase text-muted-foreground">Bijlagen</h4>
+                <div className="space-y-1 mt-2 pt-2 border-t">
                     {task.attachments.map((attachment) => (
                         <TooltipProvider key={attachment.id}>
                             <Tooltip>
