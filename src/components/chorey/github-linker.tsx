@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -6,12 +7,70 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Trash2, Github, GitPullRequest, AlertCircle } from 'lucide-react';
+import { Loader2, Trash2, Github, GitPullRequest, AlertCircle, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getGithubItemFromUrl } from '@/app/actions/github.actions';
+import { getGithubItemFromUrl, addCommentToGithubItem } from '@/app/actions/github.actions';
 import { useAuth } from '@/contexts/auth-context';
 import type { GitHubLink } from '@/lib/types';
 import Link from 'next/link';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Textarea } from '../ui/textarea';
+
+function GitHubCommentPopover({ item }: { item: GitHubLink }) {
+    const [comment, setComment] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+    const { user } = useAuth();
+
+    const handleCommentSubmit = async () => {
+        if (!comment.trim() || !user) return;
+        
+        const urlParts = item.url.match(/github\.com\/([^/]+)\/([^/]+)\/(issues|pull)\/(\d+)/);
+        if (!urlParts) {
+            toast({ title: "Fout", description: "Kon eigenaar en repo niet uit URL halen.", variant: "destructive" });
+            return;
+        }
+        const [, owner, repo] = urlParts;
+
+        setIsSubmitting(true);
+        const result = await addCommentToGithubItem(owner, repo, item.number, comment, user.name);
+        setIsSubmitting(false);
+
+        if (result.error) {
+            toast({ title: "Fout bij verzenden", description: result.error, variant: "destructive" });
+        } else {
+            toast({ title: "Reactie geplaatst", description: "Je reactie is op GitHub geplaatst." });
+            setComment('');
+            setIsOpen(false);
+        }
+    };
+
+    return (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={e => e.stopPropagation()} aria-label="Reageer op GitHub">
+                    <MessageSquare className="h-4 w-4" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" onClick={e => e.stopPropagation()}>
+                <div className="grid gap-4">
+                    <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Reageer op GitHub</h4>
+                        <p className="text-sm text-muted-foreground">Je reactie wordt geplaatst op issue #{item.number}.</p>
+                    </div>
+                    <div className="grid gap-2">
+                        <Textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Typ je reactie..." />
+                        <Button onClick={handleCommentSubmit} disabled={isSubmitting || !comment.trim()}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Verstuur
+                        </Button>
+                    </div>
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+}
 
 export function GitHubLinker() {
     const { control, getValues } = useFormContext();
@@ -68,9 +127,12 @@ export function GitHubLinker() {
                                         <span className="text-muted-foreground">#{item.number}</span> <span className="truncate">{item.title}</span>
                                     </Link>
                                 </div>
-                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => remove(index)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
+                                <div className="flex items-center">
+                                    <GitHubCommentPopover item={item} />
+                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => remove(index)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
                             </div>
                         );
                     })}

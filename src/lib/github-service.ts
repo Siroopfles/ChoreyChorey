@@ -1,3 +1,4 @@
+
 'use server';
 
 import { Octokit } from '@octokit/rest';
@@ -47,5 +48,19 @@ export async function getIssueOrPr(owner: string, repo: string, issue_number: nu
     } catch (error) {
         console.error('GitHub API get issue/pr error:', error);
         throw new Error('Failed to get GitHub item.');
+    }
+}
+
+export async function addComment(owner: string, repo: string, issue_number: number, body: string) {
+    try {
+        await octokit.issues.createComment({
+            owner,
+            repo,
+            issue_number,
+            body,
+        });
+    } catch (error) {
+        console.error('GitHub API add comment error:', error);
+        throw new Error('Failed to add comment to GitHub item.');
     }
 }
