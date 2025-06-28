@@ -1,5 +1,4 @@
 
-
 'use client';
 import type { Task, User, Project, Subtask } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -329,7 +328,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
         tabIndex={0}
         aria-label={`Open taakdetails voor: ${task.title}`}
         className={cn(
-            'group/task-card hover:shadow-lg transition-shadow duration-200 bg-card border-l-4 overflow-hidden cursor-pointer', 
+            'group-task-card hover:shadow-lg transition-shadow duration-200 bg-card border-l-4 overflow-hidden cursor-pointer', 
             statusInfo.color,
             isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
             isDragging && 'opacity-50',

@@ -38,7 +38,7 @@ export const memberSteps: Step[] = [
         disableBeacon: true,
     },
     {
-        target: '.group\\/task-card', 
+        target: '.group-task-card', 
         content: 'Klik op een taak om de details te bekijken, subtaken af te vinken en opmerkingen te plaatsen.',
         disableBeacon: true,
     },
