@@ -5,6 +5,11 @@ import { ALL_PRIORITIES } from '@/lib/types';
 export const SuggestStoryPointsInputSchema = z.object({
   title: z.string().describe('The title of the task.'),
   description: z.string().optional().describe('The description of the task.'),
+  taskHistory: z.array(z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    points: z.number(),
+  })).optional().describe('A list of recently completed tasks with their story points to provide context for the estimation.'),
 });
 export type SuggestStoryPointsInput = z.infer<typeof SuggestStoryPointsInputSchema>;
 

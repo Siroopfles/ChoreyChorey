@@ -192,8 +192,12 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
         toast({ title: 'Titel vereist', description: 'Voer een titel in om Story Points te kunnen genereren.', variant: 'destructive' });
         return;
     }
+    if (!currentOrganization) {
+        toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
+        return;
+    }
     setIsSuggestingPoints(true);
-    const result = await handleSuggestStoryPoints(title, description);
+    const result = await handleSuggestStoryPoints(title, currentOrganization.id, description);
     if (result.error) {
         toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
     } else if (result.suggestion) {

@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp, getDoc, doc } from 'firebase/firestore';
-import type { User, Organization } from '@/lib/types';
+import { collection, getDocs, query, where, Timestamp, getDoc, doc, orderBy, limit } from 'firebase/firestore';
+import type { User, Organization, SuggestStoryPointsInput } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
 import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
@@ -99,11 +99,33 @@ export async function handleSummarizeComments(comments: string[]) {
     }
 }
 
-export async function handleSuggestStoryPoints(title: string, description?: string) {
+export async function handleSuggestStoryPoints(title: string, organizationId: string, description?: string) {
     try {
-        const suggestion = await suggestStoryPoints({ title, description });
+        // RAG: Retrieve recent tasks with story points to provide context.
+        const q = query(
+            collection(db, 'tasks'),
+            where('organizationId', '==', organizationId),
+            where('storyPoints', '!=', null),
+            orderBy('createdAt', 'desc'),
+            limit(50) 
+        );
+
+        const snapshot = await getDocs(q);
+
+        const taskHistory = snapshot.docs
+            .map(doc => doc.data())
+            .filter(data => data.status === 'Voltooid') // Filter for completed tasks
+            .slice(0, 15) // Take the most recent 15
+            .map(data => ({
+                title: data.title,
+                description: data.description,
+                points: data.storyPoints,
+            }));
+
+        const suggestion = await suggestStoryPoints({ title, description, taskHistory });
         return { suggestion };
     } catch (e: any) {
+        console.error("Error in handleSuggestStoryPoints RAG:", e);
         return { error: e.message };
     }
 }
