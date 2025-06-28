@@ -158,6 +158,7 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
                 attachments: [],
                 comments: [],
                 isPrivate: false,
+                isSensitive: false,
                 thanked: false,
                 completedAt: null,
                 storyPoints: null,
@@ -165,6 +166,8 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
                 timeLogged: 0,
                 activeTimerStartedAt: null,
                 rating: null,
+                isChoreOfTheWeek: false,
+                helpNeeded: false,
             };
 
             const taskRef = doc(collection(db, 'tasks'));
@@ -225,6 +228,8 @@ export async function createTaskAction(organizationId: string, creatorId: string
           togglProjectId: taskData.togglProjectId ?? null,
           clockifyWorkspaceId: taskData.clockifyWorkspaceId ?? null,
           clockifyProjectId: taskData.clockifyProjectId ?? null,
+          helpNeeded: taskData.helpNeeded ?? false,
+          isChoreOfTheWeek: false,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -822,6 +827,8 @@ export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtas
             reviewerId: null,
             consultedUserIds: [],
             informedUserIds: [],
+            isChoreOfTheWeek: false,
+            helpNeeded: parentTask.helpNeeded ?? false,
         };
         batch.set(newTaskRef, newTaskData);
 
