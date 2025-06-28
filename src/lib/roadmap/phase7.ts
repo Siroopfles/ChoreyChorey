@@ -1,3 +1,4 @@
+
 import type { Phase } from '../types';
 
 export const phase7: Phase = {
@@ -11,5 +12,13 @@ export const phase7: Phase = {
       { id: 7005, title: "In-app Audio Huddles", description: "Integreer een WebRTC-bibliotheek om snelle, spontane voice-chats te kunnen starten binnen de context van een taak of project. Dit voorkomt de noodzaak om over te schakelen naar een externe tool voor korte afstemming.", completed: false },
       { id: 7006, title: "Collaboratief Tekstbewerken", description: "Implementeer een bibliotheek zoals 'Tiptap' met live samenwerkingsfunctionaliteit voor het bewerken van taakbeschrijvingen. Meerdere gebruikers kunnen dan tegelijkertijd, in Google Docs-stijl, een beschrijving bewerken.", completed: false },
       { id: 7007, title: "Threaded Comments", description: "Maak het mogelijk om direct op specifieke comments te reageren, waardoor overzichtelijke discussies (threads) ontstaan. Dit verbetert de helderheid van communicatie bij complexe taken.", completed: false },
+      { id: 7008, title: "Live Cursors", description: "Toon de muiscursors van andere actieve gebruikers live op het kanbanbord (à la Figma). Dit creëert een sterk gevoel van een gedeelde, levende werkruimte en bevordert spontane samenwerking.", completed: false },
+      { id: 7009, title: "Emoji Reacties op Comments", description: "Sta gebruikers toe om met emoji's te reageren op commentaren. Dit biedt een snelle en informele manier om feedback te geven, een opmerking te erkennen of instemming te tonen zonder een volledig nieuw bericht te typen.", completed: false },
+      { id: 7010, title: "Real-time Polls in Taken", description: "Voeg een 'Poll' feature toe aan taken. Hiermee kunnen teamleden snel stemmen over beslissingen, zoals de aanpak van een feature of de prioriteit van een bug, met live-updating resultaten.", completed: false },
+      { id: 7011, title: "Gedeelde Timers", description: "Maak het mogelijk voor meerdere teamleden om tegelijkertijd een timer op dezelfde taak te starten, bijvoorbeeld tijdens een 'pair programming' sessie. De gecombineerde tijd wordt opgeteld bij de totale geregistreerde tijd.", completed: false },
+      { id: 7012, title: "Taak Overdracht", description: "Een 'Geef door' knop die de huidige toegewezen gebruiker in staat stelt de taak naadloos over te dragen aan een ander teamlid, inclusief een kort overdrachtsbericht. De nieuwe persoon krijgt direct een notificatie.", completed: false },
+      { id: 7013, title: "Notificaties voor Taakweergave", description: "Toon een subtiele notificatie binnen een taak wanneer een ander teamlid dezelfde taak op dat moment bekijkt, om te voorkomen dat er tegelijkertijd tegenstrijdige wijzigingen worden gemaakt.", completed: false },
+      { id: 7014, title: "Gedeelde Tekenblokken (Whiteboarding)", description: "Integreer een lichtgewicht, real-time whiteboarding-tool (zoals `tldraw`) binnen de taakdetails. Ideaal voor het snel schetsen van diagrammen, wireframes of het visualiseren van ideeën tijdens een discussie.", completed: false },
+      { id: 7015, title: "Live Notificatie Feed", description: "Vervang de statische notificatie-inbox door een live-updating feed. Nieuwe notificaties verschijnen direct bovenaan de lijst zonder dat de pagina ververst hoeft te worden, wat zorgt voor een onmiddellijke feedback-loop.", completed: false }
     ]
   };

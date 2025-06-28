@@ -1,3 +1,4 @@
+
 import type { Phase } from '../types';
 
 export const phase10: Phase = {
@@ -9,7 +10,15 @@ export const phase10: Phase = {
     { id: 10003, title: "CI/CD Pipeline Integratie", description: "Integreer de test-suites in de CI/CD pipeline (bv. via GitHub Actions). Zorg ervoor dat de build faalt als er tests mislukken, waardoor wordt voorkomen dat er bugs in productie komen.", completed: false },
     { id: 10004, title: "Visuele Regressietesten", description: "Implementeer een tool zoals Chromatic of Percy, geïntegreerd met Storybook. Bij elke code-wijziging worden automatisch screenshots van UI-componenten gemaakt en vergeleken met de baseline om onbedoelde visuele wijzigingen te detecteren.", completed: false },
     { id: 10005, title: "Performance Budgetting", description: "Stel strikte prestatie-eisen in (bv. max. laadtijd, bundle-grootte). Gebruik tools zoals Lighthouse CI om de prestaties te meten en laat de CI-pipeline falen als de applicatie niet aan de gestelde eisen voldoet.", completed: false },
-    { id: 10006, title: "Geautomatiseerde Toegankelijkheidstesten", description: "Integreer `axe-core` in de E2E-tests en CI/CD pipeline. Dit scant de applicatie automatisch op veelvoorkomende toegankelijkheidsproblemen (WCAG), wat de basis vormt voor handmatige audits.", completed: false },
+    { id: 1_006, title: "Geautomatiseerde Toegankelijkheidstesten", description: "Integreer `axe-core` in de E2E-tests en CI/CD pipeline. Dit scant de applicatie automatisch op veelvoorkomende toegankelijkheidsproblemen (WCAG), wat de basis vormt voor handmatige audits.", completed: false },
     { id: 10007, title: "Beveiligings- & Afhankelijkheidsscans", description: "Implementeer Snyk of GitHub Dependabot om proactief en automatisch te scannen op bekende kwetsbaarheden in alle project-dependencies. Configureer de CI-pipeline om te falen bij het detecteren van kritieke kwetsbaarheden.", completed: false },
-  ]
+    { id: 10008, title: "Chaos Engineering Experimenten", description: "Introduceer gecontroleerde 'chaos' in een staging-omgeving. Simuleer storingen zoals een onbereikbare database of een falende externe API om de veerkracht van de applicatie te testen en te verbeteren.", completed: false },
+    { id: 10009, title: "Database Seeding Scripts", description: "Ontwikkel scripts die een testdatabase kunnen vullen met een grote, realistische hoeveelheid data (duizenden taken, honderden gebruikers). Dit is essentieel voor het uitvoeren van betrouwbare performance- en load-tests.", completed: false },
+    { id: 10010, title: "API Contract Testen", description: "Gebruik een tool als Pact om 'contracten' te definiëren voor de API. Dit zorgt ervoor dat de frontend en backend onafhankelijk van elkaar kunnen ontwikkelen zonder de integratie te breken, en valideert dat de API zich gedraagt zoals verwacht.", completed: false },
+    { id: 10011, title: "Staging Omgeving", description: "Creëer een staging-omgeving die een exacte spiegel is van de productie-omgeving. Alle nieuwe features worden hier eerst uitgerold en getest voordat ze live gaan, wat het risico op productiefouten minimaliseert.", completed: false },
+    { id: 10012, title: "Feature Flag Systeem", description: "Implementeer een feature flag-systeem (bv. met 'Flagsmith' of 'LaunchDarkly'). Dit maakt het mogelijk om nieuwe features te 'verbergen' in productie en ze selectief in te schakelen voor specifieke gebruikers of een percentage van de gebruikersbasis (canary release).", completed: false },
+    { id: 10013, title: "Geautomatiseerde Browser Compatibiliteitstesten", description: "Gebruik een cloud-testplatform zoals BrowserStack of Sauce Labs om de E2E-tests automatisch uit te voeren op een breed scala aan browsers en besturingssystemen, en zo compatibiliteitsproblemen te ondervangen.", completed: false },
+    { id: 10014, title: "Code Dekking Rapportage", description: "Genereer een code coverage rapport na elke test-run. Stel een minimum dekkingspercentage in (bv. 80%) en laat de build falen als dit niet wordt gehaald, om de testkwaliteit te waarborgen.", completed: false },
+    { id: 10015, title: "Geautomatiseerde API Documentatie Generatie", description: "Gebruik tools die uit de code (bv. via JSDoc of OpenAPI-specificaties in Zod) automatisch de API-documentatie genereren. Dit zorgt ervoor dat de documentatie altijd synchroon loopt met de daadwerkelijke implementatie.", completed: false }
+    ]
 };

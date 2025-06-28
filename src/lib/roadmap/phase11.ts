@@ -1,3 +1,4 @@
+
 import type { Phase } from '../types';
 
 export const phase11: Phase = {
@@ -11,5 +12,13 @@ export const phase11: Phase = {
     { id: 11005, title: "Edge Functies", description: "Verplaats bepaalde logica, zoals A/B-testen, authenticatie-checks of het doorsturen van verzoeken, naar de 'edge' (bv. met Vercel Edge Functions of Cloudflare Workers) om de latency voor de eindgebruiker te minimaliseren.", completed: false },
     { id: 11006, title: "Gevirtualiseerde Lijsten & Borden", description: "Implementeer 'windowing' of 'virtualization' met een bibliotheek zoals `react-window` of `tanstack-virtual` voor lange taaklijsten en kanban-kolommen. Dit zorgt ervoor dat alleen de zichtbare items in de DOM worden gerenderd, wat de prestaties bij grote hoeveelheden data drastisch verbetert.", completed: false },
     { id: 11007, title: "Firebase App Check", description: "Bescherm backend resources door App Check te implementeren. Dit verifieert dat verzoeken naar Firestore en Cloud Functions afkomstig zijn van uw authentieke applicatie, en niet van ongeautoriseerde clients of scripts.", completed: false },
-  ]
+    { id: 11008, title: "Image Optimization & CDN", description: "Gebruik de ingebouwde Next.js Image component in combinatie met een CDN om afbeeldingen (zoals avatars en omslagfoto's) automatisch te optimaliseren, te resizen en wereldwijd snel te leveren in moderne formaten zoals WebP.", completed: true },
+    { id: 11009, title: "WebSocket voor Real-time Data", description: "Voor specifieke, hoog-frequente real-time features zoals 'live cursors', overweeg de implementatie van een WebSocket-verbinding (bv. via `socket.io` of `Pusher`) als alternatief voor Firestore's `onSnapshot`, om het aantal database-reads te verminderen.", completed: false },
+    { id: 11010, title: "Geoptimaliseerde Service Worker Caching", description: "Verfijn de caching-strategie van de PWA. Implementeer een 'stale-while-revalidate' strategie voor applicatie-assets en een 'cache-first' strategie voor lettertypen en iconen om de laadtijd bij herhaalde bezoeken te minimaliseren.", completed: false },
+    { id: 11011, title: "Bundle Analyse", description: "Integreer `@next/bundle-analyzer` in het build-proces. Analyseer regelmatig de samenstelling van de JavaScript-bundles om onnodig grote of dubbele dependencies te identificeren en te elimineren.", completed: false },
+    { id: 11012, title: "Firestore Transacties", description: "Herschrijf kritieke operaties, zoals het overdragen van punten of het updaten van gerelateerde documenten, om gebruik te maken van Firestore Transacties. Dit garandeert de atomiciteit en consistentie van de data, zelfs bij gelijktijdige bewerkingen.", completed: false },
+    { id: 11013, title: "Server-side Rendering (SSR) Optimalisatie", description: "Analyseer de SSR-prestaties van de meest bezochte pagina's. Minimaliseer de hoeveelheid data die nodig is voor de initiële render en verplaats niet-essentiële data-fetching naar de client-side om de Time to First Byte (TTFB) te verbeteren.", completed: false },
+    { id: 11014, title: "Pre-fetching & Pre-loading", description: "Implementeer strategische `prefetching` van pagina's met `next/link` en `preloading` van kritieke assets. Dit zorgt ervoor dat de benodigde resources al zijn geladen voordat de gebruiker daadwerkelijk navigeert, wat de waargenomen snelheid verhoogt.", completed: false },
+    { id: 11015, title: "Firebase Functions Cold Start Reductie", description: "Voor backend logica in Cloud Functions, implementeer strategieën om 'cold starts' te minimaliseren. Dit omvat het instellen van een minimum aantal actieve instanties en het optimaliseren van de functie-dependencies voor een snellere initialisatie.", completed: false }
+    ]
 };

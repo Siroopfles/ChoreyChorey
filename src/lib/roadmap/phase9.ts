@@ -1,3 +1,4 @@
+
 import type { Phase } from '../types';
 
 export const phase9: Phase = {
@@ -11,5 +12,13 @@ export const phase9: Phase = {
     { id: 9005, title: "AI-gestuurde 'Wat-als' Scenario's", description: "Een geavanceerde AI-tool in de project-analyse. Gebruikers kunnen scenario's simuleren zoals: 'Wat als we twee extra ontwikkelaars toevoegen?' of 'Wat is de impact op de deadline als taak X twee weken vertraging oploopt?'.", completed: false },
     { id: 9006, title: "Team Velocity Tracking", description: "Monitor de 'velocity' van een team: de hoeveelheid werk (in story points) die gemiddeld per week of per sprint wordt voltooid. Dit biedt een datagedreven basis voor toekomstige planning en inschattingen.", completed: false },
     { id: 9007, title: "AI Inzichten & Trends", description: "Een AI-agent die periodiek de data van de organisatie analyseert en opmerkelijke trends presenteert in het dashboard. Bijvoorbeeld: 'Taken met het label 'Bug' duren gemiddeld 30% langer dan andere taken' of 'Team A voltooit deze maand 20% meer taken dan vorige maand'.", completed: false },
-  ]
-};
+    { id: 9008, title: "Resource Allocatie Heatmaps", description: "Visualiseer de werkdruk van het hele team in een heatmap. Identificeer direct welke teamleden overbelast zijn en wie er nog capaciteit heeft, waardoor het eenvoudiger wordt om werk te herverdelen.", completed: false },
+    { id: 9009, title: "Kostenanalyse Rapporten", description: "Genereer gedetailleerde rapporten over projectkosten. Vergelijk de geschatte kosten met de werkelijke kosten en analyseer de kostenefficiëntie per taak, per teamlid of per projectfase.", completed: false },
+    { id: 9010, title: "Project Gezondheidsscore", description: "Ontwikkel een algoritme dat een project een 'gezondheidsscore' (0-100) geeft op basis van factoren zoals budgetnaleving, deadline-voortgang, aantal openstaande bugs en team-sentiment. Dit biedt een snelle, kwantitatieve indicator voor de projectstatus.", completed: false },
+    { id: 9011, title: "Cumulatief Stroomdiagram (CFD)", description: "Implementeer een CFD dat de voortgang van taken door de verschillende workflow-statussen over tijd toont. Dit is een krachtig hulpmiddel voor het visualiseren van de flow, het werk-in-uitvoering (WIP) en het identificeren van bottlenecks.", completed: false },
+    { id: 9012, title: "Aanpasbare Notificatiedrempels", description: "Laat beheerders drempels instellen die automatisch notificaties triggeren, bijvoorbeeld: 'Stuur een waarschuwing naar de projectmanager als het projectbudget voor 80% is verbruikt'.", completed: false },
+    { id: 9013, title: "Analyse van Blocker-impact", description: "Genereer een rapport dat de totale vertragingstijd toont die is veroorzaakt door geblokkeerde taken. Identificeer de meest voorkomende oorzaken van blokkades om processen te verbeteren.", completed: false },
+    { id: 9014, title: "Voorspelling van Taakvoltooiing", description: "Een AI-model dat, op basis van historische data, een voorspelling doet over de waarschijnlijke voltooiingsdatum van een nieuwe taak zodra deze wordt aangemaakt, wat helpt bij een realistischere planning.", completed: false },
+    { id: 9015, title: "Integratie met Business Intelligence Tools", description: "Bied een connector of exportfunctie om Chorey-data te laden in externe BI-tools zoals Tableau, Power BI of Google Looker Studio voor nog diepgaandere, op maat gemaakte analyses.", completed: false }
+    ]
+  };
