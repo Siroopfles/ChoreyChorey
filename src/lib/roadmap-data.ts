@@ -77,7 +77,7 @@ export const roadmapPhases: Phase[] = [
       { id: 3006, title: "Cloud Storage Integraties", description: "Koppel bestanden direct vanuit Google Drive, OneDrive en Dropbox.", completed: true },
       { id: 3007, title: "Email-to-Task Gateway", description: "Maak taken aan door een e-mail te sturen naar een uniek project- of gebruikersadres.", completed: true },
       { id: 3008, title: "GitLab & Bitbucket Integraties", description: "Koppel taken aan GitLab/Bitbucket issues en merge requests.", completed: true },
-      { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden toe aan taken. Figma-bestanden worden nu met een interactieve live-preview getoond.", completed: true },
+      { id: 3009, title: "Figma & Adobe XD Integratie", description: "Voeg design-bestanden toe aan taken. Figma-bestanden worden getoond met een interactieve live-preview en Adobe XD-links worden visueel herkend met een eigen icoon.", completed: true },
       { id: 3010, title: "Outlook Calendar Integratie", description: "Synchroniseer deadlines met je Outlook agenda.", completed: true },
       { id: 3011, title: "Discord Integratie", description: "Ontvang notificaties in een Discord kanaal en beheer taken met slash-commando's.", completed: true },
       { id: 3012, title: "Toggl/Clockify Integratie", description: "Start en stop de timer in Chorey en synchroniseer de tijdregistratie met uw favoriete tool.", completed: true },
