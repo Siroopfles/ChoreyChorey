@@ -12,7 +12,7 @@ export async function manageSavedFilter(
   userId: string,
   action: 'save' | 'delete',
   payload: { name?: string; filters?: Filters; filterId?: string }
-) {
+): Promise<{ data: { success: boolean } | null; error: string | null; }> {
   try {
     const orgRef = doc(db, 'organizations', organizationId);
     
@@ -52,9 +52,9 @@ export async function manageSavedFilter(
     }
 
     await updateDoc(orgRef, { 'settings.savedFilters': newFiltersList });
-    return { success: true };
+    return { data: { success: true }, error: null };
   } catch (error: any) {
     console.error('Error managing saved filter:', error);
-    return { error: error.message };
+    return { data: null, error: error.message };
   }
 }

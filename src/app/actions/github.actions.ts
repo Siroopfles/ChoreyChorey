@@ -3,52 +3,52 @@
 
 import { getIssueOrPr, searchIssuesAndPRs, addComment, getComments } from '@/lib/github-service';
 import { getGitProviderConfig } from '@/lib/integration-helper';
-import type { Organization } from '@/lib/types';
 
-export async function searchGithubItems(organizationId: string, repo: string, query: string) {
+export async function searchGithubItems(organizationId: string, repo: string, query: string): Promise<{ data: any | null; error: string | null; }> {
     try {
         const config = await getGitProviderConfig(organizationId, 'github');
-        return await searchIssuesAndPRs(config.owner, repo, query);
+        const items = await searchIssuesAndPRs(config.owner, repo, query);
+        return { data: { items }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function getGithubItemFromUrl(organizationId: string, url: string) {
+export async function getGithubItemFromUrl(organizationId: string, url: string): Promise<{ data: { item: any } | null; error: string | null; }> {
      try {
         const config = await getGitProviderConfig(organizationId, 'github');
         const urlParts = url.match(/github\.com\/([^/]+)\/([^/]+)\/(issues|pull)\/(\d+)/);
         if (!urlParts) {
-            return { error: 'Invalid GitHub URL format.' };
+            return { data: null, error: 'Invalid GitHub URL format.' };
         }
         const [, owner, repo, , itemNumber] = urlParts;
 
         if (owner.toLowerCase() !== config.owner.toLowerCase() || !config.repos.some(r => r.toLowerCase() === repo.toLowerCase())) {
-            return { error: `Repository ${owner}/${repo} is not configured for this organization.` };
+            return { data: null, error: `Repository ${owner}/${repo} is not configured for this organization.` };
         }
 
         const item = await getIssueOrPr(owner, repo, parseInt(itemNumber, 10));
-        return { item };
+        return { data: { item }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function addCommentToGithubItem(owner: string, repo: string, itemNumber: number, commentBody: string, userName: string) {
+export async function addCommentToGithubItem(owner: string, repo: string, itemNumber: number, commentBody: string, userName: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const formattedBody = `*Reactie vanuit Chorey door ${userName}:*\n\n${commentBody}`;
         await addComment(owner, repo, itemNumber, formattedBody);
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function getGithubComments(owner: string, repo: string, itemNumber: number) {
+export async function getGithubComments(owner: string, repo: string, itemNumber: number): Promise<{ data: { comments: any[] } | null; error: string | null; }> {
     try {
         const comments = await getComments(owner, repo, itemNumber);
-        return { comments };
+        return { data: { comments }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }

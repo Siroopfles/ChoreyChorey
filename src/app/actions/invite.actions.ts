@@ -8,9 +8,9 @@ import { hasPermission } from '@/lib/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 
-export async function createOrganizationInvite(organizationId: string, inviterId: string, organizationName: string) {
+export async function createOrganizationInvite(organizationId: string, inviterId: string, organizationName: string): Promise<{ data: { success: boolean; inviteId: string; } | null; error: string | null; }> {
     if (!await hasPermission(inviterId, organizationId, PERMISSIONS.MANAGE_MEMBERS)) {
-        return { error: "Je hebt geen permissie om leden uit te nodigen." };
+        return { data: null, error: "Je hebt geen permissie om leden uit te nodigen." };
     }
     try {
         const newInviteRef = doc(collection(db, 'invites'));
@@ -22,16 +22,16 @@ export async function createOrganizationInvite(organizationId: string, inviterId
             createdAt: new Date(),
         };
         await setDoc(newInviteRef, newInvite);
-        return { success: true, inviteId: newInviteRef.id };
+        return { data: { success: true, inviteId: newInviteRef.id }, error: null };
     } catch (error: any) {
         console.error("Error creating invite:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function createProjectGuestInvite(organizationId: string, projectId: string, inviterId: string, organizationName: string) {
+export async function createProjectGuestInvite(organizationId: string, projectId: string, inviterId: string, organizationName: string): Promise<{ data: { success: boolean; inviteId: string; } | null; error: string | null; }> {
     if (!await hasPermission(inviterId, organizationId, PERMISSIONS.MANAGE_MEMBERS)) {
-        return { error: "Je hebt geen permissie om gasten uit te nodigen." };
+        return { data: null, error: "Je hebt geen permissie om gasten uit te nodigen." };
     }
      try {
         const newInviteRef = doc(collection(db, 'invites'));
@@ -44,9 +44,9 @@ export async function createProjectGuestInvite(organizationId: string, projectId
             createdAt: new Date(),
         };
         await setDoc(newInviteRef, newInvite);
-        return { success: true, inviteId: newInviteRef.id };
+        return { data: { success: true, inviteId: newInviteRef.id }, error: null };
     } catch (error: any) {
         console.error("Error creating guest invite:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }

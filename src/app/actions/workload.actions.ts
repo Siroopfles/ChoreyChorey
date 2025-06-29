@@ -1,3 +1,4 @@
+
 'use server';
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
@@ -5,7 +6,6 @@ import { db } from '@/lib/firebase';
 import type { Task, Priority, User } from '@/lib/types';
 import { eachDayOfInterval, formatISO, startOfDay, isAfter } from 'date-fns';
 
-// These schemas are for documentation and can be used with Zod on the client if needed.
 type GetWorkloadDataInput = {
   organizationId: string;
   startDate: string;
@@ -37,7 +37,7 @@ function priorityToPoints(priority: Priority): number {
     }
 }
 
-export async function getWorkloadData(input: GetWorkloadDataInput): Promise<GetWorkloadDataOutput> {
+export async function getWorkloadData(input: GetWorkloadDataInput): Promise<{ data: GetWorkloadDataOutput | null; error: string | null; }> {
   const { organizationId, startDate, endDate } = input;
   
   try {
@@ -122,9 +122,9 @@ export async function getWorkloadData(input: GetWorkloadDataInput): Promise<GetW
       }
     });
 
-    return Object.values(workloadByDay);
-  } catch(e) {
+    return { data: Object.values(workloadByDay), error: null };
+  } catch(e: any) {
       console.error("Error fetching workload data:", e);
-      return [];
+      return { data: null, error: e.message };
   }
 }

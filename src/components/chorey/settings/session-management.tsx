@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -43,19 +44,23 @@ export default function SessionManagement() {
     const fetchSessions = useCallback(async () => {
         if (!user) return;
         setIsLoading(true);
-        const userSessions = await getUserSessions(user.id);
-        setSessions(userSessions);
+        const { data, error } = await getUserSessions(user.id);
+        if (error) {
+            toast({ title: 'Fout bij ophalen sessies', description: error, variant: 'destructive' });
+        } else if (data) {
+            setSessions(data.sessions);
+        }
         setIsLoading(false);
-    }, [user]);
+    }, [user, toast]);
 
     useEffect(() => {
         fetchSessions();
     }, [fetchSessions]);
 
     const handleTerminate = async (sessionId: string) => {
-        const result = await terminateSession(sessionId, currentSessionId);
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
+        const { error } = await terminateSession(sessionId, currentSessionId);
+        if (error) {
+            toast({ title: 'Fout', description: error, variant: 'destructive' });
         } else {
             toast({ title: 'Sessie beëindigd' });
             fetchSessions();
@@ -64,11 +69,11 @@ export default function SessionManagement() {
     
     const handleTerminateAll = async () => {
         if (!user) return;
-        const result = await terminateAllOtherSessions(user.id, currentSessionId);
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        } else {
-            toast({ title: 'Sessies beëindigd', description: `${result.count} andere sessie(s) zijn beëindigd.` });
+        const { data, error } = await terminateAllOtherSessions(user.id, currentSessionId);
+        if (error) {
+            toast({ title: 'Fout', description: error, variant: 'destructive' });
+        } else if (data) {
+            toast({ title: 'Sessies beëindigd', description: `${data.count} andere sessie(s) zijn beëindigd.` });
             fetchSessions();
         }
     };

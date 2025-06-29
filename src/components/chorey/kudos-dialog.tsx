@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -57,10 +58,10 @@ export function KudosDialog({
     if (!sender || !currentOrganization) return;
     setIsSubmitting(true);
     
-    const result = await transferPoints(currentOrganization.id, sender.id, recipient.id, data.amount, data.message || '', sender.name);
+    const { data: result, error } = await transferPoints(currentOrganization.id, sender.id, recipient.id, data.amount, data.message || '', sender.name);
     
-    if (result.error) {
-        toast({ title: 'Fout', description: result.error, variant: 'destructive' });
+    if (error) {
+        toast({ title: 'Fout', description: error, variant: 'destructive' });
     } else {
         toast({ title: 'Kudos Verzonden!', description: `Je hebt ${data.amount} punten naar ${recipient.name} gestuurd.`});
         await refreshUser();

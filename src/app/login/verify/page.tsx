@@ -41,12 +41,12 @@ export default function VerifyLoginPage() {
     setIsSubmitting(true);
     setError('');
 
-    const result = await verifyLoginCode(authUser.uid, data.code);
+    const { data: result, error: actionError } = await verifyLoginCode(authUser.uid, data.code);
     
-    if (result.success) {
+    if (result?.success) {
       await completeMfa();
     } else {
-      setError(result.error || 'Er is een onbekende fout opgetreden.');
+      setError(actionError || 'Er is een onbekende fout opgetreden.');
       form.reset();
     }
 

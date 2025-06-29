@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -46,25 +47,28 @@ export function GitLabLinker() {
 
         const search = async () => {
             setIsSearching(true);
-            const result = await searchGitLabItems(currentOrganization.id, selectedProject, debouncedSearchTerm);
-            if (Array.isArray(result.items)) {
-                setSearchResults(result.items);
+            const { data, error } = await searchGitLabItems(currentOrganization.id, selectedProject, debouncedSearchTerm);
+            if (data?.items) {
+                setSearchResults(data.items);
+            }
+            if (error) {
+                toast({ title: 'Fout bij zoeken', description: error, variant: 'destructive' });
             }
             setIsSearching(false);
         };
 
         search();
-    }, [debouncedSearchTerm, selectedProject, isConfigured, currentOrganization]);
+    }, [debouncedSearchTerm, selectedProject, isConfigured, currentOrganization, toast]);
 
     const handleLinkItemFromUrl = async () => {
         if (!inputValue.trim() || !currentOrganization) return;
         setIsLoading(true);
 
-        const result = await getGitLabItemFromUrl(currentOrganization.id, inputValue);
-        if (result.error) {
-            toast({ title: 'Fout bij koppelen', description: result.error, variant: 'destructive' });
-        } else if (result.item) {
-            appendLink(result.item);
+        const { data, error } = await getGitLabItemFromUrl(currentOrganization.id, inputValue);
+        if (error) {
+            toast({ title: 'Fout bij koppelen', description: error, variant: 'destructive' });
+        } else if (data?.item) {
+            appendLink(data.item);
         }
         setIsLoading(false);
         setInputValue('');

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Loader2, GitGraph, CalendarIcon, Bot, BarChart } from 'lucide-react';
-import { handleLevelWorkload } from '@/app/actions/ai.actions';
+import { levelWorkload } from '@/ai/flows/level-workload-flow';
 import { getWorkloadData, type GetWorkloadDataOutput } from '@/app/actions/workload.actions';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
@@ -44,8 +44,10 @@ export default function WorkloadPage() {
                 organizationId: currentOrganization.id,
                 startDate: format(date.from, 'yyyy-MM-dd'),
                 endDate: format(date.to, 'yyyy-MM-dd'),
-            }).then(data => {
-                setWorkloadData(data);
+            }).then(({ data }) => {
+                if (data) {
+                    setWorkloadData(data);
+                }
                 setIsChartLoading(false);
             });
         }
@@ -123,20 +125,18 @@ export default function WorkloadPage() {
             endDate: format(date.to, 'yyyy-MM-dd'),
         };
 
-        const response = await handleLevelWorkload(input);
+        const summary = await levelWorkload(input);
 
-        if (response.error) {
-            setBalancerError(response.error);
-        } else if (response.summary) {
-            setBalancerResult(response.summary);
-            // Refetch chart data after leveling
-            if(currentOrganization && date?.from && date?.to) {
-                getWorkloadData({
-                    organizationId: currentOrganization.id,
-                    startDate: format(date.from, 'yyyy-MM-dd'),
-                    endDate: format(date.to, 'yyyy-MM-dd'),
-                }).then(data => setWorkloadData(data));
-            }
+        setBalancerResult(summary);
+        // Refetch chart data after leveling
+        if(currentOrganization && date?.from && date?.to) {
+            getWorkloadData({
+                organizationId: currentOrganization.id,
+                startDate: format(date.from, 'yyyy-MM-dd'),
+                endDate: format(date.to, 'yyyy-MM-dd'),
+            }).then(({ data }) => {
+                if (data) setWorkloadData(data);
+            });
         }
         setIsBalancerLoading(false);
     };
@@ -230,7 +230,7 @@ export default function WorkloadPage() {
                 </CardHeader>
                 <CardContent className="space-y-4 sm:flex sm:items-end sm:gap-4 sm:space-y-0">
                      <div className="grid gap-2 flex-1">
-                        <label className="font-medium text-sm">Gebruiker</label>
+                        <label className="text-sm font-medium">Gebruiker</label>
                         <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecteer een gebruiker..." />

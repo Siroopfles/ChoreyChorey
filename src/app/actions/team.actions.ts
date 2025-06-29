@@ -6,7 +6,6 @@ import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestor
 import type { Team } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';
 import { PERMISSIONS } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
 
 export async function manageTeam(
   action: 'create' | 'update' | 'delete',
@@ -16,9 +15,9 @@ export async function manageTeam(
     teamId?: string;
     name?: string;
   }
-) {
+): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_TEAMS)) {
-        return { error: "Je hebt geen permissie om teams te beheren." };
+        return { data: null, error: "Je hebt geen permissie om teams te beheren." };
     }
 
   try {
@@ -34,23 +33,23 @@ export async function manageTeam(
         memberIds: [],
       };
       await addDoc(collection(db, 'teams'), newTeam);
-      return { success: true };
+      return { data: { success: true }, error: null };
     }
 
     if (action === 'update' && teamId && name) {
       const teamRef = doc(db, 'teams', teamId);
       await updateDoc(teamRef, { name });
-      return { success: true };
+      return { data: { success: true }, error: null };
     }
 
     if (action === 'delete' && teamId) {
       const teamRef = doc(db, 'teams', teamId);
       await deleteDoc(teamRef);
-      return { success: true };
+      return { data: { success: true }, error: null };
     }
 
     throw new Error('Invalid action or payload for managing team.');
   } catch (error: any) {
-    return { error: error.message };
+    return { data: null, error: error.message };
   }
 }

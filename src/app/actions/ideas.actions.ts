@@ -24,10 +24,10 @@ async function checkIdeasEnabled(organizationId: string): Promise<boolean> {
     return orgData.settings?.features?.ideas !== false;
 }
 
-export async function createIdea(organizationId: string, creatorId: string, data: IdeaFormValues) {
+export async function createIdea(organizationId: string, creatorId: string, data: IdeaFormValues): Promise<{ data: { success: boolean } | null; error: string | null; }> {
   try {
     if (!await checkIdeasEnabled(organizationId)) {
-      return { error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
+      return { data: null, error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
     }
     await addDoc(collection(db, 'ideas'), {
       ...data,
@@ -37,21 +37,21 @@ export async function createIdea(organizationId: string, creatorId: string, data
       status: 'new',
       upvotes: [creatorId], // Creator automatically upvotes their own idea
     });
-    return { success: true };
+    return { data: { success: true }, error: null };
   } catch (error: any) {
     console.error("Error creating idea:", error);
-    return { error: error.message };
+    return { data: null, error: error.message };
   }
 }
 
-export async function toggleIdeaUpvote(ideaId: string, userId: string) {
+export async function toggleIdeaUpvote(ideaId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
   try {
     const ideaRef = doc(db, 'ideas', ideaId);
     const ideaDocCheck = await getDoc(ideaRef);
     if (!ideaDocCheck.exists()) throw new Error("Idee niet gevonden.");
     
     if (!await checkIdeasEnabled(ideaDocCheck.data().organizationId)) {
-        return { error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
+        return { data: null, error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
     }
     
     await runTransaction(db, async (transaction) => {
@@ -67,29 +67,29 @@ export async function toggleIdeaUpvote(ideaId: string, userId: string) {
         transaction.update(ideaRef, { upvotes: arrayUnion(userId) });
       }
     });
-    return { success: true };
+    return { data: { success: true }, error: null };
   } catch (error: any) {
     console.error("Error toggling upvote:", error);
-    return { error: error.message };
+    return { data: null, error: error.message };
   }
 }
 
-export async function updateIdeaStatus(ideaId: string, status: IdeaStatus, userId: string, organizationId: string) {
+export async function updateIdeaStatus(ideaId: string, status: IdeaStatus, userId: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
   if (!await checkIdeasEnabled(organizationId)) {
-    return { error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
+    return { data: null, error: 'De ideeënbus is uitgeschakeld voor deze organisatie.' };
   }
   
   const canManage = await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_IDEAS);
   if (!canManage) {
-    return { error: "U heeft geen permissie om de status aan te passen." };
+    return { data: null, error: "U heeft geen permissie om de status aan te passen." };
   }
   
   try {
     const ideaRef = doc(db, 'ideas', ideaId);
     await updateDoc(ideaRef, { status: status });
-    return { success: true };
+    return { data: { success: true }, error: null };
   } catch (error: any) {
     console.error("Error updating idea status:", error);
-    return { error: error.message };
+    return { data: null, error: error.message };
   }
 }

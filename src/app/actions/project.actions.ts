@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -9,9 +8,9 @@ import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';
 import { checkAndGrantTeamAchievements } from './gamification.actions';
 
-export async function completeProject(projectId: string, organizationId: string, currentUserId: string) {
+export async function completeProject(projectId: string, organizationId: string, currentUserId: string): Promise<{ data: { success: boolean, message: string } | null; error: string | null; }> {
     if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_PROJECTS)) {
-        return { error: "Je hebt geen permissie om een project te voltooien." };
+        return { data: null, error: "Je hebt geen permissie om een project te voltooien." };
     }
 
     try {
@@ -22,7 +21,7 @@ export async function completeProject(projectId: string, organizationId: string,
         const projectData = projectDoc.data() as Project;
         const teamIds = projectData.teamIds || [];
         if (teamIds.length === 0) {
-             return { success: true, message: "Project voltooid, maar er waren geen teams toegewezen om een badge aan uit te reiken." };
+             return { data: { success: true, message: "Project voltooid, maar er waren geen teams toegewezen om een badge aan uit te reiken." }, error: null };
         }
         
         const teamsQuery = query(collection(db, 'teams'), where('__name__', 'in', teamIds));
@@ -36,7 +35,7 @@ export async function completeProject(projectId: string, organizationId: string,
         const uniqueMemberIds = Array.from(memberIds);
 
         if (uniqueMemberIds.length === 0) {
-            return { success: true, message: "Project voltooid, maar er waren geen leden in de toegewezen teams om een badge aan uit te reiken." };
+            return { data: { success: true, message: "Project voltooid, maar er waren geen leden in de toegewezen teams om een badge aan uit te reiken." }, error: null };
         }
 
         const batch = writeBatch(db);
@@ -65,24 +64,24 @@ export async function completeProject(projectId: string, organizationId: string,
             checkAndGrantTeamAchievements(teamId, organizationId).catch(console.error);
         }
 
-        return { success: true, message: `${uniqueMemberIds.length} lid / leden hebben een prestatie ontvangen.` };
+        return { data: { success: true, message: `${uniqueMemberIds.length} lid / leden hebben een prestatie ontvangen.` }, error: null };
 
     } catch (error: any) {
         console.error("Error completing project:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function toggleProjectPin(projectId: string, organizationId: string, userId: string, isPinned: boolean) {
+export async function toggleProjectPin(projectId: string, organizationId: string, userId: string, isPinned: boolean): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     if (!await hasPermission(userId, organizationId, PERMISSIONS.PIN_ITEMS)) {
-        return { error: "Je hebt geen permissie om dit project vast te pinnen." };
+        return { data: null, error: "Je hebt geen permissie om dit project vast te pinnen." };
     }
     try {
         const projectRef = doc(db, 'projects', projectId);
         await updateDoc(projectRef, { pinned: isPinned });
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error toggling project pin:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }

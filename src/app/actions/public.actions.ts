@@ -5,13 +5,13 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import type { Task, User, Project, Organization } from '@/lib/types';
 
-export async function getPublicProjectData(projectId: string): Promise<{ project: Project, tasks: Task[], users: Pick<User, 'id' | 'name' | 'avatar'>[] } | { error: string }> {
+export async function getPublicProjectData(projectId: string): Promise<{ data: { project: Project, tasks: Task[], users: Pick<User, 'id' | 'name' | 'avatar'>[] } | null; error: string | null; }> {
     try {
         const projectRef = doc(db, 'projects', projectId);
         const projectDoc = await getDoc(projectRef);
 
         if (!projectDoc.exists()) {
-            return { error: 'Project niet gevonden.' };
+            return { data: null, error: 'Project niet gevonden.' };
         }
         
         const project = { id: projectDoc.id, ...projectDoc.data() } as Project;
@@ -19,11 +19,11 @@ export async function getPublicProjectData(projectId: string): Promise<{ project
         const orgRef = doc(db, 'organizations', project.organizationId);
         const orgDoc = await getDoc(orgRef);
         if (!orgDoc.exists() || orgDoc.data().settings?.features?.publicSharing === false) {
-            return { error: 'Publiek delen is uitgeschakeld voor deze organisatie.' };
+            return { data: null, error: 'Publiek delen is uitgeschakeld voor deze organisatie.' };
         }
 
         if (!project.isPublic) {
-            return { error: 'Dit project is niet openbaar.' };
+            return { data: null, error: 'Dit project is niet openbaar.' };
         }
         
         // Fetch tasks for the public project, excluding private/sensitive ones
@@ -59,10 +59,10 @@ export async function getPublicProjectData(projectId: string): Promise<{ project
             });
         }
         
-        return { project, tasks, users };
+        return { data: { project, tasks, users }, error: null };
 
     } catch (e: any) {
         console.error("Error fetching public project data:", e);
-        return { error: 'Er is een onbekende fout opgetreden.' };
+        return { data: null, error: 'Er is een onbekende fout opgetreden.' };
     }
 }

@@ -15,10 +15,10 @@ export async function manageAutomation(
     automationId?: string;
     data?: AutomationFormValues;
   }
-) {
+): Promise<{ data: { success: boolean } | null; error: string | null }> {
   // For now, let's tie this to a high-level permission.
   if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ORGANIZATION)) {
-    return { error: 'Geen permissie om automatiseringen te beheren.' };
+    return { data: null, error: 'Geen permissie om automatiseringen te beheren.' };
   }
 
   try {
@@ -31,23 +31,23 @@ export async function manageAutomation(
         createdAt: new Date(),
       };
       await addDoc(collection(db, 'automations'), newAutomation);
-      return { success: true };
+      return { data: { success: true }, error: null };
     }
     
     if (action === 'update' && automationId && data) {
       const automationRef = doc(db, 'automations', automationId);
       await updateDoc(automationRef, data as any); // cast as any to avoid deep type issues
-      return { success: true };
+      return { data: { success: true }, error: null };
     }
 
     if (action === 'delete' && automationId) {
       const automationRef = doc(db, 'automations', automationId);
       await deleteDoc(automationRef);
-      return { success: true };
+      return { data: { success: true }, error: null };
     }
 
     throw new Error('Ongeldige actie of payload voor het beheren van automatisering.');
   } catch (error: any) {
-    return { error: error.message };
+    return { data: null, error: error.message };
   }
 }

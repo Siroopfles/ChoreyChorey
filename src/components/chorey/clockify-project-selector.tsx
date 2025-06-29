@@ -37,9 +37,9 @@ export function ClockifyProjectSelector() {
     useEffect(() => {
         if (isClockifyEnabled && hasApiToken && user) {
             setIsLoadingWorkspaces(true);
-            getClockifyWorkspaces(user.id).then(result => {
-                if (result.workspaces) {
-                    setWorkspaces(result.workspaces);
+            getClockifyWorkspaces(user.id).then(({ data }) => {
+                if (data?.workspaces) {
+                    setWorkspaces(data.workspaces);
                 }
                 setIsLoadingWorkspaces(false);
             });
@@ -52,9 +52,9 @@ export function ClockifyProjectSelector() {
             setProjects([]);
             setValue('clockifyProjectId', undefined);
             
-            getClockifyProjects(user.id, selectedWorkspaceId).then(result => {
-                if (result.projects) {
-                    setProjects(result.projects);
+            getClockifyProjects(user.id, selectedWorkspaceId).then(({ data }) => {
+                if (data?.projects) {
+                    setProjects(data.projects);
                 }
                 setIsLoadingProjects(false);
             });

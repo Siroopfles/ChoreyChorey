@@ -12,9 +12,9 @@ function hashKey(key: string): string {
     return crypto.createHash('sha256').update(key).digest('hex');
 }
 
-export async function generateApiKey(organizationId: string, userId: string, name: string, permissions: ApiPermission[]): Promise<{ plainTextKey: string } | { error: string }> {
+export async function generateApiKey(organizationId: string, userId: string, name: string, permissions: ApiPermission[]): Promise<{ data: { plainTextKey: string } | null; error: string | null }> {
     if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
-        return { error: 'Geen permissie om API sleutels aan te maken.' };
+        return { data: null, error: 'Geen permissie om API sleutels aan te maken.' };
     }
 
     try {
@@ -33,16 +33,16 @@ export async function generateApiKey(organizationId: string, userId: string, nam
         };
 
         await addDoc(collection(db, 'apiKeys'), newApiKeyData);
-        return { plainTextKey };
+        return { data: { plainTextKey }, error: null };
     } catch (e: any) {
         console.error("Error generating API key:", e);
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function getApiKeys(organizationId: string, userId: string): Promise<{ keys: Omit<ApiKey, 'hashedKey' | 'organizationId'>[] } | { error: string }> {
+export async function getApiKeys(organizationId: string, userId: string): Promise<{ data: { keys: Omit<ApiKey, 'hashedKey' | 'organizationId'>[] } | null; error: string | null; }> {
     if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
-        return { error: 'Geen permissie om API sleutels te bekijken.' };
+        return { data: null, error: 'Geen permissie om API sleutels te bekijken.' };
     }
     
     try {
@@ -60,16 +60,16 @@ export async function getApiKeys(organizationId: string, userId: string): Promis
                 permissions: data.permissions || [],
             };
         });
-        return { keys };
+        return { data: { keys }, error: null };
     } catch (e: any) {
         console.error("Error fetching API keys:", e);
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function revokeApiKey(keyId: string, organizationId: string, userId: string): Promise<{ success: boolean } | { error: string }> {
+export async function revokeApiKey(keyId: string, organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_API_KEYS)) {
-        return { error: 'Geen permissie om API sleutels in te trekken.' };
+        return { data: null, error: 'Geen permissie om API sleutels in te trekken.' };
     }
 
     try {
@@ -77,13 +77,13 @@ export async function revokeApiKey(keyId: string, organizationId: string, userId
         const keyDoc = await getDoc(keyRef);
 
         if (!keyDoc.exists() || keyDoc.data().organizationId !== organizationId) {
-            return { error: 'API sleutel niet gevonden of behoort niet tot deze organisatie.' };
+            return { data: null, error: 'API sleutel niet gevonden of behoort niet tot deze organisatie.' };
         }
         
         await deleteDoc(keyRef);
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
         console.error("Error revoking API key:", e);
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }

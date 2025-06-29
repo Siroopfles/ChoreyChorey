@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -8,7 +7,7 @@ import type { GlobalUserProfile, Organization, OrganizationMember } from '@/lib/
 
 
 // This action now only updates the global user profile.
-export async function updateUserProfile(userId: string, data: Partial<Omit<GlobalUserProfile, 'id' | 'organizationIds' | 'currentOrganizationId'>>) {
+export async function updateUserProfile(userId: string, data: Partial<Omit<GlobalUserProfile, 'id' | 'organizationIds' | 'currentOrganizationId'>>): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const userRef = doc(db, 'users', userId);
         // Firestore doesn't like 'undefined' values from optional Zod fields
@@ -20,16 +19,16 @@ export async function updateUserProfile(userId: string, data: Partial<Omit<Globa
         }
         
         await updateDoc(userRef, cleanData);
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error updating user profile:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function purchaseCosmeticItem(organizationId: string, userId: string, cost: number, updates: { [key: string]: string }) {
+export async function purchaseCosmeticItem(organizationId: string, userId: string, cost: number, updates: { [key: string]: string }): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     if (cost < 0) {
-        return { error: 'Kosten kunnen niet negatief zijn.' };
+        return { data: null, error: 'Kosten kunnen niet negatief zijn.' };
     }
     
     try {
@@ -65,9 +64,9 @@ export async function purchaseCosmeticItem(organizationId: string, userId: strin
             transaction.update(orgRef, cosmeticUpdates);
         });
         
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error purchasing cosmetic item:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }

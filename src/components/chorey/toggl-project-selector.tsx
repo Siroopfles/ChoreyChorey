@@ -30,9 +30,9 @@ export function TogglProjectSelector() {
     useEffect(() => {
         if (isTogglEnabled && hasApiToken && user) {
             setIsLoadingWorkspaces(true);
-            getTogglWorkspaces(user.id).then(result => {
-                if (result.workspaces) {
-                    setWorkspaces(result.workspaces);
+            getTogglWorkspaces(user.id).then(({ data }) => {
+                if (data?.workspaces) {
+                    setWorkspaces(data.workspaces);
                 }
                 setIsLoadingWorkspaces(false);
             });
@@ -49,9 +49,9 @@ export function TogglProjectSelector() {
             // For now, let's just reset it. A better implementation might fetch the project and check.
             setValue('togglProjectId', undefined);
             
-            getTogglProjects(user.id, selectedWorkspaceId).then(result => {
-                if (result.projects) {
-                    setProjects(result.projects);
+            getTogglProjects(user.id, selectedWorkspaceId).then(({ data }) => {
+                if (data?.projects) {
+                    setProjects(data.projects);
                 }
                 setIsLoadingProjects(false);
             });

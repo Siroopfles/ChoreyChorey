@@ -7,21 +7,21 @@ import { authenticator } from 'otplib';
 import { updateUserProfile } from './user.actions';
 import type { GlobalUserProfile } from '@/lib/types';
 
-export async function generateTwoFactorSecret(userId: string, email: string) {
+export async function generateTwoFactorSecret(userId: string, email: string): Promise<{ data: { otpauth: string } | null; error: string | null; }> {
     try {
         const secret = authenticator.generateSecret();
         const otpauth = authenticator.keyuri(email, 'Chorey', secret);
         
         await updateUserProfile(userId, { twoFactorSecret: secret, twoFactorEnabled: false });
 
-        return { otpauth };
+        return { data: { otpauth }, error: null };
     } catch (error: any) {
         console.error("Error generating 2FA secret:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function verifyAndEnableTwoFactor(userId: string, token: string) {
+export async function verifyAndEnableTwoFactor(userId: string, token: string): Promise<{ data: { success: boolean; recoveryCodes: string[] } | null; error: string | null; }> {
     try {
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (!userDoc.exists() || !userDoc.data()?.twoFactorSecret) {
@@ -32,27 +32,29 @@ export async function verifyAndEnableTwoFactor(userId: string, token: string) {
         const isValid = authenticator.verify({ token, secret });
 
         if (!isValid) {
-            return { error: 'Ongeldige code. Probeer het opnieuw.' };
+            return { data: null, error: 'Ongeldige code. Probeer het opnieuw.' };
         }
 
         const recoveryCodes = Array.from({ length: 10 }, () => 
             Math.random().toString(36).substring(2, 12).toUpperCase()
         );
 
-        await updateUserProfile(userId, {
+        const { error } = await updateUserProfile(userId, {
             twoFactorEnabled: true,
             twoFactorRecoveryCodes: recoveryCodes
         });
         
-        return { success: true, recoveryCodes };
+        if (error) throw new Error(error);
+        
+        return { data: { success: true, recoveryCodes }, error: null };
 
     } catch (error: any) {
         console.error("Error verifying 2FA setup:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function disableTwoFactor(userId: string, token: string) {
+export async function disableTwoFactor(userId: string, token: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
      try {
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (!userDoc.exists() || !userDoc.data()?.twoFactorSecret) {
@@ -64,24 +66,26 @@ export async function disableTwoFactor(userId: string, token: string) {
         const isRecoveryCode = twoFactorRecoveryCodes?.includes(token);
 
         if (!isTokenValid && !isRecoveryCode) {
-            return { error: 'Ongeldige code.' };
+            return { data: null, error: 'Ongeldige code.' };
         }
 
-        await updateUserProfile(userId, {
+        const { error } = await updateUserProfile(userId, {
             twoFactorEnabled: false,
             twoFactorSecret: null,
             twoFactorRecoveryCodes: null
         });
         
-        return { success: true };
+        if (error) throw new Error(error);
+
+        return { data: { success: true }, error: null };
 
     } catch (error: any) {
         console.error("Error disabling 2FA:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function verifyLoginCode(userId: string, code: string) {
+export async function verifyLoginCode(userId: string, code: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (!userDoc.exists() || !userDoc.data()?.twoFactorEnabled) {
@@ -94,20 +98,20 @@ export async function verifyLoginCode(userId: string, code: string) {
 
         const isTokenValid = authenticator.verify({ token: code, secret });
         if (isTokenValid) {
-            return { success: true };
+            return { data: { success: true }, error: null };
         }
 
         const recoveryCodes = userData.twoFactorRecoveryCodes || [];
         if (recoveryCodes.includes(code)) {
             const updatedRecoveryCodes = recoveryCodes.filter(rc => rc !== code);
             await updateUserProfile(userId, { twoFactorRecoveryCodes: updatedRecoveryCodes });
-            return { success: true };
+            return { data: { success: true }, error: null };
         }
         
-        return { error: 'Ongeldige verificatiecode.' };
+        return { data: null, error: 'Ongeldige verificatiecode.' };
 
     } catch(error: any) {
         console.error("Error verifying login code:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }

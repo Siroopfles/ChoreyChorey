@@ -10,7 +10,7 @@ import { triggerWebhooks } from '@/lib/webhook-service';
 import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
 
 
-export async function addCommentAction(taskId: string, text: string, userId: string, userName: string, organizationId: string) {
+export async function addCommentAction(taskId: string, text: string, userId: string, userName: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
@@ -63,10 +63,10 @@ export async function addCommentAction(taskId: string, text: string, userId: str
                     },
                 });
 
-                if (result.suggestion?.shouldUpdate && result.suggestion.newStatus) {
+                if (result.shouldUpdate && result.newStatus) {
                     // For now, let's just create a notification for the creator and assignees
                     const notificationRecipients = new Set([...taskData.assigneeIds, taskData.creatorId]);
-                    const notificationMessage = `AI stelt voor om de status van "${taskData.title}" te wijzigen naar "${result.suggestion.newStatus}" op basis van een recente opmerking. Reden: ${result.suggestion.reasoning}`;
+                    const notificationMessage = `AI stelt voor om de status van "${taskData.title}" te wijzigen naar "${result.newStatus}" op basis van een recente opmerking. Reden: ${result.reasoning}`;
                     
                     notificationRecipients.forEach(recipientId => {
                         if (recipientId) {
@@ -80,28 +80,28 @@ export async function addCommentAction(taskId: string, text: string, userId: str
             // Do not block the main action if AI fails
         }
 
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function markCommentAsReadAction(taskId: string, commentId: string, userId: string) {
+export async function markCommentAsReadAction(taskId: string, commentId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
-        if (!taskDoc.exists()) return { success: true };
+        if (!taskDoc.exists()) return { data: { success: true }, error: null };
 
         const taskData = taskDoc.data() as Task;
         const comment = taskData.comments.find(c => c.id === commentId);
-        if (!comment || comment.readBy?.includes(userId)) return { success: true };
+        if (!comment || comment.readBy?.includes(userId)) return { data: { success: true }, error: null };
 
         const updatedComments = taskData.comments.map(c => 
             c.id === commentId ? { ...c, readBy: [...(c.readBy || []), userId] } : c
         );
         await updateDoc(taskRef, { comments: updatedComments });
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch(e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }

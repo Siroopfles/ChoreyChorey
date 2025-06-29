@@ -27,9 +27,9 @@ export default function TwoFactorAuthSettings({ user }: { user: User }) {
             return;
         }
         setIsDisabling(true);
-        const result = await disableTwoFactor(user.id, disableToken);
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
+        const { data, error } = await disableTwoFactor(user.id, disableToken);
+        if (error) {
+            toast({ title: 'Fout', description: error, variant: 'destructive' });
         } else {
             toast({ title: '2FA uitgeschakeld' });
             await refreshUser();

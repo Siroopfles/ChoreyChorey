@@ -5,9 +5,8 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { generateNotificationDigest } from '@/ai/flows/notification-digest-flow';
 import { createNotification } from './notification.actions';
-import { markdown } from 'node-forge';
 
-export async function sendDailyDigest(userId: string, organizationId: string) {
+export async function sendDailyDigest(userId: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
         const digest = await generateNotificationDigest({ userId, organizationId, period: 'daily' });
         
@@ -21,9 +20,9 @@ export async function sendDailyDigest(userId: string, organizationId: string) {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, { lastDigestSentAt: new Date() });
 
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
         console.error("Error sending daily digest:", e);
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }

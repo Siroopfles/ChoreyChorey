@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -124,17 +123,17 @@ async function grantAchievements(userId: string, organizationId: string, type: '
 }
 
 
-export async function thankForTask(taskId: string, currentUserId: string, assignees: User[], organizationId: string) {
-    if (!currentUserId) return { error: 'Niet geautoriseerd.'};
-    if (assignees.length === 0) return { error: 'Geen toegewezenen om te bedanken.'};
+export async function thankForTask(taskId: string, currentUserId: string, assignees: User[], organizationId: string): Promise<{ data: { success: boolean, points: number, assigneesNames: string } | null; error: string | null }> {
+    if (!currentUserId) return { data: null, error: 'Niet geautoriseerd.'};
+    if (assignees.length === 0) return { data: null, error: 'Geen toegewezenen om te bedanken.'};
 
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
-        if (!orgDoc.exists()) return { error: 'Organisatie niet gevonden.'};
+        if (!orgDoc.exists()) return { data: null, error: 'Organisatie niet gevonden.'};
         const orgData = orgDoc.data() as Organization;
         if (orgData.settings?.features?.gamification === false) {
-            return { success: true }; // Silently succeed
+            return { data: { success: true, points: 0, assigneesNames: '' }, error: null }; // Silently succeed
         }
 
         const batch = writeBatch(db);
@@ -179,32 +178,32 @@ export async function thankForTask(taskId: string, currentUserId: string, assign
         const achievementPromises = assignees.map(assignee => grantAchievements(assignee.id, organizationId, 'thanked'));
         await Promise.all(achievementPromises);
         
-        return { success: true, points, assigneesNames };
+        return { data: { success: true, points, assigneesNames }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
 
-export async function rateTask(taskId: string, rating: number, task: Task, currentUserId: string, organizationId: string) {
-    if (!currentUserId) return { error: 'Niet geautoriseerd.' };
+export async function rateTask(taskId: string, rating: number, task: Task, currentUserId: string, organizationId: string): Promise<{ data: { success: boolean, bonusPoints: number } | null; error: string | null }> {
+    if (!currentUserId) return { data: null, error: 'Niet geautoriseerd.' };
     
     const canRate = task.creatorId === currentUserId && !task.assigneeIds.includes(currentUserId);
     if (!canRate) {
-        return { error: 'Alleen de maker van de taak kan een beoordeling geven, tenzij ze de taak zelf hebben uitgevoerd.' };
+        return { data: null, error: 'Alleen de maker van de taak kan een beoordeling geven, tenzij ze de taak zelf hebben uitgevoerd.' };
     }
 
     if (task.rating) {
-        return { error: 'Deze taak heeft al een beoordeling.' };
+        return { data: null, error: 'Deze taak heeft al een beoordeling.' };
     }
 
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
-        if (!orgDoc.exists()) return { error: 'Organisatie niet gevonden.'};
+        if (!orgDoc.exists()) return { data: null, error: 'Organisatie niet gevonden.'};
         const orgData = orgDoc.data() as Organization;
         if (orgData.settings?.features?.gamification === false) {
-            return { success: true }; // Silently succeed
+            return { data: { success: true, bonusPoints: 0 }, error: null }; // Silently succeed
         }
 
         const batch = writeBatch(db);
@@ -242,18 +241,18 @@ export async function rateTask(taskId: string, rating: number, task: Task, curre
         }
         
         await batch.commit();
-        return { success: true, bonusPoints };
+        return { data: { success: true, bonusPoints }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function transferPoints(organizationId: string, fromUserId: string, toUserId: string, amount: number, message: string, fromUserName: string) {
+export async function transferPoints(organizationId: string, fromUserId: string, toUserId: string, amount: number, message: string, fromUserName: string): Promise<{ data: { success: boolean, amount: number } | null; error: string | null; }> {
     if (fromUserId === toUserId) {
-        return { error: 'Je kunt geen punten aan jezelf geven.' };
+        return { data: null, error: 'Je kunt geen punten aan jezelf geven.' };
     }
     if (amount <= 0) {
-        return { error: 'Je moet een positief aantal punten geven.' };
+        return { data: null, error: 'Je moet een positief aantal punten geven.' };
     }
     
     try {
@@ -281,14 +280,14 @@ export async function transferPoints(organizationId: string, fromUserId: string,
         
         await createNotification(toUserId, notificationMessage, null, organizationId, 'system', { eventType: 'gamification' });
 
-        return { success: true, amount };
+        return { data: { success: true, amount }, error: null };
     } catch (error: any) {
         console.error("Error transferring points:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function getPublicActivityFeed(organizationId: string): Promise<{ feed?: ActivityFeedItem[], error?: string }> {
+export async function getPublicActivityFeed(organizationId: string): Promise<{ data: { feed: ActivityFeedItem[] } | null; error: string | null; }> {
     try {
         const q = query(
             collection(db, 'organizations', organizationId, 'activityFeed'),
@@ -304,9 +303,9 @@ export async function getPublicActivityFeed(organizationId: string): Promise<{ f
                 timestamp: (data.timestamp as Timestamp).toDate(),
             } as ActivityFeedItem;
         });
-        return { feed };
+        return { data: { feed }, error: null };
     } catch(e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 

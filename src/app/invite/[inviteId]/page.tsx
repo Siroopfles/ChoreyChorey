@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -12,7 +11,6 @@ import type { Invite } from '@/lib/types';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { runTransaction, doc, getDoc, arrayUnion } from 'firebase/firestore';
-import { createOrganizationInvite } from '@/app/actions/invite.actions';
 
 export default function InvitePage() {
     const { inviteId } = useParams();

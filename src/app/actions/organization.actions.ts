@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -8,21 +7,21 @@ import type { User, Organization } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
-export async function updateOrganization(organizationId: string, userId: string, data: Partial<Pick<Organization, 'name' | 'settings'>>) {
+export async function updateOrganization(organizationId: string, userId: string, data: Partial<Pick<Organization, 'name' | 'settings'>>): Promise<{ data: { success: boolean } | null; error: string | null }> {
     if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_ORGANIZATION)) {
-        return { error: "Alleen een Eigenaar of Beheerder kan deze organisatie bijwerken." };
+        return { data: null, error: "Alleen een Eigenaar of Beheerder kan deze organisatie bijwerken." };
     }
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         await updateDoc(orgRef, data);
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error updating organization:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function leaveOrganization(organizationId: string, userId: string) {
+export async function leaveOrganization(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
@@ -51,14 +50,14 @@ export async function leaveOrganization(organizationId: string, userId: string) 
 
         await batch.commit();
 
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error leaving organization:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function deleteOrganization(organizationId: string, userId: string) {
+export async function deleteOrganization(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
@@ -99,9 +98,9 @@ export async function deleteOrganization(organizationId: string, userId: string)
         
         await batch.commit();
 
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error deleting organization:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }

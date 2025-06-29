@@ -56,25 +56,28 @@ export function BitbucketLinker() {
 
         const search = async () => {
             setIsSearching(true);
-            const result = await searchBitbucketItems(currentOrganization.id, selectedRepo, debouncedSearchTerm);
-            if (Array.isArray(result.items)) {
-                setSearchResults(result.items);
+            const { data, error } = await searchBitbucketItems(currentOrganization.id, selectedRepo, debouncedSearchTerm);
+            if (data?.items) {
+                setSearchResults(data.items);
+            }
+            if (error) {
+                toast({ title: 'Fout bij zoeken', description: error, variant: 'destructive' });
             }
             setIsSearching(false);
         };
 
         search();
-    }, [debouncedSearchTerm, selectedRepo, isConfigured, currentOrganization]);
+    }, [debouncedSearchTerm, selectedRepo, isConfigured, currentOrganization, toast]);
 
     const handleLinkItemFromUrl = async () => {
         if (!inputValue.trim() || !currentOrganization) return;
         setIsLoading(true);
 
-        const result = await getBitbucketItemFromUrl(currentOrganization.id, inputValue);
-        if (result.error) {
-            toast({ title: 'Fout bij koppelen', description: result.error, variant: 'destructive' });
-        } else if (result.item) {
-            appendLink(result.item);
+        const { data, error } = await getBitbucketItemFromUrl(currentOrganization.id, inputValue);
+        if (error) {
+            toast({ title: 'Fout bij koppelen', description: error, variant: 'destructive' });
+        } else if (data?.item) {
+            appendLink(data.item);
         }
         setIsLoading(false);
         setInputValue('');

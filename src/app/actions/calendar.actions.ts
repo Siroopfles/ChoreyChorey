@@ -7,30 +7,35 @@ import { getMicrosoftAuthClient, scopes as microsoftScopes, redirectUri } from '
 
 // --- Google Calendar Actions ---
 
-export async function generateGoogleAuthUrl(userId: string) {
-    const oauth2Client = getGoogleAuthClient();
-    const url = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: googleScopes,
-        prompt: 'consent',
-        state: userId,
-    });
-    return { url };
+export async function generateGoogleAuthUrl(userId: string): Promise<{ data: { url: string } | null; error: string | null; }> {
+    try {
+        const oauth2Client = getGoogleAuthClient();
+        const url = oauth2Client.generateAuthUrl({
+            access_type: 'offline',
+            scope: googleScopes,
+            prompt: 'consent',
+            state: userId,
+        });
+        return { data: { url }, error: null };
+    } catch (e: any) {
+        return { data: null, error: e.message };
+    }
 }
 
-export async function disconnectGoogleCalendar(userId: string) {
+export async function disconnectGoogleCalendar(userId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
-        await updateUserProfile(userId, { googleRefreshToken: null });
-        return { success: true };
+        const { error } = await updateUserProfile(userId, { googleRefreshToken: null });
+        if (error) throw new Error(error);
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error disconnecting Google Calendar:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
 // --- Microsoft Calendar Actions ---
 
-export async function generateMicrosoftAuthUrl(userId: string) {
+export async function generateMicrosoftAuthUrl(userId: string): Promise<{ data: { url: string } | null; error: string | null; }> {
     const msalClient = getMicrosoftAuthClient();
     try {
         const authCodeUrlParameters = {
@@ -39,19 +44,20 @@ export async function generateMicrosoftAuthUrl(userId: string) {
             state: userId,
         };
         const url = await msalClient.getAuthCodeUrl(authCodeUrlParameters);
-        return { url };
+        return { data: { url }, error: null };
     } catch (error) {
         console.error("Error generating Microsoft auth URL:", error);
-        return { error: (error as Error).message };
+        return { data: null, error: (error as Error).message };
     }
 }
 
-export async function disconnectMicrosoftCalendar(userId: string) {
+export async function disconnectMicrosoftCalendar(userId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
-        await updateUserProfile(userId, { microsoftRefreshToken: null });
-        return { success: true };
+        const { error } = await updateUserProfile(userId, { microsoftRefreshToken: null });
+        if (error) throw new Error(error);
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error disconnecting Microsoft Calendar:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }

@@ -47,25 +47,28 @@ export function JiraLinker() {
 
         const search = async () => {
             setIsSearching(true);
-            const result = await searchJiraItems(currentOrganization.id, debouncedSearchTerm);
-            if (Array.isArray(result)) {
-                setSearchResults(result);
+            const { data, error } = await searchJiraItems(currentOrganization.id, debouncedSearchTerm);
+            if (data?.items) {
+                setSearchResults(data.items);
+            }
+            if(error) {
+                toast({ title: 'Fout bij zoeken', description: error, variant: 'destructive' });
             }
             setIsSearching(false);
         };
 
         search();
-    }, [debouncedSearchTerm, isJiraConfigured, currentOrganization]);
+    }, [debouncedSearchTerm, isJiraConfigured, currentOrganization, toast]);
 
     const handleLinkItemFromUrl = async () => {
         if (!inputValue.trim() || !currentOrganization) return;
         setIsLoading(true);
 
-        const result = await getJiraItemFromUrl(currentOrganization.id, inputValue);
-        if (result.error) {
-            toast({ title: 'Fout bij koppelen', description: result.error, variant: 'destructive' });
-        } else if (result.item) {
-            appendJiraLink(result.item);
+        const { data, error } = await getJiraItemFromUrl(currentOrganization.id, inputValue);
+        if (error) {
+            toast({ title: 'Fout bij koppelen', description: error, variant: 'destructive' });
+        } else if (data?.item) {
+            appendJiraLink(data.item);
         }
         setIsLoading(false);
         setInputValue('');

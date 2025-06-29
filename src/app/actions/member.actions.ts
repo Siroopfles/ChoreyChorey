@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -9,22 +8,22 @@ import { hasPermission } from '@/lib/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 
-export async function markOnboardingComplete(organizationId: string, userId: string) {
+export async function markOnboardingComplete(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         await updateDoc(orgRef, {
             [`members.${userId}.hasCompletedOnboarding`]: true
         });
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error marking onboarding as complete:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function updateUserRoleInOrganization(organizationId: string, targetUserId: string, newRole: RoleName, currentUserId: string) {
+export async function updateUserRoleInOrganization(organizationId: string, targetUserId: string, newRole: RoleName, currentUserId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
     if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ROLES)) {
-        return { error: "Je hebt geen permissie om rollen aan te passen." };
+        return { data: null, error: "Je hebt geen permissie om rollen aan te passen." };
     }
     
     try {
@@ -45,21 +44,21 @@ export async function updateUserRoleInOrganization(organizationId: string, targe
             [`members.${targetUserId}.role`]: newRole
         });
 
-        return { success: true };
+        return { data: { success: true }, error: null };
 
     } catch (error: any) {
         console.error("Error updating user role:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function reassignTasks(organizationId: string, fromUserId: string, toUserId: string, currentUserId: string) {
+export async function reassignTasks(organizationId: string, fromUserId: string, toUserId: string, currentUserId: string): Promise<{ data: { success: boolean, message: string } | null; error: string | null; }> {
     if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ROLES)) {
-        return { error: "Je hebt geen permissie om taken opnieuw toe te wijzen." };
+        return { data: null, error: "Je hebt geen permissie om taken opnieuw toe te wijzen." };
     }
     
     if (fromUserId === toUserId) {
-        return { error: "Je kunt geen taken naar dezelfde gebruiker toewijzen." };
+        return { data: null, error: "Je kunt geen taken naar dezelfde gebruiker toewijzen." };
     }
     
     try {
@@ -72,7 +71,7 @@ export async function reassignTasks(organizationId: string, fromUserId: string, 
         const tasksSnapshot = await getDocs(tasksQuery);
         
         if (tasksSnapshot.empty) {
-            return { success: true, message: "Geen taken gevonden om opnieuw toe te wijzen voor deze gebruiker." };
+            return { data: { success: true, message: "Geen taken gevonden om opnieuw toe te wijzen voor deze gebruiker." }, error: null };
         }
 
         const batch = writeBatch(db);
@@ -107,15 +106,15 @@ export async function reassignTasks(organizationId: string, fromUserId: string, 
 
         await batch.commit();
 
-        return { success: true, message: `${tasksSnapshot.size} taken zijn opnieuw toegewezen van ${fromUserName} naar ${toUserName}.` };
+        return { data: { success: true, message: `${tasksSnapshot.size} taken zijn opnieuw toegewezen van ${fromUserName} naar ${toUserName}.` }, error: null };
 
     } catch (error: any) {
         console.error("Error reassigning tasks:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function updateMemberProfile(organizationId: string, userId: string, data: Partial<Omit<OrganizationMember, 'id' | 'role' | 'points'>>) {
+export async function updateMemberProfile(organizationId: string, userId: string, data: Partial<Omit<OrganizationMember, 'id' | 'role' | 'points'>>): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const updates: { [key: string]: any } = {};
@@ -124,14 +123,14 @@ export async function updateMemberProfile(organizationId: string, userId: string
         }
 
         await updateDoc(orgRef, updates);
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error updating member profile:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function updateUserStatus(organizationId: string, userId: string, status: UserStatus) {
+export async function updateUserStatus(organizationId: string, userId: string, status: UserStatus): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
@@ -146,14 +145,14 @@ export async function updateUserStatus(organizationId: string, userId: string, s
                 [`members.${userId}.status`]: status
             });
         }
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error updating user status:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }
 
-export async function toggleMuteTask(organizationId: string, userId: string, taskId: string) {
+export async function toggleMuteTask(organizationId: string, userId: string, taskId: string): Promise<{ data: { success: boolean, newState: 'muted' | 'unmuted' } | null; error: string | null }> {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const orgDoc = await getDoc(orgRef);
@@ -169,9 +168,9 @@ export async function toggleMuteTask(organizationId: string, userId: string, tas
             [`members.${userId}.mutedTaskIds`]: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
         });
         
-        return { success: true, newState: isMuted ? 'unmuted' : 'muted' };
+        return { data: { success: true, newState: isMuted ? 'unmuted' : 'muted' }, error: null };
     } catch (error: any) {
         console.error("Error toggling task mute:", error);
-        return { error: error.message };
+        return { data: null, error: error.message };
     }
 }

@@ -46,14 +46,14 @@ export function TwoFactorSetupDialog({ isOpen, setIsOpen, user }: TwoFactorSetup
         if (isOpen && step === 'generate') {
             setIsLoading(true);
             const handleGenerate = async () => {
-                const result = await generateTwoFactorSecret(user.id, user.email);
-                if (result.error) {
-                    setError(result.error);
-                } else if (result.otpauth) {
-                    setOtpAuthUrl(result.otpauth);
-                    const secretFromUrl = new URL(result.otpauth).searchParams.get('secret');
+                const { data, error } = await generateTwoFactorSecret(user.id, user.email);
+                if (error) {
+                    setError(error);
+                } else if (data?.otpauth) {
+                    setOtpAuthUrl(data.otpauth);
+                    const secretFromUrl = new URL(data.otpauth).searchParams.get('secret');
                     setSecret(secretFromUrl || '');
-                    QRCode.toDataURL(result.otpauth)
+                    QRCode.toDataURL(data.otpauth)
                         .then(url => setQrCode(url))
                         .catch(err => setError(err.message));
                     setStep('verify');
@@ -69,11 +69,11 @@ export function TwoFactorSetupDialog({ isOpen, setIsOpen, user }: TwoFactorSetup
     const handleVerify = async () => {
         setIsLoading(true);
         setError('');
-        const result = await verifyAndEnableTwoFactor(user.id, verificationCode);
-        if (result.error) {
-            setError(result.error);
-        } else if (result.success && result.recoveryCodes) {
-            setRecoveryCodes(result.recoveryCodes);
+        const { data, error: actionError } = await verifyAndEnableTwoFactor(user.id, verificationCode);
+        if (actionError) {
+            setError(actionError);
+        } else if (data?.success && data.recoveryCodes) {
+            setRecoveryCodes(data.recoveryCodes);
             setStep('codes');
             await refreshUser();
         }
