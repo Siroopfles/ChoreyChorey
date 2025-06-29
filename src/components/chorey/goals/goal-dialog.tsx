@@ -5,7 +5,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { PersonalGoal, PersonalGoalFormValues } from '@/lib/types';
 import { personalGoalFormSchema } from '@/lib/types';
-import { useTasks } from '@/contexts/task-context';
+import { useGoals } from '@/contexts/goal-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -25,7 +25,7 @@ interface GoalDialogProps {
 }
 
 export function GoalDialog({ open, onOpenChange, goal }: GoalDialogProps) {
-  const { addPersonalGoal, updatePersonalGoal } = useTasks();
+  const { addPersonalGoal, updatePersonalGoal } = useGoals();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PersonalGoalFormValues>({

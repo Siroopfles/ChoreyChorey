@@ -28,6 +28,7 @@ import AnnouncementBanner from '@/components/chorey/announcement-banner';
 import { PERMISSIONS } from '@/lib/types';
 import { TourProvider } from '@/contexts/tour-context';
 import { IdeaProvider } from '@/contexts/idea-context';
+import { GoalProvider } from '@/contexts/goal-context';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useAuth();
@@ -311,11 +312,13 @@ export default function DashboardLayout({
   return (
     <TaskProvider>
       <IdeaProvider>
-        <AuthGuard>
-          <TourProvider>
-              {children}
-          </TourProvider>
-        </AuthGuard>
+        <GoalProvider>
+          <AuthGuard>
+            <TourProvider>
+                {children}
+            </TourProvider>
+          </AuthGuard>
+        </GoalProvider>
       </IdeaProvider>
     </TaskProvider>
   );

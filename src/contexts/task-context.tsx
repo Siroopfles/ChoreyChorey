@@ -16,15 +16,13 @@ import {
   arrayUnion,
   arrayRemove,
 } from 'firebase/firestore';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, TeamChallenge, TeamChallengeFormValues, Subtask, Automation, AutomationFormValues } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, Subtask, Automation, AutomationFormValues } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user.actions';
 import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
-import { addPersonalGoal as addPersonalGoalAction, updatePersonalGoal as updatePersonalGoalAction, deletePersonalGoal as deletePersonalGoalAction, toggleMilestoneCompletion as toggleMilestoneCompletionAction } from '@/app/actions/goal.actions';
-import { addTeamChallenge as addTeamChallengeAction, updateTeamChallenge as updateTeamChallengeAction, deleteTeamChallenge as deleteTeamChallengeAction, completeTeamChallenge as completeTeamChallengeAction } from '@/app/actions/goal.actions';
 import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
 import * as TaskActions from '@/app/actions/task.actions';
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/gamification.actions';
@@ -74,16 +72,6 @@ type TaskContextType = {
   setIsAddTaskDialogOpen: (open: boolean) => void;
   viewedTask: Task | null;
   setViewedTask: (task: Task | null) => void;
-  personalGoals: PersonalGoal[];
-  addPersonalGoal: (goalData: PersonalGoalFormValues) => Promise<boolean>;
-  updatePersonalGoal: (goalId: string, goalData: PersonalGoalFormValues) => Promise<boolean>;
-  deletePersonalGoal: (goalId: string) => Promise<void>;
-  toggleMilestoneCompletion: (goalId: string, milestoneId: string) => Promise<void>;
-  teamChallenges: TeamChallenge[];
-  addTeamChallenge: (challengeData: TeamChallengeFormValues) => Promise<boolean>;
-  updateTeamChallenge: (challengeId: string, challengeData: TeamChallengeFormValues) => Promise<boolean>;
-  deleteTeamChallenge: (challengeId: string) => Promise<void>;
-  completeTeamChallenge: (challengeId: string) => Promise<void>;
   toggleMuteTask: (taskId: string) => void;
   automations: Automation[];
   manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
@@ -96,8 +84,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [personalGoals, setPersonalGoals] = useState<PersonalGoal[]>([]);
-  const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,7 +110,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     if (!currentOrganization || !user) {
-      setTasks([]); setTemplates([]); setPersonalGoals([]); setTeamChallenges([]); setNotifications([]); setAutomations([]); setLoading(false);
+      setTasks([]); setTemplates([]); setNotifications([]); setAutomations([]); setLoading(false);
       return;
     }
     setLoading(true);
@@ -163,15 +149,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }, (e) => handleError(e, 'laden van taken'));
 
     const commonQuery = (collectionName: string) => query(collection(db, collectionName), where("organizationId", "==", currentOrganization.id));
-    const userSpecificQuery = (collectionName: string) => query(commonQuery(collectionName), where("userId", "==", user.id));
 
     const unsubTemplates = onSnapshot(commonQuery('taskTemplates'), (s) => setTemplates(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as TaskTemplate))), (e) => handleError(e, 'laden van templates'));
-    const unsubGoals = onSnapshot(userSpecificQuery('personalGoals'), (s) => setPersonalGoals(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), targetDate: (d.data().targetDate as Timestamp)?.toDate(), milestones: d.data().milestones || [] } as PersonalGoal)).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van doelen'));
-    const unsubChallenges = onSnapshot(commonQuery('teamChallenges'), (s) => setTeamChallenges(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), completedAt: (d.data().completedAt as Timestamp)?.toDate()} as TeamChallenge)).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van uitdagingen'));
     const unsubNotifications = onSnapshot(query(collection(db, "notifications"), where("userId", "==", user.id), where("organizationId", "==", currentOrganization.id)), (s) => setNotifications(s.docs.map(d => ({ id: d.id, ...d.data(), createdAt: (d.data().createdAt as Timestamp).toDate(), snoozedUntil: (d.data().snoozedUntil as Timestamp)?.toDate() } as Notification)).filter(n => !n.archived).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van notificaties'));
     const unsubAutomations = onSnapshot(commonQuery('automations'), (s) => setAutomations(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate() } as Automation))), (e) => handleError(e, 'laden van automatiseringen'));
 
-    return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubGoals(); unsubChallenges(); unsubAutomations(); };
+    return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubAutomations(); };
   }, [user, currentOrganization, currentUserRole, currentUserPermissions, projects]);
 
   const markAllNotificationsAsRead = async () => {
@@ -366,77 +349,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (result.error) { handleError({ message: result.error }, 'template verwijderen'); }
   };
   
-  const addPersonalGoal = async (goalData: PersonalGoalFormValues): Promise<boolean> => {
-    if (!user || !currentOrganization) return false;
-    const result = await addPersonalGoalAction(currentOrganization.id, user.id, goalData);
-    if (result.error) { handleError({ message: result.error }, 'opslaan doel'); return false; }
-    toast({ title: 'Doel Aangemaakt!', description: `Je nieuwe doel "${goalData.title}" is opgeslagen.` });
-    return true;
-  };
-
-  const updatePersonalGoal = async (goalId: string, goalData: PersonalGoalFormValues): Promise<boolean> => {
-    const existingGoal = personalGoals.find(g => g.id === goalId);
-    if (!existingGoal) return false;
-    const result = await updatePersonalGoalAction(goalId, goalData, existingGoal.milestones);
-    if (result.error) { handleError({ message: result.error }, 'bijwerken doel'); return false; }
-    toast({ title: 'Doel Bijgewerkt!' });
-    return true;
-  };
-
-  const deletePersonalGoal = async (goalId: string) => {
-    const result = await deletePersonalGoalAction(goalId);
-    if (result.error) { handleError({ message: result.error }, 'verwijderen doel'); } 
-    else { toast({ title: 'Doel Verwijderd' }); }
-  };
-  
-  const toggleMilestoneCompletion = async (goalId: string, milestoneId: string) => {
-    const goal = personalGoals.find(g => g.id === goalId);
-    if (!goal) return;
-    const result = await toggleMilestoneCompletionAction(goalId, milestoneId, goal.milestones);
-    if (result.error) { handleError({ message: result.error }, 'bijwerken mijlpaal'); } 
-    else if (result.allCompleted) { toast({ title: 'Doel Behaald!', description: `Gefeliciteerd met het behalen van je doel: "${goal.title}"` }); }
-  };
-
-  const addTeamChallenge = async (challengeData: TeamChallengeFormValues): Promise<boolean> => {
-    if (!currentOrganization) return false;
-    const result = await addTeamChallengeAction(currentOrganization.id, challengeData);
-    if (result.error) { handleError({ message: result.error }, 'opslaan uitdaging'); return false; }
-    toast({ title: 'Uitdaging Aangemaakt!', description: `De uitdaging "${challengeData.title}" is gestart.` });
-    return true;
-  };
-
-  const updateTeamChallenge = async (challengeId: string, challengeData: TeamChallengeFormValues): Promise<boolean> => {
-    const result = await updateTeamChallengeAction(challengeId, challengeData);
-    if (result.error) { handleError({ message: result.error }, 'bijwerken uitdaging'); return false; }
-    toast({ title: 'Uitdaging Bijgewerkt!' });
-    return true;
-  };
-
-  const deleteTeamChallenge = async (challengeId: string) => {
-    const result = await deleteTeamChallengeAction(challengeId);
-    if (result.error) { handleError({ message: result.error }, 'verwijderen uitdaging'); }
-    else { toast({ title: 'Uitdaging Verwijderd' }); }
-  };
-
-  const completeTeamChallenge = async (challengeId: string) => {
-    const { teams } = useAuth();
-    if (!currentOrganization) return;
-    const challenge = teamChallenges.find(c => c.id === challengeId);
-    const team = teams.find(t => t.id === challenge?.teamId);
-    if (!challenge || !team) { handleError({ message: 'Uitdaging of team niet gevonden.'}, 'voltooien uitdaging'); return; }
-    
-    const result = await completeTeamChallengeAction(challenge.id, team.memberIds, challenge.reward);
-    if (result.error) { handleError({ message: result.error }, 'voltooien uitdaging'); }
-    else { toast({ title: 'Uitdaging Voltooid!', description: `Team ${team.name} heeft ${challenge.reward} punten verdiend!` }); }
-  };
-
-  const toggleMuteTask = async (taskId: string) => {
-    if (!user || !currentOrganization) return;
-    const result = await toggleMuteTaskAction(currentOrganization.id, user.id, taskId);
-    if (result.error) { handleError({ message: result.error }, 'dempen taak'); } 
-    else { toast({ title: `Taak ${result.newState === 'muted' ? 'gedempt' : 'niet langer gedempt'}` }); await refreshUser(); }
-  };
-
   const manageAutomation = async (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => {
     if (!user || !currentOrganization) {
       handleError({ message: 'Niet geautoriseerd' }, 'beheren automatisering');
@@ -454,6 +366,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return { success: true };
   };
 
+  const toggleMuteTask = async (taskId: string) => {
+    if (!user || !currentOrganization) return;
+    const result = await toggleMuteTaskAction(currentOrganization.id, user.id, taskId);
+    if (result.error) { handleError({ message: result.error }, 'dempen taak'); }
+    else { toast({ title: `Taak ${result.newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}` }); await refreshUser(); }
+  };
+
   return (
     <TaskContext.Provider value={{ 
       tasks, templates, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
@@ -463,10 +382,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       cloneTask, splitTask, deleteTaskPermanently, filters, setFilters, clearFilters,
       activeFilterCount, notifications, markAllNotificationsAsRead, markSingleNotificationAsRead,
       archiveNotification, snoozeNotification, navigateToUserProfile, isAddTaskDialogOpen,
-      setIsAddTaskDialogOpen, viewedTask, setViewedTask, personalGoals, addPersonalGoal, updatePersonalGoal,
-      deletePersonalGoal, toggleMilestoneCompletion,
-      teamChallenges, addTeamChallenge, updateTeamChallenge,
-      deleteTeamChallenge, completeTeamChallenge, toggleMuteTask, automations, manageAutomation,
+      setIsAddTaskDialogOpen, viewedTask, setViewedTask, toggleMuteTask, automations, manageAutomation,
     }}>
       {children}
     </TaskContext.Provider>

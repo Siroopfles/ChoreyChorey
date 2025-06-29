@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { PersonalGoal } from '@/lib/types';
-import { useTasks } from '@/contexts/task-context';
+import { useGoals } from '@/contexts/goal-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { GoalDialog } from './goal-dialog';
 
 export function GoalCard({ goal }: { goal: PersonalGoal }) {
-  const { toggleMilestoneCompletion, deletePersonalGoal } = useTasks();
+  const { toggleMilestoneCompletion, deletePersonalGoal } = useGoals();
   const [isEditing, setIsEditing] = useState(false);
 
   const progress = goal.milestones.length > 0

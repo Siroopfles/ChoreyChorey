@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import type { TeamChallenge } from '@/lib/types';
+import { useGoals } from '@/contexts/goal-context';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,8 @@ import { PERMISSIONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 
 export function ChallengeCard({ challenge }: { challenge: TeamChallenge }) {
-  const { deleteTeamChallenge, tasks, completeTeamChallenge } = useTasks();
+  const { deleteTeamChallenge, completeTeamChallenge } = useGoals();
+  const { tasks } = useTasks();
   const { teams, users: allUsers, currentUserPermissions } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   

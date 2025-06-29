@@ -1,7 +1,7 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Target, Plus, Trophy, Users } from 'lucide-react';
@@ -12,10 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChallengeDialog } from '@/components/chorey/goals/challenge-dialog';
 import { ChallengeCard } from '@/components/chorey/goals/challenge-card';
 import { PERMISSIONS } from '@/lib/types';
+import { useGoals } from '@/contexts/goal-context';
 
 
 export default function GoalsPage() {
-  const { personalGoals, teamChallenges, loading } = useTasks();
+  const { personalGoals, teamChallenges, loading } = useGoals();
   const { currentUserPermissions } = useAuth();
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
@@ -28,7 +29,7 @@ export default function GoalsPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Trophy /> Doelen & Uitdagingen
+              <Trophy /> Doelen &amp; Uitdagingen
             </h1>
             <p className="text-muted-foreground">
               Volg je persoonlijke groei en ga de strijd aan met teamuitdagingen.

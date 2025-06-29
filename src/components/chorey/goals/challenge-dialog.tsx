@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TeamChallenge, TeamChallengeFormValues } from '@/lib/types';
 import { teamChallengeFormSchema } from '@/lib/types';
-import { useTasks } from '@/contexts/task-context';
+import { useGoals } from '@/contexts/goal-context';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
@@ -23,7 +23,7 @@ interface ChallengeDialogProps {
 }
 
 export function ChallengeDialog({ open, onOpenChange, challenge }: ChallengeDialogProps) {
-  const { addTeamChallenge, updateTeamChallenge } = useTasks();
+  const { addTeamChallenge, updateTeamChallenge } = useGoals();
   const { teams } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
