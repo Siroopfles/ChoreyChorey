@@ -8,6 +8,7 @@ import { GenerateAvatarInputSchema, GenerateAvatarOutputSchema } from '@/ai/sche
 import type { GenerateAvatarInput, GenerateAvatarOutput } from '@/ai/schemas';
 import { storage } from '@/lib/firebase';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { compressImage } from '@/lib/utils';
 
 export async function generateAvatar(input: GenerateAvatarInput): Promise<GenerateAvatarOutput> {
   return generateAvatarFlow(input);
@@ -28,13 +29,16 @@ const generateAvatarFlow = ai.defineFlow(
       },
     });
 
-    const avatarDataUri = media.url;
-    if (!avatarDataUri) {
+    const rawImageDataUri = media.url;
+    if (!rawImageDataUri) {
       throw new Error('Image generation failed to return a data URI.');
     }
+    
+    // Compress the image before uploading
+    const compressedImageDataUri = await compressImage(rawImageDataUri, { maxWidth: 256, quality: 0.8 });
 
-    const storageRef = ref(storage, `avatars/${userId}-${Date.now()}.png`);
-    const uploadResult = await uploadString(storageRef, avatarDataUri, 'data_url');
+    const storageRef = ref(storage, `avatars/${userId}-${Date.now()}.jpg`);
+    const uploadResult = await uploadString(storageRef, compressedImageDataUri, 'data_url');
     const avatarUrl = await getDownloadURL(uploadResult.ref);
 
     return { avatarUrl };

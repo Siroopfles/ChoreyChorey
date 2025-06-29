@@ -11,6 +11,7 @@ import { getDoc, doc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import type { Organization } from '@/lib/types';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { compressImage } from '@/lib/utils';
 
 export async function generateTaskImage(input: Omit<GenerateTaskImageInput, 'primaryColor'> & { organizationId: string }): Promise<GenerateTaskImageOutput> {
   const orgDoc = await getDoc(doc(db, 'organizations', input.organizationId));
@@ -44,14 +45,17 @@ ${description ? `Task Description: ${description}` : ''}
       },
     });
 
-    const imageDataUri = media.url;
-    if (!imageDataUri) {
+    const rawImageDataUri = media.url;
+    if (!rawImageDataUri) {
       throw new Error('Image generation failed to return a data URI.');
     }
 
+    // Compress the image before uploading
+    const compressedImageDataUri = await compressImage(rawImageDataUri, { maxWidth: 1024, quality: 0.85 });
+
     const imageId = crypto.randomUUID();
-    const storageRef = ref(storage, `task-images/${imageId}.png`);
-    const uploadResult = await uploadString(storageRef, imageDataUri, 'data_url');
+    const storageRef = ref(storage, `task-images/${imageId}.jpg`);
+    const uploadResult = await uploadString(storageRef, compressedImageDataUri, 'data_url');
     const imageUrl = await getDownloadURL(uploadResult.ref);
 
     return { imageUrl };
