@@ -31,6 +31,7 @@ import { PERMISSIONS } from '@/lib/types';
 import { TourProvider } from '@/contexts/tour-context';
 import { IdeaProvider } from '@/contexts/idea-context';
 import { GoalProvider } from '@/contexts/goal-context';
+import { ChecklistProvider } from '@/contexts/checklist-context';
 import { ShortcutHelpDialog } from '@/components/chorey/shortcut-help-dialog';
 import { OrganizationProvider, useOrganization } from '@/contexts/organization-context';
 import { NotificationsProvider } from '@/contexts/notification-context';
@@ -72,8 +73,6 @@ const UserCosmeticStyle = () => {
   if (cosmetic.font && fontMap[cosmetic.font as keyof typeof fontMap]) {
     const fontValue = fontMap[cosmetic.font as keyof typeof fontMap];
     styles.push(`--font-sans: ${fontValue};`);
-    styles.push(`--font-body: ${fontValue};`);
-    styles.push(`--font-headline: ${fontValue};`);
   }
 
   if (styles.length === 0) {
@@ -135,6 +134,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS) ? [{ href: '/dashboard/automations', icon: Zap, label: 'Automatiseringen' }] : []),
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_TEMPLATES) ? [{ href: '/dashboard/templates', icon: SquareStack, label: 'Templates' }] : []),
+        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_CHECKLISTS) ? [{ href: '/dashboard/checklists', icon: ClipboardList, label: 'Checklists' }] : []),
     ];
     
     const communityNavItems = isGuest ? [] : [
@@ -404,11 +404,13 @@ export default function DashboardLayout({
           <NotificationsProvider>
               <IdeaProvider>
                 <GoalProvider>
-                  <AuthGuard>
-                    <TourProvider>
-                      {children}
-                    </TourProvider>
-                  </AuthGuard>
+                  <ChecklistProvider>
+                    <AuthGuard>
+                      <TourProvider>
+                        {children}
+                      </TourProvider>
+                    </AuthGuard>
+                  </ChecklistProvider>
                 </GoalProvider>
               </IdeaProvider>
           </NotificationsProvider>

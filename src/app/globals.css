@@ -51,8 +51,6 @@
     
     /* Font variables */
     --font-sans: var(--font-inter);
-    --font-body: var(--font-inter);
-    --font-headline: var(--font-source-sans);
     --font-code: var(--font-roboto-mono);
 
     /* Sidebar is always dark */
@@ -127,10 +125,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-headline;
+    @apply bg-background text-foreground font-sans;
   }
   kbd {
     @apply pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100;

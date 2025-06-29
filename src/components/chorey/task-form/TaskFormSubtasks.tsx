@@ -8,15 +8,19 @@ import { Label as UiLabel } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Loader2, Bot, PlusCircle, Trash2, CornerUpRight } from 'lucide-react';
+import { Loader2, Bot, PlusCircle, Trash2, CornerUpRight, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
 import { useState } from 'react';
 import type { Task, Subtask } from '@/lib/types';
+import { useChecklists } from '@/contexts/checklist-context';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 export function TaskFormSubtasks({ task }: { task?: Task }) {
   const form = useFormContext();
   const { promoteSubtaskToTask } = useTasks();
+  const { checklists } = useChecklists();
   const { toast } = useToast();
   const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
 
@@ -42,6 +46,12 @@ export function TaskFormSubtasks({ task }: { task?: Task }) {
     }
     setIsSuggestingSubtasks(false);
   };
+  
+  const onInsertChecklist = (subtasks: string[]) => {
+    subtasks.forEach(subtaskText => append({ text: subtaskText, isPrivate: false }));
+    toast({ title: 'Checklist ingevoegd!' });
+  };
+
 
   return (
     <div>
@@ -111,6 +121,29 @@ export function TaskFormSubtasks({ task }: { task?: Task }) {
                 {isSuggestingSubtasks ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
                 Suggesteer (AI)
             </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline" size="sm" disabled={checklists.length === 0}>
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  Voeg checklist in
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0">
+                <Command>
+                  <CommandInput placeholder="Zoek checklist..." />
+                  <CommandList>
+                    <CommandEmpty>Geen checklists gevonden.</CommandEmpty>
+                    <CommandGroup>
+                      {checklists.map(checklist => (
+                        <CommandItem key={checklist.id} onSelect={() => onInsertChecklist(checklist.subtasks)}>
+                          {checklist.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </div>

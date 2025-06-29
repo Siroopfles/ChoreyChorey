@@ -259,6 +259,7 @@ export const PERMISSIONS = {
   MANAGE_API_KEYS: 'MANAGE_API_KEYS',
   MANAGE_INTEGRATIONS: 'MANAGE_INTEGRATIONS',
   MANAGE_TEMPLATES: 'MANAGE_TEMPLATES',
+  MANAGE_CHECKLISTS: 'MANAGE_CHECKLISTS',
   MANAGE_SECURITY_SETTINGS: 'MANAGE_SECURITY_SETTINGS',
   MANAGE_IP_WHITELIST: 'MANAGE_IP_WHITELIST',
   MANAGE_ANNOUNCEMENTS: 'MANAGE_ANNOUNCEMENTS',
@@ -293,6 +294,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.MANAGE_API_KEYS]: { name: 'API Sleutels Beheren', description: 'Kan API-sleutels voor de organisatie aanmaken, inzien en intrekken.' },
   [PERMISSIONS.MANAGE_INTEGRATIONS]: { name: 'Integraties Beheren', description: 'Kan integraties met externe services zoals Slack en GitHub configureren.' },
   [PERMISSIONS.MANAGE_TEMPLATES]: { name: 'Templates Beheren', description: 'Kan taaktemplates voor de organisatie aanmaken, bewerken en verwijderen.' },
+  [PERMISSIONS.MANAGE_CHECKLISTS]: { name: 'Checklisten Beheren', description: 'Kan checklist-templates aanmaken, bewerken en verwijderen.' },
   [PERMISSIONS.MANAGE_SECURITY_SETTINGS]: { name: 'Beveiligingsinstellingen Beheren', description: 'Kan sessiebeleid en andere beveiligingsopties beheren.' },
   [PERMISSIONS.MANAGE_IP_WHITELIST]: { name: 'IP Whitelist Beheren', description: 'Kan de lijst met toegestane IP-adressen voor de organisatie beheren.' },
   [PERMISSIONS.MANAGE_ANNOUNCEMENTS]: { name: 'Aankondigingen Beheren', description: 'Kan organisatie-brede aankondigingen plaatsen en verwijderen.' },
@@ -332,6 +334,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.MANAGE_API_KEYS,
       PERMISSIONS.MANAGE_INTEGRATIONS,
       PERMISSIONS.MANAGE_TEMPLATES,
+      PERMISSIONS.MANAGE_CHECKLISTS,
       PERMISSIONS.MANAGE_SECURITY_SETTINGS,
       PERMISSIONS.MANAGE_IP_WHITELIST,
       PERMISSIONS.MANAGE_ANNOUNCEMENTS,
@@ -786,6 +789,25 @@ export type TaskTemplate = TaskTemplateFormValues & {
   createdAt: Date;
 };
 
+export const checklistTemplateSchema = z.object({
+  id: z.string(),
+  name: z.string().min(2, 'Naam moet minimaal 2 karakters bevatten.'),
+  subtasks: z.array(z.string().min(1, 'Subtaak mag niet leeg zijn.')),
+  organizationId: z.string(),
+  creatorId: z.string(),
+  createdAt: z.date(),
+});
+export type ChecklistTemplate = z.infer<typeof checklistTemplateSchema>;
+
+export const checklistTemplateFormSchema = checklistTemplateSchema.omit({
+  id: true,
+  organizationId: true,
+  creatorId: true,
+  createdAt: true,
+});
+export type ChecklistTemplateFormValues = z.infer<typeof checklistTemplateFormSchema>;
+
+
 export type Milestone = {
   id: string;
   text: string;
@@ -988,4 +1010,3 @@ export type Phase = {
   description: string;
   features: Feature[];
 };
-
