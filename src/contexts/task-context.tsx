@@ -242,21 +242,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const cloneTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
     const { data, error } = await TaskActions.cloneTaskAction(taskId, user.id, currentOrganization.id);
-    if (error) { handleError(error, 'klonen taak'); } 
+    if (error) { handleError({ message: error }, 'klonen taak'); } 
     else { toast({ title: 'Taak Gekloond!', description: `Een kopie van "${data?.clonedTaskTitle}" is aangemaakt.` }); }
   };
 
   const splitTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
     const { data, error } = await TaskActions.splitTaskAction(taskId, user.id, currentOrganization.id);
-    if (error) { handleError(error, 'splitsen taak'); } 
+    if (error) { handleError({ message: error }, 'splitsen taak'); } 
     else { toast({ title: 'Taak gesplitst!', description: `Een nieuwe taak is aangemaakt.` }); }
   };
 
   const deleteTaskPermanently = async (taskId: string) => {
     if (!currentOrganization) return;
     const { data, error } = await TaskActions.deleteTaskPermanentlyAction(taskId, currentOrganization.id);
-    if (error) { handleError(error, 'verwijderen taak'); }
+    if (error) { handleError({ message: error }, 'verwijderen taak'); }
     else { 
         setTasks(prev => prev.filter(t => t.id !== taskId));
         toast({ title: 'Taak Permanent Verwijderd', variant: 'destructive' }); 
@@ -265,7 +265,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const rateTask = async (taskId: string, rating: number) => {
     if (!user || !currentOrganization) return;
-    const result = await rateTaskAction(taskId, rating, tasks.find(t => t.id === taskId)!, user.id, currentOrganization.id);
+    const taskToRate = tasks.find(t => t.id === taskId);
+    if (!taskToRate) return;
+    const result = await rateTaskAction(taskId, rating, taskToRate, user.id, currentOrganization.id);
     if (result.error) { handleError({ message: result.error }, 'beoordelen taak'); }
     else { toast({ title: 'Taak beoordeeld!', description: `Bonuspunten gegeven.` }); }
   };
@@ -296,9 +298,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     });
     
     // Call server in the background
-    const { error } = await TaskActions.reorderTasksAction(tasksToUpdate);
+    const { data, error } = await TaskActions.reorderTasksAction(tasksToUpdate);
     if (error) {
-      handleError(error, 'herordenen taken');
+      handleError({ message: error }, 'herordenen taken');
       // Revert on error
       setTasks(originalTasks);
     }
@@ -325,7 +327,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     // If it fails, revert the change and show a toast
     if (error) {
-      handleError(error, 'bijwerken subtaak');
+      handleError({ message: error }, 'bijwerken subtaak');
       setTasks(originalTasks); // Revert to the old state
     }
   };
@@ -350,7 +352,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     
     const optimisticUpdate = {
         activeTimerStartedAt: isStarting ? new Date() : null,
-        timeLogged: newTimeLogged
+        timeLogged: isStarting ? (taskToUpdate.timeLogged || 0) : newTimeLogged,
     };
     
     // Update UI immediately
@@ -360,7 +362,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const { error } = await TaskActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);
     
     if (error) {
-        handleError(error, 'tijdregistratie');
+        handleError({ message: error }, 'tijdregistratie');
         setTasks(originalTasks); // Revert on error
     }
   };
@@ -368,7 +370,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const resetSubtasks = async (taskId: string) => {
     if (!user || !currentOrganization) return;
     const { data, error } = await TaskActions.resetSubtasksAction(taskId, user.id, currentOrganization.id);
-    if (error) { handleError(error, 'resetten subtaken'); }
+    if (error) { handleError({ message: error }, 'resetten subtaken'); }
     else if (data?.success) { 
         toast({ title: 'Subtaken gereset!', description: `Alle subtaken voor "${data.taskTitle}" zijn gereset.` }); 
     }
@@ -377,7 +379,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const setChoreOfTheWeek = async (taskId: string) => {
     if (!currentOrganization) return;
     const { data, error } = await TaskActions.setChoreOfTheWeekAction(taskId, currentOrganization.id);
-    if (error) { handleError(error, 'instellen klus v/d week'); }
+    if (error) { handleError({ message: error }, 'instellen klus v/d week'); }
     else { toast({ title: 'Klus van de Week ingesteld!' }); }
   };
 
@@ -385,7 +387,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const { data, error } = await TaskActions.promoteSubtaskToTask(parentTaskId, subtask, user.id);
     if (error) {
-      handleError(error, 'promoveren subtaak');
+      handleError({ message: error }, 'promoveren subtaak');
     } else if (data?.success) {
       toast({
         title: 'Subtaak Gepromoveerd!',
@@ -468,9 +470,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const toggleMuteTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const { data, error } = await toggleMuteTaskAction(currentOrganization.id, user.id, taskId);
-    if (error) { handleError({ message: result.error }, 'dempen taak'); }
-    else { toast({ title: `Taak ${data?.newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}` }); }
+    const result = await toggleMuteTaskAction(currentOrganization.id, user.id, taskId);
+    if (result.error) { handleError({ message: result.error }, 'dempen taak'); }
+    else { toast({ title: `Taak ${result.data?.newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}` }); }
   };
 
   const toggleTaskPin = async (taskId: string, isPinned: boolean) => {
