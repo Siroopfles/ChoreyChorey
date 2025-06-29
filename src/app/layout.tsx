@@ -37,7 +37,7 @@ export default function RootLayout({
        <head>
         <meta name="theme-color" content="#3b82f6" />
       </head>
-      <body className={`${inter.variable} ${sourceSans.variable} ${robotoMono.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${sourceSans.variable} ${robotoMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
