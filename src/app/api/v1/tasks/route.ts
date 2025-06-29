@@ -4,25 +4,8 @@ import { collection, query, where, getDocs, Timestamp, addDoc } from 'firebase/f
 import type { Status, Task } from '@/lib/types';
 import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+import { serializeTask } from '@/lib/api-serializers';
 
-
-// Helper to serialize Firestore Timestamps to ISO strings for JSON response
-const serializeTask = (data: any) => {
-    const serializedData: any = {};
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            serializedData[key] = (data[key] as Timestamp).toDate().toISOString();
-        } else if (data[key] instanceof Date) {
-            serializedData[key] = data[key].toISOString();
-        } else if(data[key] !== null && typeof data[key] === 'object' && !Array.isArray(data[key])) {
-            // Avoid serializing complex objects like history for now
-        }
-        else {
-            serializedData[key] = data[key];
-        }
-    }
-    return serializedData;
-};
 
 const getTasksHandler = async (
     request: NextRequest,

@@ -1,27 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { Task } from '@/lib/types';
 import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+import { serializeTask } from '@/lib/api-serializers';
 
-// Helper to serialize Firestore Timestamps to ISO strings for JSON response
-const serializeTask = (data: any) => {
-    const serializedData: any = {};
-    for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            serializedData[key] = (data[key] as Timestamp).toDate().toISOString();
-        } else if (data[key] instanceof Date) {
-            serializedData[key] = data[key].toISOString();
-        } else if(data[key] !== null && typeof data[key] === 'object' && !Array.isArray(data[key])) {
-            // Avoid serializing complex objects like history for now
-        }
-        else {
-            serializedData[key] = data[key];
-        }
-    }
-    return serializedData;
-};
 
 const getTaskHandler = async (
     request: NextRequest,

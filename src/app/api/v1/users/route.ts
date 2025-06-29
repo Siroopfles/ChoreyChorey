@@ -3,20 +3,8 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+import { serializeUser } from '@/lib/api-serializers';
 
-
-const serializeUser = (data: any) => {
-    // Return a public-safe user object
-    return {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        avatar: data.avatar,
-        points: data.points || 0,
-        skills: data.skills || [],
-        status: data.status || { type: 'Offline', until: null },
-    };
-};
 
 const getUsersHandler = async (
     request: NextRequest,

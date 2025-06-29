@@ -4,19 +4,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+import { serializeUser } from '@/lib/api-serializers';
 
-const serializeUser = (data: any) => {
-    // Return a public-safe user object
-    return {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        avatar: data.avatar,
-        points: data.points || 0,
-        skills: data.skills || [],
-        status: data.status || { type: 'Offline', until: null },
-    };
-};
 
 const getUserHandler = async (
     request: NextRequest,
