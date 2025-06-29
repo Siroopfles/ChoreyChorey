@@ -7,6 +7,12 @@
 import { ai } from '@/ai/genkit';
 import { PredictProjectOutcomeInputSchema, PredictProjectOutcomeOutputSchema } from '@/ai/schemas';
 import type { PredictProjectOutcomeInput, PredictProjectOutcomeOutput } from '@/ai/schemas';
+import { searchTasks } from '@/ai/tools/task-tools';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Project, Task } from '@/lib/types';
+import { z } from 'genkit';
+
 
 export async function predictProjectOutcome(input: PredictProjectOutcomeInput): Promise<PredictProjectOutcomeOutput> {
   return predictProjectOutcomeFlow(input);
@@ -14,20 +20,24 @@ export async function predictProjectOutcome(input: PredictProjectOutcomeInput): 
 
 const prompt = ai.definePrompt({
     name: 'predictProjectOutcomePrompt',
-    input: { schema: PredictProjectOutcomeInputSchema },
+    input: { schema: z.object({ 
+        project: z.any(),
+        projectTasks: z.any(),
+        historicalTasks: z.any(),
+    }) },
     output: { schema: PredictProjectOutcomeOutputSchema },
     model: 'gemini-pro',
     prompt: `Je bent een expert projectanalist. Jouw taak is om de voortgang van een project te analyseren, te vergelijken met historische data en een voorspelling te doen over de uitkomst.
 
 **Projectinformatie:**
-- Naam: {{{projectName}}}
-{{#if projectDeadline}}
-- Deadline: {{{projectDeadline}}}
+- Naam: {{{project.name}}}
+{{#if project.deadline}}
+- Deadline: {{{project.deadline}}}
 {{else}}
 - Deadline: Geen ingesteld
 {{/if}}
-{{#if projectBudget}}
-- Budget: {{projectBudget}} ({{projectBudgetType}})
+{{#if project.budget}}
+- Budget: {{project.budget}} ({{project.budgetType}})
 {{/if}}
 
 **Huidige Taken van dit Project:**
@@ -61,8 +71,45 @@ const predictProjectOutcomeFlow = ai.defineFlow(
     inputSchema: PredictProjectOutcomeInputSchema,
     outputSchema: PredictProjectOutcomeOutputSchema,
   },
-  async (input) => {
-    const { output } = await prompt(input);
+  async ({ projectId, organizationId }) => {
+    // 1. Fetch the project details
+    const projectDoc = await getDoc(doc(db, 'projects', projectId));
+    if (!projectDoc.exists() || projectDoc.data().organizationId !== organizationId) {
+        throw new Error('Project niet gevonden of behoort niet tot deze organisatie.');
+    }
+    const project = { id: projectDoc.id, ...projectDoc.data() } as Project;
+
+    // 2. Fetch tasks for the specific project
+    const projectTasks = await searchTasks({
+        organizationId: organizationId,
+        filters: { projectId: projectId },
+    });
+    
+    // 3. Fetch recent completed tasks from the organization for historical context
+    const historicalTasksQuery = query(
+        collection(db, 'tasks'),
+        where('organizationId', '==', organizationId),
+        where('status', '==', 'Voltooid'),
+        orderBy('completedAt', 'desc'),
+        limit(100)
+    );
+    const historicalSnapshot = await getDocs(historicalTasksQuery);
+    const historicalTasks = historicalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+
+    // 4. Call the LLM with the gathered data
+    const { output } = await prompt({
+        project: {
+            name: project.name,
+            deadline: project.deadline,
+            budget: project.budget,
+            budgetType: project.budgetType,
+        },
+        projectTasks,
+        historicalTasks,
+    });
+    
     return output!;
   }
 );
+
+    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -30,7 +31,10 @@ export default function PredictiveAnalysisPage() {
         setError('');
 
         try {
-            const outcome = await predictProjectOutcome(selectedProject.id, currentOrganization.id);
+            const outcome = await predictProjectOutcome({
+              projectId: selectedProject.id,
+              organizationId: currentOrganization.id
+            });
             setResult(outcome);
         } catch (e: any) {
             setError(e.message);
@@ -182,3 +186,5 @@ export default function PredictiveAnalysisPage() {
         </div>
     );
 }
+
+    

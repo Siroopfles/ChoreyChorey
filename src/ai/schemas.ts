@@ -337,12 +337,8 @@ export type GenerateProjectReportOutput = z.infer<typeof GenerateProjectReportOu
 
 // From predict-project-outcome-flow.ts
 export const PredictProjectOutcomeInputSchema = z.object({
-  projectName: z.string(),
-  projectDeadline: z.string().optional(),
-  projectBudget: z.number().optional(),
-  projectBudgetType: z.enum(['amount', 'hours']).optional(),
-  projectTasks: z.any().describe("A JSON array of all tasks associated with the project."),
-  historicalTasks: z.any().describe("A JSON array of recently completed tasks from the entire organization for context and velocity calculation."),
+  projectId: z.string(),
+  organizationId: z.string(),
 });
 export type PredictProjectOutcomeInput = z.infer<typeof PredictProjectOutcomeInputSchema>;
 
@@ -355,3 +351,5 @@ export const PredictProjectOutcomeOutputSchema = z.object({
   recommendations: z.array(z.string()).describe("A list of actionable recommendations to mitigate risks or improve project outcomes."),
 });
 export type PredictProjectOutcomeOutput = z.infer<typeof PredictProjectOutcomeOutputSchema>;
+
+    
