@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -7,9 +8,13 @@ import LimitSettings from '@/components/chorey/settings/limit-settings';
 import { PERMISSIONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import SessionPolicySettings from '@/components/chorey/settings/session-policy-settings';
+import IpWhitelistSettings from '@/components/chorey/settings/ip-whitelist-settings';
+import { useOrganization } from '@/contexts/organization-context';
 
 export default function LimitsOrgSettingsPage() {
-    const { user, loading, currentOrganization, currentUserPermissions } = useAuth();
+    const { user } = useAuth();
+    const { loading, currentOrganization, currentUserPermissions } = useOrganization();
     
     if (loading || !user) {
         return (
@@ -19,13 +24,14 @@ export default function LimitsOrgSettingsPage() {
         );
     }
 
-    const canManageOrg = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
+    const canManageSecurity = currentUserPermissions.includes(PERMISSIONS.MANAGE_SECURITY_SETTINGS);
+    const canManageIpWhitelist = currentUserPermissions.includes(PERMISSIONS.MANAGE_IP_WHITELIST);
 
     if (!currentOrganization) {
         return <div className="text-center"><p>Selecteer een organisatie om de instellingen te beheren.</p></div>
     }
     
-    if (!canManageOrg) {
+    if (!canManageSecurity) {
         return <div className="text-center"><p>U heeft geen permissie om deze instellingen te bekijken.</p></div>
     }
 
@@ -38,8 +44,10 @@ export default function LimitsOrgSettingsPage() {
                         <span className="sr-only">Terug naar Organisatie Instellingen</span>
                     </Link>
                 </Button>
-                <h1 className="font-semibold text-lg md:text-2xl">Limieten & Gevarenzone</h1>
+                <h1 className="font-semibold text-lg md:text-2xl">Beveiliging & Limieten</h1>
             </div>
+            <SessionPolicySettings organization={currentOrganization} />
+            {canManageIpWhitelist && <IpWhitelistSettings organization={currentOrganization} />}
             <LimitSettings organization={currentOrganization} />
             <DangerZone
                 organization={currentOrganization}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
-import type { Organization } from '@/lib/types';
+import type { Organization, Permission } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
 import { Label } from '@/components/ui/label';
 
@@ -21,12 +22,12 @@ const orgSettingsSchema = z.object({
 });
 type OrgSettingsFormValues = z.infer<typeof orgSettingsSchema>;
 
-export default function OrganizationSettings({ organization }: { organization: Organization }) {
-  const { user, refreshUser, currentUserPermissions } = useAuth();
+export default function OrganizationSettings({ organization, currentUserPermissions }: { organization: Organization, currentUserPermissions: Permission[] }) {
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const [isSubmittingOrg, setIsSubmittingOrg] = useState(false);
 
-  const canManageOrg = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
+  const canManageGeneralSettings = currentUserPermissions.includes(PERMISSIONS.MANAGE_GENERAL_SETTINGS);
 
   const orgForm = useForm<OrgSettingsFormValues>({
     resolver: zodResolver(orgSettingsSchema),
@@ -51,8 +52,8 @@ export default function OrganizationSettings({ organization }: { organization: O
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Organisatie-instellingen</CardTitle>
-        <CardDescription>Beheer de instellingen voor de organisatie '{organization.name}'.</CardDescription>
+        <CardTitle>Algemeen</CardTitle>
+        <CardDescription>Beheer de algemene instellingen voor de organisatie '{organization.name}'.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <Form {...orgForm}>
@@ -64,13 +65,13 @@ export default function OrganizationSettings({ organization }: { organization: O
                 <FormItem>
                   <FormLabel>Organisatienaam</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={!canManageOrg} />
+                    <Input {...field} disabled={!canManageGeneralSettings} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmittingOrg || !canManageOrg || !orgForm.formState.isDirty}>
+            <Button type="submit" disabled={isSubmittingOrg || !canManageGeneralSettings || !orgForm.formState.isDirty}>
               {isSubmittingOrg && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Naam Wijzigen
             </Button>

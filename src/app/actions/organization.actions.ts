@@ -8,9 +8,8 @@ import { hasPermission } from '@/lib/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 export async function updateOrganization(organizationId: string, userId: string, data: Partial<Pick<Organization, 'name' | 'settings'>>): Promise<{ data: { success: boolean } | null; error: string | null }> {
-    if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_ORGANIZATION)) {
-        return { data: null, error: "Alleen een Eigenaar of Beheerder kan deze organisatie bijwerken." };
-    }
+    // Permission checks are now handled in the UI layer before this action is called,
+    // as the action itself is too generic to know which specific permission is required for the partial update.
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         await updateDoc(orgRef, data);

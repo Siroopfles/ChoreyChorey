@@ -41,7 +41,7 @@ export async function manageSavedFilter(
       }
       const filterToDelete = currentFilters.find(f => f.id === payload.filterId);
       
-      const canDelete = filterToDelete && (filterToDelete.creatorId === userId || await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_ORGANIZATION));
+      const canDelete = filterToDelete && (filterToDelete.creatorId === userId || await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_SAVED_FILTERS));
 
       if (!canDelete) {
           throw new Error("Je hebt geen permissie om dit filter te verwijderen.");

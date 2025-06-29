@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTasks } from '@/contexts/task-context';
+import { useFilters } from '@/contexts/filter-context';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -16,7 +16,7 @@ import type { SavedFilter } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
 
 export function SavedFiltersManager() {
-  const { filters, setFilters, activeFilterCount } = useTasks();
+  const { filters, setFilters, activeFilterCount } = useFilters();
   const { currentOrganization, user, refreshUser, currentUserPermissions } = useAuth();
   const { toast } = useToast();
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -27,7 +27,7 @@ export function SavedFiltersManager() {
   
   const canDelete = (filter: SavedFilter) => {
     if (!user) return false;
-    return filter.creatorId === user.id || currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
+    return filter.creatorId === user.id || currentUserPermissions.includes(PERMISSIONS.MANAGE_SAVED_FILTERS);
   }
 
   const handleSave = async () => {
@@ -122,5 +122,3 @@ export function SavedFiltersManager() {
     </div>
   )
 }
-
-    

@@ -19,6 +19,7 @@ import {
   startAfter,
   QueryDocumentSnapshot,
   getDocs,
+  orderBy
 } from 'firebase/firestore';
 import type { Task, TaskFormValues, User, Status, Label, Automation, AutomationFormValues, TaskTemplate, TaskTemplateFormValues, Subtask, Project } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
@@ -65,7 +66,6 @@ type TaskContextType = {
   setViewedTask: (task: Task | null) => void;
   toggleMuteTask: (taskId: string) => Promise<void>;
   manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
-  toggleTaskPin: (taskId: string, isPinned: boolean) => Promise<void>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -129,7 +129,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const isGuest = currentUserRole === 'Guest';
     let tasksQuery;
 
-    const baseQueryConstraints = [where("organizationId", "==", currentOrganization.id)];
+    const baseQueryConstraints = [where("organizationId", "==", currentOrganization.id), orderBy('order', 'desc')];
     
     if (isGuest) {
       const guestAccess = currentOrganization.settings?.guestAccess?.[user.id];
@@ -139,8 +139,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       } else {
         baseQueryConstraints.push(where('id', '==', 'guest-has-no-access'));
       }
-    } else {
-      baseQueryConstraints.push(where('isPrivate', 'in', [false, true]));
     }
     
     const paginatedQueryConstraints = [...baseQueryConstraints];
@@ -475,15 +473,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     else { toast({ title: `Taak ${result.data?.newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}` }); }
   };
 
-  const toggleTaskPin = async (taskId: string, isPinned: boolean) => {
-    if (!user || !currentOrganization) return;
-    if (!currentUserPermissions.includes(PERMISSIONS.PIN_ITEMS)) {
-        toast({ title: 'Geen permissie', description: 'Je hebt geen permissie om items vast te pinnen.', variant: 'destructive' });
-        return;
-    }
-    await updateTask(taskId, { pinned: isPinned });
-  };
-
   return (
     <TaskContext.Provider value={{ 
       tasks, templates, automations, loading, isMoreLoading, hasMoreTasks, loadMoreTasks, addTask, updateTask, rateTask, toggleSubtaskCompletion,
@@ -491,7 +480,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask,
       bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
       navigateToUserProfile, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, 
-      toggleMuteTask, manageAutomation, toggleTaskPin,
+      toggleMuteTask, manageAutomation,
     }}>
       {children}
     </TaskContext.Provider>

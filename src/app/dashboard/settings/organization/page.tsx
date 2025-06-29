@@ -1,44 +1,63 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Settings, Workflow, Code2, BarChartBig, ArrowRight } from 'lucide-react';
+import { Settings, Workflow, Code2, BarChartBig, ArrowRight, Shield, ShieldQuestion } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { PERMISSIONS } from '@/lib/types';
+import { useOrganization } from '@/contexts/organization-context';
 
 export default function OrganizationSettingsHubPage() {
+    const { currentUserPermissions } = useOrganization();
+
     const settingsPages = [
         {
             href: '/dashboard/settings/organization/general',
             icon: Settings,
             title: 'Algemeen & Branding',
             description: 'Beheer de naam, aankondigingen en het uiterlijk van de organisatie.',
+            permission: PERMISSIONS.MANAGE_GENERAL_SETTINGS,
         },
         {
             href: '/dashboard/settings/organization/workflow',
             icon: Workflow,
             title: 'Workflow & Velden',
             description: 'Pas statussen, labels, prioriteiten en eigen velden aan.',
+            permission: PERMISSIONS.MANAGE_WORKFLOW,
         },
         {
             href: '/dashboard/settings/organization/developer',
             icon: Code2,
             title: 'Developer Instellingen',
             description: 'Beheer API-sleutels en webhooks voor integraties.',
+            permission: PERMISSIONS.MANAGE_WEBHOOKS, // A base permission to see the page
         },
         {
             href: '/dashboard/settings/organization/limits',
-            icon: BarChartBig,
-            title: 'Limieten & Gevarenzone',
-            description: 'Stel limieten in en beheer risicovolle acties zoals het verwijderen van de organisatie.',
+            icon: Shield,
+            title: 'Beveiliging & Limieten',
+            description: 'Beheer sessiebeleid, IP-whitelisting en risicovolle acties.',
+            permission: PERMISSIONS.MANAGE_SECURITY_SETTINGS,
         },
+        {
+            href: '/dashboard/settings/features',
+            icon: ShieldQuestion,
+            title: 'Feature Vlaggen',
+            description: 'Schakel kernmodules van de applicatie in of uit.',
+            permission: PERMISSIONS.MANAGE_FEATURE_TOGGLES,
+        }
     ];
+
+    const accessiblePages = settingsPages.filter(page => currentUserPermissions.includes(page.permission));
 
     return (
         <div className="space-y-6">
             <h1 className="font-semibold text-lg md:text-2xl">Organisatie Instellingen</h1>
             <p className="text-muted-foreground">Selecteer een categorie om te beheren.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {settingsPages.map((page) => (
+                {accessiblePages.map((page) => (
                     <Card key={page.href} className="hover:border-primary/50 transition-colors flex flex-col">
                         <CardHeader className="flex-grow">
                             <CardTitle className="flex items-center gap-3">

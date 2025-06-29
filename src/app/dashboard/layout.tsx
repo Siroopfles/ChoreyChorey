@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -106,10 +105,9 @@ function SidebarToggle() {
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
-    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks } = useTasks();
+    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks, toggleTaskPin } = useTasks();
     const { setFilters } = useFilters();
-    const { currentOrganization } = useAuth();
-    const { users, projects, currentUserRole, currentUserPermissions } = useOrganization();
+    const { currentOrganization, projects, users, currentUserRole, currentUserPermissions } = useOrganization();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -135,8 +133,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
         ...(showIdeas ? [{ href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' }] : []),
         { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
         { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
-        { href: '/dashboard/automations', icon: Zap, label: 'Automatiseringen' },
-        { href: '/dashboard/templates', icon: SquareStack, label: 'Templates' },
+        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS) ? [{ href: '/dashboard/automations', icon: Zap, label: 'Automatiseringen' }] : []),
+        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_TEMPLATES) ? [{ href: '/dashboard/templates', icon: SquareStack, label: 'Templates' }] : []),
     ];
     
     const communityNavItems = isGuest ? [] : [
@@ -158,7 +156,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     ];
     
     const adminNavItems = isGuest ? [] : [
-        { href: '/dashboard/settings', icon: Settings, label: 'Instellingen', 'data-tour-id': 'settings-link' },
+        ...(currentUserPermissions.includes(PERMISSIONS.VIEW_ORGANIZATION_SETTINGS) ? [{ href: '/dashboard/settings', icon: Settings, label: 'Instellingen', 'data-tour-id': 'settings-link' }] : []),
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS) ? [{ href: '/dashboard/settings/integrations', icon: Plug, label: 'Integraties' }] : []),
         ...(currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) ? [{ href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }] : []),
         { href: '/dashboard/trash', icon: Trash2, label: 'Prullenbak' },
@@ -313,13 +311,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
                 <BulkActionBar />
             </SidebarInset>
             
-            <AddTaskDialog users={users} open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
+            <AddTaskDialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
             {viewedTask && (
                 <EditTaskDialog
                   isOpen={!!viewedTask}
                   setIsOpen={(isOpen) => { if (!isOpen) setViewedTask(null); }}
                   task={viewedTask}
-                  users={users}
                 />
             )}
             <ShortcutHelpDialog open={isShortcutHelpOpen} onOpenChange={setIsShortcutHelpOpen} />
@@ -402,21 +399,21 @@ export default function DashboardLayout({
 }) {
   return (
     <OrganizationProvider>
-      <FilterProvider>
-        <NotificationsProvider>
-          <TaskProvider>
-            <IdeaProvider>
-              <GoalProvider>
-                <AuthGuard>
-                  <TourProvider>
-                    {children}
-                  </TourProvider>
-                </AuthGuard>
-              </GoalProvider>
-            </IdeaProvider>
-          </TaskProvider>
-        </NotificationsProvider>
-      </FilterProvider>
+      <TaskProvider>
+        <FilterProvider>
+          <NotificationsProvider>
+              <IdeaProvider>
+                <GoalProvider>
+                  <AuthGuard>
+                    <TourProvider>
+                      {children}
+                    </TourProvider>
+                  </AuthGuard>
+                </GoalProvider>
+              </IdeaProvider>
+          </NotificationsProvider>
+        </FilterProvider>
+      </TaskProvider>
     </OrganizationProvider>
   );
 }

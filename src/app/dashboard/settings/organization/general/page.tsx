@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import OrganizationSettings from '@/components/chorey/settings/organization-settings';
 import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
@@ -8,11 +9,12 @@ import BrandingSettings from '@/components/chorey/settings/branding-settings';
 import { PERMISSIONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function GeneralOrgSettingsPage() {
-    const { user, loading, currentOrganization, currentUserPermissions } = useAuth();
+    const { loading, currentOrganization, currentUserPermissions } = useOrganization();
     
-    if (loading || !user) {
+    if (loading) {
         return (
           <div className="flex h-full w-full items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -20,14 +22,24 @@ export default function GeneralOrgSettingsPage() {
         );
     }
 
-    const canManageOrg = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
-
     if (!currentOrganization) {
         return <div className="text-center"><p>Selecteer een organisatie om de instellingen te beheren.</p></div>
     }
     
-    if (!canManageOrg) {
-        return <div className="text-center"><p>U heeft geen permissie om deze instellingen te bekijken.</p></div>
+    const canManageGeneral = currentUserPermissions.includes(PERMISSIONS.MANAGE_GENERAL_SETTINGS);
+    const canManageAnnouncements = currentUserPermissions.includes(PERMISSIONS.MANAGE_ANNOUNCEMENTS);
+    const canManageBranding = currentUserPermissions.includes(PERMISSIONS.MANAGE_BRANDING);
+    
+    const hasAnyPermission = canManageGeneral || canManageAnnouncements || canManageBranding;
+
+    if (!hasAnyPermission) {
+       return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Geen Toegang</CardTitle>
+                </CardHeader>
+            </Card>
+       )
     }
 
     return (
@@ -41,9 +53,9 @@ export default function GeneralOrgSettingsPage() {
                 </Button>
                 <h1 className="font-semibold text-lg md:text-2xl">Algemene Instellingen</h1>
             </div>
-            <OrganizationSettings organization={currentOrganization} />
-            <AnnouncementSettings organization={currentOrganization} />
-            <BrandingSettings organization={currentOrganization} />
+            {canManageGeneral && <OrganizationSettings organization={currentOrganization} currentUserPermissions={currentUserPermissions} />}
+            {canManageAnnouncements && <AnnouncementSettings organization={currentOrganization} />}
+            {canManageBranding && <BrandingSettings organization={currentOrganization} />}
         </div>
     );
 }
