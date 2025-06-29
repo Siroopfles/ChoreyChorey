@@ -55,7 +55,7 @@ function UserCard({ user, completedTasks, onSelect }: { user: User; completedTas
 
 export default function MentorshipPage() {
     const { users, loading: authLoading } = useAuth();
-    const { tasks, loading: tasksLoading, setViewedUser } = useTasks();
+    const { tasks, loading: tasksLoading, navigateToUserProfile } = useTasks();
 
     const { mentors, mentees } = useMemo(() => {
         const usersWithStats = users.map(user => ({
@@ -82,6 +82,10 @@ export default function MentorshipPage() {
             </div>
         );
     }
+    
+    const handleSelectUser = (user: User) => {
+        navigateToUserProfile(user.id);
+    }
 
     return (
         <div className="space-y-8">
@@ -95,7 +99,7 @@ export default function MentorshipPage() {
                     <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2"><Star className="text-yellow-500"/> Vind een Mentor</h2>
                     <div className="space-y-4">
                         {mentors.length > 0 ? (
-                            mentors.map(user => <UserCard key={user.id} user={user} completedTasks={user.completedTasks} onSelect={setViewedUser} />)
+                            mentors.map(user => <UserCard key={user.id} user={user} completedTasks={user.completedTasks} onSelect={handleSelectUser} />)
                         ) : (
                              <p className="text-muted-foreground text-center py-8">Er zijn momenteel geen actieve mentoren beschikbaar.</p>
                         )}
@@ -105,7 +109,7 @@ export default function MentorshipPage() {
                     <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2"><Users /> Help een Nieuwkomer</h2>
                     <div className="space-y-4">
                         {mentees.length > 0 ? (
-                            mentees.map(user => <UserCard key={user.id} user={user} completedTasks={user.completedTasks} onSelect={setViewedUser} />)
+                            mentees.map(user => <UserCard key={user.id} user={user} completedTasks={user.completedTasks} onSelect={handleSelectUser} />)
                         ) : (
                              <p className="text-muted-foreground text-center py-8">Iedereen is al een ervaren rot!</p>
                         )}

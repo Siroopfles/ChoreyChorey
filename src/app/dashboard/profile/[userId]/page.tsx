@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -77,9 +76,9 @@ export default function UserProfilePage() {
     return (
         <div className="space-y-6">
             <Button asChild variant="outline" size="sm" className="w-fit">
-                <Link href="/dashboard">
+                <Link href="/dashboard/organization">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Terug naar Dashboard
+                    Terug naar Organisatie
                 </Link>
             </Button>
             
