@@ -1,35 +1,58 @@
+
 'use server';
 
 import { Timestamp } from 'firebase/firestore';
 
-// Helper to serialize Firestore Timestamps to ISO strings for JSON response
-export const serializeTask = (data: any) => {
+// Generic helper to serialize Firestore Timestamps to ISO strings for any object
+export const serializeTimestamps = (data: any) => {
+    if (!data) return data;
     const serializedData: any = {};
     for (const key in data) {
-        if (data[key] instanceof Timestamp) {
-            serializedData[key] = (data[key] as Timestamp).toDate().toISOString();
-        } else if (data[key] instanceof Date) {
-            serializedData[key] = data[key].toISOString();
-        } else if(data[key] !== null && typeof data[key] === 'object' && !Array.isArray(data[key])) {
-            // Avoid serializing complex objects like history for now
-        }
-        else {
-            serializedData[key] = data[key];
+        const value = data[key];
+        if (value instanceof Timestamp) {
+            serializedData[key] = value.toDate().toISOString();
+        } else if (value instanceof Date) {
+            serializedData[key] = value.toISOString();
+        } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+            // Recursively serialize nested objects, but be cautious
+            // For now, let's keep it simple and not serialize deeply nested objects
+            // unless we have a specific need, to avoid circular references.
+            serializedData[key] = value;
+        } else {
+            serializedData[key] = value;
         }
     }
     return serializedData;
 };
 
+// Specific serializers for different data models can be added here if needed,
+// for example, to cherry-pick fields for public responses.
+
+export const serializeTask = (data: any) => {
+    const serialized = serializeTimestamps(data);
+    // You can add task-specific field selections here if needed
+    delete serialized.history; // Example: Don't expose full history via API
+    return serialized;
+};
+
+export const serializeProject = (data: any) => {
+    return serializeTimestamps(data);
+};
+
+export const serializeTeam = (data: any) => {
+    return serializeTimestamps(data);
+};
 
 export const serializeUser = (data: any) => {
+    const serialized = serializeTimestamps(data);
     // Return a public-safe user object
     return {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        avatar: data.avatar,
-        points: data.points || 0,
-        skills: data.skills || [],
-        status: data.status || { type: 'Offline', until: null },
+        id: serialized.id,
+        name: serialized.name,
+        email: serialized.email,
+        avatar: serialized.avatar,
+        points: serialized.points || 0,
+        skills: serialized.skills || [],
+        status: serialized.status || { type: 'Offline', until: null },
     };
 };
