@@ -53,6 +53,7 @@ import Link from 'next/link';
 import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from './attachment-icons';
 import { TaskCardFooter } from './task-card-footer';
+import { useFilters } from '@/contexts/filter-context';
 
 
 type TaskCardProps = {
@@ -103,7 +104,8 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 
 const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, isOverdue, isDueToday, isDueSoon, blockingTasks, relatedTasks, blockedByTasks }: TaskCardProps) => {
   const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, searchTerm, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask, toggleTaskPin } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, cloneTask, splitTask, deleteTaskPermanently, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask, toggleTaskPin } = useTasks();
+  const { searchTerm, selectedTaskIds, toggleTaskSelection } = useFilters();
   const { currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
   const { toast } = useToast();
 
@@ -499,4 +501,5 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
 };
 
 export default TaskCard;
+
 

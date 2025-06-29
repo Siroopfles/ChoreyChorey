@@ -1,7 +1,7 @@
 
 
 'use client';
-import { useTasks } from "@/contexts/task-context";
+import { useFilters } from "@/contexts/filter-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useOrganization } from "@/contexts/organization-context";
 import type { User } from "@/lib/types";
@@ -16,7 +16,7 @@ import { SavedFiltersManager } from "./saved-filters-manager";
 
 
 export default function FilterBar() {
-  const { filters, setFilters, clearFilters, activeFilterCount } = useTasks();
+  const { filters, setFilters, clearFilters, activeFilterCount } = useFilters();
   const { user: currentUser } = useAuth();
   const { projects, users, currentOrganization } = useOrganization();
   

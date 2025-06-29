@@ -27,7 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { TaskFormFields } from './task-form-fields';
 import { TaskComments } from './task-comments';
 import { TaskHistory } from './task-history';
-import { addCommentAction, markCommentAsReadAction } from '@/app/actions/comment.actions';
+import { addCommentAction } from '@/app/actions/comment.actions';
+import { useNotifications } from '@/contexts/notification-context';
 
 
 type EditTaskDialogProps = {
@@ -40,6 +41,7 @@ type EditTaskDialogProps = {
 export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
   const { updateTask } = useTasks();
+  const { markSingleNotificationAsRead } = useNotifications();
   const { user: currentUser } = useAuth();
   const { users, projects, currentOrganization } = useOrganization();
 
@@ -119,7 +121,8 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
 
   const handleMarkCommentAsRead = (commentId: string) => {
     if (!currentUser) return;
-    markCommentAsReadAction(task.id, commentId, currentUser.id);
+    // This is handled by the notification system now.
+    // The presence of this function is kept for components that might still call it.
   }
 
 
@@ -166,7 +169,6 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                             comments={task.comments}
                             users={users}
                             addComment={handleAddComment}
-                            markCommentAsRead={handleMarkCommentAsRead}
                         />
                     </TabsContent>
                     <TabsContent value="history" className="flex-1 min-h-0 mt-2">

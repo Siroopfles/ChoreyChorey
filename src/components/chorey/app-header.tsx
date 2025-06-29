@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { User } from '@/lib/types';
+import type { User, UserStatus } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useNotifications } from '@/contexts/notification-context';
 import { useTasks } from '@/contexts/task-context';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -33,11 +34,12 @@ import { useMemo, useState } from 'react';
 import { isAfter } from 'date-fns';
 import { statusStyles } from '@/lib/types';
 import { CreateOrganizationDialog } from './organization/create-organization-dialog';
-import { updateUserStatus } from '@/app/actions/organization.actions';
+import { updateUserStatus as updateUserStatusAction } from '@/app/actions/member.actions';
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();
-  const { notifications, markAllNotificationsAsRead, snoozeNotification, setIsAddTaskDialogOpen } = useTasks();
+  const { notifications, markAllNotificationsAsRead, snoozeNotification } = useNotifications();
+  const { setIsAddTaskDialogOpen } = useTasks();
   const { user, logout, organizations, currentOrganization, switchOrganization, updateUserStatus: updateUserStatusInContext } = useAuth();
   const router = useRouter();
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
@@ -57,7 +59,7 @@ export default function AppHeader() {
 
   const handleUpdateUserStatus = async (status: UserStatus) => {
     if (!user || !currentOrganization) return;
-    await updateUserStatus(currentOrganization.id, user.id, status);
+    await updateUserStatusAction(currentOrganization.id, user.id, status);
     updateUserStatusInContext(status);
   };
 

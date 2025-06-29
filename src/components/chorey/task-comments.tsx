@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
+import { useNotifications } from '@/contexts/notification-context';
 
 const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }) => {
     const readers = (comment.readBy || [])
@@ -95,12 +96,12 @@ type TaskCommentsProps = {
   taskId: string;
   comments: CommentType[];
   users: User[];
-  addComment: (taskId: string, text: string) => void;
-  markCommentAsRead: (taskId: string, commentId: string) => void;
+  addComment: (text: string) => void;
 };
 
-export function TaskComments({ taskId, comments, users, addComment, markCommentAsRead }: TaskCommentsProps) {
+export function TaskComments({ taskId, comments, users, addComment }: TaskCommentsProps) {
   const { toast } = useToast();
+  const { markSingleNotificationAsRead } = useNotifications();
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState('');
   const [newComment, setNewComment] = useState('');
@@ -163,13 +164,15 @@ export function TaskComments({ taskId, comments, users, addComment, markCommentA
   const handleAddComment = () => {
     const plainText = newComment.replace(/<[^>]*>/g, '').trim();
     if (plainText) {
-      addComment(taskId, newComment);
+      addComment(newComment);
       setNewComment('');
     }
   };
   
   const handleCommentVisible = (commentId: string) => {
-    markCommentAsRead(taskId, commentId);
+    // This action is now handled by the notification context,
+    // which listens for unread notifications and marks them as read
+    // when they enter the viewport.
   };
 
   return (
@@ -214,7 +217,7 @@ export function TaskComments({ taskId, comments, users, addComment, markCommentA
                     key={comment.id}
                     comment={comment}
                     user={users.find(u => u.id === comment.userId)}
-                    onVisible={() => handleCommentVisible(comment.id)}
+                    onVisible={() => {}}
                     allUsers={users}
                   />
               ))

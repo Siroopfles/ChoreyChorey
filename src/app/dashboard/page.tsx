@@ -6,6 +6,7 @@ import { useState, useMemo, Suspense, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useOrganization } from '@/contexts/organization-context';
 import { useTasks } from '@/contexts/task-context';
+import { useFilters } from '@/contexts/filter-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -36,7 +37,8 @@ import { cn } from '@/lib/utils';
 import { ManageDashboardDialog } from '@/components/chorey/dashboard/ManageDashboardDialog';
 
 export default function DashboardPage() {
-  const { tasks, loading, searchTerm, setSearchTerm, filters, setViewedTask } = useTasks();
+  const { tasks, loading, setViewedTask } = useTasks();
+  const { searchTerm, setSearchTerm, filters } = useFilters();
   const { user: currentUser } = useAuth();
   const { teams, currentOrganization, users, projects } = useOrganization();
   const [isImporting, setIsImporting] = useState(false);

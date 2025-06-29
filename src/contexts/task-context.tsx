@@ -1,9 +1,7 @@
-
-
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { 
   collection, 
   onSnapshot, 
@@ -16,25 +14,24 @@ import {
   arrayUnion,
   arrayRemove,
 } from 'firebase/firestore';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, Subtask, Automation, AutomationFormValues } from '@/lib/types';
-import { PERMISSIONS, NOTIFICATION_SOUNDS, NOTIFICATION_EVENT_TYPES_FOR_SOUNDS } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Automation, AutomationFormValues, TaskTemplate, TaskTemplateFormValues, Subtask } from '@/lib/types';
+import { PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
 import { useOrganization } from './organization-context';
+import * as TaskActions from '@/app/actions/task.actions';
 import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
 import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/member.actions';
-import * as TaskActions from '@/app/actions/task.actions';
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/gamification.actions';
-import { addCommentAction, markCommentAsReadAction } from '@/app/actions/comment.actions';
-import { addHours } from 'date-fns';
 import { useRouter } from 'next/navigation';
 
 
 type TaskContextType = {
   tasks: Task[];
   templates: TaskTemplate[];
+  automations: Automation[];
   loading: boolean;
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
@@ -47,35 +44,18 @@ type TaskContextType = {
   toggleTaskTimer: (taskId: string) => void;
   reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => void;
   resetSubtasks: (taskId: string) => void;
-  addComment: (taskId: string, text: string) => void;
-  markCommentAsRead: (taskId: string, commentId: string) => void;
   thankForTask: (taskId: string) => Promise<void>;
   addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
   updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
   deleteTemplate: (templateId: string) => Promise<void>;
   setChoreOfTheWeek: (taskId: string) => Promise<void>;
   promoteSubtaskToTask: (parentTaskId: string, subtask: Subtask) => void;
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  selectedTaskIds: string[];
-  setSelectedTaskIds: React.Dispatch<React.SetStateAction<string[]>>;
-  toggleTaskSelection: (taskId: string) => void;
-  filters: Filters;
-  setFilters: (newFilters: Partial<Filters>) => void;
-  clearFilters: () => void;
-  activeFilterCount: number;
-  notifications: Notification[];
-  markAllNotificationsAsRead: () => void;
-  markSingleNotificationAsRead: (notificationId: string) => void;
-  archiveNotification: (notificationId: string) => void;
-  snoozeNotification: (notificationId: string) => void;
   navigateToUserProfile: (userId: string) => void;
   isAddTaskDialogOpen: boolean;
   setIsAddTaskDialogOpen: (open: boolean) => void;
   viewedTask: Task | null;
   setViewedTask: (task: Task | null) => void;
   toggleMuteTask: (taskId: string) => void;
-  automations: Automation[];
   manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
   toggleTaskPin: (taskId: string, isPinned: boolean) => Promise<void>;
 };
@@ -87,22 +67,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { currentOrganization, currentUserRole, currentUserPermissions, projects, loading: orgLoading } = useOrganization();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
-  const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null });
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const [viewedTask, setViewedTask] = useState<Task | null>(null);
   const { toast } = useToast();
   const router = useRouter();
-  const prevNotificationsRef = useRef<Notification[]>([]);
-
-  const setFilters = (newFilters: Partial<Filters>) => { setRawFilters(prev => ({...prev, ...newFilters})); };
-  const clearFilters = () => { setRawFilters({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null }); setSearchTerm(''); };
-  const activeFilterCount = (filters.assigneeId ? 1 : 0) + filters.labels.length + (filters.priority ? 1 : 0) + (filters.projectId ? 1 : 0) + (filters.teamId ? 1 : 0);
-  const toggleTaskSelection = (taskId: string) => { setSelectedTaskIds(prev => prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]); };
   
   const navigateToUserProfile = (userId: string) => {
     router.push(`/dashboard/profile/${userId}`);
@@ -120,7 +90,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
 
     if (!currentOrganization || !user) {
-      setTasks([]); setTemplates([]); setNotifications([]); setAutomations([]); setLoading(false);
+      setTasks([]); setTemplates([]); setAutomations([]); setLoading(false);
       return;
     }
     setLoading(true);
@@ -161,71 +131,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const commonQuery = (collectionName: string) => query(collection(db, collectionName), where("organizationId", "==", currentOrganization.id));
 
     const unsubTemplates = onSnapshot(commonQuery('taskTemplates'), (s) => setTemplates(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as TaskTemplate))), (e) => handleError(e, 'laden van templates'));
-    const unsubNotifications = onSnapshot(query(collection(db, "notifications"), where("userId", "==", user.id), where("organizationId", "==", currentOrganization.id)), (s) => setNotifications(s.docs.map(d => ({ id: d.id, ...d.data(), createdAt: (d.data().createdAt as Timestamp).toDate(), snoozedUntil: (d.data().snoozedUntil as Timestamp)?.toDate() } as Notification)).filter(n => !n.archived).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van notificaties'));
     const unsubAutomations = onSnapshot(commonQuery('automations'), (s) => setAutomations(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate() } as Automation))), (e) => handleError(e, 'laden van automatiseringen'));
 
-    return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubAutomations(); };
+    return () => { unsubTasks(); unsubTemplates(); unsubAutomations(); };
   }, [user, currentOrganization, currentUserRole, currentUserPermissions, projects, orgLoading]);
-
-  useEffect(() => {
-    // Prevent sounds on initial load
-    if (loading) {
-        prevNotificationsRef.current = notifications;
-        return;
-    }
-    if (!user || notifications.length === prevNotificationsRef.current.length) {
-        prevNotificationsRef.current = notifications;
-        return;
-    }
-    
-    const newNotifications = notifications.filter(
-        n => !prevNotificationsRef.current.some(pn => pn.id === n.id) && !n.read
-    );
-
-    if (newNotifications.length > 0) {
-        // Only play sound for the most recent new notification
-        const notificationToPlaySoundFor = newNotifications[0];
-        const eventType = notificationToPlaySoundFor.eventType || 'default';
-        const soundSettings = user.notificationSounds || {};
-        const soundToPlay = soundSettings[eventType] || soundSettings['default'];
-
-        if (soundToPlay && soundToPlay !== 'none') {
-            const audio = new Audio(`/sounds/${soundToPlay}`);
-            audio.play().catch(error => console.error("Audio playback failed:", error));
-        }
-    }
-
-    prevNotificationsRef.current = notifications;
-  }, [notifications, user, loading]);
-
-  const markAllNotificationsAsRead = async () => {
-    if (!user) return;
-    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-    if(unreadIds.length === 0) return;
-    try {
-        const batch = writeBatch(db);
-        unreadIds.forEach(id => batch.update(doc(db, 'notifications', id), { read: true }));
-        await batch.commit();
-    } catch(e) { handleError(e, 'bijwerken van notificaties'); }
-  };
-
-  const markSingleNotificationAsRead = async (notificationId: string) => {
-    try { await updateDoc(doc(db, 'notifications', notificationId), { read: true }); }
-    catch (e) { handleError(e, 'bijwerken van notificatie'); }
-  };
-
-  const archiveNotification = async (notificationId: string) => {
-    try {
-        await updateDoc(doc(db, 'notifications', notificationId), { archived: true });
-        toast({ title: 'Notificatie gearchiveerd.' });
-    } catch (e) { handleError(e, 'archiveren van notificatie'); }
-  };
-
-  const snoozeNotification = async (notificationId: string) => {
-    try {
-      await updateDoc(doc(db, 'notifications', notificationId), { snoozedUntil: Timestamp.fromDate(addHours(new Date(), 1)) });
-    } catch (e) { handleError(e, 'snoozen van notificatie'); }
-  };
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }): Promise<boolean> => {
     if (!user || !currentOrganization) { handleError({ message: 'Selecteer een organisatie.' }, 'toevoegen taak'); return false; }
@@ -279,17 +188,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const reorderTasks = async (tasksToUpdate: {id: string, order: number}[]) => {
       const result = await TaskActions.reorderTasksAction(tasksToUpdate);
       if (result.error) handleError({ message: result.error }, 'herordenen taken');
-  };
-
-  const addComment = async (taskId: string, text: string) => {
-    if (!user || !currentOrganization) { handleError({ message: 'Je moet ingelogd zijn.' }, 'reageren'); return; }
-    const result = await addCommentAction(taskId, text, user.id, user.name, currentOrganization.id);
-    if (result.error) handleError({ message: result.error }, 'reageren');
-  };
-
-  const markCommentAsRead = async (taskId: string, commentId: string) => {
-    if (!user) return;
-    await markCommentAsReadAction(taskId, commentId, user.id);
   };
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
@@ -368,8 +266,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       handleError(e, 'bulk bijwerken taken');
     }
-    
-    setSelectedTaskIds([]);
   };
   
   const addTemplate = async (templateData: TaskTemplateFormValues) => {
@@ -423,15 +319,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   return (
     <TaskContext.Provider value={{ 
-      tasks, templates, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
-      toggleTaskTimer, reorderTasks, resetSubtasks, addComment, markCommentAsRead, thankForTask,
-      addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask, searchTerm, 
-      setSearchTerm, selectedTaskIds, setSelectedTaskIds, toggleTaskSelection, bulkUpdateTasks,
-      cloneTask, splitTask, deleteTaskPermanently, filters, setFilters, clearFilters,
-      activeFilterCount, notifications, markAllNotificationsAsRead, markSingleNotificationAsRead,
-      archiveNotification, snoozeNotification, navigateToUserProfile, isAddTaskDialogOpen,
-      setIsAddTaskDialogOpen, viewedTask, setViewedTask, toggleMuteTask, automations, manageAutomation,
-      toggleTaskPin,
+      tasks, templates, automations, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
+      toggleTaskTimer, reorderTasks, resetSubtasks, thankForTask,
+      addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask,
+      bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
+      navigateToUserProfile, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, 
+      toggleMuteTask, manageAutomation, toggleTaskPin,
     }}>
       {children}
     </TaskContext.Provider>

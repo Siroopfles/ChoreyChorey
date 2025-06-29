@@ -3,7 +3,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
-import { TaskProvider, useTasks } from '@/contexts/task-context';
+import { TaskProvider } from '@/contexts/task-context';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap, MessageSquare, Pin, Briefcase, Trash2 } from 'lucide-react';
@@ -32,6 +32,9 @@ import { IdeaProvider } from '@/contexts/idea-context';
 import { GoalProvider } from '@/contexts/goal-context';
 import { ShortcutHelpDialog } from '@/components/chorey/shortcut-help-dialog';
 import { OrganizationProvider, useOrganization } from '@/contexts/organization-context';
+import { NotificationsProvider } from '@/contexts/notification-context';
+import { FilterProvider, useFilters } from '@/contexts/filter-context';
+import { useTasks } from '@/contexts/task-context';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useOrganization();
@@ -83,7 +86,8 @@ const UserCosmeticStyle = () => {
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
-    const { tasks, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, setFilters } = useTasks();
+    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks } = useTasks();
+    const { setFilters } = useFilters();
     const { currentOrganization } = useAuth();
     const { users, projects, currentUserRole, currentUserPermissions } = useOrganization();
     const pathname = usePathname();
@@ -375,17 +379,21 @@ export default function DashboardLayout({
 }) {
   return (
     <OrganizationProvider>
-        <TaskProvider>
-        <IdeaProvider>
-            <GoalProvider>
-            <AuthGuard>
-                <TourProvider>
+      <FilterProvider>
+        <NotificationsProvider>
+          <TaskProvider>
+            <IdeaProvider>
+              <GoalProvider>
+                <AuthGuard>
+                  <TourProvider>
                     {children}
-                </TourProvider>
-            </AuthGuard>
-            </GoalProvider>
-        </IdeaProvider>
-        </TaskProvider>
+                  </TourProvider>
+                </AuthGuard>
+              </GoalProvider>
+            </IdeaProvider>
+          </TaskProvider>
+        </NotificationsProvider>
+      </FilterProvider>
     </OrganizationProvider>
   );
 }

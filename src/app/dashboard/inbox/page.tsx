@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useTasks } from '@/contexts/task-context';
+import { useNotifications } from '@/contexts/notification-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -51,7 +51,7 @@ function NotificationItem({ notification, onMarkRead, onArchive }: { notificatio
 }
 
 export default function InboxPage() {
-  const { notifications, markSingleNotificationAsRead, archiveNotification, markAllNotificationsAsRead } = useTasks();
+  const { notifications, markSingleNotificationAsRead, archiveNotification, markAllNotificationsAsRead } = useNotifications();
   
   const groupedNotifications = notifications.reduce((acc, notification) => {
     const today = new Date();

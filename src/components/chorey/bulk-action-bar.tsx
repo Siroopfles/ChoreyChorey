@@ -18,9 +18,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Replace, Trash2, X, UserPlus, ArrowUpNarrowWide, Briefcase, Tags } from "lucide-react";
 import { Separator } from "../ui/separator";
+import { useFilters } from "@/contexts/filter-context";
 
 export default function BulkActionBar() {
-    const { selectedTaskIds, bulkUpdateTasks, setSelectedTaskIds } = useTasks();
+    const { bulkUpdateTasks } = useTasks();
+    const { selectedTaskIds, setSelectedTaskIds } = useFilters();
     const { currentOrganization, users, projects } = useAuth();
     
     const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
@@ -35,6 +37,12 @@ export default function BulkActionBar() {
     const handleDelete = () => {
         // This is a soft delete, moving tasks to 'Geannuleerd'
         bulkUpdateTasks(selectedTaskIds, { status: 'Geannuleerd' });
+        setSelectedTaskIds([]);
+    }
+
+    const handleUpdate = (updates: any) => {
+        bulkUpdateTasks(selectedTaskIds, updates);
+        setSelectedTaskIds([]);
     }
 
     return (
@@ -53,7 +61,7 @@ export default function BulkActionBar() {
                         {allStatuses.map(status => (
                             <DropdownMenuItem 
                                 key={status}
-                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { status })}
+                                onSelect={() => handleUpdate({ status })}
                             >
                                 {status}
                             </DropdownMenuItem>
@@ -72,13 +80,13 @@ export default function BulkActionBar() {
                         {users.map(user => (
                             <DropdownMenuItem 
                                 key={user.id}
-                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { assigneeIds: [user.id] })}
+                                onSelect={() => handleUpdate({ assigneeIds: [user.id] })}
                             >
                                 {user.name}
                             </DropdownMenuItem>
                         ))}
                          <DropdownMenuItem 
-                            onSelect={() => bulkUpdateTasks(selectedTaskIds, { assigneeIds: [] })}
+                            onSelect={() => handleUpdate({ assigneeIds: [] })}
                         >
                             Niemand
                         </DropdownMenuItem>
@@ -93,14 +101,14 @@ export default function BulkActionBar() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                         <DropdownMenuItem onSelect={() => bulkUpdateTasks(selectedTaskIds, { projectId: null })}>
+                         <DropdownMenuItem onSelect={() => handleUpdate({ projectId: null })}>
                             Geen project
                         </DropdownMenuItem>
                         <DdSeparator/>
                         {projects.map(project => (
                             <DropdownMenuItem 
                                 key={project.id}
-                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { projectId: project.id })}
+                                onSelect={() => handleUpdate({ projectId: project.id })}
                             >
                                 {project.name}
                             </DropdownMenuItem>
@@ -123,7 +131,7 @@ export default function BulkActionBar() {
                                 {allLabels.map(label => (
                                     <DropdownMenuItem 
                                         key={label}
-                                        onSelect={() => bulkUpdateTasks(selectedTaskIds, { addLabels: [label] })}
+                                        onSelect={() => handleUpdate({ addLabels: [label] })}
                                     >
                                         {label}
                                     </DropdownMenuItem>
@@ -138,7 +146,7 @@ export default function BulkActionBar() {
                                 {allLabels.map(label => (
                                     <DropdownMenuItem 
                                         key={label}
-                                        onSelect={() => bulkUpdateTasks(selectedTaskIds, { removeLabels: [label] })}
+                                        onSelect={() => handleUpdate({ removeLabels: [label] })}
                                     >
                                         {label}
                                     </DropdownMenuItem>
@@ -160,7 +168,7 @@ export default function BulkActionBar() {
                         {allPriorities.map(priority => (
                             <DropdownMenuItem 
                                 key={priority}
-                                onSelect={() => bulkUpdateTasks(selectedTaskIds, { priority: priority })}
+                                onSelect={() => handleUpdate({ priority: priority })}
                             >
                                 {priority}
                             </DropdownMenuItem>
