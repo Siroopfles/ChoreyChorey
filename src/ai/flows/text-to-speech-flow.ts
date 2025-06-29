@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent for converting text to speech.
@@ -6,35 +7,7 @@
 import { ai, googleAI } from '@/ai/genkit';
 import { TextToSpeechInputSchema, TextToSpeechOutputSchema } from '@/ai/schemas';
 import type { TextToSpeechInput, TextToSpeechOutput } from '@/ai/schemas';
-import wav from 'wav';
-
-async function toWav(
-  pcmData: Buffer,
-  channels = 1,
-  rate = 24000,
-  sampleWidth = 2
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const writer = new wav.Writer({
-      channels,
-      sampleRate: rate,
-      bitDepth: sampleWidth * 8,
-    });
-
-    let bufs: any[] = [];
-    writer.on('error', reject);
-    writer.on('data', function (d) {
-      bufs.push(d);
-    });
-    writer.on('end', function () {
-      resolve(Buffer.concat(bufs).toString('base64'));
-    });
-
-    writer.write(pcmData);
-    writer.end();
-  });
-}
-
+import { toWav } from '@/lib/audio-utils';
 
 export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
   return textToSpeechFlow(input);

@@ -1,7 +1,7 @@
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import type { Priority } from "./types";
+import type { Priority, HistoryEntry } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -39,3 +39,23 @@ export function getAttachmentSource(url: string | undefined): AttachmentSource {
     if (url.includes('bitbucket.org')) return 'bitbucket';
     return 'generic-link';
 }
+
+/**
+ * Creates a standard history entry object for tasks.
+ * @param userId The ID of the user performing the action, or 'system'.
+ * @param action A short description of the action, e.g., 'Aangemaakt'.
+ * @param details Optional further details about the action.
+ * @returns A HistoryEntry object.
+ */
+export function addHistoryEntry(userId: string | null, action: string, details?: string): HistoryEntry {
+  const entry: any = {
+      id: crypto.randomUUID(),
+      userId: userId || 'system',
+      timestamp: new Date(),
+      action,
+  };
+  if (details) {
+      entry.details = details;
+  }
+  return entry;
+};

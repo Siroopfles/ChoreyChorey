@@ -6,6 +6,7 @@ import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, 
 import type { Task, User, Organization, ActivityFeedItem, Team, GlobalUserProfile, OrganizationMember } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { createNotification } from './notification.actions';
+import { addHistoryEntry } from '@/lib/utils';
 
 async function grantAchievements(userId: string, organizationId: string, type: 'completed' | 'thanked', task?: Task) {
     const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
@@ -115,13 +116,7 @@ export async function thankForTask(taskId: string, currentUserId: string, assign
         });
         
         const assigneesNames = assignees.map(u => u.name).join(', ');
-        const historyEntry = {
-            id: crypto.randomUUID(),
-            userId: currentUserId,
-            timestamp: new Date(),
-            action: 'Bedankje gegeven',
-            details: `aan ${assigneesNames}`,
-        };
+        const historyEntry = addHistoryEntry(currentUserId, 'Bedankje gegeven', `aan ${assigneesNames}`);
         const taskRef = doc(db, 'tasks', taskId);
         batch.update(taskRef, { 
             thanked: true,
@@ -164,13 +159,7 @@ export async function rateTask(taskId: string, rating: number, task: Task, curre
         const batch = writeBatch(db);
         const taskRef = doc(db, 'tasks', taskId);
 
-        const historyEntry = {
-            id: crypto.randomUUID(),
-            userId: currentUserId,
-            timestamp: new Date(),
-            action: 'Taak beoordeeld',
-            details: `Gaf een beoordeling van ${rating} sterren.`,
-        };
+        const historyEntry = addHistoryEntry(currentUserId, 'Taak beoordeeld', `Gaf een beoordeling van ${rating} sterren.`);
         batch.update(taskRef, {
             rating: rating,
             history: arrayUnion(historyEntry)

@@ -3,13 +3,13 @@
 
 import { db } from '@/lib/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, arrayRemove, runTransaction, Timestamp } from 'firebase/firestore';
-import type { User, Task, TaskFormValues, Status, HistoryEntry, Recurring, Subtask, Organization } from '@/lib/types';
-import { calculatePoints } from '@/lib/utils';
+import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization } from '@/lib/types';
+import { calculatePoints, addHistoryEntry } from '@/lib/utils';
 import { grantAchievements, checkAndGrantTeamAchievements } from './gamification.actions';
 import { createNotification } from './notification.actions';
 import { triggerWebhooks } from '@/lib/webhook-service';
 import Papa from 'papaparse';
-import { addDays, addHours, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks, isToday, isYesterday } from 'date-fns';
+import { addDays, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks, isToday, isYesterday, addHours } from 'date-fns';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar-service';
 import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/microsoft-graph-service';
 import { createTogglTimeEntry } from '@/lib/toggl-service';
@@ -17,19 +17,6 @@ import { createClockifyTimeEntry } from '@/lib/clockify-service';
 import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
 
 // --- Internal Helper Functions ---
-
-function addHistoryEntry(userId: string | null, action: string, details?: string): HistoryEntry {
-  const entry: any = {
-      id: crypto.randomUUID(),
-      userId: userId || 'system',
-      timestamp: new Date(),
-      action,
-  };
-  if (details) {
-      entry.details = details;
-  }
-  return entry;
-};
 
 function calculateNextDueDate(currentDueDate: Date | undefined, recurring: Recurring): Date {
     const startDate = currentDueDate || new Date();
@@ -147,13 +134,7 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
                 organizationId,
                 createdAt: new Date(),
                 order: Date.now() + successCount,
-                history: [{
-                    id: crypto.randomUUID(),
-                    userId: creatorId,
-                    timestamp: new Date(),
-                    action: 'Aangemaakt',
-                    details: 'Via CSV import',
-                }],
+                history: [addHistoryEntry(creatorId, 'Aangemaakt', 'Via CSV import')],
                 subtasks: [],
                 attachments: [],
                 comments: [],
@@ -331,7 +312,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         const showGamification = organization.settings?.features?.gamification !== false;
 
         const finalUpdates: { [key: string]: any } = { ...updates };
-        const newHistory: HistoryEntry[] = [];
+        const newHistory = [];
         
         if (updates.githubLinks) {
             finalUpdates.githubLinkUrls = updates.githubLinks.map(link => link.url);
@@ -389,18 +370,16 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                 
                 await Promise.all(taskToUpdate.assigneeIds.map(async (assigneeId) => {
                     await runTransaction(db, async (transaction) => {
-                        const userRef = doc(db, 'users', assigneeId);
-                        const userDoc = await transaction.get(userRef);
+                        const memberRef = doc(db, 'organizations', organizationId, 'members', assigneeId);
+                        const memberDoc = await transaction.get(memberRef);
 
-                        if (!userDoc.exists()) {
-                            console.error(`User ${assigneeId} not found for streak calculation.`);
-                            // Still grant base points if user doesn't exist for some reason
-                            transaction.update(userRef, { points: increment(basePoints) });
+                        if (!memberDoc.exists()) {
+                            console.error(`Member ${assigneeId} not found in org ${organizationId} for streak calculation.`);
                             return;
                         }
 
-                        const userData = userDoc.data() as User;
-                        const streakData = userData.streakData;
+                        const memberData = memberDoc.data() as any;
+                        const streakData = memberData.streakData;
                         const today = new Date();
                         let newStreak = 1;
                         let showStreakToast = true;
@@ -420,7 +399,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                         const bonusPoints = Math.min(newStreak * 5, 50);
                         const totalPointsToAdd = basePoints + bonusPoints;
                         
-                        transaction.update(userRef, {
+                        transaction.update(memberRef, {
                             points: increment(totalPointsToAdd),
                             streakData: { currentStreak: newStreak, lastCompletionDate: today }
                         });
@@ -430,7 +409,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                             createNotification(assigneeId, message, taskId, organizationId, 'system', { eventType: 'gamification' });
                         }
                     });
-                     await grantAchievements(assigneeId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
+                     await grantAchievements(assigneeId, organizationId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
                 }));
             }
 
@@ -715,10 +694,10 @@ export async function addCommentAction(taskId: string, text: string, userId: str
                     },
                 });
 
-                if (suggestionResult.shouldUpdate && suggestionResult.newStatus) {
+                if (suggestionResult.suggestion?.shouldUpdate && suggestionResult.suggestion.newStatus) {
                     // For now, let's just create a notification for the creator and assignees
                     const notificationRecipients = new Set([...taskData.assigneeIds, taskData.creatorId]);
-                    const notificationMessage = `AI stelt voor om de status van "${taskData.title}" te wijzigen naar "${suggestionResult.newStatus}" op basis van een recente opmerking. Reden: ${suggestionResult.reasoning}`;
+                    const notificationMessage = `AI stelt voor om de status van "${taskData.title}" te wijzigen naar "${suggestionResult.suggestion.newStatus}" op basis van een recente opmerking. Reden: ${suggestionResult.suggestion.reasoning}`;
                     
                     notificationRecipients.forEach(recipientId => {
                         if (recipientId) {

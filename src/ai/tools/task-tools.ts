@@ -8,20 +8,7 @@ import { z } from 'genkit';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, arrayUnion, Timestamp, limit } from 'firebase/firestore';
 import type { Status, Task } from '@/lib/types';
-
-// Helper to add history entries
-const addHistoryEntry = (userId: string | null, action: string, details?: string) => {
-    const entry: any = {
-        id: crypto.randomUUID(),
-        userId: userId || 'system',
-        timestamp: new Date(),
-        action,
-    };
-    if (details) {
-        entry.details = details;
-    }
-    return entry;
-};
+import { addHistoryEntry } from '@/lib/utils';
 
 // Schema for creating a task
 const CreateTaskDataSchema = z.object({
@@ -94,6 +81,7 @@ const TaskSearchFiltersSchema = z.object({
   assigneeId: z.string().optional().describe('Filter by the ID of an assigned user.'),
   labels: z.array(z.string()).optional().describe('Filter by a list of labels.'),
   term: z.string().optional().describe('A search term to match in the title or description.'),
+  projectId: z.string().optional().describe('Filter by the ID of a project.'),
 });
 
 // Search Tasks Tool
@@ -114,6 +102,8 @@ export const searchTasks = ai.defineTool(
         priority: z.string().nullable(),
         assigneeIds: z.array(z.string()),
         dueDate: z.string().nullable(),
+        storyPoints: z.number().nullable(),
+        cost: z.number().nullable(),
       })
     ),
   },
@@ -135,6 +125,9 @@ export const searchTasks = ai.defineTool(
             }
             if (filters.assigneeId && typeof filters.assigneeId === 'string') {
                 queryConstraints.push(where('assigneeIds', 'array-contains', filters.assigneeId));
+            }
+             if (filters.projectId && typeof filters.projectId === 'string') {
+                queryConstraints.push(where('projectId', '==', filters.projectId));
             }
             if (filters.labels && Array.isArray(filters.labels) && filters.labels.length > 0) {
                 const validLabels = filters.labels.filter(label => typeof label === 'string' && label.length > 0);
@@ -178,6 +171,8 @@ export const searchTasks = ai.defineTool(
           priority: task.priority || null,
           assigneeIds: task.assigneeIds || [],
           dueDate: task.dueDate ? task.dueDate.toISOString().split('T')[0] : null,
+          storyPoints: task.storyPoints || null,
+          cost: task.cost || null,
         }));
     } catch (error: any) {
         console.error("CRITICAL ERROR in searchTasks tool:", error);
@@ -194,7 +189,8 @@ const TaskUpdateDataSchema = z.object({
     status: z.enum(['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Gearchiveerd', 'Geannuleerd']).optional(),
     priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional(),
     assigneeIds: z.array(z.string()).optional().describe("Replace the current list of assignee IDs with this new list."),
-    add_subtask: z.string().optional().describe("A subtask description to add to the task.")
+    add_subtask: z.string().optional().describe("A subtask description to add to the task."),
+    dueDate: z.string().optional().describe("Set the due date and time in 'YYYY-MM-DD' format."),
 });
 
 // Update Task Tool
@@ -226,6 +222,10 @@ export const updateTask = ai.defineTool(
             await updateDoc(taskRef, { subtasks: arrayUnion(newSubtask) });
             historyEntries.push(addHistoryEntry(userId, 'Subtaak toegevoegd', `"${cleanUpdates.add_subtask}"`));
             delete cleanUpdates.add_subtask;
+        }
+
+        if (cleanUpdates.dueDate) {
+            cleanUpdates.dueDate = new Date(cleanUpdates.dueDate);
         }
 
         Object.keys(cleanUpdates).forEach(key => {
@@ -300,4 +300,5 @@ export const getUsers = ai.defineTool(
         return users;
     }
 );
+
 
