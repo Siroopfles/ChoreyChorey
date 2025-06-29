@@ -15,6 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
@@ -39,7 +40,7 @@ export default function AddTaskDialog({ template, open, onOpenChange }: AddTaskD
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  const defaultPriority = currentOrganization?.settings?.customization?.priorities?.[1] || 'Midden';
+  const defaultPriority = currentOrganization?.settings?.customization?.priorities?.[1]?.name || 'Midden';
 
   const defaultFormValues = useMemo(() => ({
     title: '',
@@ -124,9 +125,11 @@ export default function AddTaskDialog({ template, open, onOpenChange }: AddTaskD
                 <TaskFormFields users={users} projects={projects} />
               </ScrollArea>
               <DialogFooter className="pt-4">
-                <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-                  Annuleren
-                </Button>
+                <DialogClose asChild>
+                  <Button type="button" variant="ghost" disabled={isSubmitting}>
+                    Annuleren
+                  </Button>
+                </DialogClose>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Taak Aanmaken

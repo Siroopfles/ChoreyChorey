@@ -14,6 +14,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { MessageSquare, History, ClipboardCopy } from 'lucide-react';
@@ -69,7 +70,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
         relations: task.relations || [],
         dependencyConfig: task.dependencyConfig || {},
         recurring: task.recurring,
-        imageDataUri: task.imageDataUri,
+        imageUrl: task.imageUrl,
         reviewerId: task.reviewerId,
         consultedUserIds: task.consultedUserIds || [],
         informedUserIds: task.informedUserIds || [],
@@ -149,9 +150,11 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                         <TaskFormFields users={users} projects={projects} task={task} />
                     </ScrollArea>
                     <div className="flex justify-end gap-2 pt-4 border-t mt-4">
-                        <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>
-                            Annuleren
-                        </Button>
+                        <DialogClose asChild>
+                            <Button type="button" variant="ghost">
+                                Annuleren
+                            </Button>
+                        </DialogClose>
                         <Button type="submit">Wijzigingen Opslaan</Button>
                     </div>
                 </form>

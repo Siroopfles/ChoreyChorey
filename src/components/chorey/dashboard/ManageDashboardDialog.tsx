@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -172,7 +172,9 @@ export function ManageDashboardDialog({ open, onOpenChange, highlightWidgetId }:
               </div>
             </ScrollArea>
             <DialogFooter className="pt-6 border-t mt-6">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Annuleren</Button>
+                <DialogClose asChild>
+                    <Button type="button" variant="ghost">Annuleren</Button>
+                </DialogClose>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Opslaan
