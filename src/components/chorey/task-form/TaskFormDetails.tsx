@@ -11,19 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { User as UserIcon, Bot, Loader2, Tags, X, ThumbsUp, ThumbsDown, Briefcase, Lightbulb } from 'lucide-react';
+import { User as UserIcon, Bot, Loader2, Tags, X, Briefcase, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
 import { suggestPriority } from '@/ai/flows/suggest-priority';
 import { suggestLabels } from '@/ai/flows/suggest-labels-flow';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/auth-context';
-import { submitAiFeedback } from '@/app/actions/feedback.actions';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TaskAssignmentSuggestion } from '../task-assignment-suggestion';
 import { useOrganization } from '@/contexts/organization-context';
 import type { SuggestLabelsOutput } from '@/ai/schemas';
+import { AIFeedback } from '../ai-feedback';
 
 type TaskFormDetailsProps = {
   users: User[];
@@ -34,7 +33,6 @@ type TaskFormDetailsProps = {
 export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: TaskFormDetailsProps) {
   const { toast } = useToast();
   const form = useFormContext();
-  const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
@@ -43,36 +41,12 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
 
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
   const [pointsSuggestion, setPointsSuggestion] = useState<{ output: SuggestStoryPointsOutput, input: any } | null>(null);
-  const [pointsFeedbackGiven, setPointsFeedbackGiven] = useState(false);
   
   const [isSuggestingPriority, setIsSuggestingPriority] = useState(false);
   const [prioritySuggestion, setPrioritySuggestion] = useState<{ output: SuggestPriorityOutput, input: any } | null>(null);
-  const [priorityFeedbackGiven, setPriorityFeedbackGiven] = useState(false);
 
   const [isSuggestingLabels, setIsSuggestingLabels] = useState(false);
   const [labelsSuggestion, setLabelsSuggestion] = useState<{ output: SuggestLabelsOutput, input: any } | null>(null);
-  const [labelsFeedbackGiven, setLabelsFeedbackGiven] = useState(false);
-  
-  const handleFeedback = async (flowName: string, output: any, input: any, feedback: 'positive' | 'negative') => {
-    if (!user || !currentOrganization) return;
-    
-    if (flowName === 'suggestStoryPointsFlow') setPointsFeedbackGiven(true);
-    if (flowName === 'suggestPriorityFlow') setPriorityFeedbackGiven(true);
-    if (flowName === 'suggestLabelsFlow') setLabelsFeedbackGiven(true);
-
-    const result = await submitAiFeedback({
-        flowName,
-        input,
-        output,
-        feedback,
-        userId: user.id,
-        organizationId: currentOrganization.id,
-    });
-
-    if (result.data) {
-        toast({ title: 'Feedback ontvangen!', description: 'Bedankt voor je hulp om de AI te verbeteren.' });
-    }
-  };
   
   const onSuggestStoryPoints = async () => {
     const title = form.getValues('title');
@@ -87,7 +61,6 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
     }
     setIsSuggestingPoints(true);
     setPointsSuggestion(null);
-    setPointsFeedbackGiven(false);
     try {
         const result = await suggestStoryPoints(title, currentOrganization.id, description);
         form.setValue('storyPoints', result.output.points);
@@ -107,7 +80,6 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
     }
     setIsSuggestingPriority(true);
     setPrioritySuggestion(null);
-    setPriorityFeedbackGiven(false);
     try {
         const result = await suggestPriority({ title, description, availablePriorities: allPriorities });
         form.setValue('priority', result.output.priority);
@@ -131,7 +103,6 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
     }
     setIsSuggestingLabels(true);
     setLabelsSuggestion(null);
-    setLabelsFeedbackGiven(false);
     try {
         const result = await suggestLabels({ title, description, organizationId: currentOrganization.id });
         setLabelsSuggestion(result);
@@ -276,15 +247,11 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
                   <Lightbulb className="h-4 w-4" />
                   <AlertTitle>AI Suggestie: Prioriteit '{prioritySuggestion.output.priority}'</AlertTitle>
                   <AlertDescription>{prioritySuggestion.output.reasoning}</AlertDescription>
-                  {!priorityFeedbackGiven ? (
-                    <div className="flex items-center gap-1 mt-2 pt-2 border-t">
-                      <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestPriorityFlow', prioritySuggestion.output, prioritySuggestion.input, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestPriorityFlow', prioritySuggestion.output, prioritySuggestion.input, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>
-                  )}
+                  <AIFeedback
+                    flowName="suggestPriorityFlow"
+                    input={prioritySuggestion.input}
+                    output={prioritySuggestion.output}
+                  />
                 </Alert>
               )}
               <FormMessage />
@@ -312,15 +279,11 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
                                 <Lightbulb className="h-4 w-4" />
                                 <AlertTitle>AI Suggestie: {pointsSuggestion.output.points} Story Points</AlertTitle>
                                 <AlertDescription>{pointsSuggestion.output.reasoning}</AlertDescription>
-                                {!pointsFeedbackGiven ? (
-                                    <div className="flex items-center gap-1 mt-2 pt-2 border-t">
-                                        <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestStoryPointsFlow', pointsSuggestion.output, pointsSuggestion.input, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestStoryPointsFlow', pointsSuggestion.output, pointsSuggestion.input, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>
-                                )}
+                                <AIFeedback
+                                    flowName="suggestStoryPointsFlow"
+                                    input={pointsSuggestion.input}
+                                    output={pointsSuggestion.output}
+                                />
                             </Alert>
                         )}
                         <FormMessage />
@@ -398,15 +361,11 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
                   <Lightbulb className="h-4 w-4" />
                   <AlertTitle>Voorgestelde Labels</AlertTitle>
                   <AlertDescription>De AI stelt de volgende labels voor: {labelsSuggestion.output.labels.join(', ')}</AlertDescription>
-                  {!labelsFeedbackGiven ? (
-                    <div className="flex items-center gap-1 mt-2 pt-2 border-t">
-                      <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestLabelsFlow', labelsSuggestion.output, labelsSuggestion.input, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestLabelsFlow', labelsSuggestion.output, labelsSuggestion.input, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>
-                  )}
+                  <AIFeedback
+                    flowName="suggestLabelsFlow"
+                    input={labelsSuggestion.input}
+                    output={labelsSuggestion.output}
+                  />
                 </Alert>
               )}
               <FormMessage />
