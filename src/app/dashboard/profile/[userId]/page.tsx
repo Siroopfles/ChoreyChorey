@@ -16,6 +16,7 @@ import TaskCard from '@/components/chorey/task-card';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { KudosDialog } from '@/components/chorey/kudos-dialog';
+import { useOrganization } from '@/contexts/organization-context';
 
 const achievementIcons: Record<string, React.ElementType> = {
     'first_task': Rocket,
@@ -30,12 +31,13 @@ const achievementIcons: Record<string, React.ElementType> = {
 export default function UserProfilePage() {
     const { userId } = useParams();
     const router = useRouter();
-    const { users, user: currentUser, loading: authLoading, projects } = useAuth();
+    const { user: currentUser, loading: authLoading } = useAuth();
+    const { users, projects, loading: orgLoading } = useOrganization();
     const { tasks, loading: tasksLoading } = useTasks();
     const [kudosDialogOpen, setKudosDialogOpen] = useState(false);
 
     const user = useMemo(() => {
-        if (!userId) return null;
+        if (!userId || !users) return null;
         return users.find(u => u.id === userId) || null;
     }, [userId, users]);
 
@@ -48,7 +50,7 @@ export default function UserProfilePage() {
         return userTasks.filter(t => t.status === 'Voltooid').length;
     }, [userTasks]);
     
-    if (authLoading || tasksLoading) {
+    if (authLoading || tasksLoading || orgLoading) {
         return (
           <div className="flex h-full w-full items-center justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin" />
