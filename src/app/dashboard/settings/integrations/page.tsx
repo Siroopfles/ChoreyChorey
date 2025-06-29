@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowLeft, KeyRound, Webhook, Zap, HelpCircle, Bookmark } from 'lucide-react';
+import { Loader2, ArrowLeft, KeyRound, Webhook, Zap, HelpCircle, Bookmark, Mail } from 'lucide-react';
 import { PERMISSIONS } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ import BitbucketSettings from '@/components/chorey/settings/bitbucket-settings';
 import JiraSettings from '@/components/chorey/settings/jira-settings';
 import TogglOrgSettings from '@/components/chorey/settings/toggl-org-settings';
 import ClockifyOrgSettings from '@/components/chorey/settings/clockify-org-settings';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 export default function IntegrationsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserPermissions } = useAuth();
@@ -109,6 +111,49 @@ export default function IntegrationsPage() {
         <TogglOrgSettings organization={currentOrganization} />
         <ClockifyOrgSettings organization={currentOrganization} />
 
+        <Separator />
+
+        <h2 className="text-xl font-semibold">E-mail Integratie</h2>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Mail /> Email naar Taak Gateway</CardTitle>
+                <CardDescription>
+                    Maak taken aan door een e-mail te sturen naar een speciaal adres. Dit is handig voor integratie met diensten die alleen e-mailnotificaties kunnen sturen.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Alert>
+                    <AlertTitle>Hoe werkt het?</AlertTitle>
+                    <AlertDescription>
+                        <ol className="list-decimal list-inside space-y-2 mt-2">
+                            <li>
+                                Stel een 'inbound mail' of 'mail webhook' route in bij uw e-mailprovider (bv. Mailgun, SendGrid).
+                            </li>
+                            <li>
+                                Configureer de provider om de inkomende e-mail door te sturen (via POST) naar de onderstaande Webhook URL. Zorg ervoor dat u het geheime token in de URL opneemt.
+                            </li>
+                            <li>
+                                Stuur een e-mail. De onderwerpregel wordt de taaktitel, de body wordt de omschrijving, en het `Aan:`-adres wordt gebruikt voor de routering.
+                            </li>
+                        </ol>
+                    </AlertDescription>
+                </Alert>
+                <div className="space-y-1">
+                    <Label>Webhook URL</Label>
+                    <Input readOnly value="https://uw-app-url.com/api/webhooks/mailgun?secret=UW_GEHEIME_SLEUTEL" />
+                    <p className="text-xs text-muted-foreground">
+                        Vervang `uw-app-url.com` door uw domein en `UW_GEHEIME_SLEUTEL` door de waarde van `WEBHOOK_SECRET` in uw <code>.env</code> bestand.
+                    </p>
+                </div>
+                <div className="space-y-1">
+                    <Label>Voorbeeld 'Aan:' Adres</Label>
+                    <Input readOnly value="o-orgid-p-projid-u-userid@in.chorey.app" />
+                    <p className="text-xs text-muted-foreground">
+                        De parameters `p` (project) en `u` (gebruiker) zijn optioneel. De `o` (organisatie) parameter is vereist.
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
 
         <Separator />
 
