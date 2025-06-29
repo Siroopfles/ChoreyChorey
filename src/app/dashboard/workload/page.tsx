@@ -1,8 +1,8 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,7 +22,8 @@ import { useTheme } from 'next-themes';
 const CAPACITY_THRESHOLD = 8;
 
 export default function WorkloadPage() {
-    const { user, currentOrganization, users } = useAuth();
+    const { user } = useAuth();
+    const { currentOrganization, users } = useOrganization();
     const [isBalancerLoading, setIsBalancerLoading] = useState(false);
     const [isChartLoading, setIsChartLoading] = useState(true);
     const [balancerResult, setBalancerResult] = useState('');
@@ -54,6 +55,8 @@ export default function WorkloadPage() {
     }, [currentOrganization, date]);
 
     const { chartData, allUserNames } = useMemo(() => {
+        if (!users) return { chartData: [], allUserNames: [] };
+
         const userNames = new Set<string>();
         const usersById = new Map(users.map(u => [u.id, u]));
 
@@ -110,7 +113,7 @@ export default function WorkloadPage() {
         setBalancerResult('');
         setBalancerError('');
 
-        const selectedUser = users.find(u => u.id === selectedUserId);
+        const selectedUser = users?.find(u => u.id === selectedUserId);
         if (!selectedUser) {
             setBalancerError("Geselecteerde gebruiker niet gevonden.");
             setIsBalancerLoading(false);
@@ -236,7 +239,7 @@ export default function WorkloadPage() {
                                 <SelectValue placeholder="Selecteer een gebruiker..." />
                             </SelectTrigger>
                             <SelectContent>
-                                {users.map(u => (
+                                {users?.map(u => (
                                     <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                                 ))}
                             </SelectContent>
