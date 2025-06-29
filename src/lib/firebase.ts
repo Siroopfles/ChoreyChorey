@@ -2,22 +2,15 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import { env } from "@/lib/env";
 
 const firebaseConfig = {
-  apiKey: env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCzZ1xucTPlspcWMlqXsPebyq6AaLmY8_c",
+  authDomain: "chorey-15s2w.firebaseapp.com",
+  projectId: "chorey-15s2w",
+  storageBucket: "chorey-15s2w.appspot.com",
+  messagingSenderId: "270880422233",
+  appId: "1:270880422233:web:d463ded50065113a477448",
 };
-
-// For easier debugging in the development environment
-if (process.env.NODE_ENV === 'development') {
-    console.log("Firebase Config:", firebaseConfig);
-}
-
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
