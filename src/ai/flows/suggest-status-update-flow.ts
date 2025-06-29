@@ -2,9 +2,13 @@
 /**
  * @fileOverview AI agent that suggests task status updates based on activity.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { SuggestStatusUpdateInputSchema, SuggestStatusUpdateOutputSchema } from '@/ai/schemas';
 import type { SuggestStatusUpdateInput, SuggestStatusUpdateOutput } from '@/ai/schemas';
+
+const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-status-update.prompt'), 'utf-8');
 
 export async function suggestStatusUpdate(input: SuggestStatusUpdateInput): Promise<SuggestStatusUpdateOutput> {
   return suggestStatusUpdateFlow(input);
@@ -15,36 +19,7 @@ const prompt = ai.definePrompt({
   input: { schema: SuggestStatusUpdateInputSchema },
   output: { schema: SuggestStatusUpdateOutputSchema },
   model: 'gemini-pro',
-  prompt: `Je bent een AI-assistent in een taakbeheersysteem die statuswijzigingen voorstelt op basis van activiteit.
-
-Analyseer de volgende gebeurtenis met betrekking tot een taak:
-- Taak Titel: {{{taskTitle}}}
-- Huidige Status: {{{currentStatus}}}
-- Beschikbare Statussen: {{#each availableStatuses}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
-
-Gebeurtenis Details:
----
-- Type: {{{event.type}}}
-{{#if event.comment}}
-- Reactie: "{{{event.comment}}}"
-{{/if}}
-{{#if event.prTitle}}
-- Pull Request Titel: "{{{prTitle}}}"
-{{/if}}
-{{#if event.commitMessage}}
-- Commit Bericht: "{{{commitMessage}}}"
-{{/if}}
----
-
-Jouw taak:
-1.  Analyseer de gebeurtenis. Zoek naar trefwoorden die een statuswijziging impliceren.
-    - Reacties zoals "Ik ben begonnen", "Ik pak dit op" kunnen duiden op 'In Uitvoering'.
-    - Reacties zoals "Klaar", "Done", "Fixed" of een commit bericht met "fix(..):" kunnen duiden op 'In Review' of 'Voltooid'.
-    - Een gemergde pull request duidt meestal op 'In Review' of 'Voltooid'.
-2.  Bepaal of een statuswijziging logisch is. Verander de status niet als de gebeurtenis niet relevant is voor de voortgang (bijv. een vraag stellen) of als de taak al in een logische eindstatus is.
-3.  Als een wijziging wordt voorgesteld, zet 'shouldUpdate' op true, geef de 'newStatus' op en een korte 'reasoning'.
-4.  Als er geen wijziging nodig is, zet 'shouldUpdate' op false en leg kort uit waarom niet.
-`,
+  prompt: promptText,
 });
 
 const suggestStatusUpdateFlow = ai.defineFlow(

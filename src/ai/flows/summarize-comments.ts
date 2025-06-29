@@ -2,9 +2,13 @@
 /**
  * @fileOverview AI agent that summarizes task comments.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { SummarizeCommentsInputSchema, SummarizeCommentsOutputSchema } from '@/ai/schemas';
 import type { SummarizeCommentsInput, SummarizeCommentsOutput } from '@/ai/schemas';
+
+const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/summarize-comments.prompt'), 'utf-8');
 
 export async function summarizeComments(input: SummarizeCommentsInput): Promise<SummarizeCommentsOutput> {
   return summarizeCommentsFlow(input);
@@ -15,15 +19,7 @@ const prompt = ai.definePrompt({
   input: { schema: SummarizeCommentsInputSchema },
   output: { schema: SummarizeCommentsOutputSchema },
   model: 'gemini-pro',
-  prompt: `Je bent een efficiënte assistent. Analyseer de volgende reeks van comments uit een taak en vat de discussie, de belangrijkste punten en de uiteindelijke beslissingen beknopt samen.
-
-Comments:
-{{#each comments}}
-- {{{this}}}
-{{/each}}
-
-Geef alleen de samenvatting.
-`,
+  prompt: promptText,
 });
 
 const summarizeCommentsFlow = ai.defineFlow(

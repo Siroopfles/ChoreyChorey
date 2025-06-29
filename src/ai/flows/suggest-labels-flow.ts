@@ -5,13 +5,16 @@
  * - SuggestLabelsInput - The input type for the suggestLabels function.
  * - SuggestLabelsOutput - The return type for the suggestLabels function.
  */
-
+import fs from 'node:fs';
+import path from 'node:path';
 import {ai} from '@/ai/genkit';
 import { SuggestLabelsInputSchema, SuggestLabelsOutputSchema } from '@/ai/schemas';
 import type { SuggestLabelsInput, SuggestLabelsOutput } from '@/ai/schemas';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Organization } from '@/lib/types';
+
+const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-labels.prompt'), 'utf-8');
 
 export async function suggestLabels(input: Omit<SuggestLabelsInput, 'availableLabels'> & { organizationId: string }): Promise<SuggestLabelsOutput> {
   const orgDoc = await getDoc(doc(db, 'organizations', input.organizationId));
@@ -33,17 +36,7 @@ const prompt = ai.definePrompt({
   input: {schema: SuggestLabelsInputSchema},
   output: {schema: SuggestLabelsOutputSchema},
   model: 'gemini-pro',
-  prompt: `Je bent een expert in taakbeheer. Analyseer de titel en omschrijving van de volgende taak en kies 1 tot 3 relevante labels uit de onderstaande lijst.
-
-Beschikbare labels: {{#each availableLabels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
-
-Taak Titel: {{{title}}}
-{{#if description}}
-Taak Omschrijving: {{{description}}}
-{{/if}}
-
-Zorg ervoor dat de uitvoer alleen een JSON-object is met een "labels" array van strings, waarbij de strings exact overeenkomen met de labels uit de lijst. Geef alleen labels terug die echt relevant zijn.
-`,
+  prompt: promptText,
 });
 
 const suggestLabelsFlow = ai.defineFlow(

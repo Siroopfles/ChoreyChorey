@@ -3,12 +3,16 @@
  * @fileOverview An AI agent for generating user avatars.
  * - generateAvatar - a function that creates a unique avatar for a user.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { GenerateAvatarInputSchema, GenerateAvatarOutputSchema } from '@/ai/schemas';
 import type { GenerateAvatarInput, GenerateAvatarOutput } from '@/ai/schemas';
 import { storage } from '@/lib/firebase';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { compressImage } from '@/lib/utils';
+
+const promptTemplate = fs.readFileSync(path.resolve('./src/ai/prompts/generate-avatar.prompt'), 'utf-8');
 
 export async function generateAvatar(input: GenerateAvatarInput): Promise<GenerateAvatarOutput> {
   return generateAvatarFlow(input);
@@ -21,9 +25,10 @@ const generateAvatarFlow = ai.defineFlow(
     outputSchema: GenerateAvatarOutputSchema,
   },
   async ({ userId, name }) => {
+    const promptText = promptTemplate.replace('{{name}}', name);
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate a unique, abstract, geometric, vibrant, flat-style avatar for a user named '${name}'. The avatar should be simple, clean, and suitable for a profile picture. Avoid using any text or recognizable faces. The style should be modern and professional. Use a colorful but harmonious palette.`,
+      prompt: promptText,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },

@@ -3,11 +3,15 @@
  * @fileOverview An AI agent that generates a project status report.
  * - generateProjectReport - A function that handles the project report generation process.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { GenerateProjectReportInputSchema, GenerateProjectReportOutputSchema } from '@/ai/schemas';
 import type { GenerateProjectReportInput, GenerateProjectReportOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
 import { z } from 'genkit';
+
+const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/generate-project-report.prompt'), 'utf-8');
 
 export async function generateProjectReport(input: GenerateProjectReportInput): Promise<GenerateProjectReportOutput> {
   return generateProjectReportFlow(input);
@@ -18,35 +22,7 @@ const prompt = ai.definePrompt({
     input: { schema: z.object({ projectName: z.string(), tasks: z.any() }) },
     output: { schema: GenerateProjectReportOutputSchema },
     model: 'gemini-pro',
-    prompt: `Je bent een ervaren projectcoördinator. Jouw taak is om een gedetailleerd en professioneel voortgangsrapport op te stellen voor het project "{{{projectName}}}".
-
-Analyseer de volgende lijst met taken die bij dit project horen. De data is in JSON-formaat.
----
-{{{json tasks}}}
----
-
-Stel een rapport op in Markdown-formaat. Het rapport moet de volgende secties bevatten:
-
-### Samenvatting
-Een korte, algehele samenvatting van de projectstatus.
-
-### Voortgangsstatistieken
--   Totaal aantal taken.
--   Taken voltooid, in uitvoering, te doen, etc. (geef percentages).
-
-### Belangrijke Prestaties
-Lijst van recent voltooide taken die significant zijn.
-
-### Aankomende Mijlpalen
-Lijst van belangrijke taken met een naderende deadline.
-
-### Risico's en Knelpunten
--   Identificeer taken die te laat zijn (overdue).
--   Identificeer taken met hoge prioriteit die nog niet zijn gestart.
--   Wijs op mogelijke knelpunten waar veel taken op één persoon of status wachten.
-
-Schrijf het rapport in het Nederlands. Wees beknopt maar informatief.
-`,
+    prompt: promptText,
 });
 
 

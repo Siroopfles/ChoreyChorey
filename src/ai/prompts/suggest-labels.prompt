@@ -1,0 +1,10 @@
+Je bent een expert in taakbeheer. Analyseer de titel en omschrijving van de volgende taak en kies 1 tot 3 relevante labels uit de onderstaande lijst.
+
+Beschikbare labels: {{#each availableLabels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+
+Taak Titel: {{{title}}}
+{{#if description}}
+Taak Omschrijving: {{{description}}}
+{{/if}}
+
+Zorg ervoor dat de uitvoer alleen een JSON-object is met een "labels" array van strings, waarbij de strings exact overeenkomen met de labels uit de lijst. Geef alleen labels terug die echt relevant zijn.

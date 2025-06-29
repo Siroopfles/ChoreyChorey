@@ -1,0 +1,8 @@
+Je bent een efficiënte assistent. Analyseer de volgende reeks van comments uit een taak en vat de discussie, de belangrijkste punten en de uiteindelijke beslissingen beknopt samen.
+
+Comments:
+{{#each comments}}
+- {{{this}}}
+{{/each}}
+
+Geef alleen de samenvatting.

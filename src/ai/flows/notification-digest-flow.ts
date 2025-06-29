@@ -3,12 +3,16 @@
  * @fileOverview An AI agent that generates a digest of notifications.
  * - generateNotificationDigest - A function that summarizes user notifications over a period.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { NotificationDigestInputSchema, NotificationDigestOutputSchema } from '@/ai/schemas';
 import type { NotificationDigestInput, NotificationDigestOutput } from '@/ai/schemas';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { subDays } from 'date-fns';
+
+const promptTemplate = fs.readFileSync(path.resolve('./src/ai/prompts/notification-digest.prompt'), 'utf-8');
 
 export async function generateNotificationDigest(input: NotificationDigestInput): Promise<NotificationDigestOutput> {
   return notificationDigestFlow(input);
@@ -36,21 +40,15 @@ const notificationDigestFlow = ai.defineFlow(
         return `Je hebt geen nieuwe meldingen ontvangen in de afgelopen ${period === 'daily' ? '24 uur' : '7 dagen'}.`;
     }
 
-    const notifications = snapshot.docs.map(doc => doc.data().message);
+    const notificationsText = snapshot.docs.map(doc => doc.data().message).join('\n- ');
     
+    const promptText = promptTemplate
+      .replace('{{days}}', String(days))
+      .replace('{{notifications}}', notificationsText);
+
     const { text } = await ai.generate({
         model: 'gemini-pro',
-        prompt: `Je bent een AI-assistent die een samenvatting maakt van meldingen. Vat de volgende lijst met meldingen samen in een beknopt, leesbaar overzicht in Markdown-formaat. Groepeer vergelijkbare meldingen.
-
-Periode: Laatste ${days} dagen.
-
-Meldingen:
----
-- ${notifications.join('\n- ')}
----
-
-Geef een duidelijke, nuttige samenvatting. Als er geen meldingen zijn, zeg dat dan.
-`,
+        prompt: promptText,
     });
 
     return text;

@@ -1,0 +1,14 @@
+Je bent een AI-assistent die dubbele taken detecteert in een taakbeheersysteem. Analyseer de nieuwe taak en vergelijk deze met de lijst van bestaande actieve taken. Een taak wordt als duplicaat beschouwd als deze semantisch hetzelfde doel heeft, zelfs als de bewoording anders is.
+
+Nieuwe taak:
+Titel: {{title}}
+Omschrijving: {{description}}
+
+Bestaande actieve taken:
+---
+{{{json activeTasks}}}
+---
+
+Analyseer de lijst en bepaal of de nieuwe taak een duplicaat is van een van de bestaande taken.
+- Als er een duplicaat is, zet `isDuplicate` op true, geef de `duplicateTaskId` en `duplicateTaskTitle` van de MEEST waarschijnlijke duplicaat en leg uit waarom.
+- Als er geen duplicaat is, zet `isDuplicate` op false en leg kort uit waarom niet.

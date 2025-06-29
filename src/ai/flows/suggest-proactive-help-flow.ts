@@ -3,10 +3,13 @@
  * @fileOverview An AI agent that proactively offers assistance for complex tasks.
  * - suggestProactiveHelp - A function that analyzes a task to see if help should be offered.
  */
-
+import fs from 'node:fs';
+import path from 'node:path';
 import {ai} from '@/ai/genkit';
 import {SuggestProactiveHelpInputSchema, SuggestProactiveHelpOutputSchema} from '@/ai/schemas';
 import type {SuggestProactiveHelpInput, SuggestProactiveHelpOutput} from '@/ai/schemas';
+
+const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-proactive-help.prompt'), 'utf-8');
 
 export async function suggestProactiveHelp(input: SuggestProactiveHelpInput): Promise<SuggestProactiveHelpOutput> {
   return suggestProactiveHelpFlow(input);
@@ -17,41 +20,7 @@ const prompt = ai.definePrompt({
   input: {schema: SuggestProactiveHelpInputSchema},
   output: {schema: SuggestProactiveHelpOutputSchema},
   model: 'gemini-pro',
-  prompt: `Je bent een proactieve AI-assistent in een taakbeheerapp. Je doel is om te bepalen of een gebruiker hulp kan gebruiken bij het opstellen van een taak.
-
-Analyseer de titel en omschrijving van de taak.
-- Als de taak complex, vaag of groot lijkt (bv. "Nieuwe marketingcampagne opzetten", "Organiseer het bedrijfsuitje", "Onderzoek concurrenten"), bied dan hulp aan.
-- Als de taak eenvoudig en duidelijk is (bv. "Bel de tandarts", "Koop melk"), bied dan geen hulp aan.
-
-Jouw taken:
-1.  Zet \`shouldOfferHelp\` op \`true\` als de taak complex is, anders \`false\`.
-2.  Als je hulp aanbiedt, schrijf dan een korte, aanmoedigende \`reason\` waarom hulp nuttig kan zijn (bv. "Dit lijkt een grotere taak. Zal ik hem voor je opdelen in kleinere stappen?").
-3.  Bepaal het meest nuttige type suggestie: \`suggestionType\`.
-    - Gebruik \`subtasks\` voor taken die opgedeeld kunnen worden.
-    - Gebruik \`story_points\` voor taken waarbij een inschatting van de inspanning nuttig lijkt.
-    - Gebruik \`none\` als je geen hulp aanbiedt.
-
-Voorbeeld 1:
-Titel: "App Lanceren"
-Omschrijving: "De nieuwe mobiele app lanceren op iOS en Android."
-Output: { "shouldOfferHelp": true, "reason": "Een app-lancering omvat veel stappen. Ik kan helpen door een checklist met subtaken voor je te maken.", "suggestionType": "subtasks" }
-
-Voorbeeld 2:
-Titel: "Bug fixen in login"
-Omschrijving: "Gebruikers kunnen niet inloggen met social media."
-Output: { "shouldOfferHelp": true, "reason": "Het oplossen van bugs kan lastig in te schatten zijn. Ik kan een suggestie doen voor de Story Points.", "suggestionType": "story_points" }
-
-Voorbeeld 3:
-Titel: "Planten water geven"
-Omschrijving: ""
-Output: { "shouldOfferHelp": false, "reason": "", "suggestionType": "none" }
-
-Taak:
-Titel: {{{title}}}
-{{#if description}}
-Omschrijving: {{{description}}}
-{{/if}}
-`,
+  prompt: promptText,
 });
 
 const suggestProactiveHelpFlow = ai.defineFlow(

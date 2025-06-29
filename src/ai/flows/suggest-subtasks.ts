@@ -6,10 +6,13 @@
  * - SuggestSubtasksInput - The input type for the suggestSubtasks function.
  * - SuggestSubtasksOutput - The return type for the suggestSubtasks function.
  */
-
+import fs from 'node:fs';
+import path from 'node:path';
 import {ai} from '@/ai/genkit';
 import { SuggestSubtasksInputSchema, SuggestSubtasksOutputSchema } from '@/ai/schemas';
 import type { SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/schemas';
+
+const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-subtasks.prompt'), 'utf-8');
 
 export async function suggestSubtasks(input: SuggestSubtasksInput): Promise<SuggestSubtasksOutput> {
   return suggestSubtasksFlow(input);
@@ -20,15 +23,7 @@ const prompt = ai.definePrompt({
   input: {schema: SuggestSubtasksInputSchema},
   output: {schema: SuggestSubtasksOutputSchema},
   model: 'gemini-pro',
-  prompt: `Je bent een efficiënte projectmanager. Jouw taak is om een hoofdtaak op te splitsen in kleinere, uitvoerbare subtaken.
-
-Hoofdtaak Titel: {{{title}}}
-{{#if description}}
-Hoofdtaak Omschrijving: {{{description}}}
-{{/if}}
-
-Geef een lijst met logische subtaken die nodig zijn om deze hoofdtaak te voltooien. Zorg ervoor dat de uitvoer alleen een JSON-object is met een "subtasks" array van strings.
-`,
+  prompt: promptText,
 });
 
 const suggestSubtasksFlow = ai.defineFlow(

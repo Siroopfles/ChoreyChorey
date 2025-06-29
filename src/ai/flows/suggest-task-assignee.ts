@@ -7,12 +7,14 @@
  * - SuggestTaskAssigneeInput - The input type for the suggestTaskAssignee function.
  * - SuggestTaskAssigneeOutput - The return type for the suggestTaskAssignee function.
  */
-
+import fs from 'node:fs';
+import path from 'node:path';
 import {ai} from '@/ai/genkit';
 import { SuggestTaskAssigneeInputSchema, SuggestTaskAssigneeOutputSchema } from '@/ai/schemas';
 import type { SuggestTaskAssigneeInput, SuggestTaskAssigneeOutput } from '@/ai/schemas';
 import type { User, Task } from '@/lib/types';
 
+const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-task-assignee.prompt'), 'utf-8');
 
 function getTaskHistory(allTasks: Task[], allUsers: User[]) {
     const userMap = new Map(allUsers.map(u => [u.id, u]));
@@ -54,28 +56,7 @@ const prompt = ai.definePrompt({
   input: {schema: SuggestTaskAssigneeInputSchema},
   output: {schema: SuggestTaskAssigneeOutputSchema},
   model: 'gemini-pro',
-  prompt: `Je bent een AI-assistent voor het toewijzen van taken. Je doel is om de optimale persoon voor te stellen voor een bepaalde taak, rekening houdend met hun historische prestaties en vaardigheden.
-
-Taakomschrijving: {{{taskDescription}}}
-
-{{#if assigneeSkills}}
-Beschikbare Toewijzers en hun vaardigheden:
-{{#each assigneeSkills}}
-- {{@key}}: {{#if this}}{{#each this}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}Geen specifieke vaardigheden.{{/if}}
-{{/each}}
-{{/if}}
-
-{{#if taskHistory}}
-Taakgeschiedenis:
-{{#each taskHistory}}
-- Toegewezen aan: {{{assignee}}}, Taak: {{{taskDescription}}}, Voltooiingstijd: {{{completionTime}}} uur
-{{/each}}
-{{else}}
-Geen taakgeschiedenis beschikbaar.
-{{/if}}
-
-Analyseer de taakomschrijving en de vaardigheden van de beschikbare toewijzers. Geef prioriteit aan de persoon wiens vaardigheden het beste aansluiten bij de taak. Gebruik de taakgeschiedenis als een secundaire factor. Stel op basis hiervan de beste toewijzer voor en leg je redenering beknopt uit.
-`, 
+  prompt: promptText, 
 });
 
 const suggestTaskAssigneeFlow = ai.defineFlow(

@@ -3,7 +3,8 @@
  * @fileOverview An AI agent for generating images related to a task.
  * - generateTaskImage - A function that creates an image based on a task's title and description.
  */
-
+import fs from 'node:fs';
+import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { GenerateTaskImageInputSchema, GenerateTaskImageOutputSchema } from '@/ai/schemas';
 import type { GenerateTaskImageInput, GenerateTaskImageOutput } from '@/ai/schemas';
@@ -12,6 +13,8 @@ import { db, storage } from '@/lib/firebase';
 import type { Organization } from '@/lib/types';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { compressImage } from '@/lib/utils';
+
+const promptTemplate = fs.readFileSync(path.resolve('./src/ai/prompts/generate-task-image.prompt'), 'utf-8');
 
 export async function generateTaskImage(input: Omit<GenerateTaskImageInput, 'primaryColor'> & { organizationId: string }): Promise<GenerateTaskImageOutput> {
   const orgDoc = await getDoc(doc(db, 'organizations', input.organizationId));
@@ -31,11 +34,11 @@ const generateTaskImageFlow = ai.defineFlow(
       ? `The image should subtly incorporate the primary brand color hsl(${primaryColor}) as an accent or in the overall color palette to maintain a consistent visual style.`
       : '';
 
-    const promptText = `You are a creative visual artist. Generate a single, compelling, photorealistic image that visually represents the following task. The image should be clean, professional, and directly related to the task's content. Do not include any text in the image. ${colorInstruction}
+    const promptText = promptTemplate
+      .replace('{{colorInstruction}}', colorInstruction)
+      .replace('{{title}}', title)
+      .replace('{{description}}', description ? `Task Description: ${description}` : '');
 
-Task Title: ${title}
-${description ? `Task Description: ${description}` : ''}
-`;
 
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
