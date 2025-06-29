@@ -12,11 +12,12 @@ import { Loader2, ArrowLeft, Trophy, CheckCircle, Award, Rocket, Users, Heart, S
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ACHIEVEMENTS, statusStyles } from '@/lib/types';
-import TaskCard from '@/components/chorey/task-card';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { KudosDialog } from '@/components/chorey/kudos-dialog';
 import { useOrganization } from '@/contexts/organization-context';
+import EditTaskDialog from '@/components/chorey/edit-task-dialog';
+import type { Task } from '@/lib/types';
 
 const achievementIcons: Record<string, React.ElementType> = {
     'first_task': Rocket,
@@ -35,6 +36,7 @@ export default function UserProfilePage() {
     const { users, projects, loading: orgLoading } = useOrganization();
     const { tasks, loading: tasksLoading } = useTasks();
     const [kudosDialogOpen, setKudosDialogOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
 
     const user = useMemo(() => {
         if (!userId || !users) return null;
@@ -74,6 +76,7 @@ export default function UserProfilePage() {
     
     const status = user.status?.type || 'Offline';
     const statusStyle = statusStyles[status] || statusStyles.Offline;
+    const activeTasks = userTasks.filter(t => t.status !== 'Voltooid' && t.status !== 'Geannuleerd').sort((a, b) => (a.order || 0) - (b.order || 0));
 
     return (
         <div className="space-y-6">
@@ -107,35 +110,43 @@ export default function UserProfilePage() {
                                     </Button>
                                 )}
                             </div>
+                            {(user.location || user.website || user.timezone) && (
+                                <>
+                                    <Separator className="my-4" />
+                                    <div className="space-y-3 text-sm text-left">
+                                        {user.location && <div className="flex items-center gap-3"><MapPin className="h-4 w-4 text-muted-foreground"/><span>{user.location}</span></div>}
+                                        {user.website && <div className="flex items-center gap-3"><Globe className="h-4 w-4 text-muted-foreground"/><a href={user.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">{user.website}</a></div>}
+                                        {user.timezone && <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-muted-foreground"/><span>{user.timezone}</span></div>}
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
+                </div>
 
-                    <Card>
-                        <CardHeader><CardTitle>Statistieken</CardTitle></CardHeader>
-                        <CardContent className="grid grid-cols-2 gap-4">
-                             <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-secondary">
-                                <Trophy className="h-6 w-6 text-amber-500"/>
-                                <span className="text-xl font-bold">{user.points?.toLocaleString() || 0}</span>
-                                <span className="text-xs text-muted-foreground">Punten</span>
-                            </div>
-                             <div className="flex flex-col items-center gap-1 p-2 rounded-md bg-secondary">
-                                <CheckCircle className="h-6 w-6 text-green-500"/>
-                                <span className="text-xl font-bold">{completedTasksCount}</span>
-                                <span className="text-xs text-muted-foreground">Taken Voltooid</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                     {(user.location || user.website || user.timezone) && (
+                {/* Right Column - Activity */}
+                <div className="lg:col-span-2 space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card>
-                            <CardContent className="pt-6 space-y-3 text-sm">
-                                {user.location && <div className="flex items-center gap-3"><MapPin className="h-4 w-4 text-muted-foreground"/><span>{user.location}</span></div>}
-                                {user.website && <div className="flex items-center gap-3"><Globe className="h-4 w-4 text-muted-foreground"/><a href={user.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">{user.website}</a></div>}
-                                {user.timezone && <div className="flex items-center gap-3"><Clock className="h-4 w-4 text-muted-foreground"/><span>{user.timezone}</span></div>}
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Totaal Punten</CardTitle>
+                                <Trophy className="h-4 w-4 text-muted-foreground text-amber-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{user.points?.toLocaleString() || 0}</div>
                             </CardContent>
                         </Card>
-                    )}
-                    
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Taken Voltooid</CardTitle>
+                                <CheckCircle className="h-4 w-4 text-muted-foreground text-green-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{completedTasksCount}</div>
+                            </CardContent>
+                        </Card>
+                     </div>
+
                     {user.skills && user.skills.length > 0 && (
                         <Card>
                             <CardHeader><CardTitle>Vaardigheden</CardTitle></CardHeader>
@@ -158,20 +169,24 @@ export default function UserProfilePage() {
                             </CardContent>
                         </Card>
                     )}
-                </div>
 
-                {/* Right Column - Activity */}
-                <div className="lg:col-span-2 space-y-6">
                      <Card>
                         <CardHeader>
-                            <CardTitle>Actieve Taken ({userTasks.filter(t => t.status !== 'Voltooid' && t.status !== 'Geannuleerd').length})</CardTitle>
+                            <CardTitle>Actieve Taken ({activeTasks.length})</CardTitle>
                             <CardDescription>Taken waar {user.name} momenteel aan werkt.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            {userTasks.filter(t => t.status !== 'Voltooid' && t.status !== 'Geannuleerd').length > 0 ? (
-                                userTasks.filter(t => t.status !== 'Voltooid' && t.status !== 'Geannuleerd')
-                                  .sort((a, b) => (a.order || 0) - (b.order || 0))
-                                  .map(task => <TaskCard key={task.id} task={task} users={users} currentUser={currentUser} projects={projects} />)
+                        <CardContent className="space-y-2">
+                            {activeTasks.length > 0 ? (
+                                activeTasks.map(task => (
+                                    <button
+                                        key={task.id}
+                                        onClick={() => setEditingTask(task)}
+                                        className="w-full text-left flex items-center justify-between rounded-lg border p-3 hover:bg-accent transition-colors"
+                                    >
+                                        <p className="font-medium">{task.title}</p>
+                                        <Badge variant="outline">{task.status}</Badge>
+                                    </button>
+                                ))
                             ) : (
                                 <p className="text-center text-muted-foreground py-4">Geen actieve taken.</p>
                             )}
@@ -184,6 +199,14 @@ export default function UserProfilePage() {
                     open={kudosDialogOpen}
                     onOpenChange={setKudosDialogOpen}
                     recipient={user}
+                />
+            )}
+             {editingTask && (
+                <EditTaskDialog
+                  isOpen={!!editingTask}
+                  setIsOpen={(isOpen) => { if (!isOpen) setEditingTask(null); }}
+                  task={editingTask}
+                  users={users}
                 />
             )}
         </div>
