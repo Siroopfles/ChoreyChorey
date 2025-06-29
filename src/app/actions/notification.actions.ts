@@ -2,9 +2,9 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, doc, addDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, getDoc, Timestamp, query, where, getDocs, limit } from 'firebase/firestore';
 import type { User, Task, Priority, Organization } from '@/lib/types';
-import { isAfter } from 'date-fns';
+import { isAfter, subMinutes } from 'date-fns';
 import { sendSlackMessage } from '@/lib/slack-service';
 import { sendTeamsMessage } from '@/lib/teams-service';
 import { sendDiscordMessage } from '@/lib/discord-service';
@@ -61,6 +61,23 @@ export async function createNotification(userId: string, message: string, taskId
                 console.log(`Notification for ${userData.name} suppressed due to priority threshold.`);
                 return; // Suppress notification because task priority is below user's threshold
             }
+        }
+    }
+
+    // Notification Bundling: Check if a similar notification was sent recently.
+    if (taskId) {
+        const fiveMinutesAgo = subMinutes(new Date(), 5);
+        const recentNotifsQuery = query(
+            collection(db, 'notifications'),
+            where('userId', '==', userId),
+            where('taskId', '==', taskId),
+            where('createdAt', '>=', Timestamp.fromDate(fiveMinutesAgo)),
+            limit(1)
+        );
+        const recentNotifsSnapshot = await getDocs(recentNotifsQuery);
+        if (!recentNotifsSnapshot.empty) {
+            console.log(`Notification for ${userData.name} on task ${taskId} bundled. Suppressing new notification.`);
+            return; // Found a recent notification, so we bundle by doing nothing.
         }
     }
       
