@@ -1,10 +1,11 @@
 'use server';
 import type { GitLabLink } from './types';
+import { env } from '@/lib/env';
 
 const gitlabApiBase = 'https://gitlab.com/api/v4';
 
 async function fetchGitLab(path: string, options: RequestInit = {}) {
-    const token = process.env.GITLAB_TOKEN;
+    const token = env.GITLAB_TOKEN;
     if (!token) {
         throw new Error('GitLab token (GITLAB_TOKEN) is not configured in environment variables.');
     }

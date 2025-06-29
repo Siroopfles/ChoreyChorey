@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import type { Organization, Task, GitHubLink } from '@/lib/types';
 import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
 import { createNotification } from '@/app/actions/notification.actions';
+import { env } from '@/lib/env';
 
 async function verifySignature(request: NextRequest): Promise<{ isValid: boolean; body?: any }> {
   try {
@@ -17,7 +18,7 @@ async function verifySignature(request: NextRequest): Promise<{ isValid: boolean
       return { isValid: false };
     }
     
-    const secret = process.env.GITHUB_WEBHOOK_SECRET;
+    const secret = env.GITHUB_WEBHOOK_SECRET;
     if (!secret) {
       console.error('GitHub webhook: GITHUB_WEBHOOK_SECRET is not set in environment variables.');
       return { isValid: false }; 
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
                     return NextResponse.json({ success: true, message: 'Webhook processed, but org not found.' });
                 }
                 const orgData = orgDoc.data() as Organization;
-                const availableStatuses = orgData.settings?.customization?.statuses || [];
+                const availableStatuses = (orgData.settings?.customization?.statuses || []).map(s => s.name);
 
                 for (const taskDoc of snapshot.docs) {
                     const task = taskDoc.data() as Task;
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
                         const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
                         if (!orgDoc.exists()) continue; 
                         const orgData = orgDoc.data() as Organization;
-                        const availableStatuses = orgData.settings?.customization?.statuses || [];
+                        const availableStatuses = (orgData.settings?.customization?.statuses || []).map(s => s.name);
 
                         for (const taskId of taskIds) {
                             await linkItemToTask(taskId, newLink, organizationId);

@@ -3,6 +3,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { addCommentAction } from '@/app/actions/task.actions';
 import { JIRA_BOT_USER_ID, JIRA_BOT_USER_NAME } from '@/lib/constants';
+import { env } from '@/lib/env';
 
 export async function POST(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
     const secret = searchParams.get('secret');
 
     // Basic secret validation to ensure the request is coming from a trusted source
-    if (!process.env.WEBHOOK_SECRET || secret !== process.env.WEBHOOK_SECRET) {
+    if (!env.WEBHOOK_SECRET || secret !== env.WEBHOOK_SECRET) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -2,10 +2,11 @@
 'use server';
 
 import type { JiraLink } from './types';
+import { env } from '@/lib/env';
 
-const baseUrl = process.env.JIRA_BASE_URL;
-const email = process.env.JIRA_USER_EMAIL;
-const apiToken = process.env.JIRA_API_TOKEN;
+const baseUrl = env.JIRA_BASE_URL;
+const email = env.JIRA_USER_EMAIL;
+const apiToken = env.JIRA_API_TOKEN;
 
 async function fetchJira(path: string, options: RequestInit = {}) {
     if (!baseUrl || !email || !apiToken) {

@@ -2,9 +2,10 @@
 'use server';
 
 import { Octokit } from '@octokit/rest';
+import { env } from '@/lib/env';
 
 const octokit = new Octokit({
-  auth: process.env.GITHUB_TOKEN,
+  auth: env.GITHUB_TOKEN,
 });
 
 export async function searchIssuesAndPRs(owner: string, repo: string, query: string) {

@@ -2,12 +2,13 @@
 'use server';
 
 import type { BitbucketLink } from './types';
+import { env } from '@/lib/env';
 
 const bitbucketApiBase = 'https://api.bitbucket.org/2.0';
 
 async function fetchBitbucket(path: string, options: RequestInit = {}) {
-    const username = process.env.BITBUCKET_USERNAME;
-    const appPassword = process.env.BITBUCKET_APP_PASSWORD;
+    const username = env.BITBUCKET_USERNAME;
+    const appPassword = env.BITBUCKET_APP_PASSWORD;
 
     if (!username || !appPassword) {
         throw new Error('Bitbucket credentials (BITBUCKET_USERNAME, BITBUCKET_APP_PASSWORD) are not configured in environment variables.');

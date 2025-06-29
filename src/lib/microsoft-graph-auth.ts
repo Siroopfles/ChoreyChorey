@@ -1,12 +1,13 @@
 
 import { ConfidentialClientApplication, Configuration, LogLevel } from '@azure/msal-node';
+import { env } from '@/lib/env';
 
 export function getMicrosoftAuthClient() {
     const msalConfig: Configuration = {
         auth: {
-            clientId: process.env.MICROSOFT_CLIENT_ID!,
-            authority: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID!}`,
-            clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+            clientId: env.MICROSOFT_CLIENT_ID!,
+            authority: `https://login.microsoftonline.com/${env.MICROSOFT_TENANT_ID!}`,
+            clientSecret: env.MICROSOFT_CLIENT_SECRET!,
         },
         system: {
             loggerOptions: {
@@ -23,4 +24,4 @@ export function getMicrosoftAuthClient() {
 }
 
 export const scopes = ['offline_access', 'User.Read', 'Calendars.ReadWrite'];
-export const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/api/oauth/microsoft/callback`;
+export const redirectUri = `${env.NEXT_PUBLIC_BASE_URL}/api/oauth/microsoft/callback`;
