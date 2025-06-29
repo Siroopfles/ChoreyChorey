@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -42,7 +43,7 @@ export default function TrashPage() {
 
     const handleDelete = (taskId: string) => {
         deleteTaskPermanently(taskId);
-        toast({ title: "Taak Verwijderd", description: "De taak is permanent verwijderd.", variant: "destructive" });
+        toast({ title: "Taak Permanent Verwijderd", description: "De taak is permanent verwijderd.", variant: "destructive" });
     };
     
     if (authLoading || tasksLoading) {

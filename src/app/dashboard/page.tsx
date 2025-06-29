@@ -58,8 +58,8 @@ export default function DashboardPage() {
             .then(result => {
                 if (result.error) {
                     toast({ title: "Fout bij laden feed", description: result.error, variant: 'destructive'});
-                } else if (result.feed) {
-                    setActivityFeedItems(result.feed);
+                } else if (result.data) {
+                    setActivityFeedItems(result.data.feed);
                 }
             })
             .finally(() => setIsFeedLoading(false));
@@ -95,8 +95,8 @@ export default function DashboardPage() {
     if (groupBy === 'status') {
       const statuses = currentOrganization?.settings?.customization?.statuses || [];
       return statuses.map(status => ({
-        title: status,
-        tasks: tasksToGroup.filter(task => task.status === status).sort((a,b) => a.order - b.order)
+        title: status.name,
+        tasks: tasksToGroup.filter(task => task.status === status.name).sort((a,b) => a.order - b.order)
       }));
     }
     if (groupBy === 'assignee') {
@@ -118,7 +118,7 @@ export default function DashboardPage() {
       return sortedEntries.map(([title, tasks]) => ({ title, tasks: tasks.sort((a,b) => a.order - b.order) }));
     }
     if (groupBy === 'priority') {
-      const priorities = currentOrganization?.settings?.customization?.priorities || [];
+      const priorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
       return priorities.map(priority => ({
         title: priority,
         tasks: tasksToGroup.filter(task => task.priority === priority).sort((a,b) => a.order - b.order)
@@ -179,10 +179,6 @@ export default function DashboardPage() {
     { value: 'project', label: 'Project', icon: Briefcase },
   ]
   const CurrentGroupIcon = groupByOptions.find(o => o.value === groupBy)?.icon || Columns;
-
-  if (loading) {
-    return <TaskColumnsSkeleton />;
-  }
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -289,8 +285,10 @@ export default function DashboardPage() {
           <TabsTrigger value="gantt">Gantt</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="flex-1 mt-4 overflow-hidden">
-          {groupedTasks.length > 0 ? (
-            <TaskColumns groupedTasks={groupedTasks} groupBy={groupBy} users={users} currentUser={currentUser} projects={projects} />
+          {loading ? (
+            <TaskColumnsSkeleton />
+          ) : groupedTasks.length > 0 ? (
+            <TaskColumns groupedTasks={groupedTasks} groupBy={groupBy} />
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-full">
                 <h3 className="text-2xl font-bold tracking-tight">Geen taken gevonden</h3>
@@ -314,7 +312,7 @@ export default function DashboardPage() {
            </Suspense>
         </TabsContent>
         <TabsContent value="calendar" className="flex-1 mt-4 overflow-y-auto">
-          <CalendarView tasks={filteredTasks} />
+          <CalendarView tasks={filteredTasks} users={users} />
         </TabsContent>
         <TabsContent value="gantt" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<GanttViewSkeleton />}>

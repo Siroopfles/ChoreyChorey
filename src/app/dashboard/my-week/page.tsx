@@ -12,7 +12,7 @@ import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 
 export default function MyWeekPage() {
     const { tasks, loading: tasksLoading } = useTasks();
-    const { user, users, loading: authLoading, teams, projects } = useAuth();
+    const { user, users, loading: authLoading, projects } = useAuth();
 
     const weekTasks = useMemo(() => {
         if (!user) return [];
