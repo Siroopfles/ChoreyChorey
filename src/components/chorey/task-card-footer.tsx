@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { Task, User, Project } from '@/lib/types';
+import type { Task, User, Project, Priority } from '@/lib/types';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useTasks } from '@/contexts/task-context';
@@ -208,7 +208,7 @@ export function TaskCardFooter({
                                 <div className="p-1">
                                     <p className="font-semibold mb-1">Geblokkeerd door:</p>
                                     <ul className="list-disc list-inside text-xs space-y-1">
-                                        {blockedByTasks.map(blockerTask => (
+                                        {(blockedByTasks || []).map(blockerTask => (
                                             <li key={blockerTask.id} className={cn(blockerTask.status === 'Voltooid' && 'text-muted-foreground')}>
                                                 {blockerTask.title} ({blockerTask.status})
                                             </li>
@@ -219,7 +219,7 @@ export function TaskCardFooter({
                         </Tooltip>
                     </TooltipProvider>
                 )}
-                {blockingTasks.length > 0 && (
+                {(blockingTasks || []).length > 0 && (
                     <TooltipProvider>
                         <Tooltip>
                         <TooltipTrigger asChild>
