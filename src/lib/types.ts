@@ -445,6 +445,15 @@ export type HistoryEntry = {
     details?: string;
 }
 
+export const taskRelationTypeSchema = z.enum(['related_to', 'duplicate_of']);
+export type TaskRelationType = z.infer<typeof taskRelationTypeSchema>;
+
+export const taskRelationSchema = z.object({
+  taskId: z.string(),
+  type: taskRelationTypeSchema,
+});
+export type TaskRelation = z.infer<typeof taskRelationSchema>;
+
 export type Task = {
   id: string;
   title: string;
@@ -469,6 +478,7 @@ export type Task = {
   storyPoints?: number;
   cost?: number;
   blockedBy?: string[];
+  relations?: TaskRelation[];
   dependencyConfig?: { [taskId: string]: { lag: number; unit: 'days' | 'hours' } };
   recurring?: Recurring;
   organizationId: string;
@@ -568,6 +578,7 @@ export const taskFormSchema = z.object({
   storyPoints: z.coerce.number().optional(),
   cost: z.coerce.number().optional(),
   blockedBy: z.array(z.string().min(1, 'ID mag niet leeg zijn.')).optional(),
+  relations: z.array(taskRelationSchema).optional(),
   dependencyConfig: z.record(z.string(), z.object({ lag: z.coerce.number(), unit: z.enum(['days', 'hours']) })).optional(),
   recurring: recurringSchema.optional(),
   imageDataUri: z.string().optional(),

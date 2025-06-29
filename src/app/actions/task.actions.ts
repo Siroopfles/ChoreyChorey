@@ -190,6 +190,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           storyPoints: taskData.storyPoints ?? null,
           cost: taskData.cost ?? null,
           blockedBy: taskData.blockedBy || [],
+          relations: taskData.relations || [],
           dependencyConfig: taskData.dependencyConfig || {},
           recurring: taskData.recurring ?? null,
           organizationId: organizationId,
@@ -319,6 +320,13 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         }
         if (updates.jiraLinks) {
             finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);
+        }
+        if (updates.relations) {
+            const oldRelations = taskToUpdate.relations?.map(r => `${r.type}:${r.taskId}`).sort().join(',') || '';
+            const newRelations = updates.relations.map(r => `${r.type}:${r.taskId}`).sort().join(',') || '';
+            if (oldRelations !== newRelations) {
+                newHistory.push(addHistoryEntry(userId, `Relaties gewijzigd`));
+            }
         }
 
         const fieldsToTrack: (keyof Task)[] = ['status', 'priority', 'dueDate', 'title', 'projectId', 'reviewerId', 'cost'];
@@ -911,6 +919,7 @@ export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtas
             isSensitive: parentTask.isSensitive,
             storyPoints: undefined,
             blockedBy: [],
+            relations: [],
             recurring: undefined,
             thanked: false,
             timeLogged: 0,

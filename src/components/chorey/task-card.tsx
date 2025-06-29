@@ -184,6 +184,16 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
       .filter((t): t is Task => !!t);
   }, [task.blockedBy, allTasks]);
 
+  const relatedTasks = useMemo(() => {
+    return (task.relations || [])
+      .map(relation => {
+        const relatedTask = allTasks.find(t => t.id === relation.taskId);
+        return relatedTask ? { ...relation, title: relatedTask.title } : null;
+      })
+      .filter(Boolean);
+  }, [task.relations, allTasks]);
+
+
   const isBlocked = useMemo(() => {
     if (blockedByTasks.length === 0) return false;
     return blockedByTasks.some(blockerTask => {
@@ -719,6 +729,24 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                                 <p className="font-semibold mb-1">Blokkeert de volgende taken:</p>
                                 <ul className="list-disc list-inside text-xs space-y-1">
                                 {blockingTasks.map(t => <li key={t.id}>{t.title}</li>)}
+                                </ul>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                     {relatedTasks && relatedTasks.length > 0 && (
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-gray-500 font-semibold">
+                                    <GitBranch className="h-3 w-3 rotate-90" />
+                                    <span>{relatedTasks.length}</span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p className="font-semibold mb-1">Gerelateerde Taken:</p>
+                                <ul className="list-disc list-inside text-xs space-y-1">
+                                {relatedTasks.map(relation => <li key={relation!.taskId}>{relation!.title} ({relation!.type === 'duplicate_of' ? 'duplicaat' : 'gerelateerd'})</li>)}
                                 </ul>
                             </TooltipContent>
                             </Tooltip>

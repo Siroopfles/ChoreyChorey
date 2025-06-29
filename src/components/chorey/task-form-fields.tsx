@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import type { User, Project, Task, SuggestPriorityOutput, CustomFieldDefinition } from '@/lib/types';
+import type { User, Project, Task, SuggestPriorityOutput, CustomFieldDefinition, TaskRelation, TaskRelationType } from '@/lib/types';
 import { useState, useEffect, useMemo } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight, ThumbsUp, ThumbsDown, Settings2, Euro, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Loader2, Tags, Check, X, Repeat, Users, ImageIcon, Link as LinkIcon, AlertTriangle, Lock, Unlock, EyeOff, HandHeart, MessageSquare, Mail, Briefcase, CornerUpRight, ThumbsUp, ThumbsDown, Settings2, Euro, Clock, GitBranch } from 'lucide-react';
 import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -135,6 +134,40 @@ const CustomFieldInput = ({ fieldDef }: { fieldDef: CustomFieldDefinition }) => 
     }
 }
 
+function AddRelationPopover({ onSelect }: { onSelect: (task: Task) => void }) {
+    const { tasks } = useTasks();
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+
+    const availableTasks = tasks.filter(t => t.title.toLowerCase().includes(search.toLowerCase()));
+    
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button type="button" variant="outline" size="sm" className="w-full justify-start text-muted-foreground">
+                    <LinkIcon className="mr-2 h-4 w-4"/>
+                    Zoek en koppel een taak...
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                <Command>
+                    <CommandInput placeholder="Zoek taak..." value={search} onValueChange={setSearch} />
+                    <CommandList>
+                        <CommandEmpty>Geen taken gevonden.</CommandEmpty>
+                        <CommandGroup>
+                            {availableTasks.slice(0, 10).map(t => (
+                                <CommandItem key={t.id} onSelect={() => { onSelect(t); setOpen(false); }}>
+                                    {t.title}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    )
+}
+
 export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
@@ -178,6 +211,11 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const { fields: blockedByFields, append: appendBlockedBy, remove: removeBlockedBy } = useFieldArray({
     control: form.control,
     name: "blockedBy",
+  });
+
+  const { fields: relationFields, append: appendRelation, remove: removeRelation } = useFieldArray({
+      control: form.control,
+      name: 'relations',
   });
   
   const [depPopoverOpen, setDepPopoverOpen] = useState(false);
@@ -412,6 +450,16 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
     
     setIsCheckingForDuplicates(false);
   };
+
+  const handleAddRelation = (relatedTask: Task, type: TaskRelationType) => {
+    const currentRelations = form.getValues('relations') || [];
+    if(currentRelations.some(r => r.taskId === relatedTask.id)) {
+        toast({ title: 'Taak al gekoppeld', description: 'Deze taak heeft al een relatie.', variant: 'default' });
+        return;
+    }
+    appendRelation({ taskId: relatedTask.id, type });
+  };
+
 
   return (
     <div className="space-y-4">
@@ -1259,6 +1307,32 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
       </div>
       
       <Separator />
+
+      <div className="space-y-2">
+          <UiLabel>Taak Relaties</UiLabel>
+          <div className="space-y-2">
+            {relationFields.map((field, index) => {
+                const relation = form.watch(`relations.${index}`) as TaskRelation;
+                const relatedTask = tasks.find(t => t.id === relation.taskId);
+                return (
+                    <div key={field.id} className="flex items-center justify-between gap-2 rounded-md border p-2 text-sm">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                           <GitBranch className="h-4 w-4 text-muted-foreground shrink-0"/>
+                           <Badge variant="outline" className="shrink-0">{relation.type === 'related_to' ? 'Gerelateerd' : 'Duplicaat'}</Badge>
+                           <span className="truncate">{relatedTask?.title || 'Onbekende taak'}</span>
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeRelation(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
+                )
+            })}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+              <AddRelationPopover onSelect={(task) => handleAddRelation(task, 'related_to')} />
+              <AddRelationPopover onSelect={(task) => handleAddRelation(task, 'duplicate_of')} />
+          </div>
+      </div>
       
       <div>
           <UiLabel>Geblokkeerd door</UiLabel>
