@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -17,6 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
 const THEMES = [
@@ -83,7 +85,7 @@ export default function ShopPage() {
           <h1 className="text-3xl font-bold flex items-center gap-2"><Store /> Puntenwinkel</h1>
           <p className="text-muted-foreground">Wissel je verdiende punten in voor coole cosmetische items!</p>
         </div>
-        <div className="border rounded-lg p-2 px-4 bg-card font-semibold flex items-center gap-2">
+        <div className="border rounded-lg p-2 px-4 font-semibold flex items-center gap-2">
             <Coins className="h-5 w-5 text-amber-500"/>
             <span>Je hebt {(user.points || 0).toLocaleString()} punten</span>
         </div>
