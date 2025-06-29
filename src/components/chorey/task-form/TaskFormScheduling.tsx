@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFormContext } from 'react-hook-form';
@@ -15,9 +14,9 @@ import { Input } from '@/components/ui/input';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 
 export function TaskFormScheduling() {
-    const { control, setValue } = useFormContext();
+    const { control, setValue, watch } = useFormContext();
 
-    const recurring = control.getValues('recurring');
+    const recurring = watch('recurring');
     const recurringFrequency = recurring?.frequency;
     const monthlyRecurringType = recurring?.monthly?.type;
 
