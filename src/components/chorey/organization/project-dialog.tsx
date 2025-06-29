@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
+import { HelpTooltip } from '@/components/ui/help-tooltip';
 
 const projectSchema = z.object({
     name: z.string().min(2, 'Projectnaam moet minimaal 2 karakters bevatten.'),
@@ -252,10 +253,10 @@ export function ProjectDialog({ organizationId, project, allTeams, children, ope
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                 <div className="space-y-0.5">
-                                    <FormLabel>Gevoelig Project</FormLabel>
-                                    <FormDescription>
-                                        Taken in dit project zijn enkel zichtbaar voor leden met speciale permissies.
-                                    </FormDescription>
+                                    <div className="flex items-center">
+                                      <FormLabel>Gevoelig Project</FormLabel>
+                                      <HelpTooltip content="Taken in dit project zijn enkel zichtbaar voor leden met de 'Bekijk Gevoelige Data' permissie." />
+                                    </div>
                                 </div>
                                 <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                 </FormItem>
@@ -268,10 +269,10 @@ export function ProjectDialog({ organizationId, project, allTeams, children, ope
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                                     <div className="space-y-0.5">
-                                        <FormLabel>Publiek Zichtbaar</FormLabel>
-                                        <FormDescription>
-                                            Maak een read-only versie van dit project's bord deelbaar via een openbare link.
-                                        </FormDescription>
+                                        <div className="flex items-center">
+                                          <FormLabel>Publiek Zichtbaar</FormLabel>
+                                          <HelpTooltip content="Maakt een read-only versie van dit project's bord deelbaar via een openbare link. Gevoelige taken worden nooit getoond." />
+                                        </div>
                                     </div>
                                     <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                     </FormItem>

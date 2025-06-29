@@ -55,6 +55,9 @@ const createProjectHandler = async (
       teamIds: body.teamIds || [],
       isSensitive: body.isSensitive || false,
       isPublic: body.isPublic || false,
+      budget: body.budget,
+      budgetType: body.budgetType,
+      deadline: body.deadline ? new Date(body.deadline) : undefined,
     };
 
     const docRef = await addDoc(collection(db, 'projects'), newProject);
