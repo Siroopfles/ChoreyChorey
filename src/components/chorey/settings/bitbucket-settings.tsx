@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { BitbucketIcon } from '../provider-icons';
+
 
 const bitbucketSchema = z.object({
   workspace: z.string().min(1, 'Workspace is vereist.'),
@@ -22,10 +24,10 @@ const bitbucketSchema = z.object({
 });
 type BitbucketFormValues = z.infer<typeof bitbucketSchema>;
 
-const BitbucketIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 text-blue-600">
-        <path d="M2.531 2.375l8.594 19.25-2.093 0.938-6.5-14.563v13.625h-2.125v-19.25h2.125zM22.563 15.188l-4.125-2.531-2.031 3.406 6.156-3.75zM12.969 4.313l-1.031 2.313-4.5-2.75 5.531-3.625z"></path>
-    </svg>
+const BitbucketSettingsIcon = () => (
+    <div className="h-6 w-6 text-blue-600">
+        <BitbucketIcon />
+    </div>
 );
 
 
@@ -69,7 +71,7 @@ export default function BitbucketSettings({ organization }: { organization: Orga
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <BitbucketIcon /> Bitbucket Integratie
+          <BitbucketSettingsIcon /> Bitbucket Integratie
         </CardTitle>
         <CardDescription>
           Koppel taken aan Bitbucket issues door uw repositories te configureren.

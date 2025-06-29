@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe, Clock, Gitlab } from 'lucide-react';
+import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
-import { JiraIcon, BitbucketIcon, ClockifyIcon } from '../provider-icons';
+import { JiraIcon, BitbucketIcon, ClockifyIcon, GitLabIcon } from '../provider-icons';
 
 
 const featureSchema = z.object({
@@ -111,7 +111,7 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       { name: 'toggl', icon: Clock, label: 'Toggl Integratie', description: 'Sta gebruikers toe om hun Toggl-account te koppelen voor tijdregistratie.' },
       { name: 'clockify', icon: () => <ClockifyIcon className="h-6 w-6" />, label: 'Clockify Integratie', description: 'Sta gebruikers toe om hun Clockify-account te koppelen voor tijdregistratie.' },
       { name: 'jira', icon: () => <JiraIcon className="h-6 w-6 text-[#0052CC]" />, label: 'Jira Integratie', description: 'Sta toe dat taken gekoppeld worden aan Jira issues.' },
-      { name: 'gitlab', icon: Gitlab, label: 'GitLab Integratie', description: 'Sta toe dat taken gekoppeld worden aan GitLab issues en MRs.' },
+      { name: 'gitlab', icon: () => <GitLabIcon className="h-6 w-6" />, label: 'GitLab Integratie', description: 'Sta toe dat taken gekoppeld worden aan GitLab issues en MRs.' },
       { name: 'bitbucket', icon: () => <BitbucketIcon className="h-6 w-6 text-blue-600" />, label: 'Bitbucket Integratie', description: 'Sta toe dat taken gekoppeld worden aan Bitbucket issues.' },
   ];
 
