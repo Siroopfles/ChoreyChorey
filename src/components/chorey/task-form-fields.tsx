@@ -6,7 +6,7 @@ import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Bot, X } from 'lucide-react';
+import { Loader2, Bot, X, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { findDuplicateTask } from '@/ai/flows/find-duplicate-task-flow';
 import { suggestProactiveHelp } from '@/ai/flows/suggest-proactive-help-flow';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -17,6 +17,8 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { TaskFormDetails } from './task-form/TaskFormDetails';
 import { TaskFormSubtasks } from './task-form/TaskFormSubtasks';
 import { TaskFormAdvanced } from './task-form/TaskFormAdvanced';
+import { useToast } from '@/hooks/use-toast';
+import { submitAiFeedback } from '@/app/actions/feedback.actions';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -26,12 +28,15 @@ type TaskFormFieldsProps = {
 
 export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const form = useFormContext();
-  const { currentOrganization } = useAuth();
+  const { user, currentOrganization } = useAuth();
+  const { toast } = useToast();
 
   const [isCheckingForDuplicates, setIsCheckingForDuplicates] = useState(false);
-  const [duplicateResult, setDuplicateResult] = useState<FindDuplicateTaskOutput | null>(null);
+  const [duplicateResult, setDuplicateResult] = useState<{ output: FindDuplicateTaskOutput, input: any } | null>(null);
+  const [duplicateFeedbackGiven, setDuplicateFeedbackGiven] = useState(false);
   
-  const [proactiveHelp, setProactiveHelp] = useState<SuggestProactiveHelpOutput | null>(null);
+  const [proactiveHelp, setProactiveHelp] = useState<{ output: SuggestProactiveHelpOutput, input: any } | null>(null);
+  const [proactiveHelpFeedbackGiven, setProactiveHelpFeedbackGiven] = useState(false);
   const [isCheckingComplexity, setIsCheckingComplexity] = useState(false);
 
   const title = form.watch('title');
@@ -51,8 +56,9 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
       setIsCheckingComplexity(true);
       try {
         const result = await suggestProactiveHelp({ title: debouncedTitle, description: debouncedDescription });
-        if (result.shouldOfferHelp) {
+        if (result.output.shouldOfferHelp) {
           setProactiveHelp(result);
+          setProactiveHelpFeedbackGiven(false);
         } else {
           setProactiveHelp(null);
         }
@@ -72,6 +78,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
     if (!title || !currentOrganization) return;
     setIsCheckingForDuplicates(true);
     setDuplicateResult(null);
+    setDuplicateFeedbackGiven(false);
 
     const description = form.getValues('description');
     
@@ -87,6 +94,34 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
     }
     
     setIsCheckingForDuplicates(false);
+  };
+  
+  const handleDuplicateCheckFeedback = async (feedback: 'positive' | 'negative') => {
+    if (!user || !currentOrganization || !duplicateResult) return;
+    setDuplicateFeedbackGiven(true);
+    await submitAiFeedback({
+      flowName: 'findDuplicateTaskFlow',
+      input: duplicateResult.input,
+      output: duplicateResult.output,
+      feedback,
+      userId: user.id,
+      organizationId: currentOrganization.id,
+    });
+    toast({ title: 'Feedback ontvangen!'});
+  };
+
+  const handleProactiveHelpFeedback = async (feedback: 'positive' | 'negative') => {
+    if (!user || !currentOrganization || !proactiveHelp) return;
+    setProactiveHelpFeedbackGiven(true);
+    await submitAiFeedback({
+      flowName: 'suggestProactiveHelpFlow',
+      input: proactiveHelp.input,
+      output: proactiveHelp.output,
+      feedback,
+      userId: user.id,
+      organizationId: currentOrganization.id,
+    });
+    toast({ title: 'Feedback ontvangen!'});
   };
 
   return (
@@ -111,14 +146,23 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
             Controleer op Duplicaten (AI)
         </Button>
          {duplicateResult && (
-            <Alert variant={duplicateResult.isDuplicate ? 'destructive' : 'default'}>
+            <Alert variant={duplicateResult.output.isDuplicate ? 'destructive' : 'default'}>
               <Bot className="h-4 w-4" />
               <AlertTitle>
-                {duplicateResult.isDuplicate 
-                  ? `Mogelijk Duplicaat Gevonden: "${duplicateResult.duplicateTaskTitle}"` 
+                {duplicateResult.output.isDuplicate 
+                  ? `Mogelijk Duplicaat Gevonden: "${duplicateResult.output.duplicateTaskTitle}"` 
                   : "Geen Duplicaat Gevonden"}
               </AlertTitle>
-              <AlertDescription>{duplicateResult.reasoning}</AlertDescription>
+              <AlertDescription>{duplicateResult.output.reasoning}</AlertDescription>
+               {!duplicateFeedbackGiven ? (
+                <div className="flex items-center gap-1 mt-2 pt-2 border-t">
+                  <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
+                  <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDuplicateCheckFeedback('positive')}><ThumbsUp className="h-4 w-4" /></Button>
+                  <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDuplicateCheckFeedback('negative')}><ThumbsDown className="h-4 w-4" /></Button>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>
+              )}
             </Alert>
           )}
       </div>
@@ -157,12 +201,21 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
             </Button>
           </AlertTitle>
           <AlertDescription>
-            {proactiveHelp.reason}
+            {proactiveHelp.output.reason}
           </AlertDescription>
+          {!proactiveHelpFeedbackGiven ? (
+            <div className="flex items-center gap-1 mt-2 pt-2 border-t">
+              <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleProactiveHelpFeedback('positive')}><ThumbsUp className="h-4 w-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleProactiveHelpFeedback('negative')}><ThumbsDown className="h-4 w-4" /></Button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>
+          )}
         </Alert>
       )}
 
-      <TaskFormDetails users={users} projects={projects} proactiveHelpSuggestion={proactiveHelp?.suggestionType} />
+      <TaskFormDetails users={users} projects={projects} proactiveHelpSuggestion={proactiveHelp?.output.suggestionType} />
       
       <TaskFormSubtasks task={task} />
       

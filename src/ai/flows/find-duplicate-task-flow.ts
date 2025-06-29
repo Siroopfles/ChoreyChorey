@@ -12,8 +12,9 @@ import { searchTasks } from '@/ai/tools/task-tools';
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/find-duplicate-task.prompt'), 'utf-8');
 
-export async function findDuplicateTask(input: FindDuplicateTaskInput): Promise<FindDuplicateTaskOutput> {
-  return findDuplicateTaskFlow(input);
+export async function findDuplicateTask(input: FindDuplicateTaskInput): Promise<{ output: FindDuplicateTaskOutput, input: FindDuplicateTaskInput }> {
+  const output = await findDuplicateTaskFlow(input);
+  return { output, input };
 }
 
 const findDuplicateTaskFlow = ai.defineFlow(

@@ -11,8 +11,9 @@ import type {SuggestProactiveHelpInput, SuggestProactiveHelpOutput} from '@/ai/s
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-proactive-help.prompt'), 'utf-8');
 
-export async function suggestProactiveHelp(input: SuggestProactiveHelpInput): Promise<SuggestProactiveHelpOutput> {
-  return suggestProactiveHelpFlow(input);
+export async function suggestProactiveHelp(input: SuggestProactiveHelpInput): Promise<{ output: SuggestProactiveHelpOutput, input: SuggestProactiveHelpInput }> {
+  const output = await suggestProactiveHelpFlow(input);
+  return { output, input };
 }
 
 const prompt = ai.definePrompt({

@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import type { User, Project, SuggestPriorityOutput, SuggestStoryPointsOutput } from '@/lib/types';
@@ -43,22 +41,22 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
   const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
 
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
-  const [pointsSuggestion, setPointsSuggestion] = useState<SuggestStoryPointsOutput | null>(null);
+  const [pointsSuggestion, setPointsSuggestion] = useState<{ output: SuggestStoryPointsOutput, input: any } | null>(null);
   const [pointsFeedbackGiven, setPointsFeedbackGiven] = useState(false);
   const [isSuggestingPriority, setIsSuggestingPriority] = useState(false);
-  const [prioritySuggestion, setPrioritySuggestion] = useState<SuggestPriorityOutput | null>(null);
+  const [prioritySuggestion, setPrioritySuggestion] = useState<{ output: SuggestPriorityOutput, input: any } | null>(null);
   const [priorityFeedbackGiven, setPriorityFeedbackGiven] = useState(false);
   const [isSuggestingLabels, setIsSuggestingLabels] = useState(false);
   
-  const handleFeedback = async (flowName: string, output: any, feedback: 'positive' | 'negative') => {
+  const handleFeedback = async (flowName: string, output: any, input: any, feedback: 'positive' | 'negative') => {
     if (!user || !currentOrganization) return;
     
-    if (flowName === 'suggestStoryPoints') setPointsFeedbackGiven(true);
-    if (flowName === 'suggestPriority') setPriorityFeedbackGiven(true);
+    if (flowName === 'suggestStoryPointsFlow') setPointsFeedbackGiven(true);
+    if (flowName === 'suggestPriorityFlow') setPriorityFeedbackGiven(true);
 
     const result = await submitAiFeedback({
         flowName,
-        input: { title: form.getValues('title'), description: form.getValues('description') },
+        input,
         output,
         feedback,
         userId: user.id,
@@ -82,11 +80,12 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
         return;
     }
     setIsSuggestingPoints(true);
+    setPointsSuggestion(null);
+    setPointsFeedbackGiven(false);
     try {
-        const suggestion = await suggestStoryPoints(title, currentOrganization.id, description);
-        form.setValue('storyPoints', suggestion.points);
-        setPointsSuggestion(suggestion);
-        setPointsFeedbackGiven(false);
+        const result = await suggestStoryPoints(title, currentOrganization.id, description);
+        form.setValue('storyPoints', result.output.points);
+        setPointsSuggestion(result);
     } catch (e: any) {
         toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
     }
@@ -102,11 +101,11 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
     }
     setIsSuggestingPriority(true);
     setPrioritySuggestion(null);
+    setPriorityFeedbackGiven(false);
     try {
-        const suggestion = await suggestPriority({ title, description, availablePriorities: allPriorities });
-        form.setValue('priority', suggestion.priority);
-        setPrioritySuggestion(suggestion);
-        setPriorityFeedbackGiven(false);
+        const result = await suggestPriority({ title, description, availablePriorities: allPriorities });
+        form.setValue('priority', result.output.priority);
+        setPrioritySuggestion(result);
     } catch(e: any) {
         toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
     }
@@ -261,12 +260,12 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
               </div>
               {prioritySuggestion && (
                 <Alert className="mt-2">
-                  <AlertDescription>{prioritySuggestion.reasoning}</AlertDescription>
+                  <AlertDescription>{prioritySuggestion.output.reasoning}</AlertDescription>
                   {!priorityFeedbackGiven ? (
                     <div className="flex items-center gap-1 mt-2 pt-2 border-t">
                       <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestPriority', prioritySuggestion, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestPriority', prioritySuggestion, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestPriorityFlow', prioritySuggestion.output, prioritySuggestion.input, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestPriorityFlow', prioritySuggestion.output, prioritySuggestion.input, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>
@@ -295,12 +294,12 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
                         </div>
                         {pointsSuggestion && (
                             <Alert className="mt-2">
-                                <AlertDescription>{pointsSuggestion.reasoning}</AlertDescription>
+                                <AlertDescription>{pointsSuggestion.output.reasoning}</AlertDescription>
                                 {!pointsFeedbackGiven ? (
                                     <div className="flex items-center gap-1 mt-2 pt-2 border-t">
                                         <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestStoryPoints', pointsSuggestion, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
-                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestStoryPoints', pointsSuggestion, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestStoryPointsFlow', pointsSuggestion.output, pointsSuggestion.input, 'positive')}><ThumbsUp className="h-4 w-4" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('suggestStoryPointsFlow', pointsSuggestion.output, pointsSuggestion.input, 'negative')}><ThumbsDown className="h-4 w-4" /></Button>
                                     </div>
                                 ) : (
                                     <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Bedankt voor je feedback!</p>

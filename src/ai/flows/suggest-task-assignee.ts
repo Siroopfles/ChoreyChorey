@@ -36,9 +36,10 @@ function getTaskHistory(allTasks: Task[], allUsers: User[]) {
     }).filter(th => th.completionTime > 0);
 };
 
-export async function suggestTaskAssignee(taskDescription: string, orgUsers: User[], allTasks: Task[]): Promise<SuggestTaskAssigneeOutput> {
+export async function suggestTaskAssignee(taskDescription: string, orgUsers: User[], allTasks: Task[]): Promise<{ output: SuggestTaskAssigneeOutput, input: SuggestTaskAssigneeInput }> {
   if (orgUsers.length === 0) {
-      return { suggestedAssignee: 'Niemand', reasoning: 'Er zijn geen gebruikers in deze organisatie om aan toe te wijzen.' };
+      const output = { suggestedAssignee: 'Niemand', reasoning: 'Er zijn geen gebruikers in deze organisatie om aan toe te wijzen.' };
+      return { output, input: { taskDescription } };
   }
 
   const assigneeSkills = orgUsers.reduce((acc, user) => {
@@ -47,8 +48,9 @@ export async function suggestTaskAssignee(taskDescription: string, orgUsers: Use
   }, {} as Record<string, string[]>);
   
   const taskHistory = getTaskHistory(allTasks, orgUsers);
-
-  return suggestTaskAssigneeFlow({ taskDescription, assigneeSkills, taskHistory });
+  const input = { taskDescription, assigneeSkills, taskHistory };
+  const output = await suggestTaskAssigneeFlow(input);
+  return { output, input };
 }
 
 const prompt = ai.definePrompt({

@@ -11,8 +11,9 @@ import type { SuggestPriorityInput, SuggestPriorityOutput } from '@/ai/schemas';
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-priority.prompt'), 'utf-8');
 
-export async function suggestPriority(input: SuggestPriorityInput): Promise<SuggestPriorityOutput> {
-  return suggestPriorityFlow(input);
+export async function suggestPriority(input: SuggestPriorityInput): Promise<{ output: SuggestPriorityOutput, input: SuggestPriorityInput }> {
+  const output = await suggestPriorityFlow(input);
+  return { output, input };
 }
 
 const prompt = ai.definePrompt({

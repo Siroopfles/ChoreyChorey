@@ -12,7 +12,7 @@ import { collection, getDocs, query, where, orderBy, limit } from 'firebase/fire
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-story-points.prompt'), 'utf-8');
 
-export async function suggestStoryPoints(title: string, organizationId: string, description?: string): Promise<SuggestStoryPointsOutput> {
+export async function suggestStoryPoints(title: string, organizationId: string, description?: string): Promise<{ output: SuggestStoryPointsOutput, input: SuggestStoryPointsInput }> {
   // RAG: Retrieve recent tasks with story points to provide context.
   const q = query(
       collection(db, 'tasks'),
@@ -33,8 +33,10 @@ export async function suggestStoryPoints(title: string, organizationId: string, 
           description: data.description,
           points: data.storyPoints,
       }));
-
-  return suggestStoryPointsFlow({ title, description, taskHistory });
+  
+  const input = { title, description, taskHistory };
+  const output = await suggestStoryPointsFlow(input);
+  return { output, input };
 }
 
 const prompt = ai.definePrompt({
