@@ -1,13 +1,10 @@
-
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/organization-context';
 import type { Webhook, WebhookEvent } from '@/lib/types';
 import { WEBHOOK_EVENTS } from '@/lib/types';
-import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,37 +19,13 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 
 export default function WebhookSettings() {
-  const { currentOrganization, user } = useAuth();
-  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { webhooks, loading, currentOrganization } = useOrganization();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
   const [secretDialog, setSecretDialog] = useState<{ open: boolean, webhook: Webhook | null, secret?: string }>({ open: false, webhook: null });
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!currentOrganization) {
-        setLoading(false);
-        return;
-    };
-
-    const q = query(collection(db, 'webhooks'), where('organizationId', '==', currentOrganization.id));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const webhooksData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: (doc.data().createdAt as any).toDate(),
-      } as Webhook));
-      setWebhooks(webhooksData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching webhooks:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [currentOrganization]);
-  
   const handleEdit = (webhook: Webhook) => {
     setEditingWebhook(webhook);
     setIsDialogOpen(true);

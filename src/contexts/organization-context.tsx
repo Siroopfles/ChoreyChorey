@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
-import type { Organization, Project, Team, User, RoleName, Permission } from '@/lib/types';
+import type { Organization, Project, Team, User, RoleName, Permission, Webhook } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from './auth-context';
@@ -16,6 +16,7 @@ type OrganizationContextType = {
   projects: Project[];
   teams: Team[];
   users: User[];
+  webhooks: Webhook[];
   currentUserRole: RoleName | null;
   currentUserPermissions: Permission[];
   toggleProjectPin: (projectId: string, isPinned: boolean) => Promise<void>;
@@ -29,6 +30,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<RoleName | null>(null);
   const [currentUserPermissions, setCurrentUserPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +55,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       setProjects([]);
       setTeams([]);
       setUsers([]);
+      setWebhooks([]);
       setCurrentUserRole(null);
       setCurrentUserPermissions([]);
       return;
@@ -76,9 +79,11 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     const projectsQuery = query(collection(db, 'projects'), where('organizationId', '==', currentOrgFromAuth.id));
     const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrgFromAuth.id));
     const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrgFromAuth.id));
+    const webhooksQuery = query(collection(db, 'webhooks'), where('organizationId', '==', currentOrgFromAuth.id));
 
     const unsubProjects = onSnapshot(projectsQuery, snapshot => setProjects(snapshot.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp)?.toDate(), deadline: (d.data().deadline as Timestamp)?.toDate() } as Project))), e => handleError(e, 'laden projecten'));
     const unsubTeams = onSnapshot(teamsQuery, snapshot => setTeams(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Team))), e => handleError(e, 'laden teams'));
+    const unsubWebhooks = onSnapshot(webhooksQuery, snapshot => setWebhooks(snapshot.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp)?.toDate() } as Webhook))), e => handleError(e, 'laden webhooks'));
     const unsubUsers = onSnapshot(usersQuery, snapshot => {
       setUsers(snapshot.docs.map(d => ({ ...d.data(), id: d.id, status: { ...d.data().status, until: (d.data().status?.until as Timestamp)?.toDate() }} as User)));
       setLoading(false); // Consider users the last essential data point for loading
@@ -91,6 +96,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       unsubProjects();
       unsubTeams();
       unsubUsers();
+      unsubWebhooks();
     };
   }, [user, organizations, authLoading]);
 
@@ -108,6 +114,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     projects,
     teams,
     users,
+    webhooks,
     currentUserRole,
     currentUserPermissions,
     toggleProjectPin,
