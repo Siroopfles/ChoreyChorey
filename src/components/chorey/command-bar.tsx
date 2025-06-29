@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -6,7 +7,7 @@ import { Search, Loader2, Mic } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { handleProcessCommand } from '@/app/actions/ai.actions';
+import { processCommand } from '@/ai/flows/process-command';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 
@@ -64,20 +65,20 @@ export default function CommandBar() {
 
         setIsLoading(true);
 
-        const response = await handleProcessCommand(command, user.id, currentOrganization.id, user.name);
-
-        if (response.error) {
-            toast({
-                title: 'AI Fout',
-                description: response.error,
-                variant: 'destructive',
-            });
-        } else if (response.result) {
+        try {
+            const result = await processCommand({ command, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
             toast({
                 title: 'AI Assistent',
-                description: response.result,
+                description: result,
+            });
+        } catch(error: any) {
+             toast({
+                title: 'AI Fout',
+                description: error.message,
+                variant: 'destructive',
             });
         }
+        
 
         setCommand('');
         setIsLoading(false);

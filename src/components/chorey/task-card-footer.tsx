@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Task, User, Project } from '@/lib/types';
@@ -37,7 +38,7 @@ import {
 } from 'lucide-react';
 import { calculatePoints } from '@/lib/utils';
 import { GitLabIcon, JiraIcon, BitbucketIcon } from './provider-icons';
-import { handleTextToSpeech } from '@/app/actions/ai.actions';
+import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -113,13 +114,13 @@ export function TaskCardFooter({
         e.preventDefault();
         setIsSynthesizing(true);
         try {
-          const result = await handleTextToSpeech(task.title);
+          const result = await textToSpeech(task.title);
           if (result.audioDataUri) {
             const audio = new Audio(result.audioDataUri);
             audio.play().catch(err => console.error("Audio play failed:", err)); // Add error handling for play()
             audio.onended = () => setIsSynthesizing(false);
           } else {
-            throw new Error(result.error || 'Geen audio data ontvangen');
+            throw new Error('Geen audio data ontvangen');
           }
         } catch (error: any) {
           toast({
