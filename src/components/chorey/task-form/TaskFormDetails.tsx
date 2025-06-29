@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, Project, SuggestPriorityOutput, SuggestStoryPointsOutput } from '@/lib/types';
@@ -16,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
 import { suggestPriority } from '@/ai/flows/suggest-priority';
 import { suggestLabels } from '@/ai/flows/suggest-labels-flow';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TaskAssignmentSuggestion } from '../task-assignment-suggestion';

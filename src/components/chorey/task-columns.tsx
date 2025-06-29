@@ -94,7 +94,7 @@ const TaskColumn = ({
             aria-label={title}
             className={cn(
                 "flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px] transition-colors",
-                showInvalidIndicator && "bg-destructive/10 cursor-not-allowed"
+                showInvalidIndicator && "bg-destructive/10 ring-2 ring-destructive cursor-not-allowed"
             )}
         >
             {tasks.map((task) => {
