@@ -13,7 +13,8 @@ import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { ProcessCommandInputSchema, ProcessCommandOutputSchema } from '@/ai/schemas';
 import type { ProcessCommandInput, ProcessCommandOutput } from '@/ai/schemas';
-import { createTask, searchTasks, updateTask, getUsers } from '@/ai/tools/task-tools';
+import { createTask, searchTasks, updateTask } from '@/ai/tools/task-tools';
+import { getUsers } from '@/ai/tools/user-tools';
 
 const promptTemplate = fs.readFileSync(path.resolve('./src/ai/prompts/process-command.prompt'), 'utf-8');
 

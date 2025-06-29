@@ -6,7 +6,8 @@
 import { ai } from '@/ai/genkit';
 import { EmailToTaskInputSchema, EmailToTaskOutputSchema } from '@/ai/schemas';
 import type { EmailToTaskInput, EmailToTaskOutput } from '@/ai/schemas';
-import { createTask, findUserByEmail } from '@/ai/tools/task-tools';
+import { createTask } from '@/ai/tools/task-tools';
+import { findUserByEmail } from '@/ai/tools/user-tools';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Project } from '@/lib/types';

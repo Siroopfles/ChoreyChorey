@@ -8,7 +8,8 @@ import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { MeetingToTasksInputSchema, MeetingToTasksOutputSchema } from '@/ai/schemas';
 import type { MeetingToTasksInput, MeetingToTasksOutput } from '@/ai/schemas';
-import { createTask, getUsers } from '@/ai/tools/task-tools';
+import { createTask } from '@/ai/tools/task-tools';
+import { getUsers } from '@/ai/tools/user-tools';
 
 const promptTemplate = fs.readFileSync(path.resolve('./src/ai/prompts/meeting-to-tasks.prompt'), 'utf-8');
 
