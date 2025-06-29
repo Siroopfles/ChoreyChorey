@@ -92,6 +92,7 @@ function SidebarToggle() {
       onClick={toggleSidebar}
       tooltip={state === "expanded" ? "Inklappen" : "Uitklappen"}
       className="h-9 justify-start"
+      aria-label={state === "expanded" ? "Zijbalk inklappen" : "Zijbalk uitklappen"}
     >
       <ChevronsLeft className="size-4 shrink-0 duration-200 group-data-[state=collapsed]:rotate-180" />
       <span className="group-data-[state=collapsed]:hidden">
@@ -213,7 +214,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                         {mainNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
                                         <item.icon />
                                         <span>{item.label}</span>
                                     </SidebarMenuButton>
@@ -227,7 +228,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                                 <SidebarGroupLabel className="flex items-center gap-2"><Pin className="h-4 w-4"/>Vastgezet</SidebarGroupLabel>
                                 {pinnedProjects.map((project) => (
                                      <SidebarMenuItem key={`pin-proj-${project.id}`}>
-                                        <SidebarMenuButton tooltip={project.name} onClick={() => handleProjectClick(project.id)}>
+                                        <SidebarMenuButton tooltip={project.name} onClick={() => handleProjectClick(project.id)} aria-label={`Ga naar project ${project.name}`}>
                                             <Briefcase />
                                             <span>{project.name}</span>
                                         </SidebarMenuButton>
@@ -235,7 +236,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                                 ))}
                                 {pinnedTasks.map((task) => (
                                      <SidebarMenuItem key={`pin-task-${task.id}`}>
-                                        <SidebarMenuButton tooltip={task.title} onClick={() => setViewedTask(task)}>
+                                        <SidebarMenuButton tooltip={task.title} onClick={() => setViewedTask(task)} aria-label={`Open taak ${task.title}`}>
                                             <ClipboardList />
                                             <span>{task.title}</span>
                                         </SidebarMenuButton>
@@ -248,7 +249,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                         {planningNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
                                         <item.icon />
                                         <span>{item.label}</span>
                                     </SidebarMenuButton>
@@ -260,7 +261,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                         {communityNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} data-tour-id={item['data-tour-id'] as string}>
+                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} data-tour-id={item['data-tour-id'] as string} aria-label={item.label}>
                                         <item.icon />
                                         <span>{item.label}</span>
                                     </SidebarMenuButton>
@@ -272,7 +273,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                         {aiToolsNavItems.map((item) => (
                             <SidebarMenuItem key={item.href}>
                                 <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href}>
+                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
                                         <item.icon />
                                         <span>{item.label}</span>
                                     </SidebarMenuButton>
@@ -286,7 +287,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                                 {adminNavItems.map((item) => (
                                     <SidebarMenuItem key={item.href}>
                                         <Link href={item.href} passHref>
-                                            <SidebarMenuButton tooltip={item.label} isActive={pathname.startsWith(item.href)} data-tour-id={item['data-tour-id'] as string}>
+                                            <SidebarMenuButton tooltip={item.label} isActive={pathname.startsWith(item.href)} data-tour-id={item['data-tour-id'] as string} aria-label={item.label}>
                                                 <item.icon />
                                                 <span>{item.label}</span>
                                             </SidebarMenuButton>
