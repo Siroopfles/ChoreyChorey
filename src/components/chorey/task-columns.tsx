@@ -5,7 +5,7 @@ import type { User, Task, Project, Priority } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, useDroppable } from '@dnd-kit/core';
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, useDroppable, useDndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +14,7 @@ import { FileUp, Loader2 } from 'lucide-react';
 import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
 import { useInView } from 'react-intersection-observer';
 import { useOrganization } from '@/contexts/organization-context';
+import { cn } from '@/lib/utils';
 
 const TaskColumn = ({ 
   title, 
@@ -30,9 +31,10 @@ const TaskColumn = ({
   projects: Project[],
   allTasks: Task[],
 }) => {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: title,
   });
+  const { active } = useDndContext();
 
   // Calculate dependencies based on currently loaded tasks
   const { blockingTasksMap, relatedTasksMap, blockedByTasksMap } = useMemo(() => {
@@ -73,6 +75,10 @@ const TaskColumn = ({
     return { blockingTasksMap, relatedTasksMap, blockedByTasksMap };
   }, [allTasks]);
 
+  const isDraggingBlockedTask = active?.data?.current?.isBlocked ?? false;
+  const isInvalidDropTarget = ['In Uitvoering', 'In Review', 'Voltooid'].includes(title);
+  const showInvalidIndicator = isOver && isDraggingBlockedTask && isInvalidDropTarget;
+
   return (
     <div className="flex flex-col w-[320px] shrink-0 h-full">
       <div className="flex items-center gap-2 px-1 pb-2">
@@ -82,7 +88,13 @@ const TaskColumn = ({
         </span>
       </div>
        <SortableContext id={title} items={tasks} strategy={verticalListSortingStrategy}>
-        <div ref={setNodeRef} className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
+        <div 
+            ref={setNodeRef} 
+            className={cn(
+                "flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px] transition-colors",
+                showInvalidIndicator && "bg-destructive/10 cursor-not-allowed"
+            )}
+        >
             {tasks.map((task) => {
               const today = new Date();
               const isOverdue = task.dueDate ? isBefore(startOfDay(task.dueDate), startOfDay(today)) : false;
@@ -105,8 +117,11 @@ const TaskColumn = ({
               />
             )})}
             {tasks.length === 0 && (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80 pointer-events-none">
-                Sleep een taak hierheen.
+            <div className={cn(
+                "flex flex-col items-center justify-center h-full text-sm text-muted-foreground/80 pointer-events-none p-4 text-center",
+                showInvalidIndicator && "border-2 border-dashed border-destructive/50 rounded-md"
+            )}>
+                {showInvalidIndicator ? 'Een geblokkeerde taak kan hier niet geplaatst worden.' : 'Sleep een taak hierheen.'}
             </div>
             )}
         </div>
