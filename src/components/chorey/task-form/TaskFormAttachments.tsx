@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFormContext, useFieldArray } from 'react-hook-form';
@@ -16,6 +15,7 @@ import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from '../attachment-icons';
 import { FigmaEmbed } from '../figma-embed';
 import { GoogleDocEmbed } from '../google-doc-embed';
+import { AdobeXdEmbed } from '../adobe-xd-embed';
 
 export function TaskFormAttachments() {
     const { control, getValues, setValue } = useFormContext();
@@ -85,7 +85,7 @@ export function TaskFormAttachments() {
                 {fields.map((field, index) => {
                     const urlValue = getValues(`attachments.${index}.url`);
                     const source = getAttachmentSource(urlValue);
-                    const isEmbeddable = source.startsWith('google-') || source === 'figma';
+                    const isEmbeddable = source.startsWith('google-') || source === 'figma' || source === 'adobe-xd';
                     return (
                         <div key={field.id} className="space-y-2">
                             <div className="flex items-center gap-2">
@@ -112,6 +112,7 @@ export function TaskFormAttachments() {
                             </div>
                             {isEmbeddable && urlValue && source === 'figma' && <FigmaEmbed url={urlValue} />}
                             {isEmbeddable && urlValue && source.startsWith('google-') && <GoogleDocEmbed url={urlValue} />}
+                            {isEmbeddable && urlValue && source === 'adobe-xd' && <AdobeXdEmbed url={urlValue} />}
                         </div>
                     )
                 })}
