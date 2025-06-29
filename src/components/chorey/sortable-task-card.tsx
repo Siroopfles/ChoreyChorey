@@ -35,7 +35,13 @@ export function SortableTaskCard({ task, users, currentUser, projects, blockingT
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            aria-roledescription="sortable item"
+        >
             <TaskCard 
               task={task} 
               users={users} 

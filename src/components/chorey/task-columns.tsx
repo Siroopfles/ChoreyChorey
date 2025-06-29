@@ -89,7 +89,9 @@ const TaskColumn = ({
       </div>
        <SortableContext id={title} items={tasks} strategy={verticalListSortingStrategy}>
         <div 
-            ref={setNodeRef} 
+            ref={setNodeRef}
+            role="group"
+            aria-label={title}
             className={cn(
                 "flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px] transition-colors",
                 showInvalidIndicator && "bg-destructive/10 cursor-not-allowed"

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, Comment as CommentType } from '@/lib/types';
@@ -45,7 +46,7 @@ const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }
 };
 
 const CommentItem = ({ comment, user, onVisible, allUsers }: { comment: CommentType; user?: User; onVisible: () => void; allUsers: User[] }) => {
-    const commentRef = useRef<HTMLDivElement>(null);
+    const commentRef = useRef<HTMLLIElement>(null);
     const { user: currentUser } = useAuth();
     
     const hasBeenReadByMe = currentUser ? comment.readBy?.includes(currentUser.id) : false;
@@ -71,7 +72,7 @@ const CommentItem = ({ comment, user, onVisible, allUsers }: { comment: CommentT
     }, [onVisible, hasBeenReadByMe]);
 
   return (
-    <div ref={commentRef} className="flex items-start gap-3">
+    <li ref={commentRef} className="flex items-start gap-3">
       <Avatar className="h-8 w-8 border">
         <AvatarImage src={user?.avatar} />
         <AvatarFallback>{user?.name.charAt(0) ?? '?'}</AvatarFallback>
@@ -88,7 +89,7 @@ const CommentItem = ({ comment, user, onVisible, allUsers }: { comment: CommentT
         </div>
         <div className="text-sm text-foreground/90 prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: comment.text }} />
       </div>
-    </div>
+    </li>
   );
 };
 
@@ -178,7 +179,7 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
   return (
     <div className="flex-1 flex flex-col gap-4 min-h-0">
       <ScrollArea className="flex-1 pr-2">
-        <div className="space-y-4">
+        <ul className="space-y-4">
           {sortedComments.length > 1 && (
               <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing || isReadingAloud} className="flex-1">
@@ -224,7 +225,7 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
           ) : (
               <p className="text-sm text-muted-foreground text-center py-4">Nog geen reacties.</p>
           )}
-        </div>
+        </ul>
       </ScrollArea>
       <div className="flex flex-col gap-2 mt-auto pt-4 border-t">
           <RichTextEditor

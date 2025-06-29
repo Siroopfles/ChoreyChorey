@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, HistoryEntry } from '@/lib/types';
@@ -8,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const HistoryItem = ({ entry, user }: { entry: HistoryEntry; user?: User }) => {
   return (
-    <div className="flex items-start gap-3">
+    <li className="flex items-start gap-3">
       <Avatar className="h-8 w-8 border">
         <AvatarImage src={user?.avatar} />
         <AvatarFallback>{user?.name.charAt(0) ?? '?'}</AvatarFallback>
@@ -23,7 +24,7 @@ const HistoryItem = ({ entry, user }: { entry: HistoryEntry; user?: User }) => {
             {formatDistanceToNow(entry.timestamp, { addSuffix: true, locale: nl })}
         </p>
       </div>
-    </div>
+    </li>
   );
 }
 
@@ -37,7 +38,7 @@ export function TaskHistory({ task, users }: TaskHistoryProps) {
 
   return (
     <ScrollArea className="h-full pr-2">
-        <div className="space-y-4">
+        <ul className="space-y-4">
             {sortedHistory.length > 0 ? (
                 sortedHistory.map(entry => (
                     <HistoryItem key={entry.id} entry={entry} user={users.find(u => u.id === entry.userId)} />
@@ -45,7 +46,7 @@ export function TaskHistory({ task, users }: TaskHistoryProps) {
             ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">Geen geschiedenis.</p>
             )}
-        </div>
+        </ul>
     </ScrollArea>
   );
 }
