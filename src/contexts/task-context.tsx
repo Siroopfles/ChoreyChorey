@@ -42,28 +42,28 @@ type TaskContextType = {
   hasMoreTasks: boolean;
   loadMoreTasks: () => void;
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
-  updateTask: (taskId: string, updates: Partial<Task>) => void;
+  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   rateTask: (taskId: string, rating: number) => Promise<void>;
-  bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments' | 'labels'>> & { addLabels?: string[], removeLabels?: string[] }) => void;
-  cloneTask: (taskId: string) => void;
+  bulkUpdateTasks: (taskIds: string[], updates: Partial<Omit<Task, 'id' | 'subtasks' | 'attachments' | 'labels'>> & { addLabels?: string[], removeLabels?: string[] }) => Promise<void>;
+  cloneTask: (taskId: string) => Promise<void>;
   splitTask: (taskId: string) => Promise<void>;
-  deleteTaskPermanently: (taskId: string) => void;
-  toggleSubtaskCompletion: (taskId: string, subtaskId: string) => void;
-  toggleTaskTimer: (taskId: string) => void;
-  reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => void;
-  resetSubtasks: (taskId: string) => void;
+  deleteTaskPermanently: (taskId: string) => Promise<void>;
+  toggleSubtaskCompletion: (taskId: string, subtaskId: string) => Promise<void>;
+  toggleTaskTimer: (taskId: string) => Promise<void>;
+  reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => Promise<void>;
+  resetSubtasks: (taskId: string) => Promise<void>;
   thankForTask: (taskId: string) => Promise<void>;
   addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
   updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
   deleteTemplate: (templateId: string) => Promise<void>;
   setChoreOfTheWeek: (taskId: string) => Promise<void>;
-  promoteSubtaskToTask: (parentTaskId: string, subtask: Subtask) => void;
+  promoteSubtaskToTask: (parentTaskId: string, subtask: Subtask) => Promise<void>;
   navigateToUserProfile: (userId: string) => void;
   isAddTaskDialogOpen: boolean;
   setIsAddTaskDialogOpen: (open: boolean) => void;
   viewedTask: Task | null;
   setViewedTask: (task: Task | null) => void;
-  toggleMuteTask: (taskId: string) => void;
+  toggleMuteTask: (taskId: string) => Promise<void>;
   manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
   toggleTaskPin: (taskId: string, isPinned: boolean) => Promise<void>;
 };
@@ -213,14 +213,31 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     if (!user || !currentOrganization) return;
+    
+    const originalTasks = [...tasks];
+    const taskToUpdate = originalTasks.find(t => t.id === taskId);
+    if (!taskToUpdate) {
+        console.error("Optimistic update failed: Task not found in local state.");
+        return;
+    }
+    
+    // Create a deep copy for the optimistic update to avoid mutation issues
+    const newTasks = originalTasks.map(t => 
+        t.id === taskId ? { ...t, ...updates } : t
+    );
+    setTasks(newTasks);
+
     const { data, error } = await TaskActions.updateTaskAction(taskId, updates, user.id, currentOrganization.id);
-    if (error) { handleError(error, 'bijwerken taak'); }
-    else if (data?.updatedTask) {
+    
+    if (error) {
+        handleError(error, 'bijwerken taak');
+        // Revert on error
+        setTasks(originalTasks);
+    } else if (data?.updatedTask) {
+        // Re-sync with the server's response to ensure consistency (e.g., for history entries)
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...data.updatedTask } : t));
     }
   };
-  
-  // ... other actions remain the same, but they will operate on the already loaded `tasks` state.
 
   const cloneTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
@@ -264,41 +281,88 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
   
   const reorderTasks = async (tasksToUpdate: {id: string, order: number}[]) => {
-      const { error } = await TaskActions.reorderTasksAction(tasksToUpdate);
-      if (error) handleError(error, 'herordenen taken');
-      else {
-        setTasks(prevTasks => {
-          const tasksMap = new Map(prevTasks.map(t => [t.id, t]));
-          tasksToUpdate.forEach(update => {
-            const task = tasksMap.get(update.id);
-            if(task) {
-              tasksMap.set(update.id, { ...task, order: update.order });
-            }
-          });
-          return Array.from(tasksMap.values());
-        });
-      }
+    const originalTasks = [...tasks];
+      
+    // Optimistically update the UI
+    setTasks(prevTasks => {
+      const tasksMap = new Map(prevTasks.map(t => [t.id, t]));
+      tasksToUpdate.forEach(update => {
+        const task = tasksMap.get(update.id);
+        if(task) {
+          tasksMap.set(update.id, { ...task, order: update.order });
+        }
+      });
+      return Array.from(tasksMap.values());
+    });
+    
+    // Call server in the background
+    const { error } = await TaskActions.reorderTasksAction(tasksToUpdate);
+    if (error) {
+      handleError(error, 'herordenen taken');
+      // Revert on error
+      setTasks(originalTasks);
+    }
   };
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
     if (!user || !currentOrganization) return;
+    
+    const originalTasks = [...tasks];
+    const taskToUpdate = originalTasks.find(t => t.id === taskId);
+    if (!taskToUpdate) return;
+    
+    // Update the UI immediately
+    setTasks(prev => prev.map(t => {
+        if (t.id === taskId) {
+            const newSubtasks = t.subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st);
+            return { ...t, subtasks: newSubtasks };
+        }
+        return t;
+    }));
+
+    // Call the server action in the background
     const { data, error } = await TaskActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id);
-    if (error) handleError(error, 'bijwerken subtaak');
-    else {
-        setTasks(prev => prev.map(t => {
-            if (t.id === taskId) {
-                const newSubtasks = t.subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st);
-                return { ...t, subtasks: newSubtasks };
-            }
-            return t;
-        }));
+
+    // If it fails, revert the change and show a toast
+    if (error) {
+      handleError(error, 'bijwerken subtaak');
+      setTasks(originalTasks); // Revert to the old state
     }
   };
   
   const toggleTaskTimer = async (taskId: string) => {
     if (!user || !currentOrganization) return;
+    
+    const originalTasks = [...tasks];
+    const taskToUpdate = originalTasks.find(t => t.id === taskId);
+    if (!taskToUpdate) return;
+    
+    const isStarting = !taskToUpdate.activeTimerStartedAt;
+    let newTimeLogged = taskToUpdate.timeLogged || 0;
+    
+    if (!isStarting) {
+        // If stopping, calculate elapsed time optimistically
+        const startTime = (taskToUpdate.activeTimerStartedAt as Date).getTime();
+        const now = new Date().getTime();
+        const elapsed = Math.floor((now - startTime) / 1000);
+        newTimeLogged += elapsed;
+    }
+    
+    const optimisticUpdate = {
+        activeTimerStartedAt: isStarting ? new Date() : null,
+        timeLogged: newTimeLogged
+    };
+    
+    // Update UI immediately
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...optimisticUpdate } : t));
+
+    // Call server in the background
     const { error } = await TaskActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);
-    if (error) handleError(error, 'tijdregistratie');
+    
+    if (error) {
+        handleError(error, 'tijdregistratie');
+        setTasks(originalTasks); // Revert on error
+    }
   };
 
   const resetSubtasks = async (taskId: string) => {
@@ -371,8 +435,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   
   const addTemplate = async (templateData: TaskTemplateFormValues) => {
     if (!user || !currentOrganization) return;
-    const result = await addTemplateAction(currentOrganization.id, user.id, templateData);
-    if (result.error) { handleError({ message: result.error }, 'template toevoegen'); }
+    const { data, error } = await addTemplateAction(currentOrganization.id, user.id, templateData);
+    if (error) { handleError({ message: error }, 'template toevoegen'); }
   };
 
   const updateTemplate = async (templateId: string, templateData: TaskTemplateFormValues) => {
@@ -404,9 +468,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const toggleMuteTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const result = await toggleMuteTaskAction(currentOrganization.id, user.id, taskId);
-    if (result.error) { handleError({ message: result.error }, 'dempen taak'); }
-    else { toast({ title: `Taak ${result.data?.newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}` }); }
+    const { data, error } = await toggleMuteTaskAction(currentOrganization.id, user.id, taskId);
+    if (error) { handleError({ message: result.error }, 'dempen taak'); }
+    else { toast({ title: `Taak ${data?.newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}` }); }
   };
 
   const toggleTaskPin = async (taskId: string, isPinned: boolean) => {
@@ -415,7 +479,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         toast({ title: 'Geen permissie', description: 'Je hebt geen permissie om items vast te pinnen.', variant: 'destructive' });
         return;
     }
-    updateTask(taskId, { pinned: isPinned });
+    await updateTask(taskId, { pinned: isPinned });
   };
 
   return (
