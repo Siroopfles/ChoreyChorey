@@ -23,7 +23,7 @@ import {
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db, googleProvider, microsoftProvider } from '@/lib/firebase';
 import type { User, Organization, RoleName, UserStatus, Permission, WidgetInstance } from '@/lib/types';
-import { WIDGET_TYPES } from '@/lib/types';
+import { WIDGET_TYPES, DEFAULT_ROLES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/member.actions';
 import { sendDailyDigest } from '@/app/actions/digest.actions';
