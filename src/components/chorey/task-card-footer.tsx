@@ -83,7 +83,7 @@ export function TaskCardFooter({
     const { toast } = useToast();
     const [isSynthesizing, setIsSynthesizing] = useState(false);
 
-    const assignees = useMemo(() => task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
+    const assignees = useMemo(() => (task.assigneeIds || []).map(id => (users || []).find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
     const project = projects.find((p) => p.id === task.projectId);
     const statusInfo = statusConfig[task.status] || {};
 
