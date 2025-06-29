@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider } from '@/contexts/task-context';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap, MessageSquare, Pin, Briefcase, Trash2 } from 'lucide-react';
+import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap, MessageSquare, Pin, Briefcase, Trash2, ChevronsLeft } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -18,6 +18,8 @@ import {
   SidebarMenuButton,
   SidebarSeparator,
   SidebarGroupLabel,
+  SidebarFooter,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import AppHeader from '@/components/chorey/app-header';
 import CommandBar from '@/components/chorey/command-bar';
@@ -83,6 +85,23 @@ const UserCosmeticStyle = () => {
 
   return <style dangerouslySetInnerHTML={{ __html: css }} />;
 };
+
+function SidebarToggle() {
+  const { toggleSidebar, state } = useSidebar();
+
+  return (
+    <SidebarMenuButton
+      onClick={toggleSidebar}
+      tooltip={state === "expanded" ? "Inklappen" : "Uitklappen"}
+      className="h-9 justify-start"
+    >
+      <ChevronsLeft className="size-4 shrink-0 duration-200 group-data-[state=collapsed]:rotate-180" />
+      <span className="group-data-[state=collapsed]:hidden">
+        Inklappen
+      </span>
+    </SidebarMenuButton>
+  );
+}
 
 
 // The main app shell with sidebar and header
@@ -280,6 +299,9 @@ function AppShell({ children }: { children: React.ReactNode }) {
                         )}
                     </SidebarMenu>
                 </SidebarContent>
+                <SidebarFooter className="mt-auto border-t border-sidebar-border p-2">
+                    <SidebarToggle />
+                </SidebarFooter>
             </Sidebar>
 
             <SidebarInset className="flex flex-col">
