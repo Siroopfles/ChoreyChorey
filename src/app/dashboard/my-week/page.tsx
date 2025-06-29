@@ -15,14 +15,16 @@ export default function MyWeekPage() {
     const { user, users, loading: authLoading, teams, projects } = useAuth();
 
     const weekTasks = useMemo(() => {
+        if (!user) return [];
         const today = startOfToday();
         const endOfWeek = addDays(today, 7);
         return tasks.filter(task => 
+            task.assigneeIds.includes(user.id) &&
             task.dueDate && 
             isWithinInterval(task.dueDate, { start: today, end: endOfWeek }) &&
             (task.status !== 'Voltooid' && task.status !== 'Geannuleerd')
         );
-    }, [tasks]);
+    }, [tasks, user]);
 
     const groupedTasks = useMemo(() => {
         const groups: { [key: string]: Task[] } = {};
