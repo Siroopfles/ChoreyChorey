@@ -246,6 +246,7 @@ export const PERMISSIONS = {
   MANAGE_MEMBERS: 'MANAGE_MEMBERS',
   MANAGE_MEMBER_PERMISSIONS: 'MANAGE_MEMBER_PERMISSIONS',
   MANAGE_PROJECTS: 'MANAGE_PROJECTS',
+  MANAGE_PROJECT_ROLES: 'MANAGE_PROJECT_ROLES',
   MANAGE_TEAMS: 'MANAGE_TEAMS',
   CREATE_TASK: 'CREATE_TASK',
   EDIT_TASK: 'EDIT_TASK',
@@ -279,6 +280,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.MANAGE_MEMBERS]: { name: 'Leden Beheren', description: 'Kan leden uitnodigen voor en verwijderen uit de organisatie.' },
   [PERMISSIONS.MANAGE_MEMBER_PERMISSIONS]: { name: 'Lid Permissies Beheren', description: 'Kan individuele permissies van leden overschrijven, los van hun rol.' },
   [PERMISSIONS.MANAGE_PROJECTS]: { name: 'Projecten Beheren', description: 'Kan projecten aanmaken, bewerken en verwijderen.' },
+  [PERMISSIONS.MANAGE_PROJECT_ROLES]: { name: 'Projectrollen Beheren', description: 'Kan de rol van een gebruiker binnen een specifiek project aanpassen.' },
   [PERMISSIONS.MANAGE_TEAMS]: { name: 'Teams Beheren', description: 'Kan teams aanmaken en de leden van teams beheren.' },
   [PERMISSIONS.CREATE_TASK]: { name: 'Taken Aanmaken', description: 'Kan nieuwe taken aanmaken binnen de organisatie.' },
   [PERMISSIONS.EDIT_TASK]: { name: 'Taken Bewerken', description: 'Kan de details van bestaande taken aanpassen.' },
@@ -317,6 +319,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.MANAGE_MEMBERS,
       PERMISSIONS.MANAGE_MEMBER_PERMISSIONS,
       PERMISSIONS.MANAGE_PROJECTS,
+      PERMISSIONS.MANAGE_PROJECT_ROLES,
       PERMISSIONS.MANAGE_TEAMS,
       PERMISSIONS.CREATE_TASK,
       PERMISSIONS.EDIT_TASK,
@@ -369,6 +372,7 @@ export type Project = {
   budgetType?: 'amount' | 'hours';
   deadline?: Date;
   pinned?: boolean;
+  projectRoles?: Record<string, RoleName>;
 };
 
 export type Team = {
@@ -984,3 +988,4 @@ export type Phase = {
   description: string;
   features: Feature[];
 };
+

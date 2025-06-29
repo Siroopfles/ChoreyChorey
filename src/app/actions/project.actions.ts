@@ -1,15 +1,16 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { doc, writeBatch, arrayUnion, getDoc, query, collection, getDocs, where, updateDoc } from 'firebase/firestore';
-import type { Project, Team } from '@/lib/types';
+import { doc, writeBatch, arrayUnion, getDoc, query, collection, getDocs, where, updateDoc, deleteField } from 'firebase/firestore';
+import type { Project, Team, RoleName } from '@/lib/types';
 import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';
 import { checkAndGrantTeamAchievements } from './gamification.actions';
 
 export async function completeProject(projectId: string, organizationId: string, currentUserId: string): Promise<{ data: { success: boolean, message: string } | null; error: string | null; }> {
-    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_PROJECTS)) {
+    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_PROJECTS, { projectId })) {
         return { data: null, error: "Je hebt geen permissie om een project te voltooien." };
     }
 
@@ -82,6 +83,26 @@ export async function toggleProjectPin(projectId: string, organizationId: string
         return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error toggling project pin:", error);
+        return { data: null, error: error.message };
+    }
+}
+
+export async function updateProjectRole(projectId: string, organizationId: string, targetUserId: string, role: RoleName | 'inherit', currentUserId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
+    if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_PROJECT_ROLES, { projectId })) {
+        return { data: null, error: "Je hebt geen permissie om rollen binnen dit project aan te passen." };
+    }
+    try {
+        const projectRef = doc(db, 'projects', projectId);
+        const updateData = role === 'inherit' 
+            ? { [`projectRoles.${targetUserId}`]: deleteField() }
+            : { [`projectRoles.${targetUserId}`]: role };
+        
+        await updateDoc(projectRef, updateData);
+        
+        return { data: { success: true }, error: null };
+
+    } catch (error: any) {
+        console.error("Error updating project role:", error);
         return { data: null, error: error.message };
     }
 }
