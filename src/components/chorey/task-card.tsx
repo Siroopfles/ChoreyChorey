@@ -59,7 +59,6 @@ import {
   Bell,
   BellOff,
   Github,
-  Gitlab,
   CornerUpRight,
   GitBranch,
 } from 'lucide-react';
@@ -78,6 +77,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import Link from 'next/link';
 import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from './attachment-icons';
+import { GitLabIcon, JiraIcon, BitbucketIcon } from './provider-icons';
+
 
 type TaskCardProps = {
   task: Task;
@@ -102,19 +103,6 @@ const statusConfig: Record<string, { icon?: JSX.Element; color: string }> = {
     'Gearchiveerd': { icon: <Archive className="h-5 w-5 text-gray-500" />, color: 'border-l-[hsl(var(--status-archived))]' },
     'Geannuleerd': { icon: <XCircle className="h-5 w-5 text-destructive" />, color: 'border-l-destructive' },
 };
-
-const JiraIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 text-[#0052CC]">
-      <path d="M22.516 13.313l-9.219-9.219c-.438-.438-1.125-.438-1.563 0l-9.219 9.219c-.438.438-.438 1.125 0 1.563l9.219 9.219c.438.438 1.125.438 1.563 0l9.219-9.219c.438-.438.438-1.125 0-1.563zm-10.781 7.438l-7.438-7.438 7.438-7.438 7.438 7.438-7.438 7.438z"></path>
-    </svg>
-);
-
-const BitbucketIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 text-blue-600">
-        <path d="M2.531 2.375l8.594 19.25-2.093 0.938-6.5-14.563v13.625h-2.125v-19.25h2.125zM22.563 15.188l-4.125-2.531-2.031 3.406 6.156-3.75zM12.969 4.313l-1.031 2.313-4.5-2.75 5.531-3.625z"></path>
-    </svg>
-);
-
 
 const Highlight = ({ text, highlight }: { text: string, highlight: string }) => {
     if (!highlight.trim() || text.startsWith('[')) { // Don't highlight masked tasks
@@ -778,19 +766,19 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                     )}
                      {task.gitlabLinks && task.gitlabLinks.length > 0 && (
                         <div className="flex items-center gap-1">
-                            <Gitlab className="h-3 w-3" />
+                            <GitLabIcon className="h-3 w-3" />
                             <span>{task.gitlabLinks.length}</span>
                         </div>
                     )}
                      {task.bitbucketLinks && task.bitbucketLinks.length > 0 && (
                         <div className="flex items-center gap-1">
-                            <BitbucketIcon />
+                            <BitbucketIcon className="h-3 w-3" />
                             <span>{task.bitbucketLinks.length}</span>
                         </div>
                     )}
                      {task.jiraLinks && task.jiraLinks.length > 0 && (
                         <div className="flex items-center gap-1">
-                            <JiraIcon />
+                            <div className="h-3 w-3"><JiraIcon className="text-[#0052CC]" /></div>
                             <span>{task.jiraLinks.length}</span>
                         </div>
                     )}
