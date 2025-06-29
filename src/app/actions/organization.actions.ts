@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc, deleteField } from 'firebase/firestore';
-import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project, Permission, OrganizationMember } from '@/lib/types';
+import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project, Permission, OrganizationMember, UserStatus } from '@/lib/types';
 import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { checkAndGrantTeamAchievements } from './gamification.actions';
 import { hasPermission } from '@/lib/permissions';
@@ -362,7 +362,7 @@ export async function completeProject(projectId: string, organizationId: string,
 
 
 // --- Organization Member Profile Actions ---
-export async function updateMemberProfile(organizationId: string, userId: string, data: Partial<Omit<OrganizationMember, 'id' | 'role'>>) {
+export async function updateMemberProfile(organizationId: string, userId: string, data: Partial<Omit<OrganizationMember, 'id' | 'role' | 'points'>>) {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const updates: { [key: string]: any } = {};
@@ -377,6 +377,41 @@ export async function updateMemberProfile(organizationId: string, userId: string
         return { error: error.message };
     }
 }
+
+export async function updateUserStatus(organizationId: string, userId: string, status: UserStatus) {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        await updateDoc(orgRef, { [`members.${userId}.status`]: status });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error updating user status:", error);
+        return { error: error.message };
+    }
+}
+
+export async function toggleMuteTask(organizationId: string, userId: string, taskId: string) {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists()) {
+            throw new Error("Organisatie niet gevonden.");
+        }
+        const orgData = orgDoc.data();
+        const memberData = orgData.members?.[userId];
+        const mutedTaskIds = memberData?.mutedTaskIds || [];
+        const isMuted = mutedTaskIds.includes(taskId);
+
+        await updateDoc(orgRef, {
+            [`members.${userId}.mutedTaskIds`]: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
+        });
+        
+        return { success: true, newState: isMuted ? 'unmuted' : 'muted' };
+    } catch (error: any) {
+        console.error("Error toggling task mute:", error);
+        return { error: error.message };
+    }
+}
+
 
 export async function purchaseTheme(organizationId: string, userId: string, color: string, cost: number) {
     if (cost < 0) {

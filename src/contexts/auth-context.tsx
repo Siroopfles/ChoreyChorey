@@ -26,7 +26,7 @@ import type { User, Organization, Team, RoleName, UserStatus, Permission, Projec
 import { DEFAULT_ROLES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
-import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user.actions';
+import { updateUserStatus as updateUserStatusAction } from '@/app/actions/organization.actions';
 import { sendDailyDigest } from '@/app/actions/digest.actions';
 import { useDebug } from './debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -89,8 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = useCallback(async (message?: { title: string, description: string }) => {
         try {
-            if (user?.id) {
-              await updateUserStatusAction(user.id, { type: 'Offline', until: null });
+            if (user?.id && currentOrganization?.id) {
+              await updateUserStatusAction(currentOrganization.id, user.id, { type: 'Offline', until: null });
             }
             if (currentSessionId) {
                 const sessionRef = doc(db, 'sessions', currentSessionId);
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             handleError(error, 'uitloggen');
         }
-    }, [user?.id, currentSessionId, setCurrentSessionId, toast, router]);
+    }, [user?.id, currentOrganization?.id, currentSessionId, setCurrentSessionId, toast, router]);
 
     const fetchUserAndOrgData = useCallback(async (firebaseUser: FirebaseUser) => {
         if (isDebugMode) console.log('[DEBUG] AuthContext: Running fetchUserAndOrgData for', firebaseUser.uid);
@@ -559,10 +559,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     
     const updateUserStatus = async (status: UserStatus) => {
-        if (!user) return;
+        if (!user || !currentOrganization) return;
         try {
-            const result = await updateUserStatusAction(user.id, status);
-            if (result.error) throw new Error(result.error);
+            const result = await updateUserStatusAction(currentOrganization.id, user.id, status);
+            if ((result as any).error) throw new Error((result as any).error);
             setUser(prevUser => prevUser ? { ...prevUser, status } : null);
         } catch (e) {
             handleError(e, 'bijwerken van status');

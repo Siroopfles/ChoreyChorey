@@ -21,7 +21,7 @@ import { PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
-import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user.actions';
+import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/organization.actions';
 import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
 import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
 import * as TaskActions from '@/app/actions/task.actions';

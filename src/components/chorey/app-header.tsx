@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { User } from '@/lib/types';
@@ -32,11 +33,12 @@ import { useMemo, useState } from 'react';
 import { isAfter } from 'date-fns';
 import { statusStyles } from '@/lib/types';
 import { CreateOrganizationDialog } from './organization/create-organization-dialog';
+import { updateUserStatus } from '@/app/actions/organization.actions';
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();
   const { notifications, markAllNotificationsAsRead, snoozeNotification, setIsAddTaskDialogOpen } = useTasks();
-  const { user, logout, organizations, currentOrganization, switchOrganization, updateUserStatus } = useAuth();
+  const { user, logout, organizations, currentOrganization, switchOrganization, updateUserStatus: updateUserStatusInContext } = useAuth();
   const router = useRouter();
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
 
@@ -52,6 +54,12 @@ export default function AppHeader() {
     await switchOrganization(orgId);
     router.refresh();
   }
+
+  const handleUpdateUserStatus = async (status: UserStatus) => {
+    if (!user || !currentOrganization) return;
+    await updateUserStatus(currentOrganization.id, user.id, status);
+    updateUserStatusInContext(status);
+  };
 
   const currentStatus = user?.status?.type || 'Offline';
   const dndUntil = user?.status?.until;
@@ -224,15 +232,15 @@ export default function AppHeader() {
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={() => updateUserStatus({ type: 'Online', until: null })}>
+                    <DropdownMenuItem onClick={() => handleUpdateUserStatus({ type: 'Online', until: null })}>
                       <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles.Online.dot)} />
                       <span>Online</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateUserStatus({ type: 'Afwezig', until: null })}>
+                    <DropdownMenuItem onClick={() => handleUpdateUserStatus({ type: 'Afwezig', until: null })}>
                       <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles.Afwezig.dot)} />
                       <span>Afwezig</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateUserStatus({ type: 'In vergadering', until: null })}>
+                    <DropdownMenuItem onClick={() => handleUpdateUserStatus({ type: 'In vergadering', until: null })}>
                       <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles['In vergadering'].dot)} />
                       <span>In vergadering</span>
                     </DropdownMenuItem>
@@ -244,16 +252,16 @@ export default function AppHeader() {
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
-                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setMinutes(u.getMinutes() + 30); updateUserStatus({ type: 'Niet storen', until: u }); }}>Voor 30 minuten</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setHours(u.getHours() + 2); updateUserStatus({ type: 'Niet storen', until: u }); }}>Voor 2 uur</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setHours(22, 0, 0, 0); updateUserStatus({ type: 'Niet storen', until: u }); }}>Tot vanavond</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setDate(u.getDate() + 1); u.setHours(8, 0, 0, 0); updateUserStatus({ type: 'Niet storen', until: u }); }}>Tot morgenochtend</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateUserStatus({ type: 'Niet storen', until: null })}>Tot ik het uitzet</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setMinutes(u.getMinutes() + 30); handleUpdateUserStatus({ type: 'Niet storen', until: u }); }}>Voor 30 minuten</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setHours(u.getHours() + 2); handleUpdateUserStatus({ type: 'Niet storen', until: u }); }}>Voor 2 uur</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setHours(22, 0, 0, 0); handleUpdateUserStatus({ type: 'Niet storen', until: u }); }}>Tot vanavond</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { const u = new Date(); u.setDate(u.getDate() + 1); u.setHours(8, 0, 0, 0); handleUpdateUserStatus({ type: 'Niet storen', until: u }); }}>Tot morgenochtend</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateUserStatus({ type: 'Niet storen', until: null })}>Tot ik het uitzet</DropdownMenuItem>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => updateUserStatus({ type: 'Offline', until: null })}>
+                    <DropdownMenuItem onClick={() => handleUpdateUserStatus({ type: 'Offline', until: null })}>
                       <div className={cn("w-2 h-2 rounded-full mr-2", statusStyles.Offline.dot)} />
                       <span>Offline</span>
                     </DropdownMenuItem>
