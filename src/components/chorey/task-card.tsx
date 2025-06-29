@@ -1,4 +1,5 @@
 
+
 'use client';
 import type { Task, User, Project, Subtask, Comment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -364,7 +365,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                     ) : (
                       <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => updateTask(task.id, { status: 'Geannuleerd' })}>
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Annuleren
+                        Verplaats naar Prullenbak
                       </DropdownMenuItem>
                     )}
                 </DropdownMenuContent>

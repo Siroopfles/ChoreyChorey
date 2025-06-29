@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useTasks } from "@/contexts/task-context";
@@ -171,7 +172,7 @@ export default function BulkActionBar() {
 
                 <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={handleDelete}>
                      <Trash2 className="mr-2 h-4 w-4" />
-                    Annuleren
+                    Verplaats naar Prullenbak
                 </Button>
 
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedTaskIds([])}>
