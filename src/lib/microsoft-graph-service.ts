@@ -9,8 +9,14 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Task, User } from '@/lib/types';
 import { addHours } from 'date-fns';
+import { env } from '@/lib/env';
 
 async function getAuthenticatedClient(userId: string) {
+    if (!env.MICROSOFT_CLIENT_ID || !env.MICROSOFT_CLIENT_SECRET || !env.MICROSOFT_TENANT_ID) {
+        console.warn("Microsoft Graph integration is not configured on the server. Skipping calendar event creation.");
+        return null;
+    }
+
     const userDocRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userDocRef);
     if (!userDoc.exists()) {
