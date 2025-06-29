@@ -13,7 +13,8 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import type { IdeaFormValues, IdeaStatus, Organization } from '@/lib/types';
-import { PERMISSIONS, DEFAULT_ROLES } from '@/lib/types';
+import { hasPermission } from '@/lib/permissions';
+import { PERMISSIONS } from '@/lib/types';
 
 async function checkIdeasEnabled(organizationId: string): Promise<boolean> {
     const orgRef = doc(db, 'organizations', organizationId);
@@ -21,21 +22,6 @@ async function checkIdeasEnabled(organizationId: string): Promise<boolean> {
     if (!orgDoc.exists()) return false;
     const orgData = orgDoc.data() as Organization;
     return orgData.settings?.features?.ideas !== false;
-}
-
-// Helper to check permissions
-async function hasPermission(userId: string, organizationId: string, permission: typeof PERMISSIONS[keyof typeof PERMISSIONS]): Promise<boolean> {
-    const orgRef = doc(db, 'organizations', organizationId);
-    const orgDoc = await getDoc(orgRef);
-    if (!orgDoc.exists()) return false;
-    
-    const orgData = orgDoc.data() as Organization;
-    const roleId = orgData.members?.[userId]?.role;
-    if (!roleId) return false;
-
-    const allRoles = { ...DEFAULT_ROLES, ...(orgData.settings?.customization?.customRoles || {}) };
-    const role = allRoles[roleId];
-    return role?.permissions?.includes(permission) ?? false;
 }
 
 export async function createIdea(organizationId: string, creatorId: string, data: IdeaFormValues) {
