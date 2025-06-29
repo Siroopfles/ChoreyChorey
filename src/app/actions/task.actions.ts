@@ -1,5 +1,6 @@
 
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -375,54 +376,9 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
             finalUpdates.completedAt = new Date();
             if(showGamification && taskToUpdate.assigneeIds.length > 0) {
-                const basePoints = calculatePoints(taskToUpdate.priority, taskToUpdate.storyPoints);
-                
-                await Promise.all(taskToUpdate.assigneeIds.map(async (assigneeId) => {
-                    await runTransaction(db, async (transaction) => {
-                        const memberRef = doc(db, 'organizations', organizationId, 'members', assigneeId);
-                        const memberDoc = await transaction.get(memberRef);
-
-                        if (!memberDoc.exists()) {
-                            console.error(`Member ${assigneeId} not found in org ${organizationId} for streak calculation.`);
-                            return;
-                        }
-
-                        const memberData = memberDoc.data() as any;
-                        const streakData = memberData.streakData;
-                        const today = new Date();
-                        let newStreak = 1;
-                        let showStreakToast = true;
-
-                        if (streakData?.lastCompletionDate) {
-                            const lastCompletion = (streakData.lastCompletionDate as Timestamp).toDate();
-                            const { isToday } = await import('date-fns');
-                            const { isYesterday } = await import('date-fns');
-                            
-                            if (isToday(lastCompletion)) {
-                                newStreak = streakData.currentStreak;
-                                showStreakToast = false;
-                            } else if (isYesterday(lastCompletion)) {
-                                newStreak = (streakData.currentStreak || 0) + 1;
-                            } else {
-                                newStreak = 1;
-                            }
-                        }
-                        
-                        const bonusPoints = Math.min(newStreak * 5, 50);
-                        const totalPointsToAdd = basePoints + bonusPoints;
-                        
-                        transaction.update(memberRef, {
-                            points: increment(totalPointsToAdd),
-                            streakData: { currentStreak: newStreak, lastCompletionDate: today }
-                        });
-
-                        if (showStreakToast && newStreak > 1) {
-                            const message = `Streak! 🔥 Je bent ${newStreak} dag(en) op rij bezig! +${bonusPoints} bonuspunten.`;
-                            createNotification(assigneeId, message, taskId, organizationId, 'system', { eventType: 'gamification' });
-                        }
-                    });
-                     await grantAchievements(assigneeId, organizationId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
-                }));
+                 await Promise.all(taskToUpdate.assigneeIds.map(assigneeId => 
+                    grantAchievements(assigneeId, organizationId, 'completed', { ...taskToUpdate, status: 'Voltooid' })
+                ));
             }
 
             if (taskToUpdate.recurring) {

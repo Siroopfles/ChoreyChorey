@@ -7,51 +7,101 @@ import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, 
 import type { Task, User, Organization, ActivityFeedItem, Team, GlobalUserProfile, OrganizationMember } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { createNotification } from './notification.actions';
-import { addHistoryEntry } from '@/lib/utils';
+import { addHistoryEntry, calculatePoints } from '@/lib/utils';
 
 async function grantAchievements(userId: string, organizationId: string, type: 'completed' | 'thanked', task?: Task) {
     const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-    const memberDoc = await getDoc(memberRef);
-    if (!memberDoc.exists()) return { granted: [] };
+    
+    // Use a transaction to ensure atomic reads and writes, especially for streak data.
+    const { grantedAchievements, streakToastMessage } = await runTransaction(db, async (transaction) => {
+        const memberDoc = await transaction.get(memberRef);
+        if (!memberDoc.exists()) return { grantedAchievements: [], streakToastMessage: null };
 
-    const memberData = memberDoc.data() as OrganizationMember;
-    const userAchievements = memberData.achievements || [];
-    const achievementsToGrant: { id: string, name: string }[] = [];
-    const batch = writeBatch(db);
+        const memberData = memberDoc.data() as OrganizationMember;
+        const userAchievements = memberData.achievements || [];
+        const achievementsToGrant: { id: string, name: string }[] = [];
+        let toastMessage: string | null = null;
+        
+        // Gamification logic for completing a task
+        if (type === 'completed' && task) {
+            // Point and Streak Calculation
+            const basePoints = calculatePoints(task.priority, task.storyPoints);
+            const streakData = memberData.streakData;
+            const today = new Date();
+            let newStreak = 1;
+            let showStreakToast = true;
 
-    if (type === 'completed' && task) {
-        const completedTasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('assigneeIds', 'array-contains', userId), where('status', '==', 'Voltooid'));
-        const completedTasksSnapshot = await getDocs(completedTasksQuery);
-        const totalCompleted = completedTasksSnapshot.size;
+            if (streakData?.lastCompletionDate) {
+                const lastCompletion = (streakData.lastCompletionDate as Timestamp).toDate();
+                const { isToday, isYesterday } = await import('date-fns');
+                
+                if (isToday(lastCompletion)) {
+                    newStreak = streakData.currentStreak;
+                    showStreakToast = false;
+                } else if (isYesterday(lastCompletion)) {
+                    newStreak = (streakData.currentStreak || 0) + 1;
+                } else {
+                    newStreak = 1;
+                }
+            }
+            
+            const bonusPoints = Math.min(newStreak * 5, 50); // Cap bonus points
+            const totalPointsToAdd = basePoints + bonusPoints;
+            
+            transaction.update(memberRef, {
+                points: increment(totalPointsToAdd),
+                streakData: { currentStreak: newStreak, lastCompletionDate: today }
+            });
 
-        if (totalCompleted === 1 && !userAchievements.includes(ACHIEVEMENTS.FIRST_TASK.id)) {
-            achievementsToGrant.push({id: ACHIEVEMENTS.FIRST_TASK.id, name: ACHIEVEMENTS.FIRST_TASK.name});
+            if (showStreakToast && newStreak > 1) {
+                toastMessage = `Streak! 🔥 Je bent ${newStreak} dag(en) op rij bezig! +${bonusPoints} bonuspunten.`;
+            }
+
+            // Achievement Checks
+            const completedTasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('assigneeIds', 'array-contains', userId), where('status', '==', 'Voltooid'));
+            const completedTasksSnapshot = await getDocs(completedTasksQuery); // Note: This is outside the transaction read, which is a limitation. For high-concurrency apps, this might need a different approach (e.g., counters).
+            const totalCompleted = completedTasksSnapshot.size;
+
+            if (totalCompleted === 1 && !userAchievements.includes(ACHIEVEMENTS.FIRST_TASK.id)) {
+                achievementsToGrant.push({id: ACHIEVEMENTS.FIRST_TASK.id, name: ACHIEVEMENTS.FIRST_TASK.name});
+            }
+            
+            if (task.creatorId && task.creatorId !== userId && !userAchievements.includes(ACHIEVEMENTS.COMMUNITY_HELPER.id)) {
+                achievementsToGrant.push({id: ACHIEVEMENTS.COMMUNITY_HELPER.id, name: ACHIEVEMENTS.COMMUNITY_HELPER.name});
+            }
+
+            if (totalCompleted >= 10 && !userAchievements.includes(ACHIEVEMENTS.TEN_TASKS.id)) {
+                achievementsToGrant.push({id: ACHIEVEMENTS.TEN_TASKS.id, name: ACHIEVEMENTS.TEN_TASKS.name});
+            }
         }
         
-        if (task.creatorId && task.creatorId !== userId && !userAchievements.includes(ACHIEVEMENTS.COMMUNITY_HELPER.id)) {
-            achievementsToGrant.push({id: ACHIEVEMENTS.COMMUNITY_HELPER.id, name: ACHIEVEMENTS.COMMUNITY_HELPER.name});
+        // Gamification logic for being thanked
+        if (type === 'thanked') {
+             if (!userAchievements.includes(ACHIEVEMENTS.APPRECIATED.id)) {
+                achievementsToGrant.push({id: ACHIEVEMENTS.APPRECIATED.id, name: ACHIEVEMENTS.APPRECIATED.name});
+            }
         }
 
-        if (totalCompleted >= 10 && !userAchievements.includes(ACHIEVEMENTS.TEN_TASKS.id)) {
-            achievementsToGrant.push({id: ACHIEVEMENTS.TEN_TASKS.id, name: ACHIEVEMENTS.TEN_TASKS.name});
+        if (achievementsToGrant.length > 0) {
+            transaction.update(memberRef, {
+                achievements: arrayUnion(...achievementsToGrant.map(a => a.id))
+            });
         }
+        
+        return { grantedAchievements: achievementsToGrant, streakToastMessage: toastMessage };
+    });
+
+    // Handle notifications outside of the transaction
+    if (streakToastMessage && task) {
+         createNotification(userId, streakToastMessage, task.id, organizationId, 'system', { eventType: 'gamification' });
     }
     
-    if (type === 'thanked') {
-         if (!userAchievements.includes(ACHIEVEMENTS.APPRECIATED.id)) {
-            achievementsToGrant.push({id: ACHIEVEMENTS.APPRECIATED.id, name: ACHIEVEMENTS.APPRECIATED.name});
-        }
-    }
-
-    if (achievementsToGrant.length > 0) {
-        batch.update(memberRef, {
-            achievements: arrayUnion(...achievementsToGrant.map(a => a.id))
-        });
-        
+    if (grantedAchievements.length > 0) {
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (userDoc.exists()) {
             const userData = userDoc.data() as GlobalUserProfile;
-            achievementsToGrant.forEach(ach => {
+            const batch = writeBatch(db);
+            grantedAchievements.forEach(ach => {
                 const activityRef = doc(collection(db, 'organizations', organizationId, 'activityFeed'));
                 batch.set(activityRef, {
                     organizationId: organizationId,
@@ -66,11 +116,11 @@ async function grantAchievements(userId: string, organizationId: string, type: '
                     }
                 });
             });
+            await batch.commit();
         }
-        await batch.commit();
-        return { granted: achievementsToGrant };
     }
-    return { granted: [] };
+
+    return { granted: grantedAchievements };
 }
 
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -14,9 +15,12 @@ type SortableTaskCardProps = {
     blockingTasks: Task[];
     relatedTasks: { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[];
     blockedByTasks: Task[];
+    isOverdue: boolean;
+    isDueToday: boolean;
+    isDueSoon: boolean;
 }
 
-export function SortableTaskCard({ task, users, currentUser, projects, isBlocked, blockingTasks, relatedTasks, blockedByTasks }: SortableTaskCardProps) {
+export function SortableTaskCard({ task, users, currentUser, projects, isBlocked, blockingTasks, relatedTasks, blockedByTasks, isOverdue, isDueToday, isDueSoon }: SortableTaskCardProps) {
     const {
         attributes,
         listeners,
@@ -43,6 +47,9 @@ export function SortableTaskCard({ task, users, currentUser, projects, isBlocked
               blockingTasks={blockingTasks} 
               relatedTasks={relatedTasks}
               blockedByTasks={blockedByTasks}
+              isOverdue={isOverdue}
+              isDueToday={isDueToday}
+              isDueSoon={isDueSoon}
             />
         </div>
     );

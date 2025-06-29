@@ -16,7 +16,6 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { isBefore, isToday, startOfDay, isWithinInterval, addDays, isAfter, addHours } from 'date-fns';
 import {
   CheckCircle2,
   MoreVertical,
@@ -62,6 +61,13 @@ type TaskCardProps = {
   isDragging?: boolean;
   currentUser: User | null;
   projects: Project[];
+  isBlocked: boolean;
+  blockingTasks: Task[];
+  relatedTasks: { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[];
+  blockedByTasks: Task[];
+  isOverdue: boolean;
+  isDueToday: boolean;
+  isDueSoon: boolean;
 };
 
 const statusConfig: Record<string, { color: string }> = {
@@ -95,9 +101,9 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
   };
 
 
-const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardProps) => {
+const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, isOverdue, isDueToday, isDueSoon, blockingTasks, relatedTasks, blockedByTasks }: TaskCardProps) => {
   const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask, toggleTaskPin } = useTasks();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, searchTerm, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask, toggleTaskPin } = useTasks();
   const { currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
   const { toast } = useToast();
 
@@ -120,48 +126,6 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
     return currentUser?.mutedTaskIds?.includes(task.id);
   }, [currentUser?.mutedTaskIds, task.id]);
 
-  const [dateStatus, setDateStatus] = useState({
-    isOverdue: false,
-    isDueToday: false,
-    isDueSoon: false,
-  });
-
-  const blockedByTasks = useMemo(() => {
-    return (task.blockedBy || [])
-      .map(blockerId => allTasks.find(t => t.id === blockerId))
-      .filter((t): t is Task => !!t);
-  }, [task.blockedBy, allTasks]);
-
-  const relatedTasks = useMemo(() => {
-    return (task.relations || [])
-      .map(relation => {
-        const relatedTask = allTasks.find(t => t.id === relation.taskId);
-        return relatedTask ? { ...relation, title: relatedTask.title } : null;
-      })
-      .filter(Boolean);
-  }, [task.relations, allTasks]);
-
-
-  const isBlocked = useMemo(() => {
-    if (blockedByTasks.length === 0) return false;
-    return blockedByTasks.some(blockerTask => {
-        if (blockerTask.status !== 'Voltooid') return true;
-        const dependencyConfig = task.dependencyConfig?.[blockerTask.id];
-        if (dependencyConfig && blockerTask.completedAt) {
-            const { lag, unit } = dependencyConfig;
-            const addFn = unit === 'hours' ? addHours : addDays;
-            const unlockDate = addFn(blockerTask.completedAt, lag);
-            return isAfter(unlockDate, new Date());
-        }
-        return false;
-    });
-  }, [blockedByTasks, task.dependencyConfig]);
-
-  const blockingTasks = useMemo(() => {
-    return allTasks.filter(otherTask => otherTask.blockedBy?.includes(task.id));
-  }, [allTasks, task.id]);
-
-
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
     if (task.activeTimerStartedAt) {
@@ -176,18 +140,6 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
     }
     return () => clearInterval(interval);
   }, [task.activeTimerStartedAt]);
-
-  useEffect(() => {
-    if (task.dueDate) {
-      const today = new Date();
-      const overdue = isBefore(startOfDay(task.dueDate), startOfDay(today));
-      const dueToday = isToday(task.dueDate);
-      const dueSoon = !dueToday && !overdue && isWithinInterval(task.dueDate, { start: today, end: addDays(today, 7) });
-      setDateStatus({ isOverdue: overdue, isDueToday: dueToday, isDueSoon: dueSoon });
-    }
-  }, [task.dueDate]);
-
-  const { isOverdue, isDueToday, isDueSoon } = dateStatus;
 
   const canApprove = currentUser && task.creatorId && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id);
   const canThank = showGamification && currentUser && task.status === 'Voltooid' && task.assigneeIds.length > 0 && !task.assigneeIds.includes(currentUser.id);
@@ -494,7 +446,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                                     className="h-6 w-6"
                                     onClick={(e) => { e.stopPropagation(); promoteSubtaskToTask(task.id, subtask); }}
                                     title="Promoveer naar taak"
-                                    aria-label="Promoveer subtaak naar taak"
+                                    aria-label="Promoveer subtaak naar nieuwe taak"
                                 >
                                     <CornerUpRight className="h-4 w-4" />
                                 </Button>
@@ -547,3 +499,4 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
 };
 
 export default TaskCard;
+

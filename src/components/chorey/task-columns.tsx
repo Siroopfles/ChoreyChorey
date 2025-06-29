@@ -1,4 +1,5 @@
 
+
 'use client';
 import type { User, Task, Project, Priority } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
@@ -10,7 +11,7 @@ import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { FileUp } from 'lucide-react';
-import { addDays, addHours, isAfter } from 'date-fns';
+import { addDays, addHours, isAfter, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
 
 const TaskColumn = ({ 
   title, 
@@ -47,7 +48,13 @@ const TaskColumn = ({
       </div>
        <SortableContext id={title} items={tasks} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
-            {tasks.map((task) => (
+            {tasks.map((task) => {
+              const today = new Date();
+              const isOverdue = task.dueDate ? isBefore(startOfDay(task.dueDate), startOfDay(today)) : false;
+              const isDueToday = task.dueDate ? isToday(task.dueDate) : false;
+              const isDueSoon = task.dueDate ? !isDueToday && !isOverdue && isWithinInterval(task.dueDate, { start: today, end: addDays(today, 7) }) : false;
+              
+              return (
               <SortableTaskCard 
                 key={task.id} 
                 task={task} 
@@ -58,8 +65,11 @@ const TaskColumn = ({
                 blockingTasks={blockingTasksMap.get(task.id) || []}
                 relatedTasks={relatedTasksMap.get(task.id) || []}
                 blockedByTasks={blockedByTasksMap.get(task.id) || []}
+                isOverdue={isOverdue}
+                isDueToday={isDueToday}
+                isDueSoon={isDueSoon}
               />
-            ))}
+            )})}
             {tasks.length === 0 && (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80 pointer-events-none">
                 Sleep een taak hierheen.
