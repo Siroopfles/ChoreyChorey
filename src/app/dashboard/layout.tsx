@@ -47,13 +47,34 @@ const BrandingStyle = () => {
 
 const UserCosmeticStyle = () => {
   const { user } = useAuth();
-  const primaryColor = user?.cosmetic?.primaryColor;
+  const cosmetic = user?.cosmetic;
 
-  if (!primaryColor) {
+  const fontMap = {
+    'inter': 'var(--font-inter)',
+    'source-sans': 'var(--font-source-sans)',
+    'roboto-mono': 'var(--font-roboto-mono)',
+  }
+
+  if (!cosmetic) {
+    return null;
+  }
+  
+  const styles = [];
+  if (cosmetic.primaryColor) styles.push(`--primary: ${cosmetic.primaryColor};`);
+  if (cosmetic.accent) styles.push(`--accent: ${cosmetic.accent};`);
+  if (cosmetic.radius) styles.push(`--radius: ${cosmetic.radius}rem;`);
+  if (cosmetic.font && fontMap[cosmetic.font as keyof typeof fontMap]) {
+    const fontValue = fontMap[cosmetic.font as keyof typeof fontMap];
+    styles.push(`--font-sans: ${fontValue};`);
+    styles.push(`--font-body: ${fontValue};`);
+    styles.push(`--font-headline: ${fontValue};`);
+  }
+
+  if (styles.length === 0) {
     return null;
   }
 
-  const css = `:root { --primary: ${primaryColor}; }`;
+  const css = `:root { ${styles.join(' ')} }`;
 
   return <style dangerouslySetInnerHTML={{ __html: css }} />;
 };
@@ -62,7 +83,7 @@ const UserCosmeticStyle = () => {
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
     const { tasks, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, setFilters } = useTasks();
-    const { currentUserRole, currentOrganization, users, currentUserPermissions, projects, toggleTaskPin } = useAuth();
+    const { currentUserRole, currentOrganization, users, currentUserPermissions, projects, toggleProjectPin } = useAuth();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();

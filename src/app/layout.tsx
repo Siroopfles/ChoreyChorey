@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Source_Sans_3, Roboto_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
@@ -10,6 +10,15 @@ import { UIPreferencesProvider } from '@/contexts/ui-preferences-context';
 const inter = Inter({ 
   subsets: ['latin'],
   variable: '--font-inter',
+});
+const sourceSans = Source_Sans_3({ 
+  subsets: ['latin'],
+  variable: '--font-source-sans',
+  weight: ['400', '600', '700']
+});
+const robotoMono = Roboto_Mono({ 
+  subsets: ['latin'],
+  variable: '--font-roboto-mono',
 });
 
 export const metadata: Metadata = {
@@ -28,7 +37,7 @@ export default function RootLayout({
        <head>
         <meta name="theme-color" content="#3b82f6" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${sourceSans.variable} ${robotoMono.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

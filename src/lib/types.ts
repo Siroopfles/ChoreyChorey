@@ -134,6 +134,9 @@ export type OrganizationMember = {
   endorsements?: Record<string, string[]>;
   cosmetic?: {
     primaryColor?: string;
+    font?: 'inter' | 'source-sans' | 'roboto-mono';
+    radius?: string; // e.g., '0.5'
+    accent?: string; // HSL value
   }
 };
 
