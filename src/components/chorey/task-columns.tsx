@@ -97,28 +97,29 @@ const TaskColumn = ({
                 showInvalidIndicator && "bg-destructive/10 ring-2 ring-destructive cursor-not-allowed"
             )}
         >
-            {tasks.map((task) => {
-              const today = new Date();
-              const isOverdue = task.dueDate ? isBefore(startOfDay(task.dueDate), startOfDay(today)) : false;
-              const isDueToday = task.dueDate ? isToday(task.dueDate) : false;
-              const isDueSoon = task.dueDate ? !isDueToday && !isOverdue && isWithinInterval(task.dueDate, { start: today, end: addDays(today, 7) }) : false;
-              
-              return (
-              <SortableTaskCard 
-                key={task.id} 
-                task={task} 
-                users={users} 
-                currentUser={currentUser} 
-                projects={projects}
-                blockingTasks={blockingTasksMap.get(task.id) || []}
-                relatedTasks={relatedTasksMap.get(task.id) || []}
-                blockedByTasks={blockedByTasksMap.get(task.id) || []}
-                isOverdue={isOverdue}
-                isDueToday={isDueToday}
-                isDueSoon={isDueSoon}
-              />
-            )})}
-            {tasks.length === 0 && (
+            {tasks.length > 0 ? (
+              tasks.map((task) => {
+                const today = new Date();
+                const isOverdue = task.dueDate ? isBefore(startOfDay(task.dueDate), startOfDay(today)) : false;
+                const isDueToday = task.dueDate ? isToday(task.dueDate) : false;
+                const isDueSoon = task.dueDate ? !isDueToday && !isOverdue && isWithinInterval(task.dueDate, { start: today, end: addDays(today, 7) }) : false;
+                
+                return (
+                <SortableTaskCard 
+                  key={task.id} 
+                  task={task} 
+                  users={users} 
+                  currentUser={currentUser} 
+                  projects={projects}
+                  blockingTasks={blockingTasksMap.get(task.id) || []}
+                  relatedTasks={relatedTasksMap.get(task.id) || []}
+                  blockedByTasks={blockedByTasksMap.get(task.id) || []}
+                  isOverdue={isOverdue}
+                  isDueToday={isDueToday}
+                  isDueSoon={isDueSoon}
+                />
+              )})
+            ) : (
               <div
                 className={cn(
                   'flex h-full flex-col items-center justify-center rounded-md border-2 border-dashed p-4 text-center transition-colors',
