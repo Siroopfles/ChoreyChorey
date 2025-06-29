@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useState, useContext, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback, type ReactNode, useMemo } from 'react';
 import { useAuth } from './auth-context';
 import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
 import { ownerSteps, memberSteps } from '@/lib/tour-steps';
@@ -18,17 +18,22 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const [run, setRun] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
 
+  const needsOnboarding = useMemo(() => {
+    if (!user || !currentOrganization) return false;
+    const memberInfo = currentOrganization.members?.[user.id];
+    return memberInfo ? !memberInfo.hasCompletedOnboarding : false;
+  }, [user, currentOrganization]);
+
   useEffect(() => {
-    if (user && currentOrganization && currentUserRole) {
-      const memberInfo = currentOrganization.members?.[user.id];
-      if (memberInfo && !memberInfo.hasCompletedOnboarding) {
-        const tourSteps = currentUserRole === 'Owner' ? ownerSteps : memberSteps;
-        setSteps(tourSteps);
-        // Delay starting the tour slightly to allow the UI to render
-        setTimeout(() => setRun(true), 1000);
-      }
+    if (needsOnboarding && currentUserRole) {
+      const tourSteps = currentUserRole === 'Owner' ? ownerSteps : memberSteps;
+      setSteps(tourSteps);
+      // Delay starting the tour slightly to allow the UI to render
+      setTimeout(() => setRun(true), 1000);
+    } else {
+      setRun(false);
     }
-  }, [user, currentOrganization, currentUserRole]);
+  }, [needsOnboarding, currentUserRole]);
 
   const startTour = useCallback(() => {
     if (currentUserRole) {
@@ -46,7 +51,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       setRun(false);
       if (user && currentOrganization) {
         await markOnboardingComplete(currentOrganization.id, user.id);
-        await refreshUser(); // To update the user state and prevent the tour from re-running
+        await refreshUser();
       }
     }
   };
