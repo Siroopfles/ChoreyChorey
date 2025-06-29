@@ -74,22 +74,56 @@ export const MyTasksWidgetConfigSchema = z.object({
 });
 export type MyTasksWidgetConfig = z.infer<typeof MyTasksWidgetConfigSchema>;
 
+export const NoConfigSchema = z.object({});
+
 export const widgetConfigSchemas = {
   tasksByStatus: ChartWidgetConfigSchema,
-  tasksByPriority: LeaderboardWidgetConfigSchema,
+  tasksByPriority: ChartWidgetConfigSchema,
   leaderboard: LeaderboardWidgetConfigSchema,
   myTasks: MyTasksWidgetConfigSchema,
-  activityFeed: z.object({}), // No config
-  recentActivity: z.object({}), // No config
-  welcome: z.object({}), // No config
+  activityFeed: NoConfigSchema,
+  recentActivity: NoConfigSchema,
+  welcome: NoConfigSchema,
 };
 
+export const widgetInstanceSchema = z.discriminatedUnion("type", [
+  z.object({
+    id: z.string(),
+    type: z.literal("tasksByStatus"),
+    config: ChartWidgetConfigSchema,
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("tasksByPriority"),
+    config: ChartWidgetConfigSchema,
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("leaderboard"),
+    config: LeaderboardWidgetConfigSchema,
+  }),
+   z.object({
+    id: z.string(),
+    type: z.literal("myTasks"),
+    config: MyTasksWidgetConfigSchema,
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("activityFeed"),
+    config: NoConfigSchema,
+  }),
+   z.object({
+    id: z.string(),
+    type: z.literal("recentActivity"),
+    config: NoConfigSchema,
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("welcome"),
+    config: NoConfigSchema,
+  }),
+]);
 
-export const widgetInstanceSchema = z.object({
-  id: z.string(),
-  type: z.nativeEnum(Object.keys(WIDGET_TYPES)),
-  config: z.any(),
-});
 
 export type WidgetInstance = z.infer<typeof widgetInstanceSchema>;
 

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { 
@@ -23,7 +22,7 @@ import {
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db, googleProvider, microsoftProvider } from '@/lib/firebase';
 import type { User, Organization, RoleName, UserStatus, Permission, WidgetInstance } from '@/lib/types';
-import { WIDGET_TYPES, DEFAULT_ROLES } from '@/lib/types';
+import { WIDGET_TYPES, DEFAULT_ROLES, widgetConfigSchemas } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/member.actions';
 import { sendDailyDigest } from '@/app/actions/digest.actions';
@@ -272,9 +271,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             let avatarUrl = `https://placehold.co/100x100.png`;
             try {
-                const { avatarDataUri } = await generateAvatar(name);
-                if (avatarDataUri) {
-                    avatarUrl = avatarDataUri;
+                const result = await generateAvatar({ userId: firebaseUser.uid, name: name });
+                if (result.avatarUrl) {
+                    avatarUrl = result.avatarUrl;
                 }
             } catch (aiError) {
                 console.error("Failed to generate AI avatar, using placeholder.", aiError);
@@ -312,9 +311,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (additionalInfo?.isNewUser) {
                 let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                 try {
-                    const { avatarDataUri } = await generateAvatar(firebaseUser.displayName || firebaseUser.email!);
-                    if (avatarDataUri) {
-                        avatarUrl = avatarDataUri;
+                    const result = await generateAvatar({ userId: firebaseUser.uid, name: firebaseUser.displayName || firebaseUser.email! });
+                    if (result.avatarUrl) {
+                        avatarUrl = result.avatarUrl;
                     }
                 } catch (aiError) {
                     console.error("Failed to generate AI avatar, using placeholder.", aiError);
@@ -353,9 +352,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (additionalInfo?.isNewUser) {
                 let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                  try {
-                    const { avatarDataUri } = await generateAvatar(firebaseUser.displayName || firebaseUser.email!);
-                    if (avatarDataUri) {
-                        avatarUrl = avatarDataUri;
+                    const result = await generateAvatar({ userId: firebaseUser.uid, name: firebaseUser.displayName || firebaseUser.email! });
+                    if (result.avatarUrl) {
+                        avatarUrl = result.avatarUrl;
                     }
                 } catch (aiError) {
                     console.error("Failed to generate AI avatar, using placeholder.", aiError);

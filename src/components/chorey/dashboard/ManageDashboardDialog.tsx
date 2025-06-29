@@ -48,7 +48,7 @@ export function ManageDashboardDialog({ open, onOpenChange, highlightWidgetId }:
         
         initialFormValues.widgets[widgetType] = {
           enabled: !!existingWidget,
-          config: existingWidget?.config || widgetConfigSchemas[widgetType].default({}),
+          config: existingWidget?.config || widgetConfigSchemas[widgetType].parse({}), // Use parse for defaults
         };
       }
       form.reset(initialFormValues);
@@ -68,11 +68,23 @@ export function ManageDashboardDialog({ open, onOpenChange, highlightWidgetId }:
 
       if (enabled) {
         const existingWidget = existingConfig.find(w => w.type === widgetType);
-        newDashboardConfig.push({
+        const newWidgetData = {
           id: existingWidget?.id || `${widgetType}-${crypto.randomUUID()}`,
           type: widgetType,
           config: config,
-        });
+        };
+        // Validate the new widget data before adding it to the config
+        const validation = widgetConfigSchemas[widgetType].safeParse(config);
+        if (validation.success) {
+           newDashboardConfig.push(newWidgetData as WidgetInstance);
+        } else {
+            console.error(`Invalid config for widget ${widgetType}:`, validation.error);
+            toast({
+                title: "Fout in widget configuratie",
+                description: `De instellingen voor de widget '${WIDGET_TYPES[widgetType]}' zijn ongeldig.`,
+                variant: 'destructive',
+            });
+        }
       }
     }
     
