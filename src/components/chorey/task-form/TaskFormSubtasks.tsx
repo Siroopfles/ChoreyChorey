@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFormContext, useFieldArray } from 'react-hook-form';
@@ -11,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Loader2, Bot, PlusCircle, Trash2, CornerUpRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { handleSuggestSubtasks } from '@/app/actions/ai.actions';
+import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
 import { useState } from 'react';
 import type { Task, Subtask } from '@/lib/types';
 
@@ -34,12 +33,12 @@ export function TaskFormSubtasks({ task }: { task?: Task }) {
         return;
     }
     setIsSuggestingSubtasks(true);
-    const result = await handleSuggestSubtasks({title, description});
-    if (result.error) {
-        toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
-    } else if (result.subtasks) {
+    try {
+        const result = await suggestSubtasks({title, description});
         result.subtasks.forEach(subtask => append({ text: subtask, isPrivate: false }));
         toast({ title: 'Subtaken toegevoegd!', description: `${result.subtasks.length} subtaken zijn door AI gegenereerd.` });
+    } catch(e: any) {
+        toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
     }
     setIsSuggestingSubtasks(false);
   };

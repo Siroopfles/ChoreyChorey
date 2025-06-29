@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, BrainCircuit, Bot, AlertTriangle, CheckCircle, TrendingUp, CircleDollarSign, Lightbulb } from 'lucide-react';
-import { handlePredictProjectOutcome } from '@/app/actions/ai.actions';
+import { predictProjectOutcome } from '@/ai/flows/predict-project-outcome-flow';
 import type { PredictProjectOutcomeOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,13 +29,13 @@ export default function PredictiveAnalysisPage() {
         setResult(null);
         setError('');
 
-        const response = await handlePredictProjectOutcome(selectedProject.id, currentOrganization.id);
-
-        if (response.error) {
-            setError(response.error);
-        } else if (response.result) {
-            setResult(response.result);
+        try {
+            const outcome = await predictProjectOutcome(selectedProject.id, currentOrganization.id);
+            setResult(outcome);
+        } catch (e: any) {
+            setError(e.message);
         }
+
         setIsLoading(false);
     };
 

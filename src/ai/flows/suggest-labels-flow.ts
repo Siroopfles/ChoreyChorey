@@ -9,9 +9,23 @@
 import {ai} from '@/ai/genkit';
 import { SuggestLabelsInputSchema, SuggestLabelsOutputSchema } from '@/ai/schemas';
 import type { SuggestLabelsInput, SuggestLabelsOutput } from '@/ai/schemas';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Organization } from '@/lib/types';
 
-export async function suggestLabels(input: SuggestLabelsInput): Promise<SuggestLabelsOutput> {
-  return suggestLabelsFlow(input);
+export async function suggestLabels(input: Omit<SuggestLabelsInput, 'availableLabels'> & { organizationId: string }): Promise<SuggestLabelsOutput> {
+  const orgDoc = await getDoc(doc(db, 'organizations', input.organizationId));
+  if (!orgDoc.exists()) {
+      return { labels: [] }; // Or throw an error
+  }
+  const orgData = orgDoc.data() as Organization;
+  const availableLabels = orgData.settings?.customization?.labels || [];
+
+  if (availableLabels.length === 0) {
+      return { labels: [] };
+  }
+
+  return suggestLabelsFlow({ ...input, availableLabels });
 }
 
 const prompt = ai.definePrompt({

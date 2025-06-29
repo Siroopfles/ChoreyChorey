@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, MailCheck, Calendar, Sun } from 'lucide-react';
-import { handleNotificationDigest } from '@/app/actions/ai.actions';
+import { generateNotificationDigest } from '@/ai/flows/notification-digest-flow';
 import type { NotificationDigestInput } from '@/ai/schemas';
 
 export default function DigestPage() {
@@ -22,19 +22,18 @@ export default function DigestPage() {
         setPeriod(requestedPeriod);
         setDigest('');
         setError('');
-
-        const input: NotificationDigestInput = {
-            userId: user.id,
-            organizationId: currentOrganization.id,
-            period: requestedPeriod,
-        };
-
-        const result = await handleNotificationDigest(input);
-        if (result.error) {
-            setError(result.error);
-        } else if (result.summary) {
-            setDigest(result.summary);
+        
+        try {
+            const result = await generateNotificationDigest({
+                userId: user.id,
+                organizationId: currentOrganization.id,
+                period: requestedPeriod,
+            });
+            setDigest(result);
+        } catch (e: any) {
+            setError(e.message);
         }
+        
         setIsLoading(false);
     };
 

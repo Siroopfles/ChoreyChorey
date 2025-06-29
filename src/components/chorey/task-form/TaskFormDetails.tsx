@@ -13,7 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { User as UserIcon, Bot, Loader2, Tags, X, ThumbsUp, ThumbsDown, Briefcase } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { handleSuggestStoryPoints, handleSuggestPriority, handleSuggestLabels } from '@/app/actions/ai.actions';
+import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
+import { suggestPriority } from '@/ai/flows/suggest-priority';
+import { suggestLabels } from '@/ai/flows/suggest-labels-flow';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth-context';
 import { submitAiFeedback } from '@/app/actions/feedback.actions';
@@ -67,13 +69,13 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
      if (!title) return toast({ title: 'Titel vereist', variant: 'destructive' });
     if (!currentOrganization) return toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
     setIsSuggestingPoints(true);
-    const result = await handleSuggestStoryPoints(title, currentOrganization.id, description);
-    if (result.error) {
-        toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
-    } else if (result.suggestion) {
-        form.setValue('storyPoints', result.suggestion.points);
-        setPointsSuggestion(result.suggestion);
+    try {
+        const suggestion = await suggestStoryPoints(title, currentOrganization.id, description);
+        form.setValue('storyPoints', suggestion.points);
+        setPointsSuggestion(suggestion);
         setPointsFeedbackGiven(false);
+    } catch (e: any) {
+        toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
     }
     setIsSuggestingPoints(false);
   };
@@ -84,13 +86,13 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
      if (!title) return toast({ title: 'Titel vereist', variant: 'destructive' });
     setIsSuggestingPriority(true);
     setPrioritySuggestion(null);
-    const result = await handleSuggestPriority({ title, description });
-    if (result.error) {
-        toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
-    } else if (result.suggestion) {
-        form.setValue('priority', result.suggestion.priority);
-        setPrioritySuggestion(result.suggestion);
+    try {
+        const suggestion = await suggestPriority({ title, description });
+        form.setValue('priority', suggestion.priority);
+        setPrioritySuggestion(suggestion);
         setPriorityFeedbackGiven(false);
+    } catch(e: any) {
+        toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
     }
     setIsSuggestingPriority(false);
   };
@@ -101,14 +103,14 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
     if (!title) return toast({ title: 'Titel vereist', variant: 'destructive' });
     if (!currentOrganization) return toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
     setIsSuggestingLabels(true);
-    const result = await handleSuggestLabels({ title, description }, currentOrganization.id);
-    if (result.error) {
-        toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
-    } else if (result.labels) {
+    try {
+        const result = await suggestLabels({ title, description, organizationId: currentOrganization.id });
         const currentLabels = form.getValues('labels') || [];
         const newLabels = Array.from(new Set([...currentLabels, ...result.labels]));
         form.setValue('labels', newLabels);
         toast({ title: 'Labels voorgesteld!', description: `${result.labels.length} nieuwe label(s) voorgesteld door AI.` });
+    } catch (e: any) {
+         toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
     }
     setIsSuggestingLabels(false);
   };

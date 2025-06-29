@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState } from 'react';
@@ -11,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
@@ -72,7 +70,7 @@ export default function OrganizationSettings({ organization }: { organization: O
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmittingOrg || !canManageOrg}>
+            <Button type="submit" disabled={isSubmittingOrg || !canManageOrg || !orgForm.formState.isDirty}>
               {isSubmittingOrg && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Naam Wijzigen
             </Button>

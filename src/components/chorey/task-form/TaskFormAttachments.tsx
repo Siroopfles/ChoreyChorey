@@ -1,14 +1,13 @@
-
 'use client';
 
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label as UiLabel } from '@/components/ui/label';
 import { Loader2, ImageIcon, PlusCircle, Trash2, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { handleGenerateTaskImage } from '@/app/actions/ai.actions';
+import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
 import { useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/auth-context';
@@ -43,13 +42,9 @@ export function TaskFormAttachments() {
         }
         setIsGeneratingImage(true);
         try {
-            const result = await handleGenerateTaskImage({ title, description }, currentOrganization.id);
-            if (result.imageDataUri) {
-                setValue('imageDataUri', result.imageDataUri);
-                toast({ title: 'Afbeelding gegenereerd en toegevoegd als omslagfoto!' });
-            } else {
-                throw new Error(result.error || 'Geen afbeeldingsdata ontvangen.');
-            }
+            const result = await generateTaskImage({ title, description, organizationId: currentOrganization.id });
+            setValue('imageDataUri', result.imageDataUri);
+            toast({ title: 'Afbeelding gegenereerd en toegevoegd als omslagfoto!' });
         } catch (error: any) {
             toast({ title: 'Fout bij genereren afbeelding', description: error.message, variant: 'destructive' });
         }

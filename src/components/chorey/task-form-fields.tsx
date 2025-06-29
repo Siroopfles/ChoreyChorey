@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, Project, Task, SuggestProactiveHelpOutput } from '@/lib/types';
@@ -8,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Loader2, Bot, X } from 'lucide-react';
-import { handleFindDuplicateTask, handleSuggestProactiveHelp } from '@/app/actions/ai.actions';
+import { findDuplicateTask } from '@/ai/flows/find-duplicate-task-flow';
+import { suggestProactiveHelp } from '@/ai/flows/suggest-proactive-help-flow';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
@@ -49,11 +49,16 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
 
     const checkForHelp = async () => {
       setIsCheckingComplexity(true);
-      const result = await handleSuggestProactiveHelp({ title: debouncedTitle, description: debouncedDescription });
-      if (result.suggestion?.shouldOfferHelp) {
-        setProactiveHelp(result.suggestion);
-      } else {
-        setProactiveHelp(null);
+      try {
+        const result = await suggestProactiveHelp({ title: debouncedTitle, description: debouncedDescription });
+        if (result.shouldOfferHelp) {
+          setProactiveHelp(result);
+        } else {
+          setProactiveHelp(null);
+        }
+      } catch (e) {
+        // Silently fail, this is a non-critical feature
+        console.warn("Proactive help check failed:", e);
       }
       setIsCheckingComplexity(false);
     };
@@ -69,17 +74,18 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
     setDuplicateResult(null);
 
     const description = form.getValues('description');
-    const result = await handleFindDuplicateTask({
-      organizationId: currentOrganization.id,
-      title,
-      description
-    });
     
-    if (result.error) {
-        console.error(result.error);
-    } else if (result.result) {
-      setDuplicateResult(result.result);
+    try {
+        const result = await findDuplicateTask({
+          organizationId: currentOrganization.id,
+          title,
+          description
+        });
+        setDuplicateResult(result);
+    } catch(e: any) {
+        console.error(e);
     }
+    
     setIsCheckingForDuplicates(false);
   };
 

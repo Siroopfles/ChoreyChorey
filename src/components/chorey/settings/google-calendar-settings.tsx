@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -6,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Calendar, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateGoogleAuthUrl, disconnectGoogleCalendar, updateUserProfile } from '@/app/actions/user.actions';
+import { generateGoogleAuthUrl, disconnectGoogleCalendar } from '@/app/actions/calendar.actions';
+import { updateUserProfile } from '@/app/actions/user.actions';
 
 export default function GoogleCalendarSettings() {
     const { user, refreshUser } = useAuth();

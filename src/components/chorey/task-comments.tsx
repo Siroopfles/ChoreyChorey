@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, Comment as CommentType } from '@/lib/types';
@@ -7,7 +6,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Bot, Loader2, Speaker, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { handleSummarizeComments, handleMultiSpeakerTextToSpeech } from '@/app/actions/ai.actions';
+import { summarizeComments } from '@/ai/flows/summarize-comments';
+import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -120,11 +120,12 @@ export function TaskComments({ taskId, comments, users, addComment, markCommentA
     setSummary('');
     setAudioError(null);
     setAudioSrc(null);
-    const result = await handleSummarizeComments(commentsToSummarize);
-    if (result.error) {
-      toast({ title: 'Fout bij samenvatten', description: result.error, variant: 'destructive' });
-    } else if (result.summary) {
-      setSummary(result.summary);
+    
+    try {
+        const result = await summarizeComments({ comments: commentsToSummarize });
+        setSummary(result.summary);
+    } catch(e: any) {
+        toast({ title: 'Fout bij samenvatten', description: e.message, variant: 'destructive' });
     }
     setIsSummarizing(false);
   };
@@ -149,13 +150,9 @@ export function TaskComments({ taskId, comments, users, addComment, markCommentA
         };
       });
 
-      const result = await handleMultiSpeakerTextToSpeech({ comments: commentsWithNames });
+      const result = await multiSpeakerTextToSpeech({ comments: commentsWithNames });
 
-      if (result.error) {
-        throw new Error(result.error);
-      } else if (result.audioDataUri) {
-        setAudioSrc(result.audioDataUri);
-      }
+      setAudioSrc(result.audioDataUri);
     } catch (e: any) {
       setAudioError(e.message || 'Er is een onbekende fout opgetreden.');
     } finally {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -16,7 +15,7 @@ import { Loader2, User, Bot, Tags, Check, X, Star, Bell, Globe, MapPin, Clock } 
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/app/actions/user.actions';
 import { updateMemberProfile } from '@/app/actions/member.actions';
-import { handleGenerateAvatar } from '@/app/actions/ai.actions';
+import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
@@ -99,18 +98,17 @@ export default function ProfileSettings({ user }: { user: UserType }) {
 
   const onGenerateAvatar = async () => {
     setIsGeneratingAvatar(true);
-    const avatarResult = await handleGenerateAvatar(user.name);
-
-    if (avatarResult.error) {
-      toast({ title: 'Fout bij avatar generatie', description: avatarResult.error, variant: 'destructive' });
-    } else if (avatarResult.avatarDataUri) {
-      const updateResult = await updateUserProfile(user.id, { avatar: avatarResult.avatarDataUri });
-      if (updateResult.error) {
-        toast({ title: 'Fout bij opslaan avatar', description: updateResult.error, variant: 'destructive' });
-      } else {
-        await refreshUser();
-        toast({ title: 'Avatar bijgewerkt!', description: 'Je nieuwe AI-avatar is ingesteld.' });
-      }
+    try {
+        const { avatarDataUri } = await generateAvatar(user.name);
+        const updateResult = await updateUserProfile(user.id, { avatar: avatarDataUri });
+        if (updateResult.error) {
+            toast({ title: 'Fout bij opslaan avatar', description: updateResult.error, variant: 'destructive' });
+        } else {
+            await refreshUser();
+            toast({ title: 'Avatar bijgewerkt!', description: 'Je nieuwe AI-avatar is ingesteld.' });
+        }
+    } catch (e: any) {
+         toast({ title: 'Fout bij avatar generatie', description: e.message, variant: 'destructive' });
     }
     setIsGeneratingAvatar(false);
   };

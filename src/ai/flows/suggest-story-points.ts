@@ -5,9 +5,32 @@
 import { ai } from '@/ai/genkit';
 import { SuggestStoryPointsInputSchema, SuggestStoryPointsOutputSchema } from '@/ai/schemas';
 import type { SuggestStoryPointsInput, SuggestStoryPointsOutput } from '@/ai/schemas';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 
-export async function suggestStoryPoints(input: SuggestStoryPointsInput): Promise<SuggestStoryPointsOutput> {
-  return suggestStoryPointsFlow(input);
+export async function suggestStoryPoints(title: string, organizationId: string, description?: string): Promise<SuggestStoryPointsOutput> {
+  // RAG: Retrieve recent tasks with story points to provide context.
+  const q = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('storyPoints', '!=', null),
+      orderBy('createdAt', 'desc'),
+      limit(50) 
+  );
+
+  const snapshot = await getDocs(q);
+
+  const taskHistory = snapshot.docs
+      .map(doc => doc.data())
+      .filter(data => data.status === 'Voltooid') // Filter for completed tasks
+      .slice(0, 15) // Take the most recent 15
+      .map(data => ({
+          title: data.title,
+          description: data.description,
+          points: data.storyPoints,
+      }));
+
+  return suggestStoryPointsFlow({ title, description, taskHistory });
 }
 
 const prompt = ai.definePrompt({

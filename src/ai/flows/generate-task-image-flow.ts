@@ -7,9 +7,15 @@
 import { ai } from '@/ai/genkit';
 import { GenerateTaskImageInputSchema, GenerateTaskImageOutputSchema } from '@/ai/schemas';
 import type { GenerateTaskImageInput, GenerateTaskImageOutput } from '@/ai/schemas';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Organization } from '@/lib/types';
 
-export async function generateTaskImage(input: GenerateTaskImageInput): Promise<GenerateTaskImageOutput> {
-  return generateTaskImageFlow(input);
+export async function generateTaskImage(input: Omit<GenerateTaskImageInput, 'primaryColor'> & { organizationId: string }): Promise<GenerateTaskImageOutput> {
+  const orgDoc = await getDoc(doc(db, 'organizations', input.organizationId));
+  const primaryColor = orgDoc.exists() ? (orgDoc.data() as Organization).settings?.branding?.primaryColor : undefined;
+
+  return generateTaskImageFlow({ ...input, primaryColor });
 }
 
 const generateTaskImageFlow = ai.defineFlow(

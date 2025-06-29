@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { disableTwoFactor } from '@/app/actions/user.actions';
+import { disableTwoFactor } from '@/app/actions/two-factor.actions';
 import { useAuth } from '@/contexts/auth-context';
 import type { User } from '@/lib/types';
 import { TwoFactorSetupDialog } from './two-factor-setup-dialog';

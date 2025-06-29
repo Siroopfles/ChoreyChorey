@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef } from 'react';
@@ -6,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ClipboardList, Bot, FileDown } from 'lucide-react';
-import { handleGenerateProjectReport } from '@/app/actions/ai.actions';
+import { generateProjectReport } from '@/ai/flows/generate-project-report-flow';
 import type { GenerateProjectReportOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,12 +30,11 @@ export default function ProjectReportPage() {
         setResult(null);
         setError('');
 
-        const response = await handleGenerateProjectReport(selectedProject.id, selectedProject.name, currentOrganization.id);
-
-        if (response.error) {
-            setError(response.error);
-        } else if (response.result) {
-            setResult(response.result);
+        try {
+            const reportResult = await generateProjectReport(selectedProject.id, selectedProject.name, currentOrganization.id);
+            setResult(reportResult);
+        } catch (e: any) {
+            setError(e.message);
         }
         setIsLoading(false);
     };

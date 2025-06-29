@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Users, BrainCircuit } from 'lucide-react';
-import { handleSuggestHeadcount } from '@/app/actions/ai.actions';
+import { suggestHeadcount } from '@/ai/flows/suggest-headcount-flow';
 import type { SuggestHeadcountOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,13 +26,13 @@ export default function HeadcountPage() {
         setResult(null);
         setError('');
 
-        const response = await handleSuggestHeadcount(currentOrganization.id, projectDescription);
-
-        if (response.error) {
-            setError(response.error);
-        } else if (response.result) {
-            setResult(response.result);
+        try {
+            const headcountResult = await suggestHeadcount(currentOrganization.id, projectDescription);
+            setResult(headcountResult);
+        } catch (e: any) {
+            setError(e.message);
         }
+
         setIsLoading(false);
     };
 

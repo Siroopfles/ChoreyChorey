@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { generateTwoFactorSecret, verifyAndEnableTwoFactor } from '@/app/actions/user.actions';
+import { generateTwoFactorSecret, verifyAndEnableTwoFactor } from '@/app/actions/two-factor.actions';
 import { useAuth } from '@/contexts/auth-context';
 import type { User } from '@/lib/types';
 import QRCode from 'qrcode';
@@ -149,4 +149,3 @@ export function TwoFactorSetupDialog({ isOpen, setIsOpen, user }: TwoFactorSetup
         </Dialog>
     );
 }
-

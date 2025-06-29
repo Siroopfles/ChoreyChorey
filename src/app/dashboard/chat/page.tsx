@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Send, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { handleProcessCommand } from '@/app/actions/ai.actions';
+import { processCommand } from '@/ai/flows/process-command';
 import { ChatBubble } from '@/components/chorey/chat-bubble';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -41,24 +41,21 @@ export default function ChatPage() {
     setInput('');
     setIsLoading(true);
 
-    const response = await handleProcessCommand(input, user.id, currentOrganization.id, user.name);
-    
-    let assistantMessageContent = '';
-    if (response.error) {
-      assistantMessageContent = `Er is een fout opgetreden: ${response.error}`;
-      toast({
-        title: 'AI Fout',
-        description: response.error,
-        variant: 'destructive',
-      });
-    } else if (response.result) {
-      assistantMessageContent = response.result;
-    } else {
-      assistantMessageContent = "Sorry, ik kon je verzoek niet verwerken.";
+    try {
+        const assistantMessageContent = await processCommand({ command: input, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
+        const assistantMessage: Message = { role: 'assistant', content: assistantMessageContent };
+        setMessages(prev => [...prev, assistantMessage]);
+    } catch (e: any) {
+        const assistantMessage: Message = { role: 'assistant', content: `Er is een fout opgetreden: ${e.message}` };
+        setMessages(prev => [...prev, assistantMessage]);
+        toast({
+            title: 'AI Fout',
+            description: e.message,
+            variant: 'destructive',
+        });
     }
 
-    const assistantMessage: Message = { role: 'assistant', content: assistantMessageContent };
-    setMessages(prev => [...prev, assistantMessage]);
+
     setIsLoading(false);
   };
 

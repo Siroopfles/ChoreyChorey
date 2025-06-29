@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { Loader2, ShieldCheck, Mountain } from 'lucide-react';
-import { verifyLoginCode } from '@/app/actions/user.actions';
+import { verifyLoginCode } from '@/app/actions/two-factor.actions';
 
 const verifySchema = z.object({
   code: z.string().min(6, 'Code moet minimaal 6 tekens lang zijn.'),

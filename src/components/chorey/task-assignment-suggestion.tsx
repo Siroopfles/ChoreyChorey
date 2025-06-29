@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { handleSuggestAssignee } from '@/app/actions/ai.actions';
+import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import type { SuggestTaskAssigneeOutput } from '@/ai/schemas';
@@ -29,16 +29,15 @@ export function TaskAssignmentSuggestion({ users }: TaskAssignmentSuggestionProp
     setError(null);
     setSuggestion(null);
 
-    const result = await handleSuggestAssignee(taskDescription, currentOrganization.id);
-
-    if (result.error) {
-      setError(result.error);
-    } else if (result.suggestion) {
-      setSuggestion(result.suggestion);
-      const suggestedUser = users.find(u => u.name === result.suggestion?.suggestedAssignee);
-      if(suggestedUser) {
-        form.setValue('assigneeIds', [suggestedUser.id]);
-      }
+    try {
+        const result = await suggestTaskAssignee(taskDescription, currentOrganization.id);
+        setSuggestion(result);
+        const suggestedUser = users.find(u => u.name === result.suggestedAssignee);
+        if(suggestedUser) {
+          form.setValue('assigneeIds', [suggestedUser.id]);
+        }
+    } catch (e: any) {
+        setError(e.message);
     }
     setLoading(false);
   };
