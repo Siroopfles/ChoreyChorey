@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import type { Team } from '@/lib/types';
 import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+import { serializeTeam } from '@/lib/api-serializers';
 
 const getTeamsHandler = async (
     request: NextRequest,
@@ -23,7 +24,7 @@ const getTeamsHandler = async (
         const teamsQuery = query(collection(db, 'teams'), ...queryConstraints);
         const snapshot = await getDocs(teamsQuery);
 
-        const teams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const teams = snapshot.docs.map(doc => serializeTeam({ id: doc.id, ...doc.data() }));
 
         return NextResponse.json({ data: teams });
 

@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import type { Project } from '@/lib/types';
 import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+import { serializeProject } from '@/lib/api-serializers';
 
 
 const getProjectsHandler = async (
@@ -24,7 +25,7 @@ const getProjectsHandler = async (
     const projectsQuery = query(collection(db, 'projects'), ...queryConstraints);
     const snapshot = await getDocs(projectsQuery);
 
-    const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const projects = snapshot.docs.map(doc => serializeProject({ id: doc.id, ...doc.data() }));
 
     return NextResponse.json({ data: projects });
 

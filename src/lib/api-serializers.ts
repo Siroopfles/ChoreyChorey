@@ -14,9 +14,6 @@ export const serializeTimestamps = (data: any) => {
         } else if (value instanceof Date) {
             serializedData[key] = value.toISOString();
         } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-            // Recursively serialize nested objects, but be cautious
-            // For now, let's keep it simple and not serialize deeply nested objects
-            // unless we have a specific need, to avoid circular references.
             serializedData[key] = value;
         } else {
             serializedData[key] = value;
@@ -25,18 +22,58 @@ export const serializeTimestamps = (data: any) => {
     return serializedData;
 };
 
-// Specific serializers for different data models can be added here if needed,
-// for example, to cherry-pick fields for public responses.
-
+// Explicitly select fields to prevent leaking sensitive data.
 export const serializeTask = (data: any) => {
     const serialized = serializeTimestamps(data);
-    // You can add task-specific field selections here if needed
-    delete serialized.history; // Example: Don't expose full history via API
-    return serialized;
+    return {
+        id: serialized.id,
+        title: serialized.title,
+        description: serialized.description,
+        status: serialized.status,
+        priority: serialized.priority,
+        dueDate: serialized.dueDate,
+        assigneeIds: serialized.assigneeIds,
+        creatorId: serialized.creatorId,
+        projectId: serialized.projectId,
+        teamId: serialized.teamId,
+        labels: serialized.labels,
+        subtasks: serialized.subtasks,
+        attachments: serialized.attachments,
+        comments: serialized.comments,
+        isPrivate: serialized.isPrivate,
+        createdAt: serialized.createdAt,
+        completedAt: serialized.completedAt,
+        order: serialized.order,
+        storyPoints: serialized.storyPoints,
+        cost: serialized.cost,
+        blockedBy: serialized.blockedBy,
+        relations: serialized.relations,
+        recurring: serialized.recurring,
+        organizationId: serialized.organizationId,
+        imageUrl: serialized.imageUrl,
+        timeLogged: serialized.timeLogged,
+        rating: serialized.rating,
+        reviewerId: serialized.reviewerId,
+        consultedUserIds: serialized.consultedUserIds,
+        informedUserIds: serialized.informedUserIds,
+    };
 };
 
 export const serializeProject = (data: any) => {
-    return serializeTimestamps(data);
+    const serialized = serializeTimestamps(data);
+     return {
+        id: serialized.id,
+        name: serialized.name,
+        organizationId: serialized.organizationId,
+        teamIds: serialized.teamIds,
+        program: serialized.program,
+        isSensitive: serialized.isSensitive,
+        isPublic: serialized.isPublic,
+        budget: serialized.budget,
+        budgetType: serialized.budgetType,
+        deadline: serialized.deadline,
+        pinned: serialized.pinned,
+    };
 };
 
 export const serializeTeam = (data: any) => {
@@ -45,7 +82,8 @@ export const serializeTeam = (data: any) => {
 
 export const serializeUser = (data: any) => {
     const serialized = serializeTimestamps(data);
-    // Return a public-safe user object
+    // Return a public-safe user object, excluding sensitive fields
+    // like twoFactorSecret, refreshToken, etc.
     return {
         id: serialized.id,
         name: serialized.name,
