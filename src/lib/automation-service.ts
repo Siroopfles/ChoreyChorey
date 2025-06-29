@@ -5,11 +5,12 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import type { Automation, Task, Priority, Label, Comment } from './types';
 import { createNotification } from '@/app/actions/notification.actions';
+import { SYSTEM_USER_ID } from './constants';
 
 function addHistoryEntry(userId: string | null, action: string, details?: string) {
     return {
         id: crypto.randomUUID(),
-        userId: userId || 'system',
+        userId: userId || SYSTEM_USER_ID,
         timestamp: new Date(),
         action,
         details,
@@ -24,7 +25,7 @@ async function executeTaskAssignAction(task: Task, automation: Automation) {
 
     await updateDoc(taskRef, {
         assigneeIds: arrayUnion(newAssigneeId),
-        history: arrayUnion(addHistoryEntry('system', 'Taak toegewezen via automatisering', `"${automation.name}"`))
+        history: arrayUnion(addHistoryEntry(SYSTEM_USER_ID, 'Taak toegewezen via automatisering', `"${automation.name}"`))
     });
     
     await createNotification(
@@ -32,7 +33,7 @@ async function executeTaskAssignAction(task: Task, automation: Automation) {
         `Je bent automatisch toegewezen aan taak: "${task.title}" via automatisering "${automation.name}"`,
         task.id,
         task.organizationId,
-        'system',
+        SYSTEM_USER_ID,
         { eventType: 'automation' }
     );
 }
@@ -45,7 +46,7 @@ async function executeSetPriorityAction(task: Task, automation: Automation) {
 
     await updateDoc(taskRef, {
         priority: newPriority,
-        history: arrayUnion(addHistoryEntry('system', 'Prioriteit ingesteld via automatisering', `"${automation.name}"`))
+        history: arrayUnion(addHistoryEntry(SYSTEM_USER_ID, 'Prioriteit ingesteld via automatisering', `"${automation.name}"`))
     });
 }
 
@@ -59,7 +60,7 @@ async function executeAddLabelAction(task: Task, automation: Automation) {
 
     await updateDoc(taskRef, {
         labels: arrayUnion(newLabel),
-        history: arrayUnion(addHistoryEntry('system', 'Label toegevoegd via automatisering', `"${automation.name}"`))
+        history: arrayUnion(addHistoryEntry(SYSTEM_USER_ID, 'Label toegevoegd via automatisering', `"${automation.name}"`))
     });
 }
 
@@ -68,12 +69,12 @@ async function executeAddCommentAction(task: Task, automation: Automation) {
 
     const taskRef = doc(db, 'tasks', task.id);
     const newComment: Omit<Comment, 'id'> = {
-        userId: 'system', // Comments from automations are from the system
+        userId: SYSTEM_USER_ID, // Comments from automations are from the system
         text: automation.action.params.commentText,
         createdAt: new Date(),
         readBy: [],
     };
-    const historyEntry = addHistoryEntry('system', 'Reactie toegevoegd via automatisering', `"${automation.action.params.commentText}"`);
+    const historyEntry = addHistoryEntry(SYSTEM_USER_ID, 'Reactie toegevoegd via automatisering', `"${automation.action.params.commentText}"`);
 
     await updateDoc(taskRef, {
         comments: arrayUnion({ ...newComment, id: crypto.randomUUID() }),
@@ -89,7 +90,7 @@ async function executeAddCommentAction(task: Task, automation: Automation) {
             `Automatisering "${automation.name}" heeft een reactie geplaatst op: "${task.title}"`,
             task.id,
             task.organizationId,
-            'system',
+            SYSTEM_USER_ID,
             { eventType: 'automation' }
         );
       }

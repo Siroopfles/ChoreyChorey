@@ -8,6 +8,7 @@ import { addHistoryEntry } from '@/lib/utils';
 import { createNotification } from './notification.actions';
 import { triggerWebhooks } from '@/lib/webhook-service';
 import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
+import { JIRA_BOT_USER_ID, JIRA_BOT_USER_NAME, SYSTEM_USER_ID } from '@/lib/constants';
 
 
 export async function addCommentAction(taskId: string, text: string, userId: string, userName: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
@@ -55,7 +56,7 @@ export async function addCommentAction(taskId: string, text: string, userId: str
                     taskId,
                     organizationId,
                     currentStatus: taskData.status,
-                    availableStatuses,
+                    availableStatuses: availableStatuses.map(s => s.name),
                     taskTitle: taskData.title,
                     event: {
                         type: 'comment_added',
@@ -70,7 +71,7 @@ export async function addCommentAction(taskId: string, text: string, userId: str
                     
                     notificationRecipients.forEach(recipientId => {
                         if (recipientId) {
-                            createNotification(recipientId, notificationMessage, taskId, organizationId, 'system', { eventType: 'ai_suggestion' });
+                            createNotification(recipientId, notificationMessage, taskId, organizationId, SYSTEM_USER_ID, { eventType: 'ai_suggestion' });
                         }
                     });
                 }

@@ -7,6 +7,7 @@ import type { Task, User, Organization, ActivityFeedItem, Team, GlobalUserProfil
 import { ACHIEVEMENTS } from '@/lib/types';
 import { createNotification } from './notification.actions';
 import { addHistoryEntry, calculatePoints } from '@/lib/utils';
+import { SYSTEM_USER_ID } from '@/lib/constants';
 
 async function grantAchievements(userId: string, organizationId: string, type: 'completed' | 'thanked', task?: Task) {
     const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
@@ -92,7 +93,7 @@ async function grantAchievements(userId: string, organizationId: string, type: '
 
     // Handle notifications outside of the transaction
     if (streakToastMessage && task) {
-         createNotification(userId, streakToastMessage, task.id, organizationId, 'system', { eventType: 'gamification' });
+         createNotification(userId, streakToastMessage, task.id, organizationId, SYSTEM_USER_ID, { eventType: 'gamification' });
     }
     
     if (grantedAchievements.length > 0) {
@@ -278,7 +279,7 @@ export async function transferPoints(organizationId: string, fromUserId: string,
 
         const notificationMessage = `${fromUserName} heeft je ${amount} punten gegeven! ${message ? `Bericht: "${message}"` : ''}`;
         
-        await createNotification(toUserId, notificationMessage, null, organizationId, 'system', { eventType: 'gamification' });
+        await createNotification(toUserId, notificationMessage, null, organizationId, SYSTEM_USER_ID, { eventType: 'gamification' });
 
         return { data: { success: true, amount }, error: null };
     } catch (error: any) {

@@ -6,6 +6,7 @@ import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRem
 import type { RoleName, UserStatus, OrganizationMember } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';
 import { PERMISSIONS } from '@/lib/types';
+import { ROLE_OWNER } from '@/lib/constants';
 
 
 export async function markOnboardingComplete(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
@@ -36,7 +37,7 @@ export async function updateUserRoleInOrganization(organizationId: string, targe
         if (orgData.ownerId === targetUserId) {
             throw new Error("De rol van de eigenaar kan niet worden gewijzigd.");
         }
-        if (orgData.ownerId === currentUserId && newRole !== 'Owner' && targetUserId === currentUserId) {
+        if (orgData.ownerId === currentUserId && newRole !== ROLE_OWNER && targetUserId === currentUserId) {
              throw new Error("De eigenaar kan zijn eigen rol niet verlagen.");
         }
 

@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import type { Layout } from 'react-grid-layout';
+import { ROLE_ADMIN, ROLE_GUEST, ROLE_MEMBER, ROLE_OWNER } from './constants';
 
 export const customFieldDefinitionSchema = z.object({
   id: z.string(),
@@ -75,7 +76,7 @@ export type MyTasksWidgetConfig = z.infer<typeof MyTasksWidgetConfigSchema>;
 
 export const widgetConfigSchemas = {
   tasksByStatus: ChartWidgetConfigSchema,
-  tasksByPriority: ChartWidgetConfigSchema,
+  tasksByPriority: LeaderboardWidgetConfigSchema,
   leaderboard: LeaderboardWidgetConfigSchema,
   myTasks: MyTasksWidgetConfigSchema,
   activityFeed: z.object({}), // No config
@@ -247,11 +248,11 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
-  Owner: {
+  [ROLE_OWNER]: {
     name: 'Eigenaar',
     permissions: Object.values(PERMISSIONS),
   },
-  Admin: {
+  [ROLE_ADMIN]: {
     name: 'Beheerder',
     permissions: [
       PERMISSIONS.MANAGE_ORGANIZATION,
@@ -275,7 +276,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.PIN_ITEMS,
     ],
   },
-  Member: {
+  [ROLE_MEMBER]: {
     name: 'Lid',
     permissions: [
       PERMISSIONS.CREATE_TASK,
@@ -284,7 +285,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.PIN_ITEMS,
     ],
   },
-  Guest: {
+  [ROLE_GUEST]: {
     name: 'Gast',
     permissions: [], // Permissions for guests are handled by data scoping, not a permission flag.
   },

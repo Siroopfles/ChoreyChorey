@@ -35,6 +35,7 @@ import { OrganizationProvider, useOrganization } from '@/contexts/organization-c
 import { NotificationsProvider } from '@/contexts/notification-context';
 import { FilterProvider, useFilters } from '@/contexts/filter-context';
 import { useTasks } from '@/contexts/task-context';
+import { ROLE_GUEST } from '@/lib/constants';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useOrganization();
@@ -96,7 +97,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const announcement = currentOrganization?.settings?.announcement;
     const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
     
-    const isGuest = currentUserRole === 'Guest';
+    const isGuest = currentUserRole === ROLE_GUEST;
     const features = currentOrganization?.settings?.features;
     const showGamification = features?.gamification !== false;
     const showGoals = features?.goals !== false;

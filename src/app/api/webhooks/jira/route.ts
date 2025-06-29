@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { addCommentAction } from '@/app/actions/task.actions';
+import { JIRA_BOT_USER_ID, JIRA_BOT_USER_NAME } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
                 `;
 
                 // Use a system user for comments coming from Jira
-                await addCommentAction(choreyTaskId, formattedComment, 'jira-bot', 'Jira Bot', organizationId);
+                await addCommentAction(choreyTaskId, formattedComment, JIRA_BOT_USER_ID, JIRA_BOT_USER_NAME, organizationId);
             }
         }
         
