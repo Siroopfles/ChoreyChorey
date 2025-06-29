@@ -50,9 +50,9 @@
     --status-archived: 240 5% 65%;
     
     /* Font variables */
-    --font-sans: var(--font-source-sans);
-    --font-body: var(--font-source-sans);
-    --font-headline: var(--font-source-sans);
+    --font-sans: var(--font-roboto-mono);
+    --font-body: var(--font-roboto-mono);
+    --font-headline: var(--font-roboto-mono);
     --font-code: var(--font-roboto-mono);
 
     /* Sidebar is always dark */

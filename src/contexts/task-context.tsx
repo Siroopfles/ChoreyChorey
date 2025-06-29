@@ -146,7 +146,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const isGuest = currentUserRole === ROLE_GUEST;
     let tasksQuery;
 
-    const baseQueryConstraints = [where("organizationId", "==", currentOrganization.id), orderBy('createdAt', 'desc')];
+    const baseQueryConstraints = [where("organizationId", "==", currentOrganization.id), orderBy('__name__', 'desc')];
     
     if (isGuest) {
       const guestAccess = currentOrganization.settings?.guestAccess?.[user.id];
