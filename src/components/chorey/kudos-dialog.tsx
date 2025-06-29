@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -24,13 +23,6 @@ import { useAuth } from '@/contexts/auth-context';
 import { transferPoints } from '@/app/actions/gamification.actions';
 import type { User } from '@/lib/types';
 
-const kudosSchema = z.object({
-  amount: z.coerce.number().int().positive("Je moet minimaal 1 punt geven."),
-  message: z.string().optional(),
-});
-
-type KudosFormValues = z.infer<typeof kudosSchema>;
-
 export function KudosDialog({
   open,
   onOpenChange,
@@ -43,6 +35,18 @@ export function KudosDialog({
   const { user: sender, currentOrganization, refreshUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  
+  const kudosSchema = z.object({
+    amount: z.coerce
+      .number()
+      .int()
+      .positive("Je moet minimaal 1 punt geven.")
+      .max(sender?.points || 0, "Je kunt niet meer punten geven dan je hebt."),
+    message: z.string().optional(),
+  });
+
+  type KudosFormValues = z.infer<typeof kudosSchema>;
+
 
   const form = useForm<KudosFormValues>({
     resolver: zodResolver(kudosSchema),
