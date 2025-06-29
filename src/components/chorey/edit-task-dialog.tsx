@@ -61,6 +61,7 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
         helpNeeded: task.helpNeeded,
         storyPoints: task.storyPoints,
         blockedBy: task.blockedBy || [],
+        relations: task.relations || [],
         dependencyConfig: task.dependencyConfig || {},
         recurring: task.recurring,
         imageDataUri: task.imageDataUri,

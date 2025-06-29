@@ -7,7 +7,7 @@ import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefcase, ArrowUpNarrowWide, Columns } from 'lucide-react';
+import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefcase, ArrowUpNarrowWide, Columns, CalendarIcon } from 'lucide-react';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,12 @@ import Papa from 'papaparse';
 import { ChoreOfTheWeekCard } from '@/components/chorey/chore-of-the-week-card';
 import { getPublicActivityFeed } from '@/app/actions/gamification.actions';
 import { useToast } from '@/hooks/use-toast';
+import { DateRange } from 'react-day-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, isWithinInterval } from 'date-fns';
+import { nl } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { tasks, loading, searchTerm, setSearchTerm, filters, setViewedTask, navigateToUserProfile } = useTasks();
@@ -36,6 +42,7 @@ export default function DashboardPage() {
   const [activityFeedItems, setActivityFeedItems] = useState<ActivityFeedItem[]>([]);
   const [isFeedLoading, setIsFeedLoading] = useState(true);
   const { toast } = useToast();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   useEffect(() => {
     if (currentOrganization) {
@@ -64,9 +71,13 @@ export default function DashboardPage() {
       const priorityMatch = filters.priority ? task.priority === filters.priority : true;
       const teamMatch = filters.teamId ? task.teamId === filters.teamId : true;
 
-      return searchTermMatch && assigneeMatch && labelMatch && priorityMatch && teamMatch;
+      const dateMatch = dateRange?.from && dateRange?.to
+        ? isWithinInterval(task.createdAt, { start: dateRange.from, end: dateRange.to })
+        : true;
+
+      return searchTermMatch && assigneeMatch && labelMatch && priorityMatch && teamMatch && dateMatch;
     });
-  }, [tasks, searchTerm, filters]);
+  }, [tasks, searchTerm, filters, dateRange]);
 
   const choreOfTheWeek = useMemo(() => filteredTasks.find(t => t.isChoreOfTheWeek), [filteredTasks]);
   const helpNeededTasks = useMemo(() => filteredTasks.filter(t => t.helpNeeded), [filteredTasks]);
@@ -195,6 +206,37 @@ export default function DashboardPage() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+          )}
+          {activeTab === 'dashboard' && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button id="date" variant="outline" size="sm" className={cn(!dateRange && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd, y", { locale: nl })} -{" "}
+                        {format(dateRange.to, "LLL dd, y", { locale: nl })}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd, y", { locale: nl })
+                    )
+                  ) : (
+                    <span>Filter op datum</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
           )}
         </div>
         <div className="flex items-center gap-2">

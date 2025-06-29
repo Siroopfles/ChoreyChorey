@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -138,6 +139,7 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
                 subtasks: [],
                 attachments: [],
                 comments: [],
+                relations: [],
                 isPrivate: false,
                 isSensitive: false,
                 thanked: false,
@@ -539,6 +541,7 @@ export async function cloneTaskAction(taskId: string, userId: string, organizati
           timeLogged: 0,
           activeTimerStartedAt: null,
           rating: null,
+          relations: [],
           dependencyConfig: taskToClone.dependencyConfig || {},
           consultedUserIds: taskToClone.consultedUserIds || [],
           informedUserIds: taskToClone.informedUserIds || [],
