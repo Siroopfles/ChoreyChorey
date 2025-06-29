@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User } from '@/lib/types';
@@ -8,9 +7,10 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { Mail, Check, MessageSquare, User as UserIcon } from 'lucide-react';
+import { Mail, MessageSquare, User as UserIcon } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type TaskFormRaciProps = {
   users: User[];
@@ -89,7 +89,7 @@ export function TaskFormRaci({ users }: TaskFormRaciProps) {
                                   }
                               }}
                               >
-                              <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                              <Checkbox checked={isSelected} className="mr-2" />
                               {user.name}
                               </CommandItem>
                           );
@@ -140,7 +140,7 @@ export function TaskFormRaci({ users }: TaskFormRaciProps) {
                                   }
                               }}
                               >
-                              <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                              <Checkbox checked={isSelected} className="mr-2" />
                               {user.name}
                               </CommandItem>
                           );

@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, Project, SuggestPriorityOutput, SuggestStoryPointsOutput } from '@/lib/types';
@@ -12,13 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { User as UserIcon, Bot, Loader2, Tags, Check, X, ThumbsUp, ThumbsDown, Briefcase } from 'lucide-react';
+import { User as UserIcon, Bot, Loader2, Tags, X, ThumbsUp, ThumbsDown, Briefcase } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { handleSuggestStoryPoints, handleSuggestPriority, handleSuggestLabels } from '@/app/actions/ai.actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth-context';
 import { submitAiFeedback } from '@/app/actions/feedback.actions';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type TaskFormDetailsProps = {
   users: User[];
@@ -116,6 +116,103 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
   return (
     <div className="space-y-4">
       <FormField
+        control={form.control}
+        name="assigneeIds"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel>Toegewezen aan</FormLabel>
+            <Popover>
+              <PopoverTrigger asChild>
+                <FormControl>
+                  <Button variant="outline" role="combobox" className={cn("w-full justify-start", !field.value?.length && "text-muted-foreground")}>
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    {field.value?.length > 0
+                      ? `${field.value.length} gebruiker(s) geselecteerd`
+                      : 'Selecteer gebruikers'}
+                  </Button>
+                </FormControl>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                  <CommandInput placeholder="Zoek gebruiker..." />
+                  <CommandList>
+                    <CommandEmpty>Geen gebruiker gevonden.</CommandEmpty>
+                    <CommandGroup>
+                      {(users || []).map((user) => {
+                        const isSelected = field.value?.includes(user.id);
+                        return (
+                          <CommandItem
+                            key={user.id}
+                            onSelect={() => {
+                              if (isSelected) {
+                                field.onChange(field.value?.filter((id) => id !== user.id));
+                              } else {
+                                field.onChange([...(field.value || []), user.id]);
+                              }
+                            }}
+                          >
+                            <Checkbox checked={isSelected} className="mr-2" />
+                            {user.name}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <div className="pt-1 h-fit min-h-[22px]">
+              {field.value?.map((userId: string) => {
+                const user = users.find(u => u.id === userId);
+                if (!user) return null;
+                return (
+                  <Badge variant="secondary" key={userId} className="mr-1 mb-1">
+                    {user.name}
+                    <button
+                      type="button"
+                      className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => field.onChange(field.value?.filter((id: string) => id !== userId))}
+                    >
+                      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  </Badge>
+                )
+              })}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+       <FormField
+        control={form.control}
+        name="projectId"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Project</FormLabel>
+            <Select onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)} value={field.value || 'none'}>
+              <FormControl>
+                <SelectTrigger>
+                    <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Selecteer een project" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="none">Geen project</SelectItem>
+                {(projects || []).map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+        <FormField
           control={form.control}
           name="priority"
           render={({ field }) => (
@@ -225,7 +322,7 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
                                         }
                                     }}
                                     >
-                                    <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                                    <Checkbox checked={isSelected} className="mr-2"/>
                                     {label}
                                     </CommandItem>
                                 );
