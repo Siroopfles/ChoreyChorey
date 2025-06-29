@@ -129,6 +129,11 @@ export type Organization = {
 export type OrganizationMember = {
   role: RoleName;
   hasCompletedOnboarding?: boolean;
+  points?: number;
+  endorsements?: Record<string, string[]>;
+  cosmetic?: {
+    primaryColor?: string;
+  }
 };
 
 export const PERMISSIONS = {
@@ -284,50 +289,44 @@ export type UserStatus = {
   until?: Date | null;
 };
 
-export type User = {
+export type GlobalUserProfile = {
   id: string;
   name: string;
   email: string;
   avatar: string;
-  points: number;
-  bio?: string;
-  timezone?: string;
-  website?: string;
-  location?: string;
-  workingHours?: {
-    startTime: string; // "HH:mm" format
-    endTime: string; // "HH:mm" format
-  };
-  achievements: string[]; // Achievement IDs
   organizationIds?: string[];
   currentOrganizationId?: string | null;
-  skills?: string[];
-  endorsements?: Record<string, string[]>; // Map of skill to array of user IDs
-  status: UserStatus;
-  cosmetic?: {
-    primaryColor?: string;
-  },
-  mutedTaskIds?: string[];
   twoFactorEnabled?: boolean;
-  twoFactorSecret?: string;
-  twoFactorRecoveryCodes?: string[];
-  notificationSettings?: {
-    dailyDigestEnabled?: boolean;
-    notificationPriorityThreshold?: Priority;
-  };
-  lastDigestSentAt?: Date;
+  twoFactorSecret?: string | null;
+  twoFactorRecoveryCodes?: string[] | null;
   googleRefreshToken?: string | null;
   microsoftRefreshToken?: string | null;
   togglApiToken?: string;
   clockifyApiToken?: string;
   dashboardLayout?: Record<string, Layout[]>;
+  bio?: string;
+  timezone?: string;
+  website?: string;
+  location?: string;
+}
+
+export type User = GlobalUserProfile & OrganizationMember & {
+  points: number; // For simplicity in leaderboard/gamification
+  skills?: string[];
+  status: UserStatus;
+  mutedTaskIds?: string[];
+  notificationSettings?: {
+    dailyDigestEnabled?: boolean;
+    notificationPriorityThreshold?: Priority;
+  };
+  lastDigestSentAt?: Date;
   streakData?: {
     currentStreak: number;
     lastCompletionDate: Date;
   };
-  sessionPolicy?: {
-    idleTimeoutSeconds?: number;
-    absoluteTimeoutSeconds?: number;
+  workingHours?: {
+    startTime: string; // "HH:mm" format
+    endTime: string; // "HH:mm" format
   };
 };
 
@@ -337,7 +336,6 @@ export type Session = {
   createdAt: Date;
   lastAccessed: Date;
   userAgent: string;
-  ipAddress?: string;
   isActive: boolean;
 };
 

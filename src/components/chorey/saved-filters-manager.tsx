@@ -13,16 +13,22 @@ import { useToast } from '@/hooks/use-toast';
 import { manageSavedFilter } from '@/app/actions/organization.actions';
 import { Save, Star, Trash2, Loader2 } from 'lucide-react';
 import type { SavedFilter } from '@/lib/types';
+import { PERMISSIONS } from '@/lib/types';
 
 export function SavedFiltersManager() {
   const { filters, setFilters, activeFilterCount } = useTasks();
-  const { currentOrganization, user, refreshUser, currentUserRole } = useAuth();
+  const { currentOrganization, user, refreshUser, currentUserPermissions } = useAuth();
   const { toast } = useToast();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [filterName, setFilterName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const savedFilters = currentOrganization?.settings?.savedFilters || [];
+  
+  const canDelete = (filter: SavedFilter) => {
+    if (!user) return false;
+    return filter.creatorId === user.id || currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
+  }
 
   const handleSave = async () => {
     if (!filterName.trim() || !user || !currentOrganization) return;
@@ -54,15 +60,11 @@ export function SavedFiltersManager() {
   }
 
   const handleApply = (filter: SavedFilter) => {
-    const emptyFilters = { assigneeId: null, labels: [], priority: null, projectId: null };
+    const emptyFilters = { assigneeId: null, labels: [], priority: null, projectId: null, teamId: null };
     setFilters({ ...emptyFilters, ...filter.filters }); // Replace current filters
     toast({ title: 'Filter toegepast', description: `'${filter.name}' is nu actief.`})
   }
   
-  const canDelete = (filter: SavedFilter) => {
-    if (!user) return false;
-    return filter.creatorId === user.id || currentUserRole === 'Owner' || currentUserRole === 'Admin';
-  }
 
   return (
     <div className="flex items-center gap-2">
