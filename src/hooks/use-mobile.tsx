@@ -1,2 +1,2 @@
-// This file is deprecated. The logic has been consolidated into use-mobile.ts
-export * from './use-mobile';
+// This file is deprecated. It is intentionally left blank to resolve module ambiguity.
+// Please import from `use-mobile.ts` instead.
