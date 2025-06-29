@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -11,7 +12,13 @@ export async function updateUserProfile(userId: string, data: Partial<Omit<Globa
     try {
         const userRef = doc(db, 'users', userId);
         // Firestore doesn't like 'undefined' values from optional Zod fields
-        const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+        const cleanData: { [key: string]: any } = {};
+        for (const key in data) {
+            if ((data as any)[key] !== undefined) {
+                cleanData[key] = (data as any)[key];
+            }
+        }
+        
         await updateDoc(userRef, cleanData);
         return { success: true };
     } catch (error: any) {

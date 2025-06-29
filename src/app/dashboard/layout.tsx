@@ -31,9 +31,10 @@ import { TourProvider } from '@/contexts/tour-context';
 import { IdeaProvider } from '@/contexts/idea-context';
 import { GoalProvider } from '@/contexts/goal-context';
 import { ShortcutHelpDialog } from '@/components/chorey/shortcut-help-dialog';
+import { OrganizationProvider, useOrganization } from '@/contexts/organization-context';
 
 const BrandingStyle = () => {
-  const { currentOrganization } = useAuth();
+  const { currentOrganization } = useOrganization();
   const primaryColor = currentOrganization?.settings?.branding?.primaryColor;
 
   if (!primaryColor) {
@@ -83,7 +84,8 @@ const UserCosmeticStyle = () => {
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
     const { tasks, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, setFilters } = useTasks();
-    const { currentUserRole, currentOrganization, users, currentUserPermissions, projects, toggleProjectPin } = useAuth();
+    const { currentOrganization } = useAuth();
+    const { users, projects, currentUserRole, currentUserPermissions } = useOrganization();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -306,12 +308,11 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return; 
 
-    // Handle MFA flow first
     if (mfaRequired) {
         if (pathname !== '/login/verify') {
             router.push('/login/verify');
         }
-        return; // Stop further checks if MFA is required
+        return; 
     }
     
     if (!user) {
@@ -338,7 +339,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }
   
   if (mfaRequired) {
-    // Render children if on verify page, otherwise AuthGuard's effect will redirect.
     return pathname === '/login/verify' ? <>{children}</> : (
        <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -346,12 +346,10 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // Allow access to invite page without an organization
   if (pathname.startsWith('/invite/')) {
       return <>{children}</>;
   }
   
-  // Allow access to focus mode without the main AppShell
   if (pathname.startsWith('/dashboard/focus')) {
       return <>{children}</>;
   }
@@ -376,16 +374,18 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <TaskProvider>
-      <IdeaProvider>
-        <GoalProvider>
-          <AuthGuard>
-            <TourProvider>
-                {children}
-            </TourProvider>
-          </AuthGuard>
-        </GoalProvider>
-      </IdeaProvider>
-    </TaskProvider>
+    <OrganizationProvider>
+        <TaskProvider>
+        <IdeaProvider>
+            <GoalProvider>
+            <AuthGuard>
+                <TourProvider>
+                    {children}
+                </TourProvider>
+            </AuthGuard>
+            </GoalProvider>
+        </IdeaProvider>
+        </TaskProvider>
+    </OrganizationProvider>
   );
 }

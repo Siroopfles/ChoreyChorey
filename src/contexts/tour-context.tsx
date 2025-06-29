@@ -4,6 +4,7 @@
 
 import { createContext, useState, useContext, useEffect, useCallback, type ReactNode, useMemo } from 'react';
 import { useAuth } from './auth-context';
+import { useOrganization } from './organization-context';
 import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
 import { ownerSteps, memberSteps } from '@/lib/tour-steps';
 import { markOnboardingComplete } from '@/app/actions/member.actions';
@@ -15,7 +16,8 @@ type TourContextType = {
 const TourContext = createContext<TourContextType | undefined>(undefined);
 
 export function TourProvider({ children }: { children: ReactNode }) {
-  const { user, currentOrganization, currentUserRole } = useAuth();
+  const { user } = useAuth();
+  const { currentOrganization, currentUserRole } = useOrganization();
   const [run, setRun] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
   const [isCompletingTour, setIsCompletingTour] = useState(false);

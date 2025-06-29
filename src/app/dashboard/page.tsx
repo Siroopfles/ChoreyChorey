@@ -4,6 +4,7 @@
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,8 @@ import { ManageDashboardDialog } from '@/components/chorey/dashboard/ManageDashb
 
 export default function DashboardPage() {
   const { tasks, loading, searchTerm, setSearchTerm, filters, setViewedTask } = useTasks();
-  const { user: currentUser, teams, currentOrganization, users, projects } = useAuth();
+  const { user: currentUser } = useAuth();
+  const { teams, currentOrganization, users, projects } = useOrganization();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [isDashboardManagerOpen, setIsDashboardManagerOpen] = useState(false);
@@ -304,14 +306,13 @@ export default function DashboardPage() {
            <Suspense fallback={<DashboardViewSkeleton />}>
               <DashboardView
                 tasks={filteredTasks}
-                users={users}
                 activityFeedItems={activityFeedItems}
                 isFeedLoading={isFeedLoading}
               />
            </Suspense>
         </TabsContent>
         <TabsContent value="calendar" className="flex-1 mt-4 overflow-y-auto">
-          <CalendarView tasks={filteredTasks} users={users} />
+          <CalendarView tasks={filteredTasks} />
         </TabsContent>
         <TabsContent value="gantt" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<GanttViewSkeleton />}>

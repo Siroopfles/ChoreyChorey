@@ -13,6 +13,7 @@ import type { Idea, IdeaFormValues, IdeaStatus } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
+import { useOrganization } from './organization-context';
 import { createIdea as createIdeaAction, toggleIdeaUpvote as toggleIdeaUpvoteAction, updateIdeaStatus as updateIdeaStatusAction } from '@/app/actions/ideas.actions';
 
 type IdeaContextType = {
@@ -26,7 +27,8 @@ type IdeaContextType = {
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
 
 export function IdeaProvider({ children }: { children: ReactNode }) {
-  const { user, currentOrganization } = useAuth();
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();

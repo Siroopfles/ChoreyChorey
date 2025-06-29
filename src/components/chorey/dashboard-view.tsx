@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import 'react-grid-layout/css/styles.css';
@@ -6,10 +7,10 @@ import 'react-resizable/css/styles.css';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import type { Layouts } from 'react-grid-layout';
 import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { useTasks } from '@/contexts/task-context';
 import { useMemo, useCallback, useRef } from 'react';
 import type { Task, User, ActivityFeedItem, WidgetInstance } from '@/lib/types';
-import { updateUserProfile } from '@/app/actions/user.actions';
 import { WIDGET_TYPES } from '@/lib/types';
 import { WidgetWrapper } from './dashboard/WidgetWrapper';
 
@@ -26,15 +27,15 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface DashboardViewProps {
   tasks: Task[];
-  users: User[];
   activityFeedItems: ActivityFeedItem[];
   isFeedLoading: boolean;
 };
 
 
-export default function DashboardView({ tasks, users, activityFeedItems, isFeedLoading }: DashboardViewProps) {
-  const { user, loading, updateUserDashboard } = useAuth();
-  const { setViewedTask } = useTasks();
+export default function DashboardView({ tasks, activityFeedItems, isFeedLoading }: DashboardViewProps) {
+  const { user, loading: authLoading, updateUserDashboard } = useAuth();
+  const { users, loading: orgLoading } = useOrganization();
+  const { setViewedTask, navigateToUserProfile } = useTasks();
   const layoutChangeTimer = useRef<NodeJS.Timeout | null>(null);
 
   const { dashboardConfig, layouts } = useMemo(() => {
@@ -79,9 +80,9 @@ export default function DashboardView({ tasks, users, activityFeedItems, isFeedL
         case 'leaderboard':
             return <LeaderboardWidget users={users} config={widget.config} />;
         case 'activityFeed':
-            return <ActivityFeedWidget items={activityFeedItems} users={users} tasks={tasks} isLoading={isFeedLoading} setViewedTask={setViewedTask} navigateToUserProfile={() => {}} />;
+            return <ActivityFeedWidget items={activityFeedItems} users={users} tasks={tasks} isLoading={isFeedLoading} setViewedTask={setViewedTask} navigateToUserProfile={navigateToUserProfile} />;
         case 'recentActivity':
-            return <RecentActivityWidget tasks={tasks} currentUser={user} setViewedTask={setViewedTask} isLoading={loading} />;
+            return <RecentActivityWidget tasks={tasks} currentUser={user} setViewedTask={setViewedTask} isLoading={authLoading || orgLoading} />;
         case 'welcome':
             return <WelcomeWidget name={user?.name || 'gebruiker'} />;
         case 'myTasks':

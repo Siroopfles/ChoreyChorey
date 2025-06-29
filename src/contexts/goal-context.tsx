@@ -13,6 +13,7 @@ import type { PersonalGoal, PersonalGoalFormValues, TeamChallenge, TeamChallenge
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
+import { useOrganization } from './organization-context';
 import { useTasks } from './task-context';
 import { addPersonalGoal as addPersonalGoalAction, updatePersonalGoal as updatePersonalGoalAction, deletePersonalGoal as deletePersonalGoalAction, toggleMilestoneCompletion as toggleMilestoneCompletionAction } from '@/app/actions/goal.actions';
 import { addTeamChallenge as addTeamChallengeAction, updateTeamChallenge as updateTeamChallengeAction, deleteTeamChallenge as deleteTeamChallengeAction, completeTeamChallenge as completeTeamChallengeAction } from '@/app/actions/goal.actions';
@@ -34,7 +35,8 @@ type GoalContextType = {
 const GoalContext = createContext<GoalContextType | undefined>(undefined);
 
 export function GoalProvider({ children }: { children: ReactNode }) {
-  const { user, currentOrganization, teams } = useAuth();
+  const { user } = useAuth();
+  const { currentOrganization, teams, users: allUsers } = useOrganization();
   const [personalGoals, setPersonalGoals] = useState<PersonalGoal[]>([]);
   const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
   const [loading, setLoading] = useState(true);

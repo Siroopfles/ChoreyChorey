@@ -21,6 +21,7 @@ import { PERMISSIONS, NOTIFICATION_SOUNDS, NOTIFICATION_EVENT_TYPES_FOR_SOUNDS }
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
+import { useOrganization } from './organization-context';
 import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
 import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/member.actions';
@@ -82,7 +83,8 @@ type TaskContextType = {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const { user, currentOrganization, currentUserRole, currentUserPermissions, projects, teams: allTeams, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const { currentOrganization, currentUserRole, currentUserPermissions, projects, loading: orgLoading } = useOrganization();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -112,6 +114,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
   
   useEffect(() => {
+    if (orgLoading) {
+      setLoading(true);
+      return;
+    }
+
     if (!currentOrganization || !user) {
       setTasks([]); setTemplates([]); setNotifications([]); setAutomations([]); setLoading(false);
       return;
@@ -158,7 +165,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const unsubAutomations = onSnapshot(commonQuery('automations'), (s) => setAutomations(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate() } as Automation))), (e) => handleError(e, 'laden van automatiseringen'));
 
     return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubAutomations(); };
-  }, [user, currentOrganization, currentUserRole, currentUserPermissions, projects]);
+  }, [user, currentOrganization, currentUserRole, currentUserPermissions, projects, orgLoading]);
 
   useEffect(() => {
     // Prevent sounds on initial load
@@ -345,8 +352,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         finalUpdates.labels = arrayUnion(...addLabels);
       }
       if (removeLabels && removeLabels.length > 0) {
-        // Firestore does not allow arrayUnion and arrayRemove on the same field in the same write.
-        // The UI should prevent this, but we handle it here by prioritizing addition.
         if (finalUpdates.labels) {
             console.warn("Cannot add and remove labels in the same bulk update. Add operation will take precedence.");
         } else {

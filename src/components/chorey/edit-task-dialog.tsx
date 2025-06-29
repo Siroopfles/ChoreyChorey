@@ -19,6 +19,7 @@ import { Form } from '@/components/ui/form';
 import { MessageSquare, History, ClipboardCopy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { useAuth } from '@/contexts/auth-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -36,10 +37,11 @@ type EditTaskDialogProps = {
   setIsOpen: (isOpen: boolean) => void;
 };
 
-export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditTaskDialogProps) {
+export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
   const { updateTask } = useTasks();
-  const { projects, user: currentUser, currentOrganization } = useAuth();
+  const { user: currentUser } = useAuth();
+  const { users, projects, currentOrganization } = useOrganization();
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),

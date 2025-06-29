@@ -20,18 +20,18 @@ import {
     type User as FirebaseUser,
     getAdditionalUserInfo,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db, googleProvider, microsoftProvider } from '@/lib/firebase';
-import type { User, Organization, Team, RoleName, UserStatus, Permission, Project, Session, WidgetInstance } from '@/lib/types';
-import { DEFAULT_ROLES, WIDGET_TYPES } from '@/lib/types';
+import type { User, Organization, RoleName, UserStatus, Permission, WidgetInstance } from '@/lib/types';
+import { WIDGET_TYPES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { handleGenerateAvatar } from '@/app/actions/ai.actions';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/member.actions';
-import { toggleProjectPin as toggleProjectPinAction } from '@/app/actions/project.actions';
 import { sendDailyDigest } from '@/app/actions/digest.actions';
 import { useDebug } from './debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Layouts } from 'react-grid-layout';
+import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
+
 
 const SESSION_STORAGE_KEY = 'chorey_session_id';
 
@@ -49,14 +49,7 @@ type AuthContextType = {
     refreshUser: () => Promise<void>;
     organizations: Organization[];
     currentOrganization: Organization | null;
-    currentUserRole: RoleName | null;
-    currentUserPermissions: Permission[];
     switchOrganization: (orgId: string) => Promise<void>;
-    users: User[];
-    projects: Project[];
-    teams: Team[];
-    updateUserStatus: (status: UserStatus) => Promise<void>;
-    toggleProjectPin: (projectId: string, isPinned: boolean) => Promise<void>;
     updateUserDashboard: (updates: Partial<{ dashboardConfig: WidgetInstance[]; dashboardLayout: Layouts }>) => Promise<void>;
 };
 
@@ -75,11 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [mfaRequired, setMfaRequired] = useState(false);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
-    const [currentUserRole, setCurrentUserRole] = useState<RoleName | null>(null);
-    const [currentUserPermissions, setCurrentUserPermissions] = useState<Permission[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [teams, setTeams] = useState<Team[]>([]);
     const [currentSessionId, setCurrentSessionId] = useLocalStorage(SESSION_STORAGE_KEY, '');
     const router = useRouter();
     const { toast } = useToast();
@@ -174,7 +162,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (shouldSendDigest && userData.currentOrganizationId && (!lastSent || (now.getTime() - lastSent.getTime()) > oneDay)) {
             if (isDebugMode) console.log('[DEBUG] AuthContext: Triggering daily digest for user', firebaseUser.uid);
-            // Don't await this, let it run in the background
             sendDailyDigest(firebaseUser.uid, userData.currentOrganizationId);
         }
 
@@ -202,20 +189,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setCurrentOrganization(currentOrg);
                 if (isDebugMode) console.log('[DEBUG] AuthContext: Current organization updated:', currentOrg);
 
-                if (currentOrg) {
-                    const role = (currentOrg.members || {})[firebaseUser.uid]?.role || null;
-                    setCurrentUserRole(role);
-                    if (isDebugMode) console.log('[DEBUG] AuthContext: User role set to:', role);
-
-                    const allRoles = { ...DEFAULT_ROLES, ...(currentOrg.settings?.customization?.customRoles || {}) };
-                    const permissions = role ? allRoles[role]?.permissions || [] : [];
-                    setCurrentUserPermissions(permissions);
-                    if (isDebugMode) console.log('[DEBUG] AuthContext: User permissions set:', permissions);
-                } else {
-                    if (isDebugMode) console.log('[DEBUG] AuthContext: No current organization, clearing role and permissions.');
-                     setCurrentUserRole(null);
-                     setCurrentUserPermissions([]);
-                }
             }, (error) => handleError(error, 'laden van organisaties'));
 
             return unsubscribeOrgs; 
@@ -223,33 +196,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (isDebugMode) console.log('[DEBUG] AuthContext: User has no organizations.');
             setOrganizations([]);
             setCurrentOrganization(null);
-            setCurrentUserRole(null);
-            setCurrentUserPermissions([]);
-            setProjects([]);
-            setTeams([]);
-            setUsers([]);
             return () => {}; 
         }
     }, [isDebugMode]);
     
     useEffect(() => {
         let unsubscribeFromOrgs: (() => void) | undefined;
-        let unsubscribeFromUsers: (() => void) | undefined;
-        let unsubscribeFromProjects: (() => void) | undefined;
-        let unsubscribeFromTeams: (() => void) | undefined;
 
         const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
             if (isDebugMode) console.log('[DEBUG] AuthContext: Auth state changed. User:', firebaseUser?.uid || 'null');
             
             unsubscribeFromOrgs?.();
-            unsubscribeFromUsers?.();
-            unsubscribeFromProjects?.();
-            unsubscribeFromTeams?.();
 
             setLoading(true);
             if (firebaseUser) {
                 setAuthUser(firebaseUser);
-                // Don't fully load data if MFA is required. The verify page will handle it.
                 if (!mfaRequired) {
                     unsubscribeFromOrgs = await fetchUserAndOrgData(firebaseUser);
                 }
@@ -259,11 +220,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setMfaRequired(false);
                 setOrganizations([]);
                 setCurrentOrganization(null);
-                setCurrentUserRole(null);
-                setCurrentUserPermissions([]);
-                setProjects([]);
-                setTeams([]);
-                setUsers([]);
             }
             setLoading(false);
         });
@@ -271,30 +227,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => {
             unsubscribeAuth();
             unsubscribeFromOrgs?.();
-            unsubscribeFromUsers?.();
-            unsubscribeFromProjects?.();
-            unsubscribeFromTeams?.();
         };
     }, [fetchUserAndOrgData, isDebugMode, mfaRequired]);
-
-
-    useEffect(() => {
-        if (currentOrganization) {
-            const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrganization.id));
-            const projectsQuery = query(collection(db, 'projects'), where('organizationId', '==', currentOrganization.id));
-            const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrganization.id));
-
-            const unsubscribeUsers = onSnapshot(usersQuery, snapshot => setUsers(snapshot.docs.map(d => ({...d.data(), id: d.id} as User))));
-            const unsubscribeProjects = onSnapshot(projectsQuery, snapshot => setProjects(snapshot.docs.map(d => ({...d.data(), id: d.id} as Project))));
-            const unsubscribeTeams = onSnapshot(teamsQuery, snapshot => setTeams(snapshot.docs.map(d => ({...d.data(), id: d.id} as Team))));
-            
-            return () => {
-                unsubscribeUsers();
-                unsubscribeProjects();
-                unsubscribeTeams();
-            };
-        }
-    }, [currentOrganization]);
 
     const createSession = async (uid: string) => {
         const sessionId = crypto.randomUUID();
@@ -318,7 +252,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             router.push('/login/verify');
         } else {
             await createSession(firebaseUser.uid);
-            // Let the onAuthStateChanged handler do the rest
         }
     };
 
@@ -339,7 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             let avatarUrl = `https://placehold.co/100x100.png`;
             try {
-                const { avatarDataUri } = await handleGenerateAvatar(name);
+                const { avatarDataUri } = await generateAvatar(name);
                 if (avatarDataUri) {
                     avatarUrl = avatarDataUri;
                 }
@@ -379,7 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (additionalInfo?.isNewUser) {
                 let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                 try {
-                    const { avatarDataUri } = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                    const { avatarDataUri } = await generateAvatar(firebaseUser.displayName || firebaseUser.email!);
                     if (avatarDataUri) {
                         avatarUrl = avatarDataUri;
                     }
@@ -420,7 +353,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (additionalInfo?.isNewUser) {
                 let avatarUrl = firebaseUser.photoURL || `https://placehold.co/100x100.png`;
                  try {
-                    const { avatarDataUri } = await handleGenerateAvatar(firebaseUser.displayName || firebaseUser.email!);
+                    const { avatarDataUri } = await generateAvatar(firebaseUser.displayName || firebaseUser.email!);
                     if (avatarDataUri) {
                         avatarUrl = avatarDataUri;
                     }
@@ -478,7 +411,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, [currentSessionId, authUser, logout]);
 
-    // Effect for handling session policies (timeout)
     useEffect(() => {
         if (!user || !currentOrganization || !currentSessionId) return;
 
@@ -486,7 +418,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const ipWhitelist = currentOrganization.settings?.ipWhitelist;
 
         const checkPolicies = async () => {
-            // IP Whitelist Check
             if (ipWhitelist && ipWhitelist.length > 0) {
                 try {
                     const response = await fetch('/api/ip');
@@ -494,7 +425,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         const data = await response.json();
                         if (data.ip && !ipWhitelist.includes(data.ip)) {
                             logout({ title: 'Toegang Geweigerd', description: 'Uw IP-adres heeft geen toegang tot deze organisatie.', variant: 'destructive' });
-                            return; // Stop further checks if IP is denied
+                            return; 
                         }
                     }
                 } catch (e) {
@@ -502,9 +433,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
             
-            // Session Timeout Check
             if (!policy || (!policy.absoluteTimeoutSeconds && !policy.idleTimeoutSeconds)) {
-                return; // No policy to enforce
+                return;
             }
             try {
                 const sessionRef = doc(db, 'sessions', currentSessionId);
@@ -516,7 +446,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const sessionData = sessionDoc.data() as Session;
                 const now = Date.now();
 
-                // Check absolute timeout
                 if (policy.absoluteTimeoutSeconds) {
                     const createdAt = (sessionData.createdAt as Timestamp).toMillis();
                     if (now > createdAt + policy.absoluteTimeoutSeconds * 1000) {
@@ -524,7 +453,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         return;
                     }
                 }
-                // Check idle timeout
                 if (policy.idleTimeoutSeconds) {
                     const lastAccessed = (sessionData.lastAccessed as Timestamp).toMillis();
                     if (now > lastAccessed + policy.idleTimeoutSeconds * 1000) {
@@ -538,8 +466,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         };
 
-        checkPolicies(); // Initial check
-        const interval = setInterval(checkPolicies, 30000); // Check every 30 seconds
+        checkPolicies();
+        const interval = setInterval(checkPolicies, 30000);
 
         return () => clearInterval(interval);
 
@@ -569,17 +497,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
     
-    const updateUserStatus = async (status: UserStatus) => {
-        if (!user || !currentOrganization) return;
-        try {
-            const result = await updateUserStatusAction(currentOrganization.id, user.id, status);
-            if ((result as any).error) throw new Error((result as any).error);
-            setUser(prevUser => prevUser ? { ...prevUser, status } : null);
-        } catch (e) {
-            handleError(e, 'bijwerken van status');
-        }
-    };
-
     const completeMfa = async () => {
         if (authUser) {
             setMfaRequired(false);
@@ -588,24 +505,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const toggleProjectPin = async (projectId: string, isPinned: boolean) => {
-        if (!user || !currentOrganization) return;
-        const result = await toggleProjectPinAction(projectId, currentOrganization.id, user.id, isPinned);
-        if (result.error) {
-            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        }
-    };
-
     const updateUserDashboard = async (updates: Partial<{ dashboardConfig: WidgetInstance[]; dashboardLayout: Layouts }>) => {
         if (!user) return;
-        const result = await updateUserProfile(user.id, updates);
-        if (result.error) {
-            handleError({ message: result.error }, 'bijwerken dashboard');
-        } else {
-            await refreshUser();
+        const userRef = doc(db, "users", user.id);
+        try {
+            await updateDoc(userRef, updates);
+        } catch (e) {
+             handleError(e, 'bijwerken dashboard');
         }
     };
-
 
     const value = {
         authUser,
@@ -621,14 +529,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
         organizations,
         currentOrganization,
-        currentUserRole,
-        currentUserPermissions,
         switchOrganization,
-        users,
-        projects,
-        teams,
-        updateUserStatus,
-        toggleProjectPin,
         updateUserDashboard,
     };
 
@@ -640,5 +541,12 @@ export function useAuth() {
     if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
-    return context;
+    // This is a bit of a hack to add back the derived state that was removed,
+    // without re-introducing it into the core provider state and causing re-renders.
+    const { user, currentOrganization } = context;
+    const currentUserRole = (currentOrganization?.members || {})[user?.id || '']?.role || null;
+    const allRoles = { ...DEFAULT_ROLES, ...(currentOrganization?.settings?.customization?.customRoles || {}) };
+    const currentUserPermissions = currentUserRole ? allRoles[currentUserRole]?.permissions || [] : [];
+    
+    return { ...context, currentUserRole, currentUserPermissions };
 }

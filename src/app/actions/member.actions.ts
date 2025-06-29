@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -133,7 +134,18 @@ export async function updateMemberProfile(organizationId: string, userId: string
 export async function updateUserStatus(organizationId: string, userId: string, status: UserStatus) {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
-        await updateDoc(orgRef, { [`members.${userId}.status`]: status });
+        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+        const memberDoc = await getDoc(memberRef);
+
+        if (!memberDoc.exists()) {
+             await updateDoc(orgRef, {
+                [`members.${userId}`]: { status }
+            });
+        } else {
+             await updateDoc(orgRef, {
+                [`members.${userId}.status`]: status
+            });
+        }
         return { success: true };
     } catch (error: any) {
         console.error("Error updating user status:", error);

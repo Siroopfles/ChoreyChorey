@@ -19,23 +19,22 @@ import {
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskFormFields } from './task-form-fields';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 type AddTaskDialogProps = {
-  users: User[];
   template?: TaskTemplateFormValues;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export default function AddTaskDialog({ users, template, open, onOpenChange }: AddTaskDialogProps) {
+export default function AddTaskDialog({ template, open, onOpenChange }: AddTaskDialogProps) {
   const { toast } = useToast();
   const { addTask } = useTasks();
-  const { projects, currentOrganization } = useAuth();
+  const { users, projects, currentOrganization } = useOrganization();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
