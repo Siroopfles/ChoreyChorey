@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -65,8 +64,8 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
                         {usersInTeam.length > 0 && (
                             <CommandGroup heading="Huidige Leden">
                                 {usersInTeam.map(user => (
-                                    <CommandItem key={user.id} onSelect={(e) => e.preventDefault()} className="flex justify-between items-center group">
-                                        <div className="flex items-center gap-2 flex-grow cursor-pointer" onClick={() => router.push(`/dashboard/profile/${user.id}`)}>
+                                    <CommandItem key={user.id} onSelect={() => router.push(`/dashboard/profile/${user.id}`)} className="flex justify-between items-center group">
+                                        <div className="flex items-center gap-2 flex-grow">
                                             <Avatar className="h-6 w-6">
                                                 <AvatarImage src={user.avatar} />
                                                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -76,8 +75,11 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => removeUser(user.id)}
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeUser(user.id);
+                                            }}
                                             aria-label={`Verwijder ${user.name}`}
                                         >
                                             <X className="h-4 w-4 text-muted-foreground" />
@@ -89,8 +91,8 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
                          {usersNotInTeam.length > 0 && (
                             <CommandGroup heading="Voeg Leden Toe">
                                 {usersNotInTeam.map(user => (
-                                    <CommandItem key={user.id} onSelect={(e) => e.preventDefault()} className="flex justify-between items-center group">
-                                        <div className="flex items-center gap-2 flex-grow cursor-pointer" onClick={() => router.push(`/dashboard/profile/${user.id}`)}>
+                                    <CommandItem key={user.id} onSelect={() => router.push(`/dashboard/profile/${user.id}`)} className="flex justify-between items-center group">
+                                        <div className="flex items-center gap-2 flex-grow">
                                             <Avatar className="h-6 w-6">
                                                 <AvatarImage src={user.avatar} />
                                                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -100,8 +102,11 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => addUser(user.id)}
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                addUser(user.id);
+                                            }}
                                             aria-label={`Voeg ${user.name} toe`}
                                         >
                                             <UserPlus className="h-4 w-4 text-muted-foreground" />
