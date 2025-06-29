@@ -32,7 +32,8 @@ async function executeTaskAssignAction(task: Task, automation: Automation) {
         `Je bent automatisch toegewezen aan taak: "${task.title}" via automatisering "${automation.name}"`,
         task.id,
         task.organizationId,
-        'system'
+        'system',
+        { eventType: 'automation' }
     );
 }
 
@@ -88,7 +89,8 @@ async function executeAddCommentAction(task: Task, automation: Automation) {
             `Automatisering "${automation.name}" heeft een reactie geplaatst op: "${task.title}"`,
             task.id,
             task.organizationId,
-            'system'
+            'system',
+            { eventType: 'automation' }
         );
       }
     });

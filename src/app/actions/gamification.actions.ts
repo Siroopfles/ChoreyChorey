@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -238,7 +239,7 @@ export async function transferPoints(organizationId: string, fromUserId: string,
 
         const notificationMessage = `${fromUserName} heeft je ${amount} punten gegeven! ${message ? `Bericht: "${message}"` : ''}`;
         
-        await createNotification(toUserId, notificationMessage, null, organizationId, 'system');
+        await createNotification(toUserId, notificationMessage, null, organizationId, 'system', { eventType: 'gamification' });
 
         return { success: true, amount };
     } catch (error: any) {
@@ -309,6 +310,7 @@ export async function checkAndGrantTeamAchievements(teamId: string, organization
                         read: false,
                         createdAt: new Date(),
                         organizationId: organizationId,
+                        eventType: 'gamification',
                     });
                 }
             }

@@ -1,3 +1,4 @@
+
 'use server';
     
 import { db } from '@/lib/firebase';
@@ -13,7 +14,7 @@ export async function sendDailyDigest(userId: string, organizationId: string) {
         // Only send if there's something to report
         if (digest && !digest.startsWith('Je hebt geen nieuwe meldingen')) {
             const message = `**Je Dagelijks Overzicht**\n\n${digest}`;
-            await createNotification(userId, message, null, organizationId, 'system');
+            await createNotification(userId, message, null, organizationId, 'system', { eventType: 'system' });
         }
 
         // Always update the timestamp, even if nothing was sent, to prevent re-triggering.

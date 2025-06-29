@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
                             const notificationMessage = `De status van "${task.title}" is automatisch bijgewerkt naar "${suggestion.newStatus}" na het mergen van een pull request.`;
                             recipients.forEach(recipientId => {
                                 if (recipientId) {
-                                    createNotification(recipientId, notificationMessage, task.id, organizationId, 'system');
+                                    createNotification(recipientId, notificationMessage, task.id, organizationId, 'system', { eventType: 'integration' });
                                 }
                             });
                         }
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
                                         const notificationMessage = `AI stelt voor om de status van "${task.title}" te wijzigen naar "${suggestion.newStatus}" n.a.v. een nieuwe commit.`;
                                         recipients.forEach(recipientId => {
                                             if (recipientId) {
-                                                createNotification(recipientId, notificationMessage, taskId, organizationId, 'system');
+                                                createNotification(recipientId, notificationMessage, taskId, organizationId, 'system', { eventType: 'integration' });
                                             }
                                         });
                                     }

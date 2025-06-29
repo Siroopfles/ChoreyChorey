@@ -2,8 +2,8 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, doc, addDoc, getDoc, Timestamp, query, where, getDocs, limit } from 'firebase/firestore';
-import type { User, Task, Priority, Organization } from '@/lib/types';
+import { collection, doc, addDoc, getDoc, Timestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import type { User, Task, Priority, Organization, Notification } from '@/lib/types';
 import { isAfter, subMinutes } from 'date-fns';
 import { sendSlackMessage } from '@/lib/slack-service';
 import { sendTeamsMessage } from '@/lib/teams-service';
@@ -16,7 +16,17 @@ const priorityOrder: Record<Priority, number> = {
     'Urgent': 3,
 };
 
-export async function createNotification(userId: string, message: string, taskId: string | null, organizationId: string, fromUserId: string) {
+export async function createNotification(
+  userId: string,
+  message: string,
+  taskId: string | null,
+  organizationId: string,
+  fromUserId: string,
+  options: {
+    eventType?: Notification['eventType'];
+    taskTitle?: string;
+  } = {}
+) {
   if (userId === fromUserId) return; // Don't notify yourself
   
   try {
@@ -30,7 +40,7 @@ export async function createNotification(userId: string, message: string, taskId
     const userData = userToNotifyDoc.data() as User;
     
     // Check for muted tasks
-    if (taskId && userData.mutedTaskIds?.includes(taskId)) {
+    if (taskId && (userData.mutedTaskIds || []).includes(taskId)) {
         console.log(`Notification for ${userData.name} suppressed because task ${taskId} is muted.`);
         return;
     }
@@ -51,7 +61,6 @@ export async function createNotification(userId: string, message: string, taskId
 
         if (taskDoc.exists()) {
             const taskData = taskDoc.data() as Task;
-            // Default to 'Laag' if not set, meaning all notifications are sent by default
             const userThreshold = userData.notificationSettings?.notificationPriorityThreshold || 'Laag';
             
             const taskPriorityLevel = priorityOrder[taskData.priority] ?? 0;
@@ -59,37 +68,54 @@ export async function createNotification(userId: string, message: string, taskId
 
             if (taskPriorityLevel < userThresholdLevel) {
                 console.log(`Notification for ${userData.name} suppressed due to priority threshold.`);
-                return; // Suppress notification because task priority is below user's threshold
+                return;
             }
         }
     }
-
-    // Notification Bundling: Check if a similar notification was sent recently.
-    if (taskId) {
+    
+    // --- BUNDLING LOGIC ---
+    if (taskId && options.eventType === 'comment' && options.taskTitle) {
         const fiveMinutesAgo = subMinutes(new Date(), 5);
-        const recentNotifsQuery = query(
+        const q = query(
             collection(db, 'notifications'),
             where('userId', '==', userId),
             where('taskId', '==', taskId),
-            where('createdAt', '>=', Timestamp.fromDate(fiveMinutesAgo)),
-            limit(1)
+            where('eventType', '==', 'comment'),
+            where('createdAt', '>=', Timestamp.fromDate(fiveMinutesAgo))
         );
-        const recentNotifsSnapshot = await getDocs(recentNotifsQuery);
-        if (!recentNotifsSnapshot.empty) {
-            console.log(`Notification for ${userData.name} on task ${taskId} bundled. Suppressing new notification.`);
-            return; // Found a recent notification, so we bundle by doing nothing.
+        const snapshot = await getDocs(q);
+
+        if (!snapshot.empty) {
+            const mostRecentNotif = snapshot.docs.sort((a,b) => b.data().createdAt.toMillis() - a.data().createdAt.toMillis())[0];
+            const notifRef = doc(db, 'notifications', mostRecentNotif.id);
+            const bundleCount = (mostRecentNotif.data().bundleCount || 1) + 1;
+            
+            await updateDoc(notifRef, {
+                message: `${bundleCount} nieuwe reacties op: "${options.taskTitle}"`,
+                createdAt: new Date(),
+                read: false,
+                bundleCount: bundleCount,
+                snoozedUntil: null,
+            });
+            return; // Exit after bundling
         }
     }
       
     // If all checks pass, create the in-app notification
-    await addDoc(collection(db, 'notifications'), {
+    const newNotificationData: Omit<Notification, 'id'> = {
       userId,
       message,
       taskId,
       organizationId,
       read: false,
       createdAt: new Date(),
-    });
+      eventType: options.eventType,
+    };
+    if(options.eventType === 'comment') {
+        (newNotificationData as any).bundleCount = 1;
+    }
+
+    await addDoc(collection(db, 'notifications'), newNotificationData);
 
     // Trigger external notifications
     const orgRef = doc(db, 'organizations', organizationId);
@@ -117,6 +143,5 @@ export async function createNotification(userId: string, message: string, taskId
     }
   } catch (e) {
     console.error(`Error creating notification for user ${userId}:`, e);
-    // Don't re-throw, creating a notification is not a critical failure
   }
 };

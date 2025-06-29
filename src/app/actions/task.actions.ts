@@ -254,6 +254,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
                   docRef.id,
                   organizationId,
                   creatorId,
+                  { eventType: 'assignment' }
               );
             });
         }
@@ -265,6 +266,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
                   docRef.id,
                   organizationId,
                   creatorId,
+                  { eventType: 'mention' }
               );
             });
         }
@@ -276,6 +278,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
                   docRef.id,
                   organizationId,
                   creatorId,
+                  { eventType: 'mention' }
               );
             });
         }
@@ -350,7 +353,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         if (updates.assigneeIds) {
              const addedAssignees = updates.assigneeIds.filter(id => !taskToUpdate.assigneeIds.includes(id));
              addedAssignees.forEach(assigneeId => {
-                 createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId, organizationId, userId);
+                 createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId, organizationId, userId, { eventType: 'assignment' });
              });
              newHistory.push(addHistoryEntry(userId, `Toegewezenen gewijzigd`));
         }
@@ -358,7 +361,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         if (updates.consultedUserIds) {
              const added = updates.consultedUserIds.filter(id => !(taskToUpdate.consultedUserIds || []).includes(id));
              added.forEach(id => {
-                 createNotification(id, `Je wordt geraadpleegd over taak: "${taskToUpdate.title}"`, taskId, organizationId, userId);
+                 createNotification(id, `Je wordt geraadpleegd over taak: "${taskToUpdate.title}"`, taskId, organizationId, userId, { eventType: 'mention' });
              });
              newHistory.push(addHistoryEntry(userId, `Geraadpleegden gewijzigd`));
         }
@@ -366,17 +369,17 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         if (updates.informedUserIds) {
              const added = updates.informedUserIds.filter(id => !(taskToUpdate.informedUserIds || []).includes(id));
              added.forEach(id => {
-                 createNotification(id, `Je wordt geïnformeerd over taak: "${taskToUpdate.title}"`, taskId, organizationId, userId);
+                 createNotification(id, `Je wordt geïnformeerd over taak: "${taskToUpdate.title}"`, taskId, organizationId, userId, { eventType: 'mention' });
              });
              newHistory.push(addHistoryEntry(userId, `Geïnformeerden gewijzigd`));
         }
         
         if (updates.reviewerId && updates.reviewerId !== taskToUpdate.reviewerId) {
-            createNotification(updates.reviewerId, `Je bent gevraagd om een review te doen voor: "${taskToUpdate.title}"`, taskId, organizationId, userId);
+            createNotification(updates.reviewerId, `Je bent gevraagd om een review te doen voor: "${taskToUpdate.title}"`, taskId, organizationId, userId, { eventType: 'review_request' });
         }
 
         if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== userId) {
-             createNotification(taskToUpdate.creatorId, `${userName} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId, organizationId, userId);
+             createNotification(taskToUpdate.creatorId, `${userName} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId, organizationId, userId, { eventType: 'status_change' });
         }
 
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
@@ -424,7 +427,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
 
                         if (showStreakToast && newStreak > 1) {
                             const message = `Streak! 🔥 Je bent ${newStreak} dag(en) op rij bezig! +${bonusPoints} bonuspunten.`;
-                            createNotification(assigneeId, message, taskId, organizationId, 'system');
+                            createNotification(assigneeId, message, taskId, organizationId, 'system', { eventType: 'gamification' });
                         }
                     });
                      await grantAchievements(assigneeId, 'completed', { ...taskToUpdate, status: 'Voltooid' });
@@ -451,7 +454,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                 const docRef = await addDoc(collection(db, 'tasks'), newTaskData);
                 if (newTaskData.assigneeIds.length > 0) {
                     newTaskData.assigneeIds.forEach(assigneeId => {
-                        createNotification(assigneeId, `Nieuwe herhalende taak: "${newTaskData.title}"`, docRef.id, organizationId, userId);
+                        createNotification(assigneeId, `Nieuwe herhalende taak: "${newTaskData.title}"`, docRef.id, organizationId, userId, { eventType: 'assignment' });
                     })
                 }
                 await triggerWebhooks(organizationId, 'task.created', { ...newTaskData, id: docRef.id });
@@ -679,7 +682,14 @@ export async function addCommentAction(taskId: string, text: string, userId: str
         recipients.delete(userId);
         recipients.forEach(recipientId => {
           if (recipientId) {
-            createNotification(recipientId, `${userName} heeft gereageerd op: "${taskData.title}"`, taskId, organizationId, userId);
+            createNotification(
+              recipientId,
+              `${userName} heeft gereageerd op: "${taskData.title}"`,
+              taskId,
+              organizationId,
+              userId,
+              { eventType: 'comment', taskTitle: taskData.title }
+            );
           }
         });
         
@@ -712,7 +722,7 @@ export async function addCommentAction(taskId: string, text: string, userId: str
                     
                     notificationRecipients.forEach(recipientId => {
                         if (recipientId) {
-                            createNotification(recipientId, notificationMessage, taskId, organizationId, 'system');
+                            createNotification(recipientId, notificationMessage, taskId, organizationId, 'system', { eventType: 'ai_suggestion' });
                         }
                     });
                 }

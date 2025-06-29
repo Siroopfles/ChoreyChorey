@@ -341,6 +341,7 @@ export async function completeProject(projectId: string, organizationId: string,
                 read: false,
                 createdAt: new Date(),
                 organizationId: organizationId,
+                eventType: 'gamification'
             });
         });
         
