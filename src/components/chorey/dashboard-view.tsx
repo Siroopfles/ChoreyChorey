@@ -1,4 +1,3 @@
-
 'use client';
 
 import 'react-grid-layout/css/styles.css';
@@ -11,6 +10,7 @@ import { TasksByStatusWidget } from './dashboard/widgets/TasksByStatusWidget';
 import { TasksByPriorityWidget } from './dashboard/widgets/TasksByPriorityWidget';
 import { LeaderboardWidget } from './dashboard/widgets/LeaderboardWidget';
 import { ActivityFeedWidget } from './dashboard/widgets/ActivityFeedWidget';
+import { RecentActivityWidget } from './dashboard/widgets/RecentActivityWidget';
 
 // Import Types
 import type { Task, User, ActivityFeedItem } from '@/lib/types';
@@ -34,32 +34,36 @@ const WIDGETS = {
   tasksByPriority: 'tasksByPriority',
   leaderboard: 'leaderboard',
   activityFeed: 'activityFeed',
+  recentActivity: 'recentActivity',
 };
 
 const defaultLayouts: Layouts = {
   lg: [
     { i: WIDGETS.tasksByStatus, x: 0, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
     { i: WIDGETS.leaderboard, x: 1, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
-    { i: WIDGETS.activityFeed, x: 2, y: 0, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: WIDGETS.tasksByPriority, x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+    { i: WIDGETS.tasksByPriority, x: 2, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
+    { i: WIDGETS.activityFeed, x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+    { i: WIDGETS.recentActivity, x: 2, y: 2, w: 1, h: 2, minW: 1, minH: 2 },
   ],
   md: [
     { i: WIDGETS.tasksByStatus, x: 0, y: 0, w: 1, h: 2 },
     { i: WIDGETS.leaderboard, x: 1, y: 0, w: 1, h: 2 },
-    { i: WIDGETS.activityFeed, x: 0, y: 2, w: 2, h: 4 },
-    { i: WIDGETS.tasksByPriority, x: 0, y: 6, w: 2, h: 2 },
+    { i: WIDGETS.activityFeed, x: 0, y: 2, w: 2, h: 2 },
+    { i: WIDGETS.tasksByPriority, x: 0, y: 4, w: 1, h: 2 },
+    { i: WIDGETS.recentActivity, x: 1, y: 4, w: 1, h: 2 },
   ],
   sm: [
     { i: WIDGETS.tasksByStatus, x: 0, y: 0, w: 1, h: 2 },
     { i: WIDGETS.leaderboard, x: 0, y: 2, w: 1, h: 2 },
     { i: WIDGETS.tasksByPriority, x: 0, y: 4, w: 1, h: 2 },
-    { i: WIDGETS.activityFeed, x: 0, y: 6, w: 1, h: 4 },
+    { i: WIDGETS.activityFeed, x: 0, y: 6, w: 1, h: 2 },
+    { i: WIDGETS.recentActivity, x: 0, y: 8, w: 1, h: 2 },
   ],
 };
 
 
 export default function DashboardView({ tasks, users, activityFeedItems, isFeedLoading, setViewedTask, navigateToUserProfile }: DashboardViewProps) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const layoutChangeTimer = useRef<NodeJS.Timeout | null>(null);
 
   const layouts = useMemo(() => user?.dashboardLayout || defaultLayouts, [user?.dashboardLayout]);
@@ -95,7 +99,15 @@ export default function DashboardView({ tasks, users, activityFeedItems, isFeedL
             navigateToUserProfile={navigateToUserProfile}
         />
     ),
-  }), [tasks, users, activityFeedItems, isFeedLoading, setViewedTask, navigateToUserProfile]);
+     [WIDGETS.recentActivity]: (
+      <RecentActivityWidget
+        tasks={tasks}
+        currentUser={user}
+        setViewedTask={setViewedTask}
+        isLoading={loading}
+      />
+    ),
+  }), [tasks, users, activityFeedItems, isFeedLoading, setViewedTask, navigateToUserProfile, user, loading]);
 
 
   return (
