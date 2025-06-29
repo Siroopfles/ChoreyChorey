@@ -17,7 +17,10 @@ import Link from 'next/link';
 import { KudosDialog } from '@/components/chorey/kudos-dialog';
 import { useOrganization } from '@/contexts/organization-context';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
-import type { Task } from '@/lib/types';
+import type { Task, User } from '@/lib/types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+import { endorseSkill } from '@/app/actions/user.actions';
 
 const achievementIcons: Record<string, React.ElementType> = {
     'first_task': Rocket,
@@ -32,11 +35,13 @@ const achievementIcons: Record<string, React.ElementType> = {
 export default function UserProfilePage() {
     const { userId } = useParams();
     const router = useRouter();
-    const { user: currentUser, loading: authLoading } = useAuth();
-    const { users, projects, loading: orgLoading } = useOrganization();
-    const { tasks, loading: tasksLoading } = useTasks();
+    const { user: currentUser, loading: authLoading, refreshUser } = useAuth();
+    const { users, projects, currentOrganization, loading: orgLoading } = useOrganization();
+    const { tasks, loading: tasksLoading, setViewedTask } = useTasks();
     const [kudosDialogOpen, setKudosDialogOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [endorsingSkill, setEndorsingSkill] = useState<string | null>(null);
+    const { toast } = useToast();
 
     const user = useMemo(() => {
         if (!userId || !users) return null;
@@ -51,6 +56,19 @@ export default function UserProfilePage() {
     const completedTasksCount = useMemo(() => {
         return userTasks.filter(t => t.status === 'Voltooid').length;
     }, [userTasks]);
+
+    const handleEndorse = async (skill: string) => {
+        if (!currentUser || !currentOrganization || !user) return;
+        setEndorsingSkill(skill);
+        const result = await endorseSkill(currentOrganization.id, user.id, skill, currentUser.id);
+        if (result.error) {
+            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
+        } else {
+            toast({ title: 'Bedankt!', description: `Je hebt ${user.name} onderschreven voor ${skill}.` });
+            // Data will refresh automatically via context listeners
+        }
+        setEndorsingSkill(null);
+    };
     
     if (authLoading || tasksLoading || orgLoading) {
         return (
@@ -150,8 +168,50 @@ export default function UserProfilePage() {
                     {user.skills && user.skills.length > 0 && (
                         <Card>
                             <CardHeader><CardTitle>Vaardigheden</CardTitle></CardHeader>
-                            <CardContent className="flex flex-wrap gap-2">
-                                {user.skills.map(skill => <Badge key={skill}>{skill}</Badge>)}
+                            <CardContent className="flex flex-wrap gap-2 items-center">
+                                {user.skills.map(skill => {
+                                    const endorsementCount = user.endorsements?.[skill]?.length || 0;
+                                    const isEndorsedByMe = currentUser ? user.endorsements?.[skill]?.includes(currentUser.id) : false;
+                                    const isEndorsingThis = endorsingSkill === skill;
+
+                                    return (
+                                        <div key={skill} className="flex items-center gap-1 py-1 pl-3 pr-1 rounded-full border bg-secondary text-secondary-foreground">
+                                            <span className="text-sm font-medium">{skill}</span>
+                                            {currentUser?.id !== user.id && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6"
+                                                                onClick={() => handleEndorse(skill)}
+                                                                disabled={isEndorsingThis || isEndorsedByMe}
+                                                            >
+                                                                {isEndorsingThis ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <Star className={cn(
+                                                                        "h-4 w-4 transition-colors",
+                                                                        isEndorsedByMe 
+                                                                            ? "text-yellow-400 fill-yellow-400" 
+                                                                            : "text-muted-foreground hover:text-yellow-400"
+                                                                    )} />
+                                                                )}
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{isEndorsedByMe ? 'Je hebt dit al onderschreven' : 'Onderschrijf deze vaardigheid'}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                            {endorsementCount > 0 && (
+                                                <span className="text-xs font-bold mr-1">{endorsementCount}</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </CardContent>
                         </Card>
                     )}

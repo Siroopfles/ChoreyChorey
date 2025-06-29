@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, runTransaction } from 'firebase/firestore';
+import { doc, updateDoc, runTransaction, arrayUnion } from 'firebase/firestore';
 import type { GlobalUserProfile, Organization, OrganizationMember } from '@/lib/types';
 import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 
@@ -74,4 +74,29 @@ export async function purchaseCosmeticItem(organizationId: string, userId: strin
         console.error("Error purchasing cosmetic item:", error);
         return { data: null, error: error.message };
     }
+}
+
+export async function endorseSkill(
+  organizationId: string,
+  targetUserId: string,
+  skill: string,
+  endorserId: string
+): Promise<{ success: boolean; error?: string }> {
+  if (targetUserId === endorserId) {
+    return { success: false, error: "Je kunt je eigen vaardigheden niet onderschrijven." };
+  }
+  
+  const orgRef = doc(db, 'organizations', organizationId);
+  
+  try {
+    // The `members` field is a map, so we use dot notation to update a nested field.
+    // `arrayUnion` ensures an ID is only added once.
+    await updateDoc(orgRef, {
+      [`members.${targetUserId}.endorsements.${skill}`]: arrayUnion(endorserId)
+    });
+    return { success: true };
+  } catch (e: any) {
+    console.error("Error endorsing skill:", e);
+    return { success: false, error: e.message };
+  }
 }
