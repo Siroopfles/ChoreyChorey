@@ -10,7 +10,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
-import { FileUp, Loader2 } from 'lucide-react';
+import { FileUp, Loader2, XCircle } from 'lucide-react';
 import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
 import { useInView } from 'react-intersection-observer';
 import { useOrganization } from '@/contexts/organization-context';
@@ -117,12 +117,29 @@ const TaskColumn = ({
               />
             )})}
             {tasks.length === 0 && (
-            <div className={cn(
-                "flex flex-col items-center justify-center h-full text-sm text-muted-foreground/80 pointer-events-none p-4 text-center",
-                showInvalidIndicator && "border-2 border-dashed border-destructive/50 rounded-md"
-            )}>
-                {showInvalidIndicator ? 'Een geblokkeerde taak kan hier niet geplaatst worden.' : 'Sleep een taak hierheen.'}
-            </div>
+              <div
+                className={cn(
+                  'flex h-full flex-col items-center justify-center rounded-md border-2 border-dashed p-4 text-center transition-colors',
+                  showInvalidIndicator
+                    ? 'border-destructive/50 bg-destructive/5 text-destructive'
+                    : isOver
+                    ? 'border-primary/50 bg-primary/5 text-primary'
+                    : 'border-muted-foreground/20 text-muted-foreground/80'
+                )}
+              >
+                {showInvalidIndicator ? (
+                  <>
+                    <XCircle className="h-8 w-8" />
+                    <p className="mt-2 font-semibold">Actie niet toegestaan</p>
+                    <p className="mt-1 text-xs">Geblokkeerde taken kunnen hier niet worden geplaatst.</p>
+                  </>
+                ) : (
+                  <>
+                    <FileUp className="h-8 w-8" />
+                    <p className="mt-2 font-semibold">Sleep een taak hierheen</p>
+                  </>
+                )}
+              </div>
             )}
         </div>
       </SortableContext>
