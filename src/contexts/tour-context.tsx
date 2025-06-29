@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { createContext, useState, useContext, useEffect, useCallback, type ReactNode, useMemo } from 'react';
@@ -17,6 +18,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const { user, currentOrganization, currentUserRole } = useAuth();
   const [run, setRun] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
+  const [isCompletingTour, setIsCompletingTour] = useState(false);
 
   const needsOnboarding = useMemo(() => {
     if (!user || !currentOrganization) return false;
@@ -32,7 +34,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
 
   useEffect(() => {
-    if (shouldStartTourAutomatically && currentUserRole) {
+    if (shouldStartTourAutomatically && currentUserRole && !isCompletingTour) {
       const tourSteps = currentUserRole === 'Owner' ? ownerSteps : memberSteps;
       setSteps(tourSteps);
       // Delay starting the tour slightly to allow the UI to render
@@ -40,12 +42,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
     } else {
       setRun(false);
     }
-  }, [shouldStartTourAutomatically, currentUserRole]);
+  }, [shouldStartTourAutomatically, currentUserRole, isCompletingTour]);
 
   const startTour = useCallback(() => {
     if (currentUserRole) {
       const tourSteps = currentUserRole === 'Owner' ? ownerSteps : memberSteps;
       setSteps(tourSteps);
+      setIsCompletingTour(false);
       setRun(true);
     }
   }, [currentUserRole]);
@@ -56,9 +59,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
     if (finishedStatuses.includes(status)) {
       setRun(false);
+      setIsCompletingTour(true);
       if (user && currentOrganization) {
-        // The real-time listener in AuthContext will pick up this change.
-        // No need to force a refresh, which was causing the reload loop.
         await markOnboardingComplete(currentOrganization.id, user.id);
       }
     }
