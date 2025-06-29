@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { IdeaFormValues } from '@/lib/types';
 import { ideaFormSchema } from '@/lib/types';
-import { useTasks } from '@/contexts/task-context';
+import { useIdeas } from '@/contexts/idea-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -20,7 +20,7 @@ interface IdeaDialogProps {
 }
 
 export function IdeaDialog({ open, onOpenChange }: IdeaDialogProps) {
-  const { addIdea } = useTasks();
+  const { addIdea } = useIdeas();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<IdeaFormValues>({

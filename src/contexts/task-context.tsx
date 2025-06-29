@@ -16,12 +16,11 @@ import {
   arrayUnion,
   arrayRemove,
 } from 'firebase/firestore';
-import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, Idea, IdeaFormValues, IdeaStatus, TeamChallenge, TeamChallengeFormValues, Subtask, Automation, AutomationFormValues } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, PersonalGoal, PersonalGoalFormValues, TeamChallenge, TeamChallengeFormValues, Subtask, Automation, AutomationFormValues } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
-import { createIdea as createIdeaAction, toggleIdeaUpvote as toggleIdeaUpvoteAction, updateIdeaStatus as updateIdeaStatusAction } from '@/app/actions/ideas.actions';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user.actions';
 import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
 import { addPersonalGoal as addPersonalGoalAction, updatePersonalGoal as updatePersonalGoalAction, deletePersonalGoal as deletePersonalGoalAction, toggleMilestoneCompletion as toggleMilestoneCompletionAction } from '@/app/actions/goal.actions';
@@ -80,10 +79,6 @@ type TaskContextType = {
   updatePersonalGoal: (goalId: string, goalData: PersonalGoalFormValues) => Promise<boolean>;
   deletePersonalGoal: (goalId: string) => Promise<void>;
   toggleMilestoneCompletion: (goalId: string, milestoneId: string) => Promise<void>;
-  ideas: Idea[];
-  addIdea: (ideaData: IdeaFormValues) => Promise<boolean>;
-  toggleIdeaUpvote: (ideaId: string) => void;
-  updateIdeaStatus: (ideaId: string, status: IdeaStatus) => void;
   teamChallenges: TeamChallenge[];
   addTeamChallenge: (challengeData: TeamChallengeFormValues) => Promise<boolean>;
   updateTeamChallenge: (challengeId: string, challengeData: TeamChallengeFormValues) => Promise<boolean>;
@@ -102,7 +97,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [personalGoals, setPersonalGoals] = useState<PersonalGoal[]>([]);
-  const [ideas, setIdeas] = useState<Idea[]>([]);
   const [teamChallenges, setTeamChallenges] = useState<TeamChallenge[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,7 +124,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     if (!currentOrganization || !user) {
-      setTasks([]); setTemplates([]); setPersonalGoals([]); setIdeas([]); setTeamChallenges([]); setNotifications([]); setAutomations([]); setLoading(false);
+      setTasks([]); setTemplates([]); setPersonalGoals([]); setTeamChallenges([]); setNotifications([]); setAutomations([]); setLoading(false);
       return;
     }
     setLoading(true);
@@ -173,12 +167,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     const unsubTemplates = onSnapshot(commonQuery('taskTemplates'), (s) => setTemplates(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as TaskTemplate))), (e) => handleError(e, 'laden van templates'));
     const unsubGoals = onSnapshot(userSpecificQuery('personalGoals'), (s) => setPersonalGoals(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), targetDate: (d.data().targetDate as Timestamp)?.toDate(), milestones: d.data().milestones || [] } as PersonalGoal)).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van doelen'));
-    const unsubIdeas = onSnapshot(commonQuery('ideas'), (s) => setIdeas(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as Idea))), (e) => handleError(e, 'laden van ideeën'));
     const unsubChallenges = onSnapshot(commonQuery('teamChallenges'), (s) => setTeamChallenges(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), completedAt: (d.data().completedAt as Timestamp)?.toDate()} as TeamChallenge)).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van uitdagingen'));
     const unsubNotifications = onSnapshot(query(collection(db, "notifications"), where("userId", "==", user.id), where("organizationId", "==", currentOrganization.id)), (s) => setNotifications(s.docs.map(d => ({ id: d.id, ...d.data(), createdAt: (d.data().createdAt as Timestamp).toDate(), snoozedUntil: (d.data().snoozedUntil as Timestamp)?.toDate() } as Notification)).filter(n => !n.archived).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())), (e) => handleError(e, 'laden van notificaties'));
     const unsubAutomations = onSnapshot(commonQuery('automations'), (s) => setAutomations(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate() } as Automation))), (e) => handleError(e, 'laden van automatiseringen'));
 
-    return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubGoals(); unsubIdeas(); unsubChallenges(); unsubAutomations(); };
+    return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubGoals(); unsubChallenges(); unsubAutomations(); };
   }, [user, currentOrganization, currentUserRole, currentUserPermissions, projects]);
 
   const markAllNotificationsAsRead = async () => {
@@ -404,27 +397,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     else if (result.allCompleted) { toast({ title: 'Doel Behaald!', description: `Gefeliciteerd met het behalen van je doel: "${goal.title}"` }); }
   };
 
-  const addIdea = async (ideaData: IdeaFormValues): Promise<boolean> => {
-    if (!user || !currentOrganization) return false;
-    const result = await createIdeaAction(currentOrganization.id, user.id, ideaData);
-    if (result.error) { handleError({ message: result.error }, 'indienen idee'); return false; }
-    toast({ title: 'Idee ingediend!', description: 'Bedankt voor je bijdrage.' });
-    return true;
-  };
-
-  const toggleIdeaUpvote = async (ideaId: string) => {
-    if (!user) return;
-    const result = await toggleIdeaUpvoteAction(ideaId, user.id);
-    if (result.error) { handleError({ message: result.error }, 'stemmen op idee'); }
-  };
-
-  const updateIdeaStatus = async (ideaId: string, status: IdeaStatus) => {
-    if (!user || !currentOrganization) return;
-    const result = await updateIdeaStatusAction(ideaId, status, user.id, currentOrganization.id);
-    if (result.error) { handleError({ message: result.error }, 'bijwerken idee status'); }
-    else { toast({ title: 'Status bijgewerkt!' }); }
-  };
-
   const addTeamChallenge = async (challengeData: TeamChallengeFormValues): Promise<boolean> => {
     if (!currentOrganization) return false;
     const result = await addTeamChallengeAction(currentOrganization.id, challengeData);
@@ -492,8 +464,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       activeFilterCount, notifications, markAllNotificationsAsRead, markSingleNotificationAsRead,
       archiveNotification, snoozeNotification, navigateToUserProfile, isAddTaskDialogOpen,
       setIsAddTaskDialogOpen, viewedTask, setViewedTask, personalGoals, addPersonalGoal, updatePersonalGoal,
-      deletePersonalGoal, toggleMilestoneCompletion, ideas, addIdea, toggleIdeaUpvote,
-      updateIdeaStatus, teamChallenges, addTeamChallenge, updateTeamChallenge,
+      deletePersonalGoal, toggleMilestoneCompletion,
+      teamChallenges, addTeamChallenge, updateTeamChallenge,
       deleteTeamChallenge, completeTeamChallenge, toggleMuteTask, automations, manageAutomation,
     }}>
       {children}

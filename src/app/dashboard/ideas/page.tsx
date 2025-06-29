@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTasks } from '@/contexts/task-context';
+import { useIdeas } from '@/contexts/idea-context';
 import { Button } from '@/components/ui/button';
 import { Lightbulb, Plus } from 'lucide-react';
 import { IdeaDialog } from '@/components/chorey/ideas/idea-dialog';
@@ -13,7 +13,7 @@ import type { Idea } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function IdeasPage() {
-  const { ideas, loading } = useTasks();
+  const { ideas, loading } = useIdeas();
   const { currentUserPermissions } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
 

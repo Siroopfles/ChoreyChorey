@@ -3,7 +3,7 @@
 
 import type { Idea, Permission } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
+import { useIdeas } from '@/contexts/idea-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,7 +30,7 @@ interface IdeaCardProps {
 
 export function IdeaCard({ idea, currentUserPermissions }: IdeaCardProps) {
   const { user, users } = useAuth();
-  const { toggleIdeaUpvote, updateIdeaStatus } = useTasks();
+  const { toggleIdeaUpvote, updateIdeaStatus } = useIdeas();
   const creator = users.find(u => u.id === idea.creatorId);
   const hasVoted = user ? idea.upvotes?.includes(user.id) : false;
 
