@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -497,6 +498,20 @@ export async function markOnboardingComplete(organizationId: string, userId: str
         return { success: true };
     } catch (error: any) {
         console.error("Error marking onboarding as complete:", error);
+        return { error: error.message };
+    }
+}
+
+export async function toggleProjectPin(projectId: string, organizationId: string, userId: string, isPinned: boolean) {
+    if (!await hasPermission(userId, organizationId, PERMISSIONS.PIN_ITEMS)) {
+        return { error: "Je hebt geen permissie om dit project vast te pinnen." };
+    }
+    try {
+        const projectRef = doc(db, 'projects', projectId);
+        await updateDoc(projectRef, { pinned: isPinned });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error toggling project pin:", error);
         return { error: error.message };
     }
 }

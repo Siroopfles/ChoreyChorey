@@ -1,4 +1,5 @@
 
+
 'use client';
 import type { Task, User, Project, Subtask, Comment } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +37,8 @@ import {
   Bell,
   BellOff,
   ClipboardCopy,
-  CornerUpRight
+  CornerUpRight,
+  Pin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -95,8 +97,8 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 
 const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardProps) => {
   const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
-  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask } = useTasks();
-  const { currentOrganization, currentUserRole } = useAuth();
+  const { updateTask, toggleSubtaskCompletion, selectedTaskIds, toggleTaskSelection, cloneTask, splitTask, deleteTaskPermanently, searchTerm, tasks: allTasks, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask, toggleTaskPin } = useTasks();
+  const { currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
   const { toast } = useToast();
 
   const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
@@ -191,6 +193,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
   const canThank = showGamification && currentUser && task.status === 'Voltooid' && task.assigneeIds.length > 0 && !task.assigneeIds.includes(currentUser.id);
   const canRate = showGamification && currentUser && task.status === 'Voltooid' && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id) && !task.rating;
   const canManageChoreOfWeek = currentUserRole === 'Owner' || currentUserRole === 'Admin';
+  const canPin = currentUserPermissions.includes(PERMISSIONS.PIN_ITEMS);
 
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -339,6 +342,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                     </DropdownMenuPortal>
                     </DropdownMenuSub>
                     <DropdownMenuSeparator />
+                     <DropdownMenuItem onClick={() => toggleTaskPin(task.id, !task.pinned)} disabled={!canPin}>
+                        <Pin className={cn("mr-2 h-4 w-4", task.pinned && "fill-current")} />
+                        <span>{task.pinned ? 'Taak losmaken' : 'Taak vastpinnen'}</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => toggleMuteTask(task.id)}>
                         {isMuted ? <Bell className="mr-2 h-4 w-4" /> : <BellOff className="mr-2 h-4 w-4" />}
                         <span>{isMuted ? 'Dempen opheffen' : 'Dempen'}</span>

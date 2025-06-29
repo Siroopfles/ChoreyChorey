@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 import type { Layout } from 'react-grid-layout';
 
@@ -155,6 +156,7 @@ export const PERMISSIONS = {
   MANAGE_TEMPLATES: 'MANAGE_TEMPLATES',
   MANAGE_TIME_TRACKING_INTEGRATIONS: 'MANAGE_TIME_TRACKING_INTEGRATIONS',
   MANAGE_IP_WHITELIST: 'MANAGE_IP_WHITELIST',
+  PIN_ITEMS: 'PIN_ITEMS',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -178,6 +180,7 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.MANAGE_TEMPLATES]: { name: 'Templates Beheren', description: 'Kan taaktemplates voor de organisatie aanmaken, bewerken en verwijderen.' },
   [PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS]: { name: 'Tijdregistratie Integraties Beheren', description: 'Kan integraties met tijdregistratietools zoals Toggl configureren.' },
   [PERMISSIONS.MANAGE_IP_WHITELIST]: { name: 'IP Whitelist Beheren', description: 'Kan de lijst met toegestane IP-adressen voor de organisatie beheren.' },
+  [PERMISSIONS.PIN_ITEMS]: { name: 'Items Vastpinnen', description: 'Kan taken en projecten vastpinnen in de zijbalk voor iedereen in de organisatie.' },
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
@@ -206,6 +209,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.MANAGE_TEMPLATES,
       PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS,
       PERMISSIONS.MANAGE_IP_WHITELIST,
+      PERMISSIONS.PIN_ITEMS,
     ],
   },
   Member: {
@@ -214,6 +218,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.CREATE_TASK,
       PERMISSIONS.EDIT_TASK, // Note: Rules should enforce editing only assigned/created tasks
       PERMISSIONS.VIEW_ALL_TASKS,
+      PERMISSIONS.PIN_ITEMS,
     ],
   },
   Guest: {
@@ -234,6 +239,7 @@ export type Project = {
   budget?: number;
   budgetType?: 'amount' | 'hours';
   deadline?: Date;
+  pinned?: boolean;
 };
 
 export type Team = {
@@ -505,6 +511,7 @@ export type Task = {
   clockifyWorkspaceId?: string;
   clockifyProjectId?: string;
   customFieldValues?: Record<string, any>;
+  pinned?: boolean;
 };
 
 export type Notification = {

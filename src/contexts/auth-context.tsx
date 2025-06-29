@@ -26,7 +26,7 @@ import type { User, Organization, Team, RoleName, UserStatus, Permission, Projec
 import { DEFAULT_ROLES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
-import { updateUserStatus as updateUserStatusAction } from '@/app/actions/organization.actions';
+import { updateUserStatus as updateUserStatusAction, toggleProjectPin as toggleProjectPinAction } from '@/app/actions/organization.actions';
 import { sendDailyDigest } from '@/app/actions/digest.actions';
 import { useDebug } from './debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -54,6 +54,7 @@ type AuthContextType = {
     projects: Project[];
     teams: Team[];
     updateUserStatus: (status: UserStatus) => Promise<void>;
+    toggleProjectPin: (projectId: string, isPinned: boolean) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -577,6 +578,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const toggleProjectPin = async (projectId: string, isPinned: boolean) => {
+        if (!user || !currentOrganization) return;
+        const result = await toggleProjectPinAction(projectId, currentOrganization.id, user.id, isPinned);
+        if (result.error) {
+            toast({ title: 'Fout', description: result.error, variant: 'destructive' });
+        }
+    };
+
     const value = {
         authUser,
         user,
@@ -598,6 +607,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         projects,
         teams,
         updateUserStatus,
+        toggleProjectPin,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

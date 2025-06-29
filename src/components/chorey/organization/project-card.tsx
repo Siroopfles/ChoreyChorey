@@ -5,7 +5,7 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2, Briefcase, UserPlus } from 'lucide-react';
+import { Users, EyeOff, Globe, Share2, Edit, Medal, Loader2, Briefcase, UserPlus, Pin } from 'lucide-react';
 import type { Team, User, Project, Task } from '@/lib/types';
 import { ProjectDialog } from './project-dialog';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,10 @@ import { PermissionProtectedButton } from '@/components/ui/permission-protected-
 
 export function ProjectCard({ project, allTeams, allTasks }: { project: Project, usersInOrg: User[], allTeams: Team[], allTasks: Task[] }) {
     const { toast } = useToast();
-    const { user, currentUserPermissions } = useAuth();
+    const { user, currentUserPermissions, toggleProjectPin } = useAuth();
     const [isCompleting, setIsCompleting] = useState(false);
     const [isGuestInviteOpen, setIsGuestInviteOpen] = useState(false);
+    const [isPinning, setIsPinning] = useState(false);
     
     const canManageProjects = currentUserPermissions.includes(PERMISSIONS.MANAGE_PROJECTS);
     const canInviteGuests = currentUserPermissions.includes(PERMISSIONS.MANAGE_MEMBERS);
@@ -78,6 +79,14 @@ export function ProjectCard({ project, allTeams, allTasks }: { project: Project,
         setIsCompleting(false);
     };
 
+    const handlePinToggle = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsPinning(true);
+        await toggleProjectPin(project.id, !project.pinned);
+        setIsPinning(false);
+        toast({ title: `Project ${!project.pinned ? 'vastgepind' : 'losgemaakt'}.` });
+    }
+
 
     return (
         <>
@@ -105,6 +114,21 @@ export function ProjectCard({ project, allTeams, allTasks }: { project: Project,
                         )}
                     </CardTitle>
                     <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <PermissionProtectedButton
+                                        requiredPermission={PERMISSIONS.PIN_ITEMS}
+                                        variant="ghost" size="icon" className="h-8 w-8"
+                                        onClick={handlePinToggle}
+                                        disabled={isPinning}
+                                    >
+                                        {isPinning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pin className={cn("h-4 w-4", project.pinned && "fill-current text-primary")} />}
+                                    </PermissionProtectedButton>
+                                </TooltipTrigger>
+                                <TooltipContent><p>{project.pinned ? 'Project losmaken' : 'Project vastpinnen'}</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                          {canInviteGuests && (
                              <TooltipProvider>
                                 <Tooltip>

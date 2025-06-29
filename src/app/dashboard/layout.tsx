@@ -5,8 +5,8 @@
 import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap, MessageSquare } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap, MessageSquare, Pin, Briefcase } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarSeparator,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import AppHeader from '@/components/chorey/app-header';
 import CommandBar from '@/components/chorey/command-bar';
@@ -59,10 +60,11 @@ const UserCosmeticStyle = () => {
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
-    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask } = useTasks();
-    const { currentUserRole, currentOrganization, users, currentUserPermissions } = useAuth();
+    const { tasks, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, setFilters } = useTasks();
+    const { currentUserRole, currentOrganization, users, currentUserPermissions, projects } = useAuth();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const router = useRouter();
     const announcement = currentOrganization?.settings?.announcement;
     
     const isGuest = currentUserRole === 'Guest';
@@ -112,6 +114,14 @@ function AppShell({ children }: { children: React.ReactNode }) {
         ...(currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) ? [{ href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }] : []),
     ];
 
+    const pinnedProjects = useMemo(() => projects.filter(p => p.pinned), [projects]);
+    const pinnedTasks = useMemo(() => tasks.filter(t => t.pinned), [tasks]);
+    
+    const handleProjectClick = (projectId: string) => {
+      setFilters({ projectId });
+      router.push('/dashboard');
+    };
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -154,6 +164,29 @@ function AppShell({ children }: { children: React.ReactNode }) {
                                 </Link>
                             </SidebarMenuItem>
                         ))}
+
+                        {(pinnedProjects.length > 0 || pinnedTasks.length > 0) && (
+                            <>
+                                <SidebarSeparator className="my-2" />
+                                <SidebarGroupLabel className="flex items-center gap-2"><Pin className="h-4 w-4"/>Vastgezet</SidebarGroupLabel>
+                                {pinnedProjects.map((project) => (
+                                     <SidebarMenuItem key={`pin-proj-${project.id}`}>
+                                        <SidebarMenuButton tooltip={project.name} onClick={() => handleProjectClick(project.id)}>
+                                            <Briefcase />
+                                            <span>{project.name}</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                                {pinnedTasks.map((task) => (
+                                     <SidebarMenuItem key={`pin-task-${task.id}`}>
+                                        <SidebarMenuButton tooltip={task.title} onClick={() => setViewedTask(task)}>
+                                            <ClipboardList />
+                                            <span>{task.title}</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                            </>
+                        )}
 
                         {planningNavItems.length > 0 && <SidebarSeparator className="my-2" />}
                         {planningNavItems.map((item) => (

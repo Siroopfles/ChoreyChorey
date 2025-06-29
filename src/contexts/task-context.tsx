@@ -75,6 +75,7 @@ type TaskContextType = {
   toggleMuteTask: (taskId: string) => void;
   automations: Automation[];
   manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
+  toggleTaskPin: (taskId: string, isPinned: boolean) => Promise<void>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -373,6 +374,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     else { toast({ title: `Taak ${result.newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}` }); await refreshUser(); }
   };
 
+  const toggleTaskPin = async (taskId: string, isPinned: boolean) => {
+    if (!user || !currentOrganization) return;
+    if (!currentUserPermissions.includes(PERMISSIONS.PIN_ITEMS)) {
+        toast({ title: 'Geen permissie', description: 'Je hebt geen permissie om items vast te pinnen.', variant: 'destructive' });
+        return;
+    }
+    updateTask(taskId, { pinned: isPinned });
+  };
+
   return (
     <TaskContext.Provider value={{ 
       tasks, templates, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
@@ -383,6 +393,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       activeFilterCount, notifications, markAllNotificationsAsRead, markSingleNotificationAsRead,
       archiveNotification, snoozeNotification, navigateToUserProfile, isAddTaskDialogOpen,
       setIsAddTaskDialogOpen, viewedTask, setViewedTask, toggleMuteTask, automations, manageAutomation,
+      toggleTaskPin,
     }}>
       {children}
     </TaskContext.Provider>
