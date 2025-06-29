@@ -52,11 +52,6 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
         }
     };
 
-    const handleMouseDown = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-    };
-
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -70,7 +65,7 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
                         {usersInTeam.length > 0 && (
                             <CommandGroup heading="Huidige Leden">
                                 {usersInTeam.map(user => (
-                                    <CommandItem key={user.id} onSelect={() => router.push(`/dashboard/profile/${user.id}`)} onMouseDown={handleMouseDown} className="flex justify-between items-center group">
+                                    <CommandItem key={user.id} onSelect={() => router.push(`/dashboard/profile/${user.id}`)} className="flex justify-between items-center group">
                                         <div className="flex items-center gap-2">
                                             <Avatar className="h-6 w-6">
                                                 <AvatarImage src={user.avatar} />
@@ -82,6 +77,7 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
                                             variant="ghost"
                                             size="icon"
                                             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onMouseDown={(e) => e.preventDefault()}
                                             onClick={(e) => { e.stopPropagation(); removeUser(user.id); }}
                                             aria-label={`Verwijder ${user.name}`}
                                         >
@@ -94,7 +90,7 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
                          {usersNotInTeam.length > 0 && (
                             <CommandGroup heading="Voeg Leden Toe">
                                 {usersNotInTeam.map(user => (
-                                    <CommandItem key={user.id} onSelect={() => router.push(`/dashboard/profile/${user.id}`)} onMouseDown={handleMouseDown} className="flex justify-between items-center group">
+                                    <CommandItem key={user.id} onSelect={() => router.push(`/dashboard/profile/${user.id}`)} className="flex justify-between items-center group">
                                         <div className="flex items-center gap-2">
                                             <Avatar className="h-6 w-6">
                                                 <AvatarImage src={user.avatar} />
@@ -106,6 +102,7 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
                                             variant="ghost"
                                             size="icon"
                                             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onMouseDown={(e) => e.preventDefault()}
                                             onClick={(e) => { e.stopPropagation(); addUser(user.id); }}
                                             aria-label={`Voeg ${user.name} toe`}
                                         >
