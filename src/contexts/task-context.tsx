@@ -3,7 +3,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { 
   collection, 
   onSnapshot, 
@@ -17,7 +17,7 @@ import {
   arrayRemove,
 } from 'firebase/firestore';
 import type { Task, TaskFormValues, User, Status, Label, Filters, Notification, TaskTemplate, TaskTemplateFormValues, Subtask, Automation, AutomationFormValues } from '@/lib/types';
-import { PERMISSIONS } from '@/lib/types';
+import { PERMISSIONS, NOTIFICATION_SOUNDS, NOTIFICATION_EVENT_TYPES_FOR_SOUNDS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
@@ -94,6 +94,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [viewedTask, setViewedTask] = useState<Task | null>(null);
   const { toast } = useToast();
   const router = useRouter();
+  const prevNotificationsRef = useRef<Notification[]>([]);
 
   const setFilters = (newFilters: Partial<Filters>) => { setRawFilters(prev => ({...prev, ...newFilters})); };
   const clearFilters = () => { setRawFilters({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null }); setSearchTerm(''); };
@@ -157,6 +158,37 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     return () => { unsubTasks(); unsubTemplates(); unsubNotifications(); unsubAutomations(); };
   }, [user, currentOrganization, currentUserRole, currentUserPermissions, projects]);
+
+  useEffect(() => {
+    // Prevent sounds on initial load
+    if (loading) {
+        prevNotificationsRef.current = notifications;
+        return;
+    }
+    if (!user || notifications.length === prevNotificationsRef.current.length) {
+        prevNotificationsRef.current = notifications;
+        return;
+    }
+    
+    const newNotifications = notifications.filter(
+        n => !prevNotificationsRef.current.some(pn => pn.id === n.id) && !n.read
+    );
+
+    if (newNotifications.length > 0) {
+        // Only play sound for the most recent new notification
+        const notificationToPlaySoundFor = newNotifications[0];
+        const eventType = notificationToPlaySoundFor.eventType || 'default';
+        const soundSettings = user.notificationSounds || {};
+        const soundToPlay = soundSettings[eventType] || soundSettings['default'];
+
+        if (soundToPlay && soundToPlay !== 'none') {
+            const audio = new Audio(`/sounds/${soundToPlay}`);
+            audio.play().catch(error => console.error("Audio playback failed:", error));
+        }
+    }
+
+    prevNotificationsRef.current = notifications;
+  }, [notifications, user, loading]);
 
   const markAllNotificationsAsRead = async () => {
     if (!user) return;

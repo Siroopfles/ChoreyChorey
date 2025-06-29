@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -13,6 +14,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import TogglSettings from '@/components/chorey/settings/toggl-settings';
 import ClockifySettings from '@/components/chorey/settings/clockify-settings';
+import NotificationSoundSettings from '@/components/chorey/settings/notification-sound-settings';
 
 export default function ProfileSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -39,6 +41,7 @@ export default function ProfileSettingsPage() {
       
       <ProfileSettings user={user} />
       <TwoFactorAuthSettings user={user} />
+      <NotificationSoundSettings user={user} />
       <AnimationSettings />
       <SessionManagement />
       <GoogleCalendarSettings />
@@ -48,4 +51,3 @@ export default function ProfileSettingsPage() {
     </div>
   );
 }
-
