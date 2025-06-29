@@ -8,8 +8,9 @@ import { ai } from '@/ai/genkit';
 import { GenerateTaskImageInputSchema, GenerateTaskImageOutputSchema } from '@/ai/schemas';
 import type { GenerateTaskImageInput, GenerateTaskImageOutput } from '@/ai/schemas';
 import { getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import type { Organization } from '@/lib/types';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 
 export async function generateTaskImage(input: Omit<GenerateTaskImageInput, 'primaryColor'> & { organizationId: string }): Promise<GenerateTaskImageOutput> {
   const orgDoc = await getDoc(doc(db, 'organizations', input.organizationId));
@@ -48,6 +49,11 @@ ${description ? `Task Description: ${description}` : ''}
       throw new Error('Image generation failed to return a data URI.');
     }
 
-    return { imageDataUri };
+    const imageId = crypto.randomUUID();
+    const storageRef = ref(storage, `task-images/${imageId}.png`);
+    const uploadResult = await uploadString(storageRef, imageDataUri, 'data_url');
+    const imageUrl = await getDownloadURL(uploadResult.ref);
+
+    return { imageUrl };
   }
 );

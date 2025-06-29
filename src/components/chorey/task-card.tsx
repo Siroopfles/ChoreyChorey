@@ -202,17 +202,17 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
             isBlocked && 'opacity-60 bg-red-500/10'
         )}
       >
-        {task.imageDataUri && (
+        {task.imageUrl && (
             <div className="relative aspect-[16/9] w-full">
                 <Image
-                  src={task.imageDataUri}
+                  src={task.imageUrl}
                   alt={task.title}
                   layout="fill"
                   objectFit="cover"
                 />
             </div>
         )}
-        <div className={cn(task.imageDataUri && "border-t")}>
+        <div className={cn(task.imageUrl && "border-t")}>
             <CardHeader className="p-3 pb-2 pl-9">
             <div className="flex justify-between items-start gap-2">
                 <CardTitle className="text-sm font-semibold font-body leading-snug pt-1 flex items-center gap-1.5">

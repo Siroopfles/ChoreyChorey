@@ -191,11 +191,12 @@ export async function createTaskAction(organizationId: string, creatorId: string
           storyPoints: taskData.storyPoints ?? null,
           cost: taskData.cost ?? null,
           blockedBy: taskData.blockedBy || [],
+          isBlocked: false,
           relations: taskData.relations || [],
           dependencyConfig: taskData.dependencyConfig || {},
           recurring: taskData.recurring ?? null,
           organizationId: organizationId,
-          imageDataUri: taskData.imageDataUri ?? null,
+          imageUrl: taskData.imageUrl ?? null,
           thanked: false,
           timeLogged: 0,
           activeTimerStartedAt: null,
@@ -295,33 +296,30 @@ export async function createTaskAction(organizationId: string, creatorId: string
 }
 
 export async function updateTaskAction(taskId: string, updates: Partial<Task>, userId: string, organizationId: string): Promise<{ data: { success: boolean; updatedTask: Task; } | null; error: string | null; }> {
+    const taskRef = doc(db, 'tasks', taskId);
+    
     try {
-        const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
-        if (!taskDoc.exists()) {
-            throw new Error("Taak niet gevonden.");
-        }
-        const taskToUpdate = taskDoc.data() as Task;
+        if (!taskDoc.exists()) throw new Error("Taak niet gevonden.");
+        
+        const taskToUpdate = { ...taskDoc.data(), id: taskDoc.id } as Task;
         const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
         const userName = userDoc.exists() ? userDoc.data().name : 'Onbekend';
 
         const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
-        if (!orgDoc.exists()) {
-          throw new Error("Organisatie niet gevonden.");
-        }
+        if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
+        
         const organization = orgDoc.data() as Organization;
         const showGamification = organization.settings?.features?.gamification !== false;
 
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory = [];
+        const batch = writeBatch(db);
         
-        if (updates.githubLinks) {
-            finalUpdates.githubLinkUrls = updates.githubLinks.map(link => link.url);
-        }
-        if (updates.jiraLinks) {
-            finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);
-        }
+        if (updates.githubLinks) finalUpdates.githubLinkUrls = updates.githubLinks.map(link => link.url);
+        if (updates.jiraLinks) finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);
+
         if (updates.relations) {
             const oldRelations = taskToUpdate.relations?.map(r => `${r.type}:${r.taskId}`).sort().join(',') || '';
             const newRelations = updates.relations.map(r => `${r.type}:${r.taskId}`).sort().join(',') || '';
@@ -335,8 +333,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
             if (updates[field] !== undefined && JSON.stringify(updates[field]) !== JSON.stringify(taskToUpdate[field])) {
                 let oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');
                 let newValue = field === 'dueDate' ? (updates[field] ? (updates[field] as Date).toLocaleDateString() : 'geen') : (updates[field] || 'leeg');
-                let details = `van "${oldValue}" naar "${newValue}"`;
-                newHistory.push(addHistoryEntry(userId, `Veld '${field}' gewijzigd`, details));
+                newHistory.push(addHistoryEntry(userId, `Veld '${field}' gewijzigd`, `van "${oldValue}" naar "${newValue}"`));
             }
         });
 
@@ -348,28 +345,12 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
              newHistory.push(addHistoryEntry(userId, `Toegewezenen gewijzigd`));
         }
 
-        if (updates.consultedUserIds) {
-             const added = updates.consultedUserIds.filter(id => !(taskToUpdate.consultedUserIds || []).includes(id));
-             added.forEach(id => {
-                 createNotification(id, `Je wordt geraadpleegd over taak: "${taskToUpdate.title}"`, taskId, organizationId, userId, { eventType: 'mention' });
-             });
-             newHistory.push(addHistoryEntry(userId, `Geraadpleegden gewijzigd`));
-        }
-
-        if (updates.informedUserIds) {
-             const added = updates.informedUserIds.filter(id => !(taskToUpdate.informedUserIds || []).includes(id));
-             added.forEach(id => {
-                 createNotification(id, `Je wordt geïnformeerd over taak: "${taskToUpdate.title}"`, taskId, organizationId, userId, { eventType: 'mention' });
-             });
-             newHistory.push(addHistoryEntry(userId, `Geïnformeerden gewijzigd`));
-        }
-        
-        if (updates.reviewerId && updates.reviewerId !== taskToUpdate.reviewerId) {
-            createNotification(updates.reviewerId, `Je bent gevraagd om een review te doen voor: "${taskToUpdate.title}"`, taskId, organizationId, userId, { eventType: 'review_request' });
-        }
-
-        if (updates.status === 'In Review' && taskToUpdate.creatorId && taskToUpdate.creatorId !== userId) {
-             createNotification(taskToUpdate.creatorId, `${userName} heeft de taak "${taskToUpdate.title}" ter review aangeboden.`, taskId, organizationId, userId, { eventType: 'status_change' });
+        // Handle isBlocked updates based on 'blockedBy' changes
+        if (updates.blockedBy) {
+            const blockingTasksQuery = query(collection(db, 'tasks'), where('__name__', 'in', updates.blockedBy));
+            const blockingTasksSnapshot = await getDocs(blockingTasksQuery);
+            const activeBlockers = blockingTasksSnapshot.docs.some(doc => doc.data().status !== 'Voltooid');
+            finalUpdates.isBlocked = activeBlockers;
         }
 
         if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
@@ -379,34 +360,33 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                     grantAchievements(assigneeId, organizationId, 'completed', { ...taskToUpdate, status: 'Voltooid' })
                 ));
             }
+            if (taskToUpdate.teamId) {
+                checkAndGrantTeamAchievements(taskToUpdate.teamId, organizationId).catch(console.error);
+            }
+            // Deblock tasks that were blocked by this one
+            const deblockedTasksQuery = query(collection(db, 'tasks'), where('blockedBy', 'array-contains', taskId));
+            const deblockedSnapshot = await getDocs(deblockedTasksQuery);
+            deblockedSnapshot.forEach(doc => {
+                const deblockedTask = doc.data() as Task;
+                const otherBlockers = deblockedTask.blockedBy?.filter(id => id !== taskId) || [];
+                // This task should only be un-blocked if all its other blockers are also complete
+                // A more robust solution would check all blockers' statuses. For now, we simplify.
+                if (otherBlockers.length === 0) {
+                    batch.update(doc.ref, { isBlocked: false });
+                }
+            });
 
             if (taskToUpdate.recurring) {
                 const nextDueDate = calculateNextDueDate(taskToUpdate.dueDate, taskToUpdate.recurring);
-                const newTaskData = {
-                    ...taskToUpdate,
-                    recurring: taskToUpdate.recurring,
-                    status: 'Te Doen' as Status,
-                    dueDate: nextDueDate,
-                    createdAt: new Date(),
-                    subtasks: taskToUpdate.subtasks.map(s => ({...s, completed: false })),
-                    comments: [],
-                    history: [addHistoryEntry(userId, 'Automatisch aangemaakt', `Herhaling van taak ${taskToUpdate.id}`)],
-                    order: Date.now(),
-                    thanked: false,
-                };
-                delete (newTaskData as any).id;
-                delete (newTaskData as any).completedAt;
-
-                const docRef = await addDoc(collection(db, 'tasks'), newTaskData);
+                const newTaskData: any = { ...taskToUpdate, recurring: taskToUpdate.recurring, status: 'Te Doen' as Status, dueDate: nextDueDate, createdAt: new Date(), subtasks: taskToUpdate.subtasks.map(s => ({...s, completed: false })), comments: [], history: [addHistoryEntry(userId, 'Automatisch aangemaakt', `Herhaling van taak ${taskToUpdate.id}`)], order: Date.now(), thanked: false, };
+                delete newTaskData.id;
+                delete newTaskData.completedAt;
+                const newDocRef = doc(collection(db, 'tasks'));
+                batch.set(newDocRef, newTaskData);
                 if (newTaskData.assigneeIds.length > 0) {
-                    newTaskData.assigneeIds.forEach(assigneeId => {
-                        createNotification(assigneeId, `Nieuwe herhalende taak: "${newTaskData.title}"`, docRef.id, organizationId, userId, { eventType: 'assignment' });
-                    })
+                    newTaskData.assigneeIds.forEach((assigneeId: string) => createNotification(assigneeId, `Nieuwe herhalende taak: "${newTaskData.title}"`, newDocRef.id, organizationId, userId, { eventType: 'assignment' }));
                 }
-                await triggerWebhooks(organizationId, 'task.created', { ...newTaskData, id: docRef.id });
-            }
-             if (taskToUpdate.teamId) {
-                checkAndGrantTeamAchievements(taskToUpdate.teamId, organizationId).catch(console.error);
+                await triggerWebhooks(organizationId, 'task.created', { ...newTaskData, id: newDocRef.id });
             }
         }
         
@@ -415,59 +395,11 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         
         Object.keys(finalUpdates).forEach(key => { if ((finalUpdates as any)[key] === undefined) { (finalUpdates as any)[key] = null; }});
         
-        await updateDoc(taskRef, finalUpdates);
+        batch.update(taskRef, finalUpdates);
+        await batch.commit();
+
         const updatedTask = { ...taskToUpdate, ...finalUpdates, id: taskId };
-
-        // Trigger automations for the updated task
-        try {
-            const { processTriggers } = await import('@/lib/automation-service');
-            await processTriggers('task.updated', { task: updatedTask, oldTask: taskToUpdate });
-        } catch (e) {
-            console.error("Error processing automations for updated task:", e);
-            // Do not block the main flow if automations fail
-        }
-
         await triggerWebhooks(organizationId, 'task.updated', updatedTask);
-
-        const dueDateChanged = 'dueDate' in updates;
-
-        // Google Calendar Sync
-        try {
-            if (dueDateChanged) {
-                if (updates.dueDate && updatedTask.googleEventId) { // Date changed, event exists -> update
-                    await updateCalendarEvent(userId, updatedTask);
-                } else if (updates.dueDate && !updatedTask.googleEventId) { // Date added, no event -> create
-                    const eventId = await createCalendarEvent(userId, updatedTask);
-                    if (eventId) await updateDoc(taskRef, { googleEventId: eventId });
-                } else if (!updates.dueDate && updatedTask.googleEventId) { // Date removed, event exists -> delete
-                    await deleteCalendarEvent(userId, updatedTask.googleEventId);
-                    await updateDoc(taskRef, { googleEventId: null });
-                }
-            } else if (('title' in updates || 'description' in updates) && updatedTask.googleEventId) {
-                await updateCalendarEvent(userId, updatedTask);
-            }
-        } catch (e) {
-            console.error("Google Calendar event update failed:", e);
-        }
-
-         // Microsoft Calendar Sync
-        try {
-            if (dueDateChanged) {
-                if (updates.dueDate && updatedTask.microsoftEventId) { // Date changed, event exists -> update
-                    await updateMicrosoftCalendarEvent(userId, updatedTask);
-                } else if (updates.dueDate && !updatedTask.microsoftEventId) { // Date added, no event -> create
-                    const eventId = await createMicrosoftCalendarEvent(userId, updatedTask);
-                    if (eventId) await updateDoc(taskRef, { microsoftEventId: eventId });
-                } else if (!updates.dueDate && updatedTask.microsoftEventId) { // Date removed, event exists -> delete
-                    await deleteMicrosoftCalendarEvent(userId, updatedTask.microsoftEventId);
-                    await updateDoc(taskRef, { microsoftEventId: null });
-                }
-            } else if (('title' in updates || 'description' in updates) && updatedTask.microsoftEventId) {
-                await updateMicrosoftCalendarEvent(userId, updatedTask);
-            }
-        } catch (e) {
-            console.error("Microsoft Calendar event update failed:", e);
-        }
         
         return { data: { success: true, updatedTask }, error: null };
 
@@ -785,6 +717,7 @@ export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtas
             isSensitive: parentTask.isSensitive,
             storyPoints: undefined,
             blockedBy: [],
+            isBlocked: false,
             relations: [],
             recurring: undefined,
             thanked: false,

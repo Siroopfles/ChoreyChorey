@@ -552,7 +552,7 @@ export type Task = {
   dependencyConfig?: { [taskId: string]: { lag: number; unit: 'days' | 'hours' } };
   recurring?: Recurring;
   organizationId: string;
-  imageDataUri?: string | null;
+  imageUrl?: string | null;
   thanked?: boolean;
   timeLogged?: number; // in seconds
   activeTimerStartedAt?: Date | null;
@@ -672,7 +672,7 @@ export const taskFormSchema = z.object({
   relations: z.array(taskRelationSchema).optional(),
   dependencyConfig: z.record(z.string(), z.object({ lag: z.coerce.number(), unit: z.enum(['days', 'hours']) })).optional(),
   recurring: recurringSchema.optional(),
-  imageDataUri: z.string().optional(),
+  imageUrl: z.string().optional(),
   reviewerId: z.string().optional(),
   consultedUserIds: z.array(z.string()).optional(),
   informedUserIds: z.array(z.string()).optional(),

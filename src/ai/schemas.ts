@@ -75,11 +75,14 @@ export const ProcessCommandOutputSchema = z.string().describe('A concise, friend
 export type ProcessCommandOutput = z.infer<typeof ProcessCommandOutputSchema>;
 
 // From generate-avatar-flow.ts
-export const GenerateAvatarInputSchema = z.string().describe("The user's name or email to base the avatar on.");
+export const GenerateAvatarInputSchema = z.object({
+  userId: z.string().describe("The user's unique ID."),
+  name: z.string().describe("The user's name or email to base the avatar on.")
+});
 export type GenerateAvatarInput = z.infer<typeof GenerateAvatarInputSchema>;
 
 export const GenerateAvatarOutputSchema = z.object({
-  avatarDataUri: z.string().describe("A data URI of the generated avatar image. Expected format: 'data:image/png;base64,<encoded_data>'."),
+  avatarUrl: z.string().url().describe("A public URL to the generated avatar image in Firebase Storage."),
 });
 export type GenerateAvatarOutput = z.infer<typeof GenerateAvatarOutputSchema>;
 
@@ -92,7 +95,7 @@ export const GenerateTaskImageInputSchema = z.object({
 export type GenerateTaskImageInput = z.infer<typeof GenerateTaskImageInputSchema>;
 
 export const GenerateTaskImageOutputSchema = z.object({
-  imageDataUri: z.string().describe("A data URI of the generated image. Expected format: 'data:image/png;base64,<encoded_data>'."),
+  imageUrl: z.string().url().describe("A public URL to the generated image in Firebase Storage."),
 });
 export type GenerateTaskImageOutput = z.infer<typeof GenerateTaskImageOutputSchema>;
 

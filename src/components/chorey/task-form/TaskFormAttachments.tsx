@@ -27,7 +27,7 @@ export function TaskFormAttachments() {
         name: "attachments",
     });
 
-    const imageDataUri = getValues('imageDataUri');
+    const imageUrl = getValues('imageUrl');
 
     const onGenerateImage = async () => {
         const title = getValues('title');
@@ -43,7 +43,7 @@ export function TaskFormAttachments() {
         setIsGeneratingImage(true);
         try {
             const result = await generateTaskImage({ title, description, organizationId: currentOrganization.id });
-            setValue('imageDataUri', result.imageDataUri);
+            setValue('imageUrl', result.imageUrl);
             toast({ title: 'Afbeelding gegenereerd en toegevoegd als omslagfoto!' });
         } catch (error: any) {
             toast({ title: 'Fout bij genereren afbeelding', description: error.message, variant: 'destructive' });
@@ -56,15 +56,15 @@ export function TaskFormAttachments() {
             <div>
                 <UiLabel>Omslagfoto</UiLabel>
                 <div className="space-y-2 mt-2">
-                {imageDataUri && (
+                {imageUrl && (
                     <div className="relative aspect-video w-full max-w-sm rounded-md border overflow-hidden">
-                    <Image src={imageDataUri} alt="Omslagfoto preview" layout="fill" objectFit="cover" />
+                    <Image src={imageUrl} alt="Omslagfoto preview" layout="fill" objectFit="cover" />
                     <Button 
                         type="button" 
                         variant="destructive" 
                         size="icon" 
                         className="absolute top-2 right-2 h-7 w-7"
-                        onClick={() => setValue('imageDataUri', undefined)}
+                        onClick={() => setValue('imageUrl', undefined)}
                         aria-label="Verwijder omslagfoto"
                     >
                         <Trash2 className="h-4 w-4" />

@@ -101,8 +101,8 @@ export default function ProfileSettings({ user }: { user: UserType }) {
   const onGenerateAvatar = async () => {
     setIsGeneratingAvatar(true);
     try {
-        const { avatarDataUri } = await generateAvatar(user.name);
-        const updateResult = await updateUserProfile(user.id, { avatar: avatarDataUri });
+        const { avatarUrl } = await generateAvatar({ userId: user.id, name: user.name });
+        const updateResult = await updateUserProfile(user.id, { avatar: avatarUrl });
         if (updateResult.error) {
             toast({ title: 'Fout bij opslaan avatar', description: updateResult.error, variant: 'destructive' });
         } else {
