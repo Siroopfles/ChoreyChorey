@@ -15,9 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, User, Bot, Tags, Check, X, Star, Bell, Globe, MapPin, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserProfile } from '@/app/actions/user.actions';
+import { updateUserProfile, generateAvatarAction } from '@/app/actions/user.actions';
 import { updateMemberProfile } from '@/app/actions/member.actions';
-import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
@@ -102,7 +101,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
   const onGenerateAvatar = async () => {
     setIsGeneratingAvatar(true);
     try {
-        const { avatarUrl } = await generateAvatar({ userId: user.id, name: user.name });
+        const { avatarUrl } = await generateAvatarAction(user.id, user.name);
         const updateResult = await updateUserProfile(user.id, { avatar: avatarUrl });
         if (updateResult.error) {
             toast({ title: 'Fout bij opslaan avatar', description: updateResult.error, variant: 'destructive' });

@@ -4,6 +4,7 @@
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, runTransaction } from 'firebase/firestore';
 import type { GlobalUserProfile, Organization, OrganizationMember } from '@/lib/types';
+import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 
 
 // This action now only updates the global user profile.
@@ -24,6 +25,10 @@ export async function updateUserProfile(userId: string, data: Partial<Omit<Globa
         console.error("Error updating user profile:", error);
         return { data: null, error: error.message };
     }
+}
+
+export async function generateAvatarAction(userId: string, name: string) {
+    return generateAvatar({ userId, name });
 }
 
 export async function purchaseCosmeticItem(organizationId: string, userId: string, cost: number, updates: { [key: string]: string }): Promise<{ data: { success: boolean } | null; error: string | null; }> {
