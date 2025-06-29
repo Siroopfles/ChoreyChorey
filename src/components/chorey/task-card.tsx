@@ -1,7 +1,11 @@
 
 
 'use client';
-import type { Task, User, Project, Subtask, Comment } from '@/lib/types';
+import type { Task, User, Project, Subtask, Comment, StatusDefinition } from '@/lib/types';
+import { useMemo, useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -39,13 +43,9 @@ import {
   CornerUpRight,
   Pin
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -54,6 +54,7 @@ import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from './attachment-icons';
 import { TaskCardFooter } from './task-card-footer';
 import { useFilters } from '@/contexts/filter-context';
+import { useOrganization } from '@/contexts/organization-context';
 
 
 type TaskCardProps = {
@@ -69,15 +70,6 @@ type TaskCardProps = {
   isOverdue: boolean;
   isDueToday: boolean;
   isDueSoon: boolean;
-};
-
-const statusConfig: Record<string, { color: string }> = {
-    'Te Doen': { color: 'border-l-[hsl(var(--status-todo))]' },
-    'In Uitvoering': { color: 'border-l-[hsl(var(--status-inprogress))]' },
-    'In Review': { color: 'border-l-[hsl(var(--status-in-review))]' },
-    'Voltooid': { color: 'border-l-[hsl(var(--status-completed))]' },
-    'Gearchiveerd': { color: 'border-l-[hsl(var(--status-archived))]' },
-    'Geannuleerd': { color: 'border-l-destructive' },
 };
 
 const Highlight = ({ text, highlight }: { text: string, highlight: string }) => {
@@ -103,7 +95,6 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 
 
 const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, isOverdue, isDueToday, isDueSoon, blockingTasks, relatedTasks, blockedByTasks }: TaskCardProps) => {
-  const statusInfo = statusConfig[task.status] || { color: 'border-l-muted' };
   const { updateTask, toggleSubtaskCompletion, cloneTask, splitTask, deleteTaskPermanently, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask, toggleTaskPin } = useTasks();
   const { searchTerm, selectedTaskIds, toggleTaskSelection } = useFilters();
   const { currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
@@ -123,6 +114,13 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
   const isSelected = selectedTaskIds.includes(task.id);
   const [liveTime, setLiveTime] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+
+  const statusConfig = useMemo(() => 
+    currentOrganization?.settings?.customization?.statuses?.find(s => s.name === task.status),
+    [currentOrganization, task.status]
+  );
+  const borderColorStyle = statusConfig ? { borderLeftColor: `hsl(${statusConfig.color})` } : {};
+
 
   const isMuted = useMemo(() => {
     return currentUser?.mutedTaskIds?.includes(task.id);
@@ -196,9 +194,9 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
         role="button"
         tabIndex={0}
         aria-label={`Open taakdetails voor: ${task.title}`}
+        style={borderColorStyle}
         className={cn(
             'group-task-card hover:shadow-lg transition-shadow duration-200 bg-card border-l-4 overflow-hidden cursor-pointer', 
-            statusInfo.color,
             isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
             isDragging && 'opacity-50',
             isBlocked && 'opacity-60 bg-red-500/10'
@@ -288,8 +286,8 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     <DropdownMenuPortal>
                         <DropdownMenuSubContent>
                             {allStatuses.map(status => (
-                                <DropdownMenuItem key={status} onClick={() => updateTask(task.id, { status })}>
-                                    {status}
+                                <DropdownMenuItem key={status.name} onClick={() => updateTask(task.id, { status: status.name })}>
+                                    {status.name}
                                 </DropdownMenuItem>
                             ))}
                         </DropdownMenuSubContent>
@@ -501,5 +499,3 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
 };
 
 export default TaskCard;
-
-

@@ -3,7 +3,7 @@
 'use client';
 
 import type { Task, User, Project } from '@/lib/types';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
@@ -36,26 +36,12 @@ import {
     Volume2,
     Loader2
 } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { calculatePoints } from '@/lib/utils';
 import { GitLabIcon, JiraIcon, BitbucketIcon } from './provider-icons';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-
-const priorityConfig = {
-    Urgent: { icon: Flame, color: 'text-chart-1' },
-    Hoog: { icon: ChevronUp, color: 'text-chart-2' },
-    Midden: { icon: Equal, color: 'text-chart-3' },
-    Laag: { icon: ChevronDown, color: 'text-chart-4' },
-};
-
-const statusConfig: Record<string, { icon?: JSX.Element }> = {
-    'In Review': { icon: <Hourglass className="h-5 w-5 text-[hsl(var(--status-in-review))]" /> },
-    'Voltooid': { icon: <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-completed))]" /> },
-    'Gearchiveerd': { icon: <Archive className="h-5 w-5 text-gray-500" /> },
-    'Geannuleerd': { icon: <XCircle className="h-5 w-5 text-destructive" /> },
-};
-
+import { useOrganization } from '@/contexts/organization-context';
 
 type TaskCardFooterProps = {
     task: Task;
@@ -71,6 +57,14 @@ type TaskCardFooterProps = {
     relatedTasks: { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[];
 };
 
+const statusConfig: Record<string, { icon?: JSX.Element }> = {
+    'In Review': { icon: <Hourglass className="h-5 w-5 text-[hsl(var(--status-in-review))]" /> },
+    'Voltooid': { icon: <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-completed))]" /> },
+    'Gearchiveerd': { icon: <Archive className="h-5 w-5 text-gray-500" /> },
+    'Geannuleerd': { icon: <XCircle className="h-5 w-5 text-destructive" /> },
+};
+
+
 export function TaskCardFooter({
     task,
     users,
@@ -85,13 +79,12 @@ export function TaskCardFooter({
     relatedTasks,
 }: TaskCardFooterProps) {
     const { navigateToUserProfile } = useTasks();
-    const { currentOrganization } = useAuth();
+    const { currentOrganization } = useOrganization();
     const { toast } = useToast();
     const [isSynthesizing, setIsSynthesizing] = useState(false);
 
     const assignees = useMemo(() => task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[], [task.assigneeIds, users]);
     const project = projects.find((p) => p.id === task.projectId);
-    const PriorityIcon = priorityConfig[task.priority]?.icon || Equal;
     const statusInfo = statusConfig[task.status] || {};
 
     const showGamification = currentOrganization?.settings?.features?.gamification !== false;
@@ -100,6 +93,14 @@ export function TaskCardFooter({
     const totalTimeLogged = (task.timeLogged || 0) + liveTime;
     const points = showGamification ? calculatePoints(task.priority, task.storyPoints) : 0;
     
+    const priorityConfig = useMemo(() =>
+        currentOrganization?.settings?.customization?.priorities?.find(p => p.name === task.priority),
+        [currentOrganization, task.priority]
+    );
+
+    const PriorityIcon = priorityConfig ? Icons[priorityConfig.icon as keyof typeof Icons] || Equal : Equal;
+    const priorityColorStyle = priorityConfig ? { color: `hsl(${priorityConfig.color})` } : {};
+
     const formatTime = (seconds: number) => {
         if (seconds < 60) return `${seconds}s`;
         const minutes = Math.floor(seconds / 60);
@@ -188,7 +189,7 @@ export function TaskCardFooter({
                 )}
 
                 {/* Priority */}
-                <div className={cn('flex items-center gap-1 font-medium', priorityConfig[task.priority]?.color || 'text-muted-foreground')}>
+                <div className={cn('flex items-center gap-1 font-medium')} style={priorityColorStyle}>
                     <PriorityIcon className="h-3 w-3" />
                     <span>{task.priority}</span>
                 </div>

@@ -1,6 +1,6 @@
 
+
 import { z } from 'genkit';
-import { ALL_PRIORITIES } from '@/lib/types';
 
 // From suggest-story-points.ts
 export const SuggestStoryPointsInputSchema = z.object({
@@ -124,11 +124,12 @@ export type MultiSpeakerTextToSpeechOutput = z.infer<typeof MultiSpeakerTextToSp
 export const SuggestPriorityInputSchema = z.object({
   title: z.string().describe('The title of the task.'),
   description: z.string().optional().describe('The description of the task.'),
+  availablePriorities: z.array(z.string()).describe('A list of available priority names for the organization.'),
 });
 export type SuggestPriorityInput = z.infer<typeof SuggestPriorityInputSchema>;
 
 export const SuggestPriorityOutputSchema = z.object({
-  priority: z.enum(ALL_PRIORITIES),
+  priority: z.string().describe('The suggested priority from the list of available priorities.'),
   reasoning: z.string().describe('A brief explanation for the suggested priority value.'),
 });
 export type SuggestPriorityOutput = z.infer<typeof SuggestPriorityOutputSchema>;
@@ -351,5 +352,3 @@ export const PredictProjectOutcomeOutputSchema = z.object({
   recommendations: z.array(z.string()).describe("A list of actionable recommendations to mitigate risks or improve project outcomes."),
 });
 export type PredictProjectOutcomeOutput = z.infer<typeof PredictProjectOutcomeOutputSchema>;
-
-    

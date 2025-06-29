@@ -61,9 +61,20 @@ export function CreateOrganizationView({ onCreated, inDialog = false }: CreateOr
                     },
                     settings: {
                         customization: {
-                            statuses: ['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Geannuleerd'],
+                            statuses: [
+                                { name: 'Te Doen', color: '220 13% 69%' },
+                                { name: 'In Uitvoering', color: '210 89% 64%' },
+                                { name: 'In Review', color: '262 83% 58%' },
+                                { name: 'Voltooid', color: '142 71% 45%' },
+                                { name: 'Geannuleerd', color: '0 84.2% 60.2%' },
+                            ],
                             labels: ['Keuken', 'Woonkamer', 'Badkamer', 'Slaapkamer', 'Algemeen', 'Kantoor'],
-                            priorities: ['Laag', 'Midden', 'Hoog', 'Urgent'],
+                             priorities: [
+                                { name: 'Laag', color: '142.1 76.2% 36.3%', icon: 'ChevronDown' },
+                                { name: 'Midden', color: '47.9 95.8% 53.1%', icon: 'Equal' },
+                                { name: 'Hoog', color: '22.8 95.8% 53.1%', icon: 'ChevronUp' },
+                                { name: 'Urgent', color: '346.8 77.2% 49.8%', icon: 'Flame' },
+                            ],
                         },
                         features: {
                             gamification: true,

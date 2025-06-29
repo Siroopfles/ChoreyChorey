@@ -1,4 +1,5 @@
 
+
 'use server';
 /**
  * @fileOverview A set of AI tools for interacting with tasks in Firestore.
@@ -14,7 +15,7 @@ import { addHistoryEntry } from '@/lib/utils';
 const CreateTaskDataSchema = z.object({
   title: z.string().describe('The title of the task.'),
   description: z.string().optional().describe('The detailed description of the task.'),
-  priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional().describe('The priority of the task.'),
+  priority: z.string().optional().describe('The priority of the task.'),
   assigneeIds: z.array(z.string()).optional().describe('The IDs of the users the task is assigned to.'),
   labels: z.array(z.string()).optional().describe('A list of labels for the task.'),
   dueDate: z.string().optional().describe("The due date and time in 'YYYY-MM-DDTHH:mm:ss' ISO 8601 format. The AI should convert natural language dates like 'tomorrow at 10am' into this format."),
@@ -76,8 +77,8 @@ export const createTask = ai.defineTool(
 
 // Schema for task search filters
 const TaskSearchFiltersSchema = z.object({
-  status: z.enum(['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Gearchiveerd', 'Geannuleerd']).optional(),
-  priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional(),
+  status: z.string().optional(),
+  priority: z.string().optional(),
   assigneeId: z.string().optional().describe('Filter by the ID of an assigned user.'),
   labels: z.array(z.string()).optional().describe('Filter by a list of labels.'),
   term: z.string().optional().describe('A search term to match in the title or description.'),
@@ -186,8 +187,8 @@ export const searchTasks = ai.defineTool(
 const TaskUpdateDataSchema = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
-    status: z.enum(['Te Doen', 'In Uitvoering', 'In Review', 'Voltooid', 'Gearchiveerd', 'Geannuleerd']).optional(),
-    priority: z.enum(['Laag', 'Midden', 'Hoog', 'Urgent']).optional(),
+    status: z.string().optional(),
+    priority: z.string().optional(),
     assigneeIds: z.array(z.string()).optional().describe("Replace the current list of assignee IDs with this new list."),
     add_subtask: z.string().optional().describe("A subtask description to add to the task."),
     dueDate: z.string().optional().describe("Set the due date and time in 'YYYY-MM-DD' format."),
@@ -300,5 +301,3 @@ export const getUsers = ai.defineTool(
         return users;
     }
 );
-
-

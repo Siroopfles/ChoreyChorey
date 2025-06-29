@@ -92,12 +92,24 @@ export const widgetInstanceSchema = z.object({
 
 export type WidgetInstance = z.infer<typeof widgetInstanceSchema>;
 
+export const statusDefinitionSchema = z.object({
+  name: z.string().min(1, "Naam mag niet leeg zijn."),
+  color: z.string().regex(/^\d{1,3}(\.\d+)?\s\d{1,3}(\.\d+)?%\s\d{1,3}(\.\d+)?%$/, "Color must be a valid HSL string (e.g., '221.2 83.2% 53.3%')"),
+});
+export type StatusDefinition = z.infer<typeof statusDefinitionSchema>;
+
+export const priorityDefinitionSchema = z.object({
+  name: z.string().min(1, "Naam mag niet leeg zijn."),
+  color: z.string().regex(/^\d{1,3}(\.\d+)?\s\d{1,3}(\.\d+)?%\s\d{1,3}(\.\d+)?%$/, "Color must be a valid HSL string (e.g., '221.2 83.2% 53.3%')"),
+  icon: z.string().min(1, "Icoon naam is verplicht."),
+});
+export type PriorityDefinition = z.infer<typeof priorityDefinitionSchema>;
 
 export type OrganizationSettings = {
   customization: {
-    statuses: string[];
+    statuses: StatusDefinition[];
     labels: string[];
-    priorities: string[];
+    priorities: PriorityDefinition[];
     customRoles?: Record<string, { name: string; permissions: Permission[] }>;
     customFields?: CustomFieldDefinition[];
   },
@@ -445,9 +457,6 @@ export const ACHIEVEMENTS = {
 };
 
 export type Priority = string;
-export const ALL_PRIORITIES: Priority[] = ["Laag", "Midden", "Hoog", "Urgent"];
-
-
 export type Status = string;
 export type Label = string;
 export const ALL_SKILLS: string[] = ["Koken", "Schoonmaken", "Tuinieren", "Techniek", "Administratie", "Organiseren", "Boodschappen", "Dierenverzorging", "Planning", "Communicatie"];

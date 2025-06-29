@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import type { User, Project, SuggestPriorityOutput, SuggestStoryPointsOutput } from '@/lib/types';
@@ -22,6 +24,7 @@ import { submitAiFeedback } from '@/app/actions/feedback.actions';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TaskAssignmentSuggestion } from '../task-assignment-suggestion';
+import { useOrganization } from '@/contexts/organization-context';
 
 type TaskFormDetailsProps = {
   users: User[];
@@ -32,10 +35,11 @@ type TaskFormDetailsProps = {
 export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: TaskFormDetailsProps) {
   const { toast } = useToast();
   const form = useFormContext();
-  const { user, currentOrganization } = useAuth();
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
 
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
-  const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+  const allPriorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
   const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
 
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
@@ -52,7 +56,7 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
     if (flowName === 'suggestStoryPoints') setPointsFeedbackGiven(true);
     if (flowName === 'suggestPriority') setPriorityFeedbackGiven(true);
 
-    await submitAiFeedback({
+    const result = await submitAiFeedback({
         flowName,
         input: { title: form.getValues('title'), description: form.getValues('description') },
         output,
@@ -61,14 +65,22 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
         organizationId: currentOrganization.id,
     });
 
-    toast({ title: 'Feedback ontvangen!', description: 'Bedankt voor je hulp om de AI te verbeteren.' });
+    if (result.data) {
+        toast({ title: 'Feedback ontvangen!', description: 'Bedankt voor je hulp om de AI te verbeteren.' });
+    }
   };
   
   const onSuggestStoryPoints = async () => {
     const title = form.getValues('title');
     const description = form.getValues('description');
-     if (!title) return toast({ title: 'Titel vereist', variant: 'destructive' });
-    if (!currentOrganization) return toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
+     if (!title) {
+        toast({ title: 'Titel vereist', variant: 'destructive' });
+        return;
+    }
+    if (!currentOrganization) {
+        toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
+        return;
+    }
     setIsSuggestingPoints(true);
     try {
         const suggestion = await suggestStoryPoints(title, currentOrganization.id, description);
@@ -84,11 +96,14 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
   const onSuggestPriority = async () => {
     const title = form.getValues('title');
     const description = form.getValues('description');
-     if (!title) return toast({ title: 'Titel vereist', variant: 'destructive' });
+     if (!title) {
+        toast({ title: 'Titel vereist', variant: 'destructive' });
+        return;
+    }
     setIsSuggestingPriority(true);
     setPrioritySuggestion(null);
     try {
-        const suggestion = await suggestPriority({ title, description });
+        const suggestion = await suggestPriority({ title, description, availablePriorities: allPriorities });
         form.setValue('priority', suggestion.priority);
         setPrioritySuggestion(suggestion);
         setPriorityFeedbackGiven(false);
@@ -101,8 +116,14 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
   const onSuggestLabels = async () => {
     const title = form.getValues('title');
     const description = form.getValues('description');
-    if (!title) return toast({ title: 'Titel vereist', variant: 'destructive' });
-    if (!currentOrganization) return toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
+    if (!title) {
+        toast({ title: 'Titel vereist', variant: 'destructive' });
+        return;
+    }
+    if (!currentOrganization) {
+        toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
+        return;
+    }
     setIsSuggestingLabels(true);
     try {
         const result = await suggestLabels({ title, description, organizationId: currentOrganization.id });

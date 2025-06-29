@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview AI agent that suggests a priority for a task.
@@ -15,7 +16,9 @@ const prompt = ai.definePrompt({
   input: { schema: SuggestPriorityInputSchema },
   output: { schema: SuggestPriorityOutputSchema },
   model: 'gemini-pro',
-  prompt: `Je bent een ervaren projectmanager. Jouw taak is om de urgentie en belangrijkheid van een taak te bepalen en een prioriteit toe te kennen. De mogelijke prioriteiten zijn: "Laag", "Midden", "Hoog", "Urgent".
+  prompt: `Je bent een ervaren projectmanager. Jouw taak is om de urgentie en belangrijkheid van een taak te bepalen en een prioriteit toe te kennen. 
+  
+  De mogelijke prioriteiten zijn: {{#each availablePriorities}}"{{{this}}}"{{#unless @last}}, {{/unless}}{{/each}}.
 
 Analyseer de volgende taak:
 Titel: {{{title}}}
@@ -30,7 +33,7 @@ Omschrijving: {{{description}}}
 
 Let op woorden die duiden op tijdgevoeligheid (bv. "meteen", "dringend", "deadline", "geblokkeerd") of impact (bv. "kritiek", "belangrijk", "fout").
 
-Bepaal de juiste prioriteit en geef een korte, duidelijke redenering waarom je voor deze waarde hebt gekozen.
+Bepaal de juiste prioriteit uit de beschikbare lijst en geef een korte, duidelijke redenering waarom je voor deze waarde hebt gekozen.
 `,
 });
 
