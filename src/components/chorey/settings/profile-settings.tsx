@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -14,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, User, Bot, Tags, Check, X, Star, Bell, Globe, MapPin, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/app/actions/user.actions';
-import { updateMemberProfile } from '@/app/actions/organization.actions';
+import { updateMemberProfile } from '@/app/actions/member.actions';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -271,7 +272,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
                                             }
                                             }}
                                         >
-                                            <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}/>
+                                            <Checkbox checked={isSelected} className="mr-2" />
                                             {skill}
                                         </CommandItem>
                                         );

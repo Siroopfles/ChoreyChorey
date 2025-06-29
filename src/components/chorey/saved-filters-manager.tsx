@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { manageSavedFilter } from '@/app/actions/organization.actions';
+import { manageSavedFilter } from '@/app/actions/filter.actions';
 import { Save, Star, Trash2, Loader2 } from 'lucide-react';
 import type { SavedFilter } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';

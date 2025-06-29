@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, type ReactNode } from 'react';
@@ -8,7 +9,7 @@ import { Loader2, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { Input } from '@/components/ui/input';
-import { createProjectGuestInvite } from '@/app/actions/organization.actions';
+import { createProjectGuestInvite } from '@/app/actions/invite.actions';
 
 export function InviteGuestDialog({ 
   projectId,

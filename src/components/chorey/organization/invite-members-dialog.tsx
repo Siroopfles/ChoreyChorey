@@ -8,7 +8,7 @@ import { Loader2, Mail, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { Input } from '@/components/ui/input';
-import { createOrganizationInvite } from '@/app/actions/organization.actions';
+import { createOrganizationInvite } from '@/app/actions/invite.actions';
 
 export function InviteMembersDialog({ 
   organizationId,

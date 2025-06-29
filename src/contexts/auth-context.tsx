@@ -26,7 +26,8 @@ import type { User, Organization, Team, RoleName, UserStatus, Permission, Projec
 import { DEFAULT_ROLES, WIDGET_TYPES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
-import { updateUserStatus as updateUserStatusAction, toggleProjectPin as toggleProjectPinAction } from '@/app/actions/organization.actions';
+import { updateUserStatus as updateUserStatusAction } from '@/app/actions/member.actions';
+import { toggleProjectPin as toggleProjectPinAction } from '@/app/actions/project.actions';
 import { sendDailyDigest } from '@/app/actions/digest.actions';
 import { useDebug } from './debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';

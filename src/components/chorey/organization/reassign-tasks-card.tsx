@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ArrowRight, Loader2, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { reassignTasks } from '@/app/actions/organization.actions';
+import { reassignTasks } from '@/app/actions/member.actions';
 
 export function ReassignTasksCard() {
     const { currentOrganization, user: currentUser, users } = useAuth();

@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import type { User as UserType, RoleName } from '@/lib/types';
 import { DEFAULT_ROLES, statusStyles, PERMISSIONS } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
-import { updateUserRoleInOrganization } from '@/app/actions/organization.actions';
+import { updateUserRoleInOrganization } from '@/app/actions/member.actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

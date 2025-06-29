@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { PERMISSIONS } from '@/lib/types';
-import { completeProject } from '@/app/actions/organization.actions';
+import { completeProject, toggleProjectPin } from '@/app/actions/project.actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +32,7 @@ import { PermissionProtectedButton } from '@/components/ui/permission-protected-
 
 export function ProjectCard({ project, allTeams, allTasks }: { project: Project, usersInOrg: User[], allTeams: Team[], allTasks: Task[] }) {
     const { toast } = useToast();
-    const { user, currentUserPermissions, toggleProjectPin } = useAuth();
+    const { user, currentUserPermissions } = useAuth();
     const [isCompleting, setIsCompleting] = useState(false);
     const [isGuestInviteOpen, setIsGuestInviteOpen] = useState(false);
     const [isPinning, setIsPinning] = useState(false);
@@ -81,8 +81,9 @@ export function ProjectCard({ project, allTeams, allTasks }: { project: Project,
 
     const handlePinToggle = async (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!user) return;
         setIsPinning(true);
-        await toggleProjectPin(project.id, !project.pinned);
+        await toggleProjectPin(project.id, project.organizationId, user.id, !project.pinned);
         setIsPinning(false);
         toast({ title: `Project ${!project.pinned ? 'vastgepind' : 'losgemaakt'}.` });
     }

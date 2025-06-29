@@ -21,9 +21,9 @@ import { PERMISSIONS, NOTIFICATION_SOUNDS, NOTIFICATION_EVENT_TYPES_FOR_SOUNDS }
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
-import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/organization.actions';
 import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
 import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
+import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/member.actions';
 import * as TaskActions from '@/app/actions/task.actions';
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/gamification.actions';
 import { addCommentAction, markCommentAsReadAction } from '@/app/actions/comment.actions';
