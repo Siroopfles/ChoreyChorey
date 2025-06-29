@@ -90,7 +90,7 @@ export default function OrganizationPage() {
                                 <Plus className="mr-2 h-4 w-4" /> Nieuw Project
                             </PermissionProtectedButton>
                         </div>
-                         {projects.length > 0 ? (
+                         {(projects || []).length > 0 ? (
                             <div className="grid gap-6 md:grid-cols-1">
                                 {projects.map(project => (
                                     <ProjectCard key={project.id} project={project} usersInOrg={usersInOrg} allTeams={teams} allTasks={tasks} />
@@ -123,7 +123,7 @@ export default function OrganizationPage() {
                                 <Plus className="mr-2 h-4 w-4" /> Nieuw Team
                              </PermissionProtectedButton>
                          </div>
-                         {teams.length > 0 ? (
+                         {(teams || []).length > 0 ? (
                            <Card>
                              <CardContent className="p-4 space-y-2">
                                {teams.map(team => (

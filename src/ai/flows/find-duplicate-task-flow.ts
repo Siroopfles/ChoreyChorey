@@ -19,15 +19,19 @@ const findDuplicateTaskFlow = ai.defineFlow(
     outputSchema: FindDuplicateTaskOutputSchema,
   },
   async (input) => {
-    // Search for active tasks with similar keywords.
-    const existingTasks = await searchTasks({
-      organizationId: input.organizationId,
-      filters: { term: input.title },
-    });
-
-    const activeTasks = existingTasks.filter(
-      (task) => task.status !== 'Voltooid' && task.status !== 'Geannuleerd' && task.status !== 'Gearchiveerd'
+    // To make this more efficient, we fetch tasks for each "active" status separately.
+    // This avoids fetching all tasks (including completed/archived) from the database.
+    const activeStatuses = ['Te Doen', 'In Uitvoering', 'In Review'];
+    
+    const searchPromises = activeStatuses.map(status => 
+        searchTasks({
+            organizationId: input.organizationId,
+            filters: { status: status, term: input.title },
+        })
     );
+    
+    const resultsPerStatus = await Promise.all(searchPromises);
+    const activeTasks = resultsPerStatus.flat();
 
     if (activeTasks.length === 0) {
       return {
