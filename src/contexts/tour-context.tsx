@@ -24,8 +24,15 @@ export function TourProvider({ children }: { children: ReactNode }) {
     return memberInfo ? !memberInfo.hasCompletedOnboarding : false;
   }, [user, currentOrganization]);
 
+  const shouldStartTourAutomatically = useMemo(() => {
+    // Default to true if the setting is not present
+    const tourEnabledByUser = user?.showTour ?? true;
+    return needsOnboarding && tourEnabledByUser;
+  }, [needsOnboarding, user?.showTour]);
+
+
   useEffect(() => {
-    if (needsOnboarding && currentUserRole) {
+    if (shouldStartTourAutomatically && currentUserRole) {
       const tourSteps = currentUserRole === 'Owner' ? ownerSteps : memberSteps;
       setSteps(tourSteps);
       // Delay starting the tour slightly to allow the UI to render
@@ -33,7 +40,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     } else {
       setRun(false);
     }
-  }, [needsOnboarding, currentUserRole]);
+  }, [shouldStartTourAutomatically, currentUserRole]);
 
   const startTour = useCallback(() => {
     if (currentUserRole) {

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import TogglSettings from '@/components/chorey/settings/toggl-settings';
 import ClockifySettings from '@/components/chorey/settings/clockify-settings';
 import NotificationSoundSettings from '@/components/chorey/settings/notification-sound-settings';
+import TourSettings from '@/components/chorey/settings/tour-settings';
 
 export default function ProfileSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -43,6 +44,7 @@ export default function ProfileSettingsPage() {
       <TwoFactorAuthSettings user={user} />
       <NotificationSoundSettings user={user} />
       <AnimationSettings />
+      <TourSettings />
       <SessionManagement />
       <GoogleCalendarSettings />
       <MicrosoftCalendarSettings />

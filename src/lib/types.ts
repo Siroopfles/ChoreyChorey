@@ -318,6 +318,7 @@ export type GlobalUserProfile = {
   website?: string;
   location?: string;
   notificationSounds?: Record<string, string>;
+  showTour?: boolean;
 }
 
 export type User = GlobalUserProfile & OrganizationMember & {
