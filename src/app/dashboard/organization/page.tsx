@@ -14,12 +14,10 @@ import { ProjectDialog } from '@/components/chorey/organization/project-dialog';
 import { ProjectCard } from '@/components/chorey/organization/project-card';
 import { InviteMembersDialog } from '@/components/chorey/organization/invite-members-dialog';
 import { MemberList } from '@/components/chorey/organization/member-list';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TeamDialog } from '@/components/chorey/organization/team-dialog';
-import { ManageMembersPopover } from '@/components/chorey/organization/manage-members-popover';
 import { useTasks } from '@/contexts/task-context';
 import { PermissionProtectedButton } from '@/components/ui/permission-protected-button';
+import { TeamCard } from '@/components/chorey/organization/team-card';
 
 export default function OrganizationPage() {
     const { currentOrganization, loading: authLoading, currentUserPermissions, projects, teams, users: usersInOrg } = useAuth();
@@ -126,31 +124,9 @@ export default function OrganizationPage() {
                          </div>
                          {teams.length > 0 ? (
                            <Card>
-                             <CardContent className="p-4 space-y-4">
+                             <CardContent className="p-4 space-y-2">
                                {teams.map(team => (
-                                 <div key={team.id} className="flex items-center justify-between">
-                                   <p className="font-medium">{team.name}</p>
-                                   <div className="flex items-center gap-2">
-                                    <div className="flex -space-x-2">
-                                        {(team.memberIds || []).map(id => usersInOrg.find(u => u.id === id)).filter(Boolean).map(member => (
-                                            <Avatar key={member!.id} className="h-6 w-6 border-2 border-background">
-                                                <AvatarImage src={member!.avatar} />
-                                                <AvatarFallback>{member!.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                        ))}
-                                    </div>
-                                    <PermissionProtectedButton
-                                        requiredPermission={PERMISSIONS.MANAGE_TEAMS}
-                                    >
-                                        <>
-                                            <ManageMembersPopover team={team} usersInOrg={usersInOrg} />
-                                            <TeamDialog team={team}>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4"/></Button>
-                                            </TeamDialog>
-                                        </>
-                                    </PermissionProtectedButton>
-                                   </div>
-                                 </div>
+                                <TeamCard key={team.id} team={team} usersInOrg={usersInOrg} />
                                ))}
                              </CardContent>
                            </Card>
