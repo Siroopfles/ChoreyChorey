@@ -24,4 +24,8 @@ export function getMicrosoftAuthClient() {
 }
 
 export const scopes = ['offline_access', 'User.Read', 'Calendars.ReadWrite'];
+
+if (!env.NEXT_PUBLIC_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_BASE_URL is not set in environment variables. This is required for Microsoft OAuth.");
+}
 export const redirectUri = `${env.NEXT_PUBLIC_BASE_URL}/api/oauth/microsoft/callback`;

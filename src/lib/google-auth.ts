@@ -4,6 +4,10 @@ import { env } from '@/lib/env';
 export function getGoogleAuthClient() {
     const clientId = env.GOOGLE_CLIENT_ID;
     const clientSecret = env.GOOGLE_CLIENT_SECRET;
+
+    if (!env.NEXT_PUBLIC_BASE_URL) {
+        throw new Error("NEXT_PUBLIC_BASE_URL is not set in environment variables. This is required for Google OAuth.");
+    }
     const redirectUri = `${env.NEXT_PUBLIC_BASE_URL}/api/oauth/google/callback`;
 
     if (!clientId || !clientSecret) {

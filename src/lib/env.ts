@@ -3,15 +3,17 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   // Firebase (Public) - These are required for the app to function.
-  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1),
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1),
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1),
-  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1),
-  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1),
-  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1, "Required"),
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1, "Required"),
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1, "Required"),
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1, "Required"),
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1, "Required"),
+  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1, "Required"),
   
   // Base URL (Public) - Required for OAuth callbacks.
-  NEXT_PUBLIC_BASE_URL: z.string().min(1, "Required"),
+  // Made optional here to prevent client-side hydration errors if not immediately available.
+  // Runtime checks are added in services that depend on it.
+  NEXT_PUBLIC_BASE_URL: z.string().optional(),
 
   // Google OAuth (Server-side) - Optional
   GOOGLE_CLIENT_ID: z.string().optional(),
