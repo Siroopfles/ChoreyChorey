@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { submitAiFeedback } from '@/app/actions/feedback.actions';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
+import { TaskAssignmentSuggestion } from '../task-assignment-suggestion';
 
 type TaskFormDetailsProps = {
   users: User[];
@@ -186,6 +187,8 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
           </FormItem>
         )}
       />
+      
+      <TaskAssignmentSuggestion />
 
        <FormField
         control={form.control}

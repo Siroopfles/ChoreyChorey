@@ -11,41 +11,30 @@
 import {ai} from '@/ai/genkit';
 import { SuggestTaskAssigneeInputSchema, SuggestTaskAssigneeOutputSchema } from '@/ai/schemas';
 import type { SuggestTaskAssigneeInput, SuggestTaskAssigneeOutput } from '@/ai/schemas';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import type { User } from '@/lib/types';
+import type { User, Task } from '@/lib/types';
 
 
-async function getTaskHistory(organizationId: string) {
-    const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId), where('status', '==', 'Voltooid'));
-    const usersQuery = query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId));
+function getTaskHistory(allTasks: Task[], allUsers: User[]) {
+    const userMap = new Map(allUsers.map(u => [u.id, u]));
 
-    const [tasksSnapshot, usersSnapshot] = await Promise.all([
-        getDocs(tasksQuery),
-        getDocs(usersSnapshot)
-    ]);
-
-    const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-    const userMap = new Map(users.map(u => [u.id, u]));
-
-    return tasksSnapshot.docs.map(doc => {
-        const task = doc.data();
-        const assignee = task.assigneeIds.map((id: string) => userMap.get(id)?.name).filter(Boolean).join(', ');
-        const completedAt = (task.completedAt as Timestamp)?.toDate();
-        const createdAt = (task.createdAt as Timestamp)?.toDate();
-
-        return {
-            assignee: assignee || 'Unknown',
-            taskDescription: task.description,
-            completionTime: (completedAt && createdAt) ? (completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60) : 0, // in hours
-        };
+    return allTasks
+        .filter(task => task.status === 'Voltooid' && task.completedAt && task.createdAt)
+        .map(task => {
+            const assignee = task.assigneeIds.map((id: string) => userMap.get(id)?.name).filter(Boolean).join(', ');
+            // Ensure dates are valid before calculating difference
+            const completedAt = new Date(task.completedAt!);
+            const createdAt = new Date(task.createdAt);
+            const completionTime = (completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60); // in hours
+            
+            return {
+                assignee: assignee || 'Unknown',
+                taskDescription: task.description,
+                completionTime: completionTime,
+            };
     }).filter(th => th.completionTime > 0);
 };
 
-export async function suggestTaskAssignee(taskDescription: string, organizationId: string): Promise<SuggestTaskAssigneeOutput> {
-  const orgUsersSnapshot = await getDocs(query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId)));
-  const orgUsers = orgUsersSnapshot.docs.map(doc => doc.data() as User);
-
+export async function suggestTaskAssignee(taskDescription: string, orgUsers: User[], allTasks: Task[]): Promise<SuggestTaskAssigneeOutput> {
   if (orgUsers.length === 0) {
       return { suggestedAssignee: 'Niemand', reasoning: 'Er zijn geen gebruikers in deze organisatie om aan toe te wijzen.' };
   }
@@ -55,7 +44,7 @@ export async function suggestTaskAssignee(taskDescription: string, organizationI
       return acc;
   }, {} as Record<string, string[]>);
   
-  const taskHistory = await getTaskHistory(organizationId);
+  const taskHistory = getTaskHistory(allTasks, orgUsers);
 
   return suggestTaskAssigneeFlow({ taskDescription, assigneeSkills, taskHistory });
 }

@@ -9,16 +9,14 @@ import { Lightbulb, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import type { SuggestTaskAssigneeOutput } from '@/ai/schemas';
 import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/task-context';
 
-type TaskAssignmentSuggestionProps = {
-  users: User[];
-}
-
-export function TaskAssignmentSuggestion({ users }: TaskAssignmentSuggestionProps) {
+export function TaskAssignmentSuggestion() {
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestTaskAssigneeOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { currentOrganization } = useAuth();
+  const { users: orgUsers, currentOrganization } = useAuth();
+  const { tasks } = useTasks();
   const form = useFormContext();
   const taskDescription = form.watch('description');
 
@@ -30,9 +28,9 @@ export function TaskAssignmentSuggestion({ users }: TaskAssignmentSuggestionProp
     setSuggestion(null);
 
     try {
-        const result = await suggestTaskAssignee(taskDescription, currentOrganization.id);
+        const result = await suggestTaskAssignee(taskDescription, orgUsers, tasks);
         setSuggestion(result);
-        const suggestedUser = users.find(u => u.name === result.suggestedAssignee);
+        const suggestedUser = orgUsers.find(u => u.name === result.suggestedAssignee);
         if(suggestedUser) {
           form.setValue('assigneeIds', [suggestedUser.id]);
         }
