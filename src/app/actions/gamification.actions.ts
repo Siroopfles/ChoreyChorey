@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -51,7 +52,7 @@ async function grantAchievements(userId: string, organizationId: string, type: '
         if (userDoc.exists()) {
             const userData = userDoc.data() as GlobalUserProfile;
             achievementsToGrant.forEach(ach => {
-                const activityRef = doc(collection(db, 'activityFeed'));
+                const activityRef = doc(collection(db, 'organizations', organizationId, 'activityFeed'));
                 batch.set(activityRef, {
                     organizationId: organizationId,
                     timestamp: new Date(),
@@ -97,7 +98,7 @@ export async function thankForTask(taskId: string, currentUserId: string, assign
           const assigneeMemberRef = doc(db, 'organizations', organizationId, 'members', assignee.id);
           batch.update(assigneeMemberRef, { points: increment(points) });
 
-          const activityRef = doc(collection(db, 'activityFeed'));
+          const activityRef = doc(collection(db, 'organizations', organizationId, 'activityFeed'));
           batch.set(activityRef, {
               organizationId: organizationId,
               timestamp: new Date(),
@@ -173,7 +174,7 @@ export async function rateTask(taskId: string, rating: number, task: Task, curre
             });
             const fromUserDoc = await getDoc(doc(db, 'users', currentUserId));
             const fromUserData = fromUserDoc.data() as GlobalUserProfile;
-            const activityRef = doc(collection(db, 'activityFeed'));
+            const activityRef = doc(collection(db, 'organizations', organizationId, 'activityFeed'));
             batch.set(activityRef, {
                 organizationId: organizationId,
                 timestamp: new Date(),
@@ -240,8 +241,7 @@ export async function transferPoints(organizationId: string, fromUserId: string,
 export async function getPublicActivityFeed(organizationId: string): Promise<{ feed?: ActivityFeedItem[], error?: string }> {
     try {
         const q = query(
-            collection(db, 'activityFeed'),
-            where('organizationId', '==', organizationId),
+            collection(db, 'organizations', organizationId, 'activityFeed'),
             orderBy('timestamp', 'desc'),
             limit(20)
         );
