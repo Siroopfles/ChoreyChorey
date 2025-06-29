@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo } from 'react';
@@ -6,14 +7,12 @@ import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
-import type { User } from '@/lib/types';
-import { GripVertical, ClipboardCopy } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import type { User, LeaderboardWidgetConfig } from '@/lib/types';
+import { GripVertical } from 'lucide-react';
 
-export function LeaderboardWidget({ users }: { users: User[] }) {
+
+export function LeaderboardWidget({ users, config }: { users: User[], config: LeaderboardWidgetConfig }) {
     const { resolvedTheme } = useTheme();
-    const { toast } = useToast();
 
     const data = useMemo(() => {
         const lightness = resolvedTheme === 'dark' ? 60 : 45;
@@ -24,32 +23,16 @@ export function LeaderboardWidget({ users }: { users: User[] }) {
                 fill: `hsl(${user.id.charCodeAt(0) % 360}, 70%, ${lightness}%)`
             }))
             .sort((a,b) => b.points - a.points)
-            .slice(0, 10); // Show top 10
-    }, [users, resolvedTheme]);
+            .slice(0, config.limit || 5); 
+    }, [users, resolvedTheme, config.limit]);
 
-    const handleCopyData = () => {
-        try {
-            navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-            toast({ title: "Data Gekopieerd", description: "De widgetdata is naar je klembord gekopieerd." });
-        } catch (err) {
-            toast({ title: "Fout", description: "Kon de data niet kopiëren.", variant: 'destructive' });
-        }
-    }
 
     return (
-        <Card className="h-full flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between">
+        <>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <div>
                     <CardTitle>Scorebord</CardTitle>
-                    <CardDescription>Totaal aantal punten per gebruiker.</CardDescription>
-                </div>
-                <div className="flex items-center">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopyData} aria-label="Kopieer data">
-                        <ClipboardCopy className="h-4 w-4" />
-                    </Button>
-                    <div className="react-grid-drag-handle cursor-grab active:cursor-grabbing p-1">
-                        <GripVertical />
-                    </div>
+                    <CardDescription>Top {config.limit || 5} gebruikers op basis van punten.</CardDescription>
                 </div>
             </CardHeader>
             <CardContent className="flex-grow">
@@ -69,6 +52,6 @@ export function LeaderboardWidget({ users }: { users: User[] }) {
                     </ResponsiveContainer>
                 </ChartContainer>
             </CardContent>
-        </Card>
+        </>
     );
 }

@@ -22,14 +22,15 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, microsoftProvider } from '@/lib/firebase';
-import type { User, Organization, Team, RoleName, UserStatus, Permission, Project, Session } from '@/lib/types';
-import { DEFAULT_ROLES } from '@/lib/types';
+import type { User, Organization, Team, RoleName, UserStatus, Permission, Project, Session, WidgetInstance } from '@/lib/types';
+import { DEFAULT_ROLES, WIDGET_TYPES } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateAvatar } from '@/app/actions/ai.actions';
 import { updateUserStatus as updateUserStatusAction, toggleProjectPin as toggleProjectPinAction } from '@/app/actions/organization.actions';
 import { sendDailyDigest } from '@/app/actions/digest.actions';
 import { useDebug } from './debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { Layouts } from 'react-grid-layout';
 
 const SESSION_STORAGE_KEY = 'chorey_session_id';
 
@@ -55,9 +56,16 @@ type AuthContextType = {
     teams: Team[];
     updateUserStatus: (status: UserStatus) => Promise<void>;
     toggleProjectPin: (projectId: string, isPinned: boolean) => Promise<void>;
+    updateUserDashboard: (updates: Partial<{ dashboardConfig: WidgetInstance[]; dashboardLayout: Layouts }>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const defaultDashboardConfig: WidgetInstance[] = [
+  { id: crypto.randomUUID(), type: 'welcome', config: {} },
+  { id: crypto.randomUUID(), type: 'myTasks', config: { limit: 5 } },
+  { id: crypto.randomUUID(), type: 'activityFeed', config: {} },
+];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
@@ -148,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             togglApiToken: rawData.togglApiToken,
             clockifyApiToken: rawData.clockifyApiToken,
             dashboardLayout: rawData.dashboardLayout,
+            dashboardConfig: rawData.dashboardConfig || defaultDashboardConfig,
             streakData: rawData.streakData ? {
                 ...rawData.streakData,
                 lastCompletionDate: (rawData.streakData.lastCompletionDate as Timestamp).toDate(),
@@ -586,6 +595,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const updateUserDashboard = async (updates: Partial<{ dashboardConfig: WidgetInstance[]; dashboardLayout: Layouts }>) => {
+        if (!user) return;
+        const result = await updateUserProfile(user.id, updates);
+        if (result.error) {
+            handleError({ message: result.error }, 'bijwerken dashboard');
+        } else {
+            await refreshUser();
+        }
+    };
+
+
     const value = {
         authUser,
         user,
@@ -608,6 +628,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         teams,
         updateUserStatus,
         toggleProjectPin,
+        updateUserDashboard,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

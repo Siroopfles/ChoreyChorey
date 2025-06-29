@@ -45,6 +45,54 @@ export type JiraLink = {
   iconUrl: string;
 };
 
+// --- Dashboard Widget Types ---
+export const WIDGET_TYPES = {
+  tasksByStatus: 'Taken per Status',
+  tasksByPriority: 'Taken per Prioriteit',
+  leaderboard: 'Scorebord',
+  activityFeed: 'Recente Activiteit (Organisatie)',
+  recentActivity: 'Mijn Recente Activiteit',
+  myTasks: 'Mijn Openstaande Taken',
+  welcome: 'Welkomstbericht',
+} as const;
+
+export type WidgetType = keyof typeof WIDGET_TYPES;
+
+export const ChartWidgetConfigSchema = z.object({
+  chartType: z.enum(['pie', 'bar']).default('pie'),
+});
+export type ChartWidgetConfig = z.infer<typeof ChartWidgetConfigSchema>;
+
+export const LeaderboardWidgetConfigSchema = z.object({
+  limit: z.number().default(5),
+});
+export type LeaderboardWidgetConfig = z.infer<typeof LeaderboardWidgetConfigSchema>;
+
+export const MyTasksWidgetConfigSchema = z.object({
+  limit: z.number().default(5),
+});
+export type MyTasksWidgetConfig = z.infer<typeof MyTasksWidgetConfigSchema>;
+
+export const widgetConfigSchemas = {
+  tasksByStatus: ChartWidgetConfigSchema,
+  tasksByPriority: ChartWidgetConfigSchema,
+  leaderboard: LeaderboardWidgetConfigSchema,
+  myTasks: MyTasksWidgetConfigSchema,
+  activityFeed: z.object({}), // No config
+  recentActivity: z.object({}), // No config
+  welcome: z.object({}), // No config
+};
+
+
+export const widgetInstanceSchema = z.object({
+  id: z.string(),
+  type: z.nativeEnum(Object.keys(WIDGET_TYPES)),
+  config: z.any(),
+});
+
+export type WidgetInstance = z.infer<typeof widgetInstanceSchema>;
+
+
 export type OrganizationSettings = {
   customization: {
     statuses: string[];
@@ -313,6 +361,7 @@ export type GlobalUserProfile = {
   togglApiToken?: string;
   clockifyApiToken?: string;
   dashboardLayout?: Record<string, Layout[]>;
+  dashboardConfig?: WidgetInstance[];
   bio?: string;
   timezone?: string;
   website?: string;

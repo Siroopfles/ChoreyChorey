@@ -1,14 +1,14 @@
 
+
 'use client';
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import type { Task, Priority } from '@/lib/types';
-import { GripVertical, ClipboardCopy } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { PieChart, Pie, Cell, ResponsiveContainer, Bar, XAxis, YAxis, BarChart, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
+import type { Task, Priority, ChartWidgetConfig } from '@/lib/types';
+import { GripVertical } from 'lucide-react';
+
 
 const COLORS: Record<string, string> = {
     'Urgent': 'hsl(var(--chart-1))',
@@ -17,9 +17,7 @@ const COLORS: Record<string, string> = {
     'Laag': 'hsl(var(--chart-4))',
 };
 
-export function TasksByPriorityWidget({ tasks }: { tasks: Task[] }) {
-    const { toast } = useToast();
-
+export function TasksByPriorityWidget({ tasks, config }: { tasks: Task[], config: ChartWidgetConfig }) {
     const data = useMemo(() => {
         const priorityCounts = tasks.reduce((acc, task) => {
             acc[task.priority] = (acc[task.priority] || 0) + 1;
@@ -31,45 +29,40 @@ export function TasksByPriorityWidget({ tasks }: { tasks: Task[] }) {
             .filter(item => item.value > 0);
     }, [tasks]);
 
-    const handleCopyData = () => {
-        try {
-            navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-            toast({ title: "Data Gekopieerd", description: "De widgetdata is naar je klembord gekopieerd." });
-        } catch (err) {
-            toast({ title: "Fout", description: "Kon de data niet kopiëren.", variant: 'destructive' });
-        }
-    }
-
     return (
-        <Card className="h-full flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between">
+        <>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <div>
                     <CardTitle>Prioriteit Distributie</CardTitle>
-                    <CardDescription>Hoe taken zijn verdeeld op basis van prioriteit.</CardDescription>
-                </div>
-                <div className="flex items-center">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopyData} aria-label="Kopieer data">
-                        <ClipboardCopy className="h-4 w-4" />
-                    </Button>
-                    <div className="react-grid-drag-handle cursor-grab active:cursor-grabbing p-1">
-                        <GripVertical />
-                    </div>
+                    <CardDescription>Taken verdeeld op basis van prioriteit.</CardDescription>
                 </div>
             </CardHeader>
             <CardContent className="flex-grow">
-                <ChartContainer config={{}} className="mx-auto aspect-square h-full">
+                <ChartContainer config={{}} className="h-full w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} label>
-                                {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                                ))}
-                            </Pie>
-                        </PieChart>
+                         {config.chartType === 'bar' ? (
+                            <BarChart data={data}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <RechartsTooltip />
+                                <Bar dataKey="value">
+                                    {data.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
+                                </Bar>
+                            </BarChart>
+                        ) : (
+                            <PieChart>
+                                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                                <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} label>
+                                    {data.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        )}
                     </ResponsiveContainer>
                 </ChartContainer>
             </CardContent>
-        </Card>
+        </>
     );
 }

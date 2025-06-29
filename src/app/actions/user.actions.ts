@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -11,7 +12,9 @@ import { getMicrosoftAuthClient, scopes as microsoftScopes } from '@/lib/microso
 export async function updateUserProfile(userId: string, data: Partial<Omit<GlobalUserProfile, 'id' | 'organizationIds' | 'currentOrganizationId'>>) {
     try {
         const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, data);
+        // Firestore doesn't like 'undefined' values from optional Zod fields
+        const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+        await updateDoc(userRef, cleanData);
         return { success: true };
     } catch (error: any) {
         console.error("Error updating user profile:", error);

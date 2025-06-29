@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -7,7 +8,7 @@ import { useTasks } from '@/contexts/task-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefcase, ArrowUpNarrowWide, Columns, CalendarIcon } from 'lucide-react';
+import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefcase, ArrowUpNarrowWide, Columns, CalendarIcon, Settings2 } from 'lucide-react';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
@@ -31,12 +32,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, isWithinInterval } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { ManageDashboardDialog } from '@/components/chorey/dashboard/ManageDashboardDialog';
 
 export default function DashboardPage() {
-  const { tasks, loading, searchTerm, setSearchTerm, filters, setViewedTask, navigateToUserProfile } = useTasks();
+  const { tasks, loading, searchTerm, setSearchTerm, filters, setViewedTask } = useTasks();
   const { user: currentUser, teams, currentOrganization, users, projects } = useAuth();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
+  const [isDashboardManagerOpen, setIsDashboardManagerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
   const [groupBy, setGroupBy] = useState<'status' | 'assignee' | 'priority' | 'project'>('status');
   const [activityFeedItems, setActivityFeedItems] = useState<ActivityFeedItem[]>([]);
@@ -240,6 +243,10 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsDashboardManagerOpen(true)}>
+              <Settings2 className="h-4 w-4 mr-2" />
+              Beheer Dashboard
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -300,8 +307,6 @@ export default function DashboardPage() {
                 users={users}
                 activityFeedItems={activityFeedItems}
                 isFeedLoading={isFeedLoading}
-                setViewedTask={setViewedTask}
-                navigateToUserProfile={navigateToUserProfile}
               />
            </Suspense>
         </TabsContent>
@@ -316,6 +321,7 @@ export default function DashboardPage() {
       </Tabs>
       <ImportTasksDialog open={isImporting} onOpenChange={setIsImporting} />
       <MeetingImportDialog open={isMeetingImporting} onOpenChange={setIsMeetingImporting} />
+      <ManageDashboardDialog open={isDashboardManagerOpen} onOpenChange={setIsDashboardManagerOpen} />
     </div>
   );
 }

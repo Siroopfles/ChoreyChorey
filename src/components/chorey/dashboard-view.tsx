@@ -1,9 +1,17 @@
+
 'use client';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import type { Layouts } from 'react-grid-layout';
+import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/task-context';
+import { useMemo, useCallback, useRef } from 'react';
+import type { Task, User, ActivityFeedItem, WidgetInstance } from '@/lib/types';
+import { updateUserProfile } from '@/app/actions/user.actions';
+import { WIDGET_TYPES } from '@/lib/types';
+import { WidgetWrapper } from './dashboard/WidgetWrapper';
 
 // Import Widgets
 import { TasksByStatusWidget } from './dashboard/widgets/TasksByStatusWidget';
@@ -11,12 +19,8 @@ import { TasksByPriorityWidget } from './dashboard/widgets/TasksByPriorityWidget
 import { LeaderboardWidget } from './dashboard/widgets/LeaderboardWidget';
 import { ActivityFeedWidget } from './dashboard/widgets/ActivityFeedWidget';
 import { RecentActivityWidget } from './dashboard/widgets/RecentActivityWidget';
-
-// Import Types
-import type { Task, User, ActivityFeedItem } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
-import { useMemo, useCallback, useRef } from 'react';
-import { updateUserProfile } from '@/app/actions/user.actions';
+import { WelcomeWidget } from './dashboard/widgets/WelcomeWidget';
+import { MyTasksWidget } from './dashboard/widgets/MyTasksWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -25,48 +29,29 @@ interface DashboardViewProps {
   users: User[];
   activityFeedItems: ActivityFeedItem[];
   isFeedLoading: boolean;
-  setViewedTask: (task: Task | null) => void;
-  navigateToUserProfile: (userId: string) => void;
-};
-
-const WIDGETS = {
-  tasksByStatus: 'tasksByStatus',
-  tasksByPriority: 'tasksByPriority',
-  leaderboard: 'leaderboard',
-  activityFeed: 'activityFeed',
-  recentActivity: 'recentActivity',
-};
-
-const defaultLayouts: Layouts = {
-  lg: [
-    { i: WIDGETS.tasksByStatus, x: 0, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
-    { i: WIDGETS.leaderboard, x: 1, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
-    { i: WIDGETS.tasksByPriority, x: 2, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
-    { i: WIDGETS.activityFeed, x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-    { i: WIDGETS.recentActivity, x: 2, y: 2, w: 1, h: 2, minW: 1, minH: 2 },
-  ],
-  md: [
-    { i: WIDGETS.tasksByStatus, x: 0, y: 0, w: 1, h: 2 },
-    { i: WIDGETS.leaderboard, x: 1, y: 0, w: 1, h: 2 },
-    { i: WIDGETS.activityFeed, x: 0, y: 2, w: 2, h: 2 },
-    { i: WIDGETS.tasksByPriority, x: 0, y: 4, w: 1, h: 2 },
-    { i: WIDGETS.recentActivity, x: 1, y: 4, w: 1, h: 2 },
-  ],
-  sm: [
-    { i: WIDGETS.tasksByStatus, x: 0, y: 0, w: 1, h: 2 },
-    { i: WIDGETS.leaderboard, x: 0, y: 2, w: 1, h: 2 },
-    { i: WIDGETS.tasksByPriority, x: 0, y: 4, w: 1, h: 2 },
-    { i: WIDGETS.activityFeed, x: 0, y: 6, w: 1, h: 2 },
-    { i: WIDGETS.recentActivity, x: 0, y: 8, w: 1, h: 2 },
-  ],
 };
 
 
-export default function DashboardView({ tasks, users, activityFeedItems, isFeedLoading, setViewedTask, navigateToUserProfile }: DashboardViewProps) {
-  const { user, loading } = useAuth();
+export default function DashboardView({ tasks, users, activityFeedItems, isFeedLoading }: DashboardViewProps) {
+  const { user, loading, updateUserDashboard } = useAuth();
+  const { setViewedTask } = useTasks();
   const layoutChangeTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const layouts = useMemo(() => user?.dashboardLayout || defaultLayouts, [user?.dashboardLayout]);
+  const { dashboardConfig, layouts } = useMemo(() => {
+      const config = user?.dashboardConfig || [];
+      const defaultLayouts: Layouts = {
+          lg: config.map((widget, index) => ({
+              i: widget.id,
+              x: (index % 3) * 4,
+              y: Math.floor(index / 3) * 2,
+              w: 4, h: 2, minW: 3, minH: 2
+          })),
+      };
+      return {
+          dashboardConfig: config,
+          layouts: user?.dashboardLayout || defaultLayouts,
+      };
+  }, [user]);
   
   const handleLayoutChange = useCallback(
     (_currentLayout: any, allLayouts: Layouts) => {
@@ -77,37 +62,34 @@ export default function DashboardView({ tasks, users, activityFeedItems, isFeedL
         if (user) {
           const hasLayoutChanged = JSON.stringify(allLayouts) !== JSON.stringify(layouts);
           if (hasLayoutChanged) {
-            await updateUserProfile(user.id, { dashboardLayout: allLayouts });
+            await updateUserDashboard({ dashboardLayout: allLayouts });
           }
         }
       }, 500);
     },
-    [user, layouts]
+    [user, layouts, updateUserDashboard]
   );
-
-  const memoizedWidgets = useMemo(() => ({
-    [WIDGETS.tasksByStatus]: <TasksByStatusWidget tasks={tasks} />,
-    [WIDGETS.tasksByPriority]: <TasksByPriorityWidget tasks={tasks} />,
-    [WIDGETS.leaderboard]: <LeaderboardWidget users={users} />,
-    [WIDGETS.activityFeed]: (
-        <ActivityFeedWidget
-            items={activityFeedItems}
-            users={users}
-            tasks={tasks}
-            isLoading={isFeedLoading}
-            setViewedTask={setViewedTask}
-            navigateToUserProfile={navigateToUserProfile}
-        />
-    ),
-     [WIDGETS.recentActivity]: (
-      <RecentActivityWidget
-        tasks={tasks}
-        currentUser={user}
-        setViewedTask={setViewedTask}
-        isLoading={loading}
-      />
-    ),
-  }), [tasks, users, activityFeedItems, isFeedLoading, setViewedTask, navigateToUserProfile, user, loading]);
+  
+  const renderWidget = (widget: WidgetInstance) => {
+    switch (widget.type) {
+        case 'tasksByStatus':
+            return <TasksByStatusWidget tasks={tasks} config={widget.config} />;
+        case 'tasksByPriority':
+            return <TasksByPriorityWidget tasks={tasks} config={widget.config} />;
+        case 'leaderboard':
+            return <LeaderboardWidget users={users} config={widget.config} />;
+        case 'activityFeed':
+            return <ActivityFeedWidget items={activityFeedItems} users={users} tasks={tasks} isLoading={isFeedLoading} setViewedTask={setViewedTask} navigateToUserProfile={() => {}} />;
+        case 'recentActivity':
+            return <RecentActivityWidget tasks={tasks} currentUser={user} setViewedTask={setViewedTask} isLoading={loading} />;
+        case 'welcome':
+            return <WelcomeWidget name={user?.name || 'gebruiker'} />;
+        case 'myTasks':
+            return <MyTasksWidget tasks={tasks} currentUser={user} setViewedTask={setViewedTask} config={widget.config} />;
+        default:
+            return <div>Onbekend widget type: {widget.type}</div>;
+    }
+  };
 
 
   return (
@@ -115,16 +97,18 @@ export default function DashboardView({ tasks, users, activityFeedItems, isFeedL
       className="layout"
       layouts={layouts}
       breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-      cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }}
-      rowHeight={150}
+      cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+      rowHeight={100}
       isDraggable={true}
       isResizable={true}
       onLayoutChange={handleLayoutChange}
       draggableHandle=".react-grid-drag-handle"
     >
-        {Object.keys(WIDGETS).map(key => (
-            <div key={key}>
-                {memoizedWidgets[key as keyof typeof WIDGETS]}
+        {dashboardConfig.map(widget => (
+            <div key={widget.id}>
+                <WidgetWrapper widget={widget}>
+                  {renderWidget(widget)}
+                </WidgetWrapper>
             </div>
         ))}
     </ResponsiveGridLayout>
