@@ -96,27 +96,34 @@ function IndividualLeaderboard() {
           </div>
           <Card>
             <CardContent className="p-4">
-            <ul className="space-y-4">
-                {sortedUsers.map((user, index) => (
-                <li key={user.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted">
-                    <div className="flex items-center justify-center w-8">
-                    {getRankIcon(index)}
-                    </div>
-                    <Avatar className="h-12 w-12">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-1">
-                    <p className="font-semibold">{user.name}</p>
-                    <Progress value={(user.dynamicPoints / maxPoints) * 100} className="h-2" />
-                    </div>
-                    <div className="text-right">
-                        <p className="font-bold text-lg">{user.dynamicPoints.toLocaleString()} pts</p>
-                        <p className="text-xs text-muted-foreground">{user.tasksCompleted} taken</p>
-                    </div>
-                </li>
-                ))}
-            </ul>
+            {sortedUsers.length > 0 ? (
+              <ul className="space-y-4">
+                  {sortedUsers.map((user, index) => (
+                  <li key={user.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted">
+                      <div className="flex items-center justify-center w-8">
+                      {getRankIcon(index)}
+                      </div>
+                      <Avatar className="h-12 w-12">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 space-y-1">
+                      <p className="font-semibold">{user.name}</p>
+                      <Progress value={(user.dynamicPoints / maxPoints) * 100} className="h-2" />
+                      </div>
+                      <div className="text-right">
+                          <p className="font-bold text-lg">{user.dynamicPoints.toLocaleString()} pts</p>
+                          <p className="text-xs text-muted-foreground">{user.tasksCompleted} taken</p>
+                      </div>
+                  </li>
+                  ))}
+              </ul>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-12 text-center h-[200px]">
+                  <UsersIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <p className="mt-2 text-sm text-muted-foreground">Geen gebruikers om weer te geven.</p>
+                </div>
+              )}
             </CardContent>
         </Card>
       </div>
@@ -146,45 +153,52 @@ function TeamLeaderboard() {
     return (
         <Card>
             <CardContent className="p-4">
-            <ul className="space-y-4">
-                {sortedTeams.map((team, index) => (
-                <li key={team.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted">
-                    <div className="flex items-center justify-center w-8">
-                        {getRankIcon(index)}
-                    </div>
-                    <div className="flex -space-x-2">
-                        <TooltipProvider>
-                        {team.members.slice(0, 5).map(member => (
-                            <Tooltip key={member.id}>
-                                <TooltipTrigger asChild>
-                                    <Avatar className="h-12 w-12 border-2 border-background">
-                                        <AvatarImage src={member.avatar} alt={member.name} />
-                                        <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{member.name}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        ))}
-                        </TooltipProvider>
-                         {team.members.length > 5 && (
-                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-sm font-bold border-2 border-background">
-                                +{team.members.length - 5}
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                        <p className="font-semibold">{team.name}</p>
-                        <Progress value={(team.totalPoints / maxPoints) * 100} className="h-2" />
-                    </div>
-                    <div className="text-right">
-                        <p className="font-bold text-lg">{team.totalPoints.toLocaleString()} pts</p>
-                        <p className="text-xs text-muted-foreground">{team.members.length} leden</p>
-                    </div>
-                </li>
-                ))}
-            </ul>
+            {sortedTeams.length > 0 ? (
+              <ul className="space-y-4">
+                  {sortedTeams.map((team, index) => (
+                  <li key={team.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted">
+                      <div className="flex items-center justify-center w-8">
+                          {getRankIcon(index)}
+                      </div>
+                      <div className="flex -space-x-2">
+                          <TooltipProvider>
+                          {team.members.slice(0, 5).map(member => (
+                              <Tooltip key={member.id}>
+                                  <TooltipTrigger asChild>
+                                      <Avatar className="h-12 w-12 border-2 border-background">
+                                          <AvatarImage src={member.avatar} alt={member.name} />
+                                          <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                      <p>{member.name}</p>
+                                  </TooltipContent>
+                              </Tooltip>
+                          ))}
+                          </TooltipProvider>
+                          {team.members.length > 5 && (
+                              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-sm font-bold border-2 border-background">
+                                  +{team.members.length - 5}
+                              </div>
+                          )}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                          <p className="font-semibold">{team.name}</p>
+                          <Progress value={(team.totalPoints / maxPoints) * 100} className="h-2" />
+                      </div>
+                      <div className="text-right">
+                          <p className="font-bold text-lg">{team.totalPoints.toLocaleString()} pts</p>
+                          <p className="text-xs text-muted-foreground">{team.members.length} leden</p>
+                      </div>
+                  </li>
+                  ))}
+              </ul>
+            ) : (
+                <div className="flex flex-col items-center justify-center p-12 text-center h-[200px]">
+                    <UsersIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <p className="mt-2 text-sm text-muted-foreground">Geen teams om weer te geven.</p>
+                </div>
+            )}
             </CardContent>
         </Card>
     );

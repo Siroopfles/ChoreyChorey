@@ -77,19 +77,19 @@ export default function AuditLogPage() {
                     <h1 className="text-3xl font-bold flex items-center gap-2"><ShieldCheck /> Audit Log</h1>
                     <p className="text-muted-foreground">Een gedetailleerd overzicht van alle acties binnen de organisatie.</p>
                 </div>
-                <div className="border rounded-lg">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Gebruiker</TableHead>
-                                <TableHead>Actie</TableHead>
-                                <TableHead>Taak</TableHead>
-                                <TableHead className="text-right">Datum</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {aggregatedHistory.length > 0 ? (
-                                aggregatedHistory.map(entry => {
+                {aggregatedHistory.length > 0 ? (
+                    <div className="border rounded-lg">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Gebruiker</TableHead>
+                                    <TableHead>Actie</TableHead>
+                                    <TableHead>Taak</TableHead>
+                                    <TableHead className="text-right">Datum</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {aggregatedHistory.map(entry => {
                                     const user = users.find(u => u.id === entry.userId);
                                     return (
                                         <TableRow key={entry.id}>
@@ -116,17 +116,19 @@ export default function AuditLogPage() {
                                             </TableCell>
                                         </TableRow>
                                     );
-                                })
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">
-                                        Geen log-data gevonden.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-[400px]">
+                        <ShieldCheck className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <h3 className="mt-4 text-2xl font-bold tracking-tight">Geen log-data</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Er zijn nog geen acties vastgelegd in het audit logboek.
+                        </p>
+                    </div>
+                )}
             </div>
              {editingTask && (
                 <EditTaskDialog

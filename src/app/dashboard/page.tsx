@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -10,7 +9,7 @@ import { useFilters } from '@/contexts/filter-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefcase, ArrowUpNarrowWide, Columns, CalendarIcon, Settings2 } from 'lucide-react';
+import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefcase, ArrowUpNarrowWide, Columns, CalendarIcon, Settings2, ClipboardList } from 'lucide-react';
 import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
 import FilterBar from '@/components/chorey/filter-bar';
 import { Input } from '@/components/ui/input';
@@ -291,8 +290,9 @@ export default function DashboardPage() {
             <TaskColumns groupedTasks={groupedTasks} groupBy={groupBy} />
           ) : (
             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-full">
-                <h3 className="text-2xl font-bold tracking-tight">Geen taken gevonden</h3>
-                <p className="text-sm text-muted-foreground">Er zijn geen taken die aan de huidige filters voldoen.</p>
+                <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-2xl font-bold tracking-tight">Geen taken gevonden</h3>
+                <p className="mt-2 text-sm text-muted-foreground">Er zijn geen taken die aan de huidige filters voldoen.</p>
             </div>
           )}
         </TabsContent>

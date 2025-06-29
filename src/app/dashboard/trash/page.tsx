@@ -68,19 +68,19 @@ export default function TrashPage() {
                     Items in de prullenbak worden na 30 dagen automatisch permanent verwijderd.
                 </AlertDescription>
             </Alert>
-
-            <div className="border rounded-lg">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Taak</TableHead>
-                            <TableHead>Verwijderd</TableHead>
-                            <TableHead className="text-right">Acties</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {trashedTasks.length > 0 ? (
-                            trashedTasks.map(task => {
+            
+            {trashedTasks.length > 0 ? (
+                <div className="border rounded-lg">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Taak</TableHead>
+                                <TableHead>Verwijderd</TableHead>
+                                <TableHead className="text-right">Acties</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {trashedTasks.map(task => {
                                 const lastCancelledEntry = task.history.filter(h => h.action.includes('geannuleerd') || h.action.includes('Prullenbak')).sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
                                 return (
                                     <TableRow key={task.id}>
@@ -112,17 +112,19 @@ export default function TrashPage() {
                                         </TableCell>
                                     </TableRow>
                                 )
-                            })
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={3} className="h-24 text-center">
-                                    De prullenbak is leeg.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            })}
+                        </TableBody>
+                    </Table>
+                </div>
+            ) : (
+                 <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-[400px]">
+                    <Trash2 className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-4 text-2xl font-bold tracking-tight">De prullenbak is leeg</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Verwijderde taken verschijnen hier.
+                    </p>
+                </div>
+            )}
         </div>
     );
 }
