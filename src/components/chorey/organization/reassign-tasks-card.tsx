@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState } from 'react';
@@ -11,9 +9,11 @@ import { ArrowRight, Loader2, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { reassignTasks } from '@/app/actions/member.actions';
+import { useOrganization } from '@/contexts/organization-context';
 
 export function ReassignTasksCard() {
-    const { currentOrganization, user: currentUser, users } = useAuth();
+    const { user: currentUser } = useAuth();
+    const { currentOrganization, users } = useOrganization();
     const { toast } = useToast();
 
     const [fromUserId, setFromUserId] = useState<string | undefined>(undefined);
@@ -22,8 +22,8 @@ export function ReassignTasksCard() {
     
     if (!currentOrganization || !currentUser) return null;
 
-    const fromUser = users.find(u => u.id === fromUserId);
-    const toUser = users.find(u => u.id === toUserId);
+    const fromUser = users?.find(u => u.id === fromUserId);
+    const toUser = users?.find(u => u.id === toUserId);
 
     const handleReassign = async () => {
         if (!fromUserId || !toUserId) {
@@ -57,7 +57,7 @@ export function ReassignTasksCard() {
                         <Select value={fromUserId} onValueChange={setFromUserId}>
                             <SelectTrigger><SelectValue placeholder="Selecteer gebruiker..." /></SelectTrigger>
                             <SelectContent>
-                                {users.map(u => (
+                                {(users || []).map(u => (
                                     <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                                 ))}
                             </SelectContent>
@@ -69,7 +69,7 @@ export function ReassignTasksCard() {
                          <Select value={toUserId} onValueChange={setToUserId}>
                             <SelectTrigger><SelectValue placeholder="Selecteer gebruiker..." /></SelectTrigger>
                             <SelectContent>
-                                {users.filter(u => u.id !== fromUserId).map(u => (
+                                {(users || []).filter(u => u.id !== fromUserId).map(u => (
                                     <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                                 ))}
                             </SelectContent>
