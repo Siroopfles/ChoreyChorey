@@ -27,6 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Naam moet minimaal 2 karakters bevatten.'),
