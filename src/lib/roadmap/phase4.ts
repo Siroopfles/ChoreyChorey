@@ -13,5 +13,6 @@ export const phase4: Phase = {
     { id: 4007, title: "Geavanceerde Terugkerende Taken", description: "De functionaliteit voor herhalende taken is uitgebreid. Naast dagelijks en wekelijks, kunnen taken nu ook maandelijks herhaald worden, bijvoorbeeld 'elke laatste vrijdag van de maand' of 'elke 15e van de maand'.", completed: true },
     { id: 4008, title: "Toegankelijkheidsverbeteringen (WCAG)", description: "Een grondige review en aanpassing van de applicatie om te voldoen aan de WCAG 2.1 AA-standaarden. Dit omvat correcte ARIA-attributen, toetsenbordnavigatie, en voldoende kleurcontrast.", completed: true },
     { id: 4009, title: "Persoonlijke Werk-uren", description: "Gebruikers kunnen hun standaard werkuren instellen in hun profiel. Deze informatie wordt gebruikt door de AI voor realistischere werkdruk-analyses en kan in de toekomst worden gebruikt om notificaties buiten werktijd te beperken.", completed: true },
+    { id: 4010, title: "Verrijkte Taakkaarten", description: "Toon meer informatie direct op de taakkaarten, zoals voortgang van subtaken, avatars van toegewezenen, en iconen voor het aantal bijlagen en comments. Dit vermindert de noodzaak om taken constant te openen voor basisinformatie.", completed: true },
   ]
 };

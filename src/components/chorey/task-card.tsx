@@ -1,6 +1,6 @@
 
 'use client';
-import type { Task, User, Project, Subtask } from '@/lib/types';
+import type { Task, User, Project, Subtask, Comment } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -393,7 +393,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects }: TaskCardPr
                     )}
                     {canManageChoreOfWeek && (
                       task.isChoreOfTheWeek ? (
-                        <DropdownMenuItem onClick={() => updateTask(task.id, { isChoreOfTheWeek: false })}>
+                        <DropdownMenuItem onClick={() => setChoreOfTheWeek(task.id)}>
                           <Star className="mr-2 h-4 w-4" />
                           Verwijder als Klus v/d Week
                         </DropdownMenuItem>
