@@ -23,7 +23,6 @@ import GanttViewSkeleton from '@/components/chorey/gantt-view-skeleton';
 import TaskListView from '@/components/chorey/task-list-view';
 import Papa from 'papaparse';
 import { ChoreOfTheWeekCard } from '@/components/chorey/chore-of-the-week-card';
-import { GettingStartedGuide } from '@/components/chorey/getting-started-guide';
 import { getPublicActivityFeed } from '@/app/actions/gamification.actions';
 import { useToast } from '@/hooks/use-toast';
 
@@ -125,11 +124,6 @@ export default function DashboardPage() {
     return filteredTasks.filter(t => !t.isChoreOfTheWeek && !t.helpNeeded);
   }, [filteredTasks]);
 
-  const showGettingStarted = useMemo(() => {
-    return currentOrganization && users.length === 1 && currentUser?.id === currentOrganization.ownerId;
-  }, [currentOrganization, users, currentUser]);
-
-
   const handleExport = () => {
     const dataToExport = filteredTasks.map(task => {
         const assignees = task.assigneeIds.map(id => users.find(u => u.id === id)?.name).filter(Boolean);
@@ -174,7 +168,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      {showGettingStarted && <GettingStartedGuide />}
       {choreOfTheWeek && <ChoreOfTheWeekCard task={choreOfTheWeek} users={users} />}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2 flex-wrap">
