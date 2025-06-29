@@ -152,6 +152,7 @@ export default function UserProfilePage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{user.points?.toLocaleString() || 0}</div>
+                                <p className="text-xs text-muted-foreground">Verdiend in deze organisatie.</p>
                             </CardContent>
                         </Card>
                         <Card>
@@ -161,6 +162,7 @@ export default function UserProfilePage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{completedTasksCount}</div>
+                                <p className="text-xs text-muted-foreground">Totaal aantal afgeronde taken.</p>
                             </CardContent>
                         </Card>
                      </div>

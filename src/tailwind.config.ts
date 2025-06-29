@@ -11,6 +11,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-sans)', 'sans-serif'],
+        body: ['var(--font-sans)', 'sans-serif'],
+        headline: ['var(--font-sans)', 'sans-serif'],
         code: ['var(--font-code)', 'monospace'],
       },
       colors: {
@@ -95,10 +97,14 @@ const config: Config = {
             height: '0',
           },
         },
-      },
-      animation: {
-        'accordion-down': 'accordion-down calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
-        'accordion-up': 'accordion-up calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'out': {
+          from: { opacity: '1' },
+          to: { opacity: '0' },
+        }
       },
       transitionProperty: {
         'width': 'width',
@@ -116,8 +122,8 @@ const config: Config = {
       animation: {
         'accordion-down': 'accordion-down calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
         'accordion-up': 'accordion-up calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
-        'in': 'animate-in calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
-        'out': 'animate-out calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'in': 'in calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'out': 'out calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
       }
     },
   },
