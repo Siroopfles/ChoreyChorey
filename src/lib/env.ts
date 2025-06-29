@@ -11,7 +11,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1),
   
   // Base URL (Public) - Required for OAuth callbacks.
-  NEXT_PUBLIC_BASE_URL: z.string().url(),
+  NEXT_PUBLIC_BASE_URL: z.string().min(1, "Required"),
 
   // Google OAuth (Server-side) - Optional
   GOOGLE_CLIENT_ID: z.string().optional(),
