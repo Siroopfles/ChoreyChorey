@@ -16,19 +16,17 @@ import type { Organization } from '@/lib/types';
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-labels.prompt'), 'utf-8');
 
-export async function suggestLabels(input: Omit<SuggestLabelsInput, 'availableLabels'> & { organizationId: string }): Promise<SuggestLabelsOutput> {
+export async function suggestLabels(input: Omit<SuggestLabelsInput, 'availableLabels'> & { organizationId: string }): Promise<{ output: SuggestLabelsOutput; input: SuggestLabelsInput }> {
   const orgDoc = await getDoc(doc(db, 'organizations', input.organizationId));
-  if (!orgDoc.exists()) {
-      return { labels: [] }; // Or throw an error
-  }
-  const orgData = orgDoc.data() as Organization;
-  const availableLabels = orgData.settings?.customization?.labels || [];
+  const availableLabels = (orgDoc.exists() ? (orgDoc.data() as Organization).settings?.customization?.labels : []) || [];
+  const flowInput: SuggestLabelsInput = { ...input, availableLabels };
 
   if (availableLabels.length === 0) {
-      return { labels: [] };
+      return { output: { labels: [] }, input: flowInput };
   }
 
-  return suggestLabelsFlow({ ...input, availableLabels });
+  const output = await suggestLabelsFlow(flowInput);
+  return { output, input: flowInput };
 }
 
 const prompt = ai.definePrompt({
