@@ -13,19 +13,34 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { HandHeart } from 'lucide-react';
+import { HandHeart, Loader2 } from 'lucide-react';
+import { useInView } from 'react-intersection-observer';
+import { useTasks } from '@/contexts/task-context';
+
 
 export default function TaskListView({ tasks, users }: { tasks: Task[], users: User[] }) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const { loadMoreTasks, hasMoreTasks, isMoreLoading } = useTasks();
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: '200px',
+  });
+
+  useEffect(() => {
+    if (inView && !isMoreLoading) {
+      loadMoreTasks();
+    }
+  }, [inView, isMoreLoading, loadMoreTasks]);
+
 
   const handleRowClick = (task: Task) => {
     setEditingTask(task);
   };
 
-  if (tasks.length === 0) {
+  if (tasks.length === 0 && !isMoreLoading) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-[400px]">
         <HandHeart className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -49,10 +64,12 @@ export default function TaskListView({ tasks, users }: { tasks: Task[], users: U
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks.map((task) => {
+            {tasks.map((task, index) => {
               const assignees = task.assigneeIds.map(id => users.find(u => u.id === id)).filter(Boolean) as User[];
+              // Add the ref to the last element to trigger loading more
+              const isLastElement = index === tasks.length - 1;
               return (
-                <TableRow key={task.id} onClick={() => handleRowClick(task)} className="cursor-pointer">
+                <TableRow key={task.id} onClick={() => handleRowClick(task)} className="cursor-pointer" ref={isLastElement ? ref : null}>
                   <TableCell className="font-medium">{task.title}</TableCell>
                   <TableCell><Badge variant="outline">{task.status}</Badge></TableCell>
                   <TableCell>{task.priority}</TableCell>
@@ -74,6 +91,13 @@ export default function TaskListView({ tasks, users }: { tasks: Task[], users: U
                 </TableRow>
               );
             })}
+             {isMoreLoading && (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                    </TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

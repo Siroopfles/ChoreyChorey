@@ -1,5 +1,4 @@
 
-
 'use client';
 import type { User, Task, Project, Priority } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
@@ -9,9 +8,10 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, re
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { FileUp } from 'lucide-react';
-import { addDays, addHours, isAfter, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
+import { useState, useEffect } from 'react';
+import { FileUp, Loader2 } from 'lucide-react';
+import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
+import { useInView } from 'react-intersection-observer';
 
 const TaskColumn = ({ 
   title, 
@@ -99,7 +99,7 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBlockedMap, blockingTasksMap, relatedTasksMap, blockedByTasksMap }: TaskColumnsProps) => {
-  const { tasks, updateTask, reorderTasks, addTask } = useTasks();
+  const { tasks, updateTask, reorderTasks, addTask, loadMoreTasks, hasMoreTasks, isMoreLoading } = useTasks();
   const { toast } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -109,6 +109,17 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBl
     })
   );
   const [isDragOver, setIsDragOver] = useState(false);
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: '400px',
+  });
+
+  useEffect(() => {
+    if (inView && !isMoreLoading) {
+      loadMoreTasks();
+    }
+  }, [inView, isMoreLoading, loadMoreTasks]);
+
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -134,7 +145,6 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBl
     const activeTask = tasks.find(t => t.id === activeId);
     if (!activeTask) return;
 
-    // Handle moving to a NEW column
     if (activeContainer !== overContainer) {
       if (active.data.current?.isBlocked && groupBy === 'status' && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
         toast({
@@ -166,7 +176,7 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBl
 
       updateTask(activeId, updates);
 
-    } else { // Handle reordering WITHIN the same column
+    } else {
       const itemsInColumn = groupedTasks.find(g => g.title === activeContainer)?.tasks || [];
       const oldIndex = itemsInColumn.findIndex((t) => t.id === activeId);
       const newIndex = itemsInColumn.findIndex((t) => t.id === overId);
@@ -248,6 +258,11 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBl
                     blockedByTasksMap={blockedByTasksMap}
                   />
               ))}
+              {hasMoreTasks && (
+                <div ref={ref} className="flex w-[320px] shrink-0 items-center justify-center">
+                  {isMoreLoading && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
+                </div>
+              )}
           </div>
           <ScrollBar orientation="horizontal" />
           </ScrollArea>
