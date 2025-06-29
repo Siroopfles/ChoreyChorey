@@ -1,75 +1,64 @@
-
-
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
-import { Loader2, ArrowLeft } from 'lucide-react';
-import OrganizationSettings from '@/components/chorey/settings/organization-settings';
-import DangerZone from '@/components/chorey/settings/danger-zone';
-import WorkflowSettings from '@/components/chorey/settings/workflow-settings';
-import WebhookSettings from '@/components/chorey/settings/webhook-settings';
-import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
-import { PERMISSIONS } from '@/lib/types';
-import LimitSettings from '@/components/chorey/settings/limit-settings';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import CustomFieldsSettings from '@/components/chorey/settings/custom-fields-settings';
-import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
+import { Settings, Workflow, Code2, BarChartBig, ArrowRight } from 'lucide-react';
 
+export default function OrganizationSettingsHubPage() {
+    const settingsPages = [
+        {
+            href: '/dashboard/settings/organization/general',
+            icon: Settings,
+            title: 'Algemeen & Branding',
+            description: 'Beheer de naam, aankondigingen en het uiterlijk van de organisatie.',
+        },
+        {
+            href: '/dashboard/settings/organization/workflow',
+            icon: Workflow,
+            title: 'Workflow & Velden',
+            description: 'Pas statussen, labels, prioriteiten en eigen velden aan.',
+        },
+        {
+            href: '/dashboard/settings/organization/developer',
+            icon: Code2,
+            title: 'Developer Instellingen',
+            description: 'Beheer API-sleutels en webhooks voor integraties.',
+        },
+        {
+            href: '/dashboard/settings/organization/limits',
+            icon: BarChartBig,
+            title: 'Limieten & Gevarenzone',
+            description: 'Stel limieten in en beheer risicovolle acties zoals het verwijderen van de organisatie.',
+        },
+    ];
 
-export default function OrganizationSettingsPage() {
-  const { user, loading: authLoading, currentOrganization, currentUserPermissions } = useAuth();
-
-  if (authLoading || !user) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  const canManageOrg = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
-  const canManageApiKeys = currentUserPermissions.includes(PERMISSIONS.MANAGE_API_KEYS);
-  
-  if (!currentOrganization) {
-    return (
-        <div className="text-center">
-            <p>Selecteer een organisatie om de instellingen te beheren.</p>
-        </div>
-    )
-  }
-
-  if (!canManageOrg) {
-    return (
-        <div className="text-center">
-            <p>U heeft geen permissie om de organisatie-instellingen te bekijken.</p>
-        </div>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-        <div className="flex items-center gap-4">
-            <Button asChild variant="outline" size="icon">
-                <Link href="/dashboard/settings">
-                    <ArrowLeft className="h-4 w-4" />
-                    <span className="sr-only">Terug naar Instellingen</span>
-                </Link>
-            </Button>
+        <div className="space-y-6">
             <h1 className="font-semibold text-lg md:text-2xl">Organisatie Instellingen</h1>
+            <p className="text-muted-foreground">Selecteer een categorie om te beheren.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {settingsPages.map((page) => (
+                    <Card key={page.href} className="hover:border-primary/50 transition-colors flex flex-col">
+                        <CardHeader className="flex-grow">
+                            <CardTitle className="flex items-center gap-3">
+                                <page.icon className="h-6 w-6 text-primary" />
+                                {page.title}
+                            </CardTitle>
+                            <CardDescription>
+                                {page.description}
+                            </CardDescription>
+                        </CardHeader>
+                        <div className="p-6 pt-0">
+                            <Button asChild>
+                                <Link href={page.href}>
+                                    Beheren <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </div>
+                    </Card>
+                ))}
+            </div>
         </div>
-
-        <OrganizationSettings organization={currentOrganization} />
-        <AnnouncementSettings organization={currentOrganization} />
-        <LimitSettings organization={currentOrganization} />
-        <WebhookSettings />
-        {canManageApiKeys && <ApiKeySettings />}
-        <WorkflowSettings organization={currentOrganization} />
-        <CustomFieldsSettings organization={currentOrganization} />
-        <DangerZone
-            organization={currentOrganization}
-            isOwner={currentOrganization.ownerId === user.id}
-        />
-    </div>
-  );
+    );
 }

@@ -74,7 +74,7 @@ export default function SettingsPage() {
                                 Organisatie
                             </CardTitle>
                             <CardDescription>
-                                Beheer algemene instellingen, workflow, limieten en de gevarenzone voor de organisatie.
+                                Beheer workflow, developer-instellingen, limieten en algemene opties voor de organisatie.
                             </CardDescription>
                         </CardHeader>
                          <div className="p-6 pt-0">
