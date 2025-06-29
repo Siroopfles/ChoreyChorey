@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -15,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateProjectRole } from '@/app/actions/project.actions';
 import type { Project, User, RoleName } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
+import { ROLE_OWNER } from '@/lib/constants';
 
 interface ManageProjectAccessDialogProps {
   open: boolean;
