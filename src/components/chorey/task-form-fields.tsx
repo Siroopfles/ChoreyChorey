@@ -42,6 +42,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useTasks } from '@/contexts/task-context';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 import { submitAiFeedback } from '@/app/actions/feedback.actions';
+import { HelpTooltip } from '../ui/help-tooltip';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -519,7 +520,10 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
           name="assigneeIds"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Verantwoordelijk (Responsible)</FormLabel>
+              <div className="flex items-center">
+                <FormLabel>Verantwoordelijk (Responsible)</FormLabel>
+                <HelpTooltip content="De persoon/personen die het werk daadwerkelijk uitvoeren." />
+              </div>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -846,7 +850,10 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
               name="recurring"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Herhaling</FormLabel>
+                  <div className="flex items-center">
+                    <FormLabel>Herhaling</FormLabel>
+                    <HelpTooltip content="Stel in of deze taak automatisch opnieuw moet worden aangemaakt na voltooiing, en met welke frequentie." />
+                  </div>
                   <Select
                     onValueChange={(value) => {
                       if (value === 'none') {
@@ -1052,14 +1059,20 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
 
       {!isPrivate ? (
           <>
-            <h3 className="text-lg font-semibold">RACI Rollen</h3>
+            <h3 className="text-lg font-semibold flex items-center">
+                RACI Rollen
+                <HelpTooltip content="RACI is een model om rollen te definiëren: Responsible (doet het), Accountable (eindverantwoordelijk), Consulted (geeft input), Informed (wordt op de hoogte gehouden)." />
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
                 name="consultedUserIds"
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
-                    <FormLabel>Raadplegen (Consulted)</FormLabel>
+                    <div className="flex items-center">
+                      <FormLabel>Raadplegen (Consulted)</FormLabel>
+                      <HelpTooltip content="Personen die input moeten leveren. Communicatie is tweerichtingsverkeer." />
+                    </div>
                     <Popover>
                         <PopoverTrigger asChild>
                         <FormControl>
@@ -1107,7 +1120,10 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
                 name="informedUserIds"
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
-                    <FormLabel>Informeren (Informed)</FormLabel>
+                    <div className="flex items-center">
+                      <FormLabel>Informeren (Informed)</FormLabel>
+                      <HelpTooltip content="Personen die op de hoogte worden gehouden van de voortgang. Communicatie is eenrichtingsverkeer." />
+                    </div>
                     <Popover>
                         <PopoverTrigger asChild>
                         <FormControl>
