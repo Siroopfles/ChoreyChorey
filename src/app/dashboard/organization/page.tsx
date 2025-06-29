@@ -1,9 +1,9 @@
 
-
 'use client';
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Shield, UserCheck, Plus, Briefcase, Users, Edit } from 'lucide-react';
 import type { Team } from '@/lib/types';
@@ -20,14 +20,15 @@ import { PermissionProtectedButton } from '@/components/ui/permission-protected-
 import { TeamCard } from '@/components/chorey/organization/team-card';
 
 export default function OrganizationPage() {
-    const { currentOrganization, loading: authLoading, currentUserPermissions, projects, teams, users: usersInOrg } = useAuth();
+    const { loading: authLoading } = useAuth();
+    const { currentOrganization, currentUserPermissions, projects, teams, users: usersInOrg, loading: orgLoading } = useOrganization();
     const { tasks, loading: tasksLoading } = useTasks();
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
     const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
 
 
-    if (authLoading || tasksLoading) {
+    if (authLoading || tasksLoading || orgLoading) {
         return (
           <div className="flex h-full w-full items-center justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin" />
