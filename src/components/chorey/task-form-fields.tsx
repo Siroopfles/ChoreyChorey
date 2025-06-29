@@ -1011,8 +1011,9 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
           name="isPrivate"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
+              <div className="flex items-center">
                 <FormLabel className="flex items-center gap-2"><Lock />Privé taak</FormLabel>
+                <HelpTooltip content="Een privé taak is alleen zichtbaar voor de maker en de toegewezen personen." />
               </div>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -1025,8 +1026,9 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
           name="isSensitive"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
+              <div className="flex items-center">
                 <FormLabel className="flex items-center gap-2"><EyeOff />Gevoelige taak</FormLabel>
+                <HelpTooltip content="Gevoelige taken zijn alleen zichtbaar voor gebruikers met de 'Bekijk Gevoelige Data' permissie." />
               </div>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -1039,8 +1041,9 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
           name="helpNeeded"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
+              <div className="flex items-center">
                 <FormLabel className="flex items-center gap-2"><HandHeart />Hulp Gezocht</FormLabel>
+                <HelpTooltip content="Markeer deze taak om aan te geven dat je hulp nodig hebt. De taak verschijnt in de 'Hulp Gezocht' weergave op het dashboard." />
               </div>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
