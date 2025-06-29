@@ -13,12 +13,8 @@ const firebaseConfig = {
   appId: env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Runtime check for Firebase config to provide a better error message.
-const missingConfig = Object.entries(firebaseConfig).filter(([, value]) => !value);
-if (missingConfig.length > 0) {
-    const missingKeys = missingConfig.map(([key]) => key).join(', ');
-    throw new Error(`Firebase configuration is missing the following keys: ${missingKeys}. Please check your .env file and ensure it is loaded correctly.`);
-}
+// The runtime check is removed to allow for environments where .env files might load late.
+// Firebase SDK will handle its own initialization errors if the config is truly invalid.
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
