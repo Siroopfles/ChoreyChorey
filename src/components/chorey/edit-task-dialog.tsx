@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { TaskFormFields } from './task-form-fields';
 import { TaskComments } from './task-comments';
 import { TaskHistory } from './task-history';
+import { addCommentAction, markCommentAsReadAction } from '@/app/actions/comment.actions';
 
 
 type EditTaskDialogProps = {
@@ -37,8 +38,8 @@ type EditTaskDialogProps = {
 
 export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
-  const { updateTask, addComment, markCommentAsRead } = useTasks();
-  const { projects } = useAuth();
+  const { updateTask } = useTasks();
+  const { projects, user: currentUser, currentOrganization } = useAuth();
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -109,6 +110,17 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
     })
   }
 
+  const handleAddComment = (text: string) => {
+    if (!currentUser || !currentOrganization) return;
+    addCommentAction(task.id, text, currentUser.id, currentUser.name, currentOrganization.id);
+  }
+
+  const handleMarkCommentAsRead = (commentId: string) => {
+    if (!currentUser) return;
+    markCommentAsReadAction(task.id, commentId, currentUser.id);
+  }
+
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
@@ -151,8 +163,8 @@ export default function EditTaskDialog({ users, task, isOpen, setIsOpen }: EditT
                             taskId={task.id}
                             comments={task.comments}
                             users={users}
-                            addComment={addComment}
-                            markCommentAsRead={markCommentAsRead}
+                            addComment={handleAddComment}
+                            markCommentAsRead={handleMarkCommentAsRead}
                         />
                     </TabsContent>
                     <TabsContent value="history" className="flex-1 min-h-0 mt-2">

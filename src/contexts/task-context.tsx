@@ -26,6 +26,7 @@ import { addTemplate as addTemplateAction, updateTemplate as updateTemplateActio
 import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
 import * as TaskActions from '@/app/actions/task.actions';
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/gamification.actions';
+import { addCommentAction, markCommentAsReadAction } from '@/app/actions/comment.actions';
 import { addHours } from 'date-fns';
 import { useRouter } from 'next/navigation';
 
@@ -275,13 +276,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const addComment = async (taskId: string, text: string) => {
     if (!user || !currentOrganization) { handleError({ message: 'Je moet ingelogd zijn.' }, 'reageren'); return; }
-    const result = await TaskActions.addCommentAction(taskId, text, user.id, user.name, currentOrganization.id);
+    const result = await addCommentAction(taskId, text, user.id, user.name, currentOrganization.id);
     if (result.error) handleError({ message: result.error }, 'reageren');
   };
 
   const markCommentAsRead = async (taskId: string, commentId: string) => {
     if (!user) return;
-    await TaskActions.markCommentAsReadAction(taskId, commentId, user.id);
+    await markCommentAsReadAction(taskId, commentId, user.id);
   };
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {

@@ -12,7 +12,27 @@ import { useState } from 'react';
 import { FileUp } from 'lucide-react';
 import { addDays, addHours, isAfter } from 'date-fns';
 
-const TaskColumn = ({ title, tasks, users, currentUser, projects }: { title: string; tasks: Task[]; users: User[], currentUser: User | null, projects: Project[] }) => {
+const TaskColumn = ({ 
+  title, 
+  tasks, 
+  users, 
+  currentUser, 
+  projects, 
+  isBlockedMap, 
+  blockingTasksMap, 
+  relatedTasksMap, 
+  blockedByTasksMap 
+}: { 
+  title: string; 
+  tasks: Task[]; 
+  users: User[], 
+  currentUser: User | null, 
+  projects: Project[],
+  isBlockedMap: Map<string, boolean>,
+  blockingTasksMap: Map<string, Task[]>,
+  relatedTasksMap: Map<string, { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[]>,
+  blockedByTasksMap: Map<string, Task[]>,
+}) => {
   const { setNodeRef } = useDroppable({
     id: title,
   });
@@ -27,7 +47,19 @@ const TaskColumn = ({ title, tasks, users, currentUser, projects }: { title: str
       </div>
        <SortableContext id={title} items={tasks} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className="flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px]">
-            {tasks.map((task) => <SortableTaskCard key={task.id} task={task} users={users} currentUser={currentUser} projects={projects} />)}
+            {tasks.map((task) => (
+              <SortableTaskCard 
+                key={task.id} 
+                task={task} 
+                users={users} 
+                currentUser={currentUser} 
+                projects={projects}
+                isBlocked={isBlockedMap.get(task.id) || false}
+                blockingTasks={blockingTasksMap.get(task.id) || []}
+                relatedTasks={relatedTasksMap.get(task.id) || []}
+                blockedByTasks={blockedByTasksMap.get(task.id) || []}
+              />
+            ))}
             {tasks.length === 0 && (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground/80 pointer-events-none">
                 Sleep een taak hierheen.
@@ -50,9 +82,13 @@ type TaskColumnsProps = {
   groupBy: 'status' | 'assignee' | 'priority' | 'project';
   currentUser: User | null;
   projects: Project[];
+  isBlockedMap: Map<string, boolean>;
+  blockingTasksMap: Map<string, Task[]>;
+  relatedTasksMap: Map<string, { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[]>;
+  blockedByTasksMap: Map<string, Task[]>;
 };
 
-const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects }: TaskColumnsProps) => {
+const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBlockedMap, blockingTasksMap, relatedTasksMap, blockedByTasksMap }: TaskColumnsProps) => {
   const { tasks, updateTask, reorderTasks, addTask } = useTasks();
   const { toast } = useToast();
   const sensors = useSensors(
@@ -90,22 +126,7 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects }: Ta
 
     // Handle moving to a NEW column
     if (activeContainer !== overContainer) {
-      const isBlocked = activeTask.blockedBy?.some(blockerId => {
-        const blockerTask = tasks.find(t => t.id === blockerId);
-        if (!blockerTask) return false;
-        if (blockerTask.status !== 'Voltooid') return true;
-        
-        const dependencyConfig = activeTask.dependencyConfig?.[blockerId];
-        if (dependencyConfig && blockerTask.completedAt) {
-            const { lag, unit } = dependencyConfig;
-            const addFn = unit === 'hours' ? addHours : addDays;
-            const unlockDate = addFn(blockerTask.completedAt, lag);
-            return isAfter(unlockDate, new Date());
-        }
-        return false;
-      });
-
-      if (isBlocked && groupBy === 'status' && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
+      if (active.data.current?.isBlocked && groupBy === 'status' && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
         toast({
           title: 'Taak Geblokkeerd',
           description: 'Deze taak kan niet worden gestart omdat een afhankelijke taak nog niet is voltooid.',
@@ -204,7 +225,18 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects }: Ta
           <ScrollArea className="w-full h-full">
           <div className="flex gap-6 pb-4 h-full">
               {groupedTasks.map((group) => (
-                  <TaskColumn key={group.title} title={group.title} tasks={group.tasks} users={users} currentUser={currentUser} projects={projects} />
+                  <TaskColumn 
+                    key={group.title} 
+                    title={group.title} 
+                    tasks={group.tasks} 
+                    users={users} 
+                    currentUser={currentUser} 
+                    projects={projects}
+                    isBlockedMap={isBlockedMap}
+                    blockingTasksMap={blockingTasksMap}
+                    relatedTasksMap={relatedTasksMap}
+                    blockedByTasksMap={blockedByTasksMap}
+                  />
               ))}
           </div>
           <ScrollBar orientation="horizontal" />

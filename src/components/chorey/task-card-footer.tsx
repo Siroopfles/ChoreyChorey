@@ -67,7 +67,7 @@ type TaskCardFooterProps = {
     liveTime: number;
     blockedByTasks: Task[];
     blockingTasks: Task[];
-    relatedTasks: any[]; // Adjust type if more specific structure is needed
+    relatedTasks: { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[];
 };
 
 export function TaskCardFooter({
@@ -247,7 +247,7 @@ export function TaskCardFooter({
                         <TooltipContent>
                             <p className="font-semibold mb-1">Gerelateerde Taken:</p>
                             <ul className="list-disc list-inside text-xs space-y-1">
-                            {relatedTasks.map(relation => <li key={relation!.taskId}>{relation!.title} ({relation!.type === 'duplicate_of' ? 'duplicaat' : 'gerelateerd'})</li>)}
+                            {relatedTasks.map(relation => <li key={relation.taskId}>{relation.title} ({relation.type === 'duplicate_of' ? 'duplicaat' : 'gerelateerd'})</li>)}
                             </ul>
                         </TooltipContent>
                         </Tooltip>

@@ -10,9 +10,13 @@ type SortableTaskCardProps = {
     users: User[];
     currentUser: User | null;
     projects: Project[];
+    isBlocked: boolean;
+    blockingTasks: Task[];
+    relatedTasks: { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[];
+    blockedByTasks: Task[];
 }
 
-export function SortableTaskCard({ task, users, currentUser, projects }: SortableTaskCardProps) {
+export function SortableTaskCard({ task, users, currentUser, projects, isBlocked, blockingTasks, relatedTasks, blockedByTasks }: SortableTaskCardProps) {
     const {
         attributes,
         listeners,
@@ -20,7 +24,7 @@ export function SortableTaskCard({ task, users, currentUser, projects }: Sortabl
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: task.id });
+    } = useSortable({ id: task.id, data: { isBlocked } });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -29,7 +33,17 @@ export function SortableTaskCard({ task, users, currentUser, projects }: Sortabl
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <TaskCard task={task} users={users} isDragging={isDragging} currentUser={currentUser} projects={projects} />
+            <TaskCard 
+              task={task} 
+              users={users} 
+              isDragging={isDragging} 
+              currentUser={currentUser} 
+              projects={projects} 
+              isBlocked={isBlocked} 
+              blockingTasks={blockingTasks} 
+              relatedTasks={relatedTasks}
+              blockedByTasks={blockedByTasks}
+            />
         </div>
     );
 }

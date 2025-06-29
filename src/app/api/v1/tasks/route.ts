@@ -1,3 +1,4 @@
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, Timestamp, addDoc } from 'firebase/firestore';
@@ -5,6 +6,7 @@ import type { Status, Task } from '@/lib/types';
 import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
 import { serializeTask } from '@/lib/api-serializers';
+import { addHistoryEntry } from '@/lib/utils';
 
 
 const getTasksHandler = async (
@@ -52,7 +54,7 @@ const createTaskHandler = async (
     context: AuthenticatedApiHandlerContext,
     authResult: AuthenticatedApiHandlerAuthResult
 ) => {
-    const { organizationId } = authResult;
+    const { organizationId, creatorId } = authResult;
 
     try {
         const body = await request.json();
@@ -67,7 +69,7 @@ const createTaskHandler = async (
             status: body.status || 'Te Doen' as Status,
             priority: body.priority || 'Midden',
             assigneeIds: body.assigneeIds || [],
-            creatorId: 'api', // Identify tasks created via API
+            creatorId: creatorId,
             organizationId: organizationId,
             createdAt: new Date(),
             dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
@@ -76,13 +78,7 @@ const createTaskHandler = async (
             subtasks: body.subtasks || [],
             attachments: body.attachments || [],
             comments: [],
-            history: [{
-                id: crypto.randomUUID(),
-                userId: 'api',
-                timestamp: new Date(),
-                action: 'Aangemaakt',
-                details: 'via de API',
-            }],
+            history: [addHistoryEntry(creatorId, 'Aangemaakt', 'via de API')],
             isPrivate: body.isPrivate || false,
             completedAt: null,
             storyPoints: body.storyPoints || null,
