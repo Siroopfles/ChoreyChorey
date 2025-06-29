@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -12,16 +13,22 @@ import { db } from '@/lib/firebase';
 import { updateDoc, doc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { Team, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
+import { PERMISSIONS } from '@/lib/types';
 
 
 export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersInOrg: User[] }) {
     const { toast } = useToast();
+    const { currentUserPermissions } = useAuth();
     const [open, setOpen] = useState(false);
+    
+    const canManage = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEAMS);
 
     const usersInTeam = usersInOrg.filter(u => team.memberIds.includes(u.id));
     const usersNotInTeam = usersInOrg.filter(u => !team.memberIds.includes(u.id));
 
     const addUser = async (userId: string) => {
+        if (!canManage) return;
         const teamRef = doc(db, 'teams', team.id);
         try {
             await updateDoc(teamRef, { memberIds: arrayUnion(userId) });
@@ -33,6 +40,7 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
     };
 
     const removeUser = async (userId: string) => {
+        if (!canManage) return;
         const teamRef = doc(db, 'teams', team.id);
         try {
             await updateDoc(teamRef, { memberIds: arrayRemove(userId) });
@@ -51,7 +59,7 @@ export function ManageMembersPopover({ team, usersInOrg }: { team: Team, usersIn
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" size="sm"><UserPlus className="mr-2 h-4 w-4" /> Leden beheren</Button>
+                <Button variant="outline" size="sm" disabled={!canManage}><UserPlus className="mr-2 h-4 w-4" /> Leden beheren</Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
                 <Command>

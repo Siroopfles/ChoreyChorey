@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, type ReactNode } from 'react';
@@ -16,18 +17,15 @@ import { useAuth } from '@/contexts/auth-context';
 import { Separator } from '@/components/ui/separator';
 import { TemplateCard } from '@/components/chorey/templates/template-card';
 import { TemplateDialog } from '@/components/chorey/templates/template-dialog';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { PERMISSIONS, PERMISSIONS_DESCRIPTIONS } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { PERMISSIONS } from '@/lib/types';
+import { PermissionProtectedButton } from '@/components/ui/permission-protected-button';
 
 
 export default function TemplatesPage() {
   const { templates, loading } = useTasks();
-  const { users, currentUserPermissions } = useAuth();
+  const { users } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  const canManageTemplates = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEMPLATES);
-
   if (loading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -41,26 +39,12 @@ export default function TemplatesPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
         <div className="flex items-center justify-between">
           <h1 className="font-semibold text-lg md:text-2xl">Taaktemplates</h1>
-           <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span tabIndex={0}>
-                    <Button 
-                      onClick={() => canManageTemplates && setIsDialogOpen(true)} 
-                      disabled={!canManageTemplates} 
-                      className={cn(!canManageTemplates && 'pointer-events-none')}
-                    >
-                      <Plus className="mr-2 h-4 w-4" /> Nieuw Template
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!canManageTemplates && (
-                  <TooltipContent>
-                    <p>{PERMISSIONS_DESCRIPTIONS.MANAGE_TEMPLATES.name} permissie vereist.</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
+           <PermissionProtectedButton
+              requiredPermission={PERMISSIONS.MANAGE_TEMPLATES}
+              onClick={() => setIsDialogOpen(true)}
+           >
+              <Plus className="mr-2 h-4 w-4" /> Nieuw Template
+           </PermissionProtectedButton>
         </div>
 
         <Separator />
@@ -80,26 +64,12 @@ export default function TemplatesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-               <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={0}>
-                      <Button 
-                        onClick={() => canManageTemplates && setIsDialogOpen(true)} 
-                        disabled={!canManageTemplates}
-                        className={cn(!canManageTemplates && 'pointer-events-none')}
-                      >
-                        <Plus className="mr-2 h-4 w-4" /> Nieuw Template
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {!canManageTemplates && (
-                    <TooltipContent>
-                      <p>{PERMISSIONS_DESCRIPTIONS.MANAGE_TEMPLATES.name} permissie vereist.</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+               <PermissionProtectedButton
+                  requiredPermission={PERMISSIONS.MANAGE_TEMPLATES}
+                  onClick={() => setIsDialogOpen(true)}
+               >
+                  <Plus className="mr-2 h-4 w-4" /> Nieuw Template
+               </PermissionProtectedButton>
             </CardContent>
           </Card>
         )}

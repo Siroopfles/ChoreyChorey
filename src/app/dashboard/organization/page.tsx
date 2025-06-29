@@ -7,21 +7,19 @@ import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Shield, UserCheck, Plus, Briefcase, Users, Edit } from 'lucide-react';
 import type { Team } from '@/lib/types';
-import { PERMISSIONS, PERMISSIONS_DESCRIPTIONS } from '@/lib/types';
+import { PERMISSIONS } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { CreateOrganizationView } from '@/components/chorey/organization/create-organization-view';
 import { ProjectDialog } from '@/components/chorey/organization/project-dialog';
 import { ProjectCard } from '@/components/chorey/organization/project-card';
 import { InviteMembersDialog } from '@/components/chorey/organization/invite-members-dialog';
 import { MemberList } from '@/components/chorey/organization/member-list';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TeamDialog } from '@/components/chorey/organization/team-dialog';
 import { ManageMembersPopover } from '@/components/chorey/organization/manage-members-popover';
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import { useTasks } from '@/contexts/task-context';
+import { PermissionProtectedButton } from '@/components/ui/permission-protected-button';
 
 export default function OrganizationPage() {
     const { currentOrganization, loading: authLoading, currentUserPermissions, projects, teams, users: usersInOrg } = useAuth();
@@ -44,11 +42,6 @@ export default function OrganizationPage() {
     }
     
     const showRaci = currentOrganization.settings?.features?.raci !== false;
-    const canViewRaci = currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) && showRaci;
-    const canManageRoles = currentUserPermissions.includes(PERMISSIONS.MANAGE_ROLES);
-    const canInviteMembers = currentUserPermissions.includes(PERMISSIONS.MANAGE_MEMBERS);
-    const canManageProjects = currentUserPermissions.includes(PERMISSIONS.MANAGE_PROJECTS);
-    const canManageTeams = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEAMS);
 
     return (
         <>
@@ -56,48 +49,31 @@ export default function OrganizationPage() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <h1 className="font-semibold text-lg md:text-2xl">Organisatie Overzicht</h1>
                     <div className="flex items-center gap-2">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <span tabIndex={0}>
-                                        <Button asChild variant="outline" disabled={!canViewRaci} className={cn(!canViewRaci && 'pointer-events-none')}>
-                                            <Link href={canViewRaci ? "/dashboard/organization/raci" : "#"}>
-                                                <UserCheck className="mr-2 h-4 w-4" /> RACI Matrix
-                                            </Link>
-                                        </Button>
-                                    </span>
-                                </TooltipTrigger>
-                                {!canViewRaci && <TooltipContent><p>{PERMISSIONS_DESCRIPTIONS.VIEW_AUDIT_LOG.name} permissie vereist.</p></TooltipContent>}
-                            </Tooltip>
-                        </TooltipProvider>
+                        <PermissionProtectedButton
+                            requiredPermission={PERMISSIONS.VIEW_AUDIT_LOG}
+                            variant="outline"
+                            href="/dashboard/organization/raci"
+                            manualDisableCondition={!showRaci}
+                            manualDisableTooltip="De RACI Matrix feature is uitgeschakeld voor deze organisatie."
+                        >
+                            <UserCheck className="mr-2 h-4 w-4" /> RACI Matrix
+                        </PermissionProtectedButton>
+                        
+                        <PermissionProtectedButton
+                            requiredPermission={PERMISSIONS.MANAGE_ROLES}
+                            variant="outline"
+                            href="/dashboard/organization/roles"
+                        >
+                            <Shield className="mr-2 h-4 w-4" /> Rollen & Permissies
+                        </PermissionProtectedButton>
 
-                         <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <span tabIndex={0}>
-                                        <Button asChild variant="outline" disabled={!canManageRoles} className={cn(!canManageRoles && 'pointer-events-none')}>
-                                            <Link href={canManageRoles ? "/dashboard/organization/roles" : "#"}>
-                                                <Shield className="mr-2 h-4 w-4" /> Rollen & Permissies
-                                            </Link>
-                                        </Button>
-                                    </span>
-                                </TooltipTrigger>
-                                {!canManageRoles && <TooltipContent><p>{PERMISSIONS_DESCRIPTIONS.MANAGE_ROLES.name} permissie vereist.</p></TooltipContent>}
-                            </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <span tabIndex={0}>
-                                        <Button variant="outline" disabled={!canInviteMembers} onClick={() => canInviteMembers && setIsInviteOpen(true)} className={cn(!canInviteMembers && 'pointer-events-none')}>
-                                            <Plus className="mr-2 h-4 w-4" /> Leden Uitnodigen
-                                        </Button>
-                                    </span>
-                                </TooltipTrigger>
-                                {!canInviteMembers && <TooltipContent><p>{PERMISSIONS_DESCRIPTIONS.MANAGE_MEMBERS.name} permissie vereist.</p></TooltipContent>}
-                            </Tooltip>
-                        </TooltipProvider>
+                        <PermissionProtectedButton
+                            requiredPermission={PERMISSIONS.MANAGE_MEMBERS}
+                            variant="outline"
+                            onClick={() => setIsInviteOpen(true)}
+                        >
+                             <Plus className="mr-2 h-4 w-4" /> Leden Uitnodigen
+                        </PermissionProtectedButton>
                     </div>
                 </div>
 
@@ -107,18 +83,13 @@ export default function OrganizationPage() {
                     <div className="space-y-8">
                         <div className="flex items-center justify-between">
                           <h2 className="text-xl font-semibold flex items-center gap-2"><Briefcase/> Projecten</h2>
-                           <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span tabIndex={0}>
-                                            <Button size="sm" disabled={!canManageProjects} onClick={() => canManageProjects && setIsProjectDialogOpen(true)} className={cn(!canManageProjects && 'pointer-events-none')}>
-                                                <Plus className="mr-2 h-4 w-4" /> Nieuw Project
-                                            </Button>
-                                        </span>
-                                    </TooltipTrigger>
-                                    {!canManageProjects && <TooltipContent><p>{PERMISSIONS_DESCRIPTIONS.MANAGE_PROJECTS.name} permissie vereist.</p></TooltipContent>}
-                                </Tooltip>
-                            </TooltipProvider>
+                           <PermissionProtectedButton
+                                requiredPermission={PERMISSIONS.MANAGE_PROJECTS}
+                                size="sm"
+                                onClick={() => setIsProjectDialogOpen(true)}
+                            >
+                                <Plus className="mr-2 h-4 w-4" /> Nieuw Project
+                            </PermissionProtectedButton>
                         </div>
                          {projects.length > 0 ? (
                             <div className="grid gap-6 md:grid-cols-1">
@@ -133,36 +104,25 @@ export default function OrganizationPage() {
                                     <CardDescription>Maak je eerste project aan om taken te groeperen.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                     <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <span tabIndex={0}>
-                                                    <Button disabled={!canManageProjects} onClick={() => canManageProjects && setIsProjectDialogOpen(true)} className={cn(!canManageProjects && 'pointer-events-none')}>
-                                                        <Plus className="mr-2 h-4 w-4" /> Nieuw Project
-                                                    </Button>
-                                                </span>
-                                            </TooltipTrigger>
-                                            {!canManageProjects && <TooltipContent><p>{PERMISSIONS_DESCRIPTIONS.MANAGE_PROJECTS.name} permissie vereist.</p></TooltipContent>}
-                                        </Tooltip>
-                                    </TooltipProvider>
+                                     <PermissionProtectedButton
+                                        requiredPermission={PERMISSIONS.MANAGE_PROJECTS}
+                                        onClick={() => setIsProjectDialogOpen(true)}
+                                     >
+                                        <Plus className="mr-2 h-4 w-4" /> Nieuw Project
+                                     </PermissionProtectedButton>
                                 </CardContent>
                             </Card>
                         )}
 
                          <div className="flex items-center justify-between mt-8">
                             <h2 className="text-xl font-semibold flex items-center gap-2"><Users /> Teams</h2>
-                             <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span tabIndex={0}>
-                                            <Button size="sm" disabled={!canManageTeams} onClick={() => canManageTeams && setIsTeamDialogOpen(true)} className={cn(!canManageTeams && 'pointer-events-none')}>
-                                                <Plus className="mr-2 h-4 w-4" /> Nieuw Team
-                                            </Button>
-                                        </span>
-                                    </TooltipTrigger>
-                                    {!canManageTeams && <TooltipContent><p>{PERMISSIONS_DESCRIPTIONS.MANAGE_TEAMS.name} permissie vereist.</p></TooltipContent>}
-                                </Tooltip>
-                            </TooltipProvider>
+                             <PermissionProtectedButton
+                                requiredPermission={PERMISSIONS.MANAGE_TEAMS}
+                                size="sm"
+                                onClick={() => setIsTeamDialogOpen(true)}
+                             >
+                                <Plus className="mr-2 h-4 w-4" /> Nieuw Team
+                             </PermissionProtectedButton>
                          </div>
                          {teams.length > 0 ? (
                            <Card>
@@ -179,14 +139,16 @@ export default function OrganizationPage() {
                                             </Avatar>
                                         ))}
                                     </div>
-                                    {canManageTeams && (
+                                    <PermissionProtectedButton
+                                        requiredPermission={PERMISSIONS.MANAGE_TEAMS}
+                                    >
                                         <>
                                             <ManageMembersPopover team={team} usersInOrg={usersInOrg} />
                                             <TeamDialog team={team}>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4"/></Button>
                                             </TeamDialog>
                                         </>
-                                    )}
+                                    </PermissionProtectedButton>
                                    </div>
                                  </div>
                                ))}
