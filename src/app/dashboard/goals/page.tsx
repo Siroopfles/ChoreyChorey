@@ -21,7 +21,7 @@ export default function GoalsPage() {
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
 
-  const canManageChallenges = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEAMS); // Use a relevant permission
+  const canManageChallenges = currentUserPermissions.includes(PERMISSIONS.MANAGE_GOALS);
 
   return (
     <>

@@ -255,6 +255,9 @@ export const PERMISSIONS = {
   MANAGE_TIME_TRACKING_INTEGRATIONS: 'MANAGE_TIME_TRACKING_INTEGRATIONS',
   MANAGE_IP_WHITELIST: 'MANAGE_IP_WHITELIST',
   PIN_ITEMS: 'PIN_ITEMS',
+  MANAGE_AUTOMATIONS: 'MANAGE_AUTOMATIONS',
+  MANAGE_WEBHOOKS: 'MANAGE_WEBHOOKS',
+  MANAGE_GOALS: 'MANAGE_GOALS',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -279,6 +282,9 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS]: { name: 'Tijdregistratie Integraties Beheren', description: 'Kan integraties met tijdregistratietools zoals Toggl configureren.' },
   [PERMISSIONS.MANAGE_IP_WHITELIST]: { name: 'IP Whitelist Beheren', description: 'Kan de lijst met toegestane IP-adressen voor de organisatie beheren.' },
   [PERMISSIONS.PIN_ITEMS]: { name: 'Items Vastpinnen', description: 'Kan taken en projecten vastpinnen in de zijbalk voor iedereen in de organisatie.' },
+  [PERMISSIONS.MANAGE_AUTOMATIONS]: { name: 'Automatiseringen Beheren', description: 'Kan automatiseringen voor de organisatie aanmaken, bewerken en verwijderen.' },
+  [PERMISSIONS.MANAGE_WEBHOOKS]: { name: 'Webhooks Beheren', description: 'Kan webhooks voor de organisatie aanmaken, bewerken en verwijderen.' },
+  [PERMISSIONS.MANAGE_GOALS]: { name: 'Doelen & Uitdagingen Beheren', description: 'Kan team-brede uitdagingen aanmaken, bewerken en verwijderen.' },
 };
 
 export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permission[] }> = {
@@ -308,6 +314,9 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS,
       PERMISSIONS.MANAGE_IP_WHITELIST,
       PERMISSIONS.PIN_ITEMS,
+      PERMISSIONS.MANAGE_AUTOMATIONS,
+      PERMISSIONS.MANAGE_WEBHOOKS,
+      PERMISSIONS.MANAGE_GOALS,
     ],
   },
   [ROLE_MEMBER]: {
@@ -885,18 +894,6 @@ export const API_PERMISSIONS = {
 
 export type ApiPermission = keyof typeof API_PERMISSIONS;
 
-export type ApiKey = {
-  id: string;
-  organizationId: string;
-  creatorId: string;
-  name: string;
-  hashedKey: string;
-  keyPrefix: string;
-  createdAt: Date;
-  lastUsed?: Date;
-  permissions: ApiPermission[];
-};
-
 export const AUTOMATION_TRIGGER_TYPES = {
   'task.created': 'Taak Aangemaakt',
   'task.status.changed': 'Status van taak gewijzigd',
@@ -965,3 +962,4 @@ export type Phase = {
   description: string;
   features: Feature[];
 };
+

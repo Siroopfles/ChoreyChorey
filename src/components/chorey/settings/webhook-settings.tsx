@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,7 +22,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 
 export default function WebhookSettings() {
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, user } = useAuth();
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -58,8 +59,8 @@ export default function WebhookSettings() {
   };
   
   const handleDelete = async (webhookId: string) => {
-    if (!currentOrganization) return;
-    const result = await manageWebhook('delete', currentOrganization.id, { webhookId });
+    if (!currentOrganization || !user) return;
+    const result = await manageWebhook('delete', currentOrganization.id, user.id, { webhookId });
     if (result.error) {
       toast({ title: "Fout bij verwijderen", description: result.error, variant: 'destructive' });
     } else {
@@ -68,8 +69,8 @@ export default function WebhookSettings() {
   };
 
   const handleRegenerateSecret = async () => {
-    if (!secretDialog.webhook) return;
-    const result = await regenerateWebhookSecret(secretDialog.webhook.id);
+    if (!secretDialog.webhook || !user) return;
+    const result = await regenerateWebhookSecret(secretDialog.webhook.id, user.id);
      if (result.error) {
       toast({ title: "Fout bij genereren", description: result.error, variant: 'destructive' });
     } else {

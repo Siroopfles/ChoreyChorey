@@ -16,8 +16,7 @@ export async function manageAutomation(
     data?: AutomationFormValues;
   }
 ): Promise<{ data: { success: boolean } | null; error: string | null }> {
-  // For now, let's tie this to a high-level permission.
-  if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ORGANIZATION)) {
+  if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_AUTOMATIONS)) {
     return { data: null, error: 'Geen permissie om automatiseringen te beheren.' };
   }
 

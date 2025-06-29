@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -21,7 +22,7 @@ export function ChallengeCard({ challenge }: { challenge: TeamChallenge }) {
   const { teams, users: allUsers, currentUserPermissions } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   
-  const canManageChallenges = currentUserPermissions.includes(PERMISSIONS.MANAGE_TEAMS);
+  const canManageChallenges = currentUserPermissions.includes(PERMISSIONS.MANAGE_GOALS);
 
   const { team, progress, current, metricLabel } = useMemo(() => {
     const team = teams.find(t => t.id === challenge.teamId);

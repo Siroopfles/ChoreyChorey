@@ -25,7 +25,7 @@ interface WebhookDialogProps {
 }
 
 export function WebhookDialog({ isOpen, setIsOpen, webhook }: WebhookDialogProps) {
-  const { currentOrganization } = useAuth();
+  const { currentOrganization, user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -43,10 +43,10 @@ export function WebhookDialog({ isOpen, setIsOpen, webhook }: WebhookDialogProps
   }, [webhook, isOpen, form]);
 
   const onSubmit = async (data: WebhookFormValues) => {
-    if (!currentOrganization) return;
+    if (!currentOrganization || !user) return;
     setIsSubmitting(true);
     const action = webhook ? 'update' : 'create';
-    const result = await manageWebhook(action, currentOrganization.id, {
+    const result = await manageWebhook(action, currentOrganization.id, user.id, {
       webhookId: webhook?.id,
       data,
     });
