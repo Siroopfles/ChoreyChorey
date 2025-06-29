@@ -541,6 +541,7 @@ export type Task = {
   history: HistoryEntry[];
   isPrivate: boolean;
   isSensitive?: boolean;
+  isBlocked?: boolean;
   createdAt: Date;
   completedAt?: Date;
   order: number;
@@ -663,6 +664,7 @@ export const taskFormSchema = z.object({
     })).optional(),
   isPrivate: z.boolean().default(false),
   isSensitive: z.boolean().default(false),
+  isBlocked: z.boolean().optional(),
   helpNeeded: z.boolean().default(false),
   storyPoints: z.coerce.number().optional(),
   cost: z.coerce.number().optional(),

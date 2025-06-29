@@ -1,4 +1,5 @@
 
+
 'use client';
 import type { User, Task, Project, Priority } from '@/lib/types';
 import { useTasks } from '@/contexts/task-context';
@@ -8,10 +9,11 @@ import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, re
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FileUp, Loader2 } from 'lucide-react';
 import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
 import { useInView } from 'react-intersection-observer';
+import { useOrganization } from '@/contexts/organization-context';
 
 const TaskColumn = ({ 
   title, 
@@ -19,24 +21,57 @@ const TaskColumn = ({
   users, 
   currentUser, 
   projects, 
-  isBlockedMap, 
-  blockingTasksMap, 
-  relatedTasksMap, 
-  blockedByTasksMap 
+  allTasks
 }: { 
   title: string; 
   tasks: Task[]; 
   users: User[], 
   currentUser: User | null, 
   projects: Project[],
-  isBlockedMap: Map<string, boolean>,
-  blockingTasksMap: Map<string, Task[]>,
-  relatedTasksMap: Map<string, { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[]>,
-  blockedByTasksMap: Map<string, Task[]>,
+  allTasks: Task[],
 }) => {
   const { setNodeRef } = useDroppable({
     id: title,
   });
+
+  // Calculate dependencies based on currently loaded tasks
+  const { blockingTasksMap, relatedTasksMap, blockedByTasksMap } = useMemo(() => {
+    const blockingTasksMap = new Map<string, Task[]>();
+    const relatedTasksMap = new Map<string, { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[]>();
+    const blockedByTasksMap = new Map<string, Task[]>();
+
+    for (const task of allTasks) {
+      if (task.blockedBy?.length) {
+        task.blockedBy.forEach(blockerId => {
+          if (!blockingTasksMap.has(blockerId)) {
+            blockingTasksMap.set(blockerId, []);
+          }
+          blockingTasksMap.get(blockerId)!.push(task);
+        });
+        
+        blockedByTasksMap.set(task.id, task.blockedBy.map(id => allTasks.find(t => t.id === id)).filter(Boolean) as Task[]);
+      }
+
+      if (task.relations?.length) {
+        task.relations.forEach(relation => {
+           // Link this task to the related one
+          if (!relatedTasksMap.has(relation.taskId)) {
+            relatedTasksMap.set(relation.taskId, []);
+          }
+          const reverseType = relation.type === 'duplicate_of' ? 'duplicate_of' : 'related_to';
+          relatedTasksMap.get(relation.taskId)!.push({ taskId: task.id, type: reverseType, title: task.title });
+
+          // Link the related one to this task
+          if (!relatedTasksMap.has(task.id)) {
+            relatedTasksMap.set(task.id, []);
+          }
+          const relatedTask = allTasks.find(t => t.id === relation.taskId);
+          relatedTasksMap.get(task.id)!.push({ ...relation, title: relatedTask?.title });
+        });
+      }
+    }
+    return { blockingTasksMap, relatedTasksMap, blockedByTasksMap };
+  }, [allTasks]);
 
   return (
     <div className="flex flex-col w-[320px] shrink-0 h-full">
@@ -61,7 +96,6 @@ const TaskColumn = ({
                 users={users} 
                 currentUser={currentUser} 
                 projects={projects}
-                isBlocked={isBlockedMap.get(task.id) || false}
                 blockingTasks={blockingTasksMap.get(task.id) || []}
                 relatedTasks={relatedTasksMap.get(task.id) || []}
                 blockedByTasks={blockedByTasksMap.get(task.id) || []}
@@ -87,19 +121,14 @@ type GroupedTasks = {
 }
 
 type TaskColumnsProps = {
-  users: User[];
   groupedTasks: GroupedTasks[];
   groupBy: 'status' | 'assignee' | 'priority' | 'project';
-  currentUser: User | null;
-  projects: Project[];
-  isBlockedMap: Map<string, boolean>;
-  blockingTasksMap: Map<string, Task[]>;
-  relatedTasksMap: Map<string, { taskId: string; type: "related_to" | "duplicate_of"; title?: string }[]>;
-  blockedByTasksMap: Map<string, Task[]>;
 };
 
-const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBlockedMap, blockingTasksMap, relatedTasksMap, blockedByTasksMap }: TaskColumnsProps) => {
+const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
   const { tasks, updateTask, reorderTasks, addTask, loadMoreTasks, hasMoreTasks, isMoreLoading } = useTasks();
+  const { users, projects } = useOrganization();
+  const { user: currentUser } = useAuth();
   const { toast } = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -146,7 +175,7 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBl
     if (!activeTask) return;
 
     if (activeContainer !== overContainer) {
-      if (active.data.current?.isBlocked && groupBy === 'status' && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
+      if (activeTask.isBlocked && groupBy === 'status' && ['In Uitvoering', 'In Review', 'Voltooid'].includes(overContainer)) {
         toast({
           title: 'Taak Geblokkeerd',
           description: 'Deze taak kan niet worden gestart omdat een afhankelijke taak nog niet is voltooid.',
@@ -215,8 +244,8 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBl
 
     let successCount = 0;
     for (const file of files) {
-      const success = await addTask({ title: file.name });
-      if (success) {
+      const result = await addTask({ title: file.name });
+      if (result) {
         successCount++;
       }
     }
@@ -252,10 +281,7 @@ const TaskColumns = ({ users, groupedTasks, groupBy, currentUser, projects, isBl
                     users={users} 
                     currentUser={currentUser} 
                     projects={projects}
-                    isBlockedMap={isBlockedMap}
-                    blockingTasksMap={blockingTasksMap}
-                    relatedTasksMap={relatedTasksMap}
-                    blockedByTasksMap={blockedByTasksMap}
+                    allTasks={tasks}
                   />
               ))}
               {hasMoreTasks && (
