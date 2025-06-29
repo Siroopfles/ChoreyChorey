@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, Project, Task, SuggestPriorityOutput, CustomFieldDefinition, TaskRelation, TaskRelationType } from '@/lib/types';
@@ -19,7 +20,7 @@ import { Calendar as CalendarIcon, User as UserIcon, PlusCircle, Trash2, Bot, Lo
 import { TaskAssignmentSuggestion } from './task-assignment-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { handleSuggestSubtasks, handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels, handleFindDuplicateTask, handleSuggestProactiveHelp } from '@/app/actions/ai.actions';
+import { handleSuggestStoryPoints, handleGenerateTaskImage, handleSuggestPriority, handleIdentifyRisk, handleSuggestLabels, handleFindDuplicateTask, handleSuggestProactiveHelp } from '@/app/actions/ai.actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -41,6 +42,7 @@ import { useTasks } from '@/contexts/task-context';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 import { submitAiFeedback } from '@/app/actions/feedback.actions';
 import { HelpTooltip } from '../ui/help-tooltip';
+import { TaskFormSubtasks } from './task-form/TaskFormSubtasks';
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -171,7 +173,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const { toast } = useToast();
   const form = useFormContext();
   const { user, currentOrganization, teams } = useAuth();
-  const { tasks, promoteSubtaskToTask } = useTasks();
+  const { tasks } = useTasks();
   const status = form.watch('status');
   const isPrivate = form.watch('isPrivate');
 
@@ -180,7 +182,6 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const customFields = currentOrganization?.settings?.customization?.customFields || [];
   const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
 
-  const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false);
   const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
   const [pointsSuggestion, setPointsSuggestion] = useState<SuggestStoryPointsOutput | null>(null);
   const [pointsFeedbackGiven, setPointsFeedbackGiven] = useState(false);
@@ -196,11 +197,6 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   
   const [proactiveHelp, setProactiveHelp] = useState<SuggestProactiveHelpOutput | null>(null);
   const [isCheckingComplexity, setIsCheckingComplexity] = useState(false);
-
-  const { fields: subtaskFields, append: appendSubtask, remove: removeSubtask } = useFieldArray({
-    control: form.control,
-    name: "subtasks",
-  });
 
   const { fields: attachmentFields, append: appendAttachment, remove: removeAttachment } = useFieldArray({
     control: form.control,
@@ -293,25 +289,6 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
     });
 
     toast({ title: 'Feedback ontvangen!', description: 'Bedankt voor je hulp om de AI te verbeteren.' });
-  };
-
-
-  const onSuggestSubtasks = async () => {
-    const title = form.getValues('title');
-    const description = form.getValues('description');
-    if (!title) {
-        toast({ title: 'Titel vereist', description: 'Voer een titel in om subtaken te kunnen genereren.', variant: 'destructive' });
-        return;
-    }
-    setIsSuggestingSubtasks(true);
-    const result = await handleSuggestSubtasks(title, description);
-    if (result.error) {
-        toast({ title: 'Fout bij suggereren', description: result.error, variant: 'destructive' });
-    } else if (result.subtasks) {
-        result.subtasks.forEach(subtask => appendSubtask({ text: subtask, isPrivate: false }));
-        toast({ title: 'Subtaken toegevoegd!', description: `${result.subtasks.length} subtaken zijn door AI gegenereerd.` });
-    }
-    setIsSuggestingSubtasks(false);
   };
   
   const onSuggestStoryPoints = async () => {
@@ -530,12 +507,6 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
           <AlertDescription>
             {proactiveHelp.reason}
             <div className="mt-2">
-              {proactiveHelp.suggestionType === 'subtasks' && (
-                <Button type="button" size="sm" onClick={onSuggestSubtasks} disabled={isSuggestingSubtasks}>
-                  {isSuggestingSubtasks ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
-                  Genereer Subtaken
-                </Button>
-              )}
               {proactiveHelp.suggestionType === 'story_points' && (
                 <Button type="button" size="sm" onClick={onSuggestStoryPoints} disabled={isSuggestingPoints}>
                   {isSuggestingPoints ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
@@ -1427,70 +1398,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
       
        <Separator />
 
-      <div>
-        <UiLabel>Subtaken</UiLabel>
-        <div className="space-y-2 mt-2">
-          {subtaskFields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-2">
-                <FormField
-                    control={form.control}
-                    name={`subtasks.${index}.isPrivate`}
-                    render={({ field }) => (
-                        <FormItem>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <FormControl>
-                                            <Switch
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                                className="data-[state=checked]:bg-yellow-500"
-                                                aria-label="Markeer subtaak als privé"
-                                            />
-                                        </FormControl>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Markeer als privé subtaak</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name={`subtasks.${index}.text`}
-                    render={({ field }) => (
-                        <Input {...field} placeholder="Beschrijf subtaak..."/>
-                    )}
-                />
-                {task && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const subtask = task.subtasks[index];
-                      if (task && subtask) {
-                        promoteSubtaskToTask(task.id, subtask);
-                      }
-                    }}
-                    aria-label="Promoveer subtaak naar nieuwe taak"
-                  >
-                    <CornerUpRight className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeSubtask(index)} aria-label="Verwijder subtaak">
-                    <Trash2 className="h-4 w-4 text-destructive"/>
-                </Button>
-            </div>
-          ))}
-          <Button type="button" variant="outline" size="sm" onClick={onSuggestSubtasks} disabled={isSuggestingSubtasks}>
-            {isSuggestingSubtasks ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
-            Suggesteer subtaken (AI)
-          </Button>
-        </div>
-      </div>
+      <TaskFormSubtasks task={task} />
     </div>
   );
 }
