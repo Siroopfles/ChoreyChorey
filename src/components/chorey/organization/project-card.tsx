@@ -27,6 +27,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { InviteGuestDialog } from './invite-guest-dialog';
+import { PermissionProtectedButton } from '@/components/ui/permission-protected-button';
 
 
 export function ProjectCard({ project, allTeams, allTasks }: { project: Project, usersInOrg: User[], allTeams: Team[], allTasks: Task[] }) {
@@ -114,37 +115,42 @@ export function ProjectCard({ project, allTeams, allTasks }: { project: Project,
                                 </Tooltip>
                             </TooltipProvider>
                          )}
-                         {canManageProjects && (
-                            <AlertDialog>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8"><Medal className="h-4 w-4 text-amber-500"/></Button>
-                                            </AlertDialogTrigger>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>Project Voltooien</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Weet u het zeker?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Dit zal het project '{project.name}' als voltooid markeren en een prestatie-badge toekennen aan alle leden van de toegewezen teams. Deze actie kan niet ongedaan worden gemaakt.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleCompleteProject} disabled={isCompleting}>
-                                            {isCompleting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                            Ja, voltooi project
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
+                         <AlertDialog>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <AlertDialogTrigger asChild>
+                                            <PermissionProtectedButton 
+                                                requiredPermission={PERMISSIONS.MANAGE_PROJECTS}
+                                                variant="ghost" size="icon" className="h-8 w-8"
+                                            >
+                                                <Medal className="h-4 w-4 text-amber-500"/>
+                                            </PermissionProtectedButton>
+                                        </AlertDialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Project Voltooien</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Weet u het zeker?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Dit zal het project '{project.name}' als voltooid markeren en een prestatie-badge toekennen aan alle leden van de toegewezen teams. Deze actie kan niet ongedaan worden gemaakt.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleCompleteProject} disabled={isCompleting}>
+                                        {isCompleting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                        Ja, voltooi project
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                         <ProjectDialog organizationId={project.organizationId} project={project} allTeams={allTeams}>
-                           <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4"/></Button>
+                           <PermissionProtectedButton requiredPermission={PERMISSIONS.MANAGE_PROJECTS} variant="ghost" size="icon" className="h-8 w-8">
+                                <Edit className="h-4 w-4"/>
+                           </PermissionProtectedButton>
                         </ProjectDialog>
                     </div>
                 </div>
