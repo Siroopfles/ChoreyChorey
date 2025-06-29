@@ -13,8 +13,11 @@ const firebaseConfig = {
   appId: env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// The runtime check is removed to allow for environments where .env files might load late.
-// Firebase SDK will handle its own initialization errors if the config is truly invalid.
+// For easier debugging in the development environment
+if (process.env.NODE_ENV === 'development') {
+    console.log("Firebase Config:", firebaseConfig);
+}
+
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
