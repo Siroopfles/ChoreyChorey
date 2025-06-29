@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Loader2, Save, Github } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
@@ -17,9 +19,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 const githubSchema = z.object({
-  owner: z.string().min(1, 'Eigenaar is vereist.'),
-  repos: z.string().min(1, 'Minstens één repository is vereist.'),
+  enabled: z.boolean().default(false),
+  owner: z.string().optional(),
+  repos: z.string().optional(),
+}).refine(data => !data.enabled || (data.enabled && data.owner && data.repos), {
+  message: 'Eigenaar en Repositories zijn vereist als de integratie is ingeschakeld.',
+  path: ['owner'],
 });
+
 type GithubFormValues = z.infer<typeof githubSchema>;
 
 export default function GitHubSettings({ organization }: { organization: Organization }) {
@@ -30,10 +37,13 @@ export default function GitHubSettings({ organization }: { organization: Organiz
   const form = useForm<GithubFormValues>({
     resolver: zodResolver(githubSchema),
     values: {
+      enabled: !!organization.settings?.github,
       owner: organization.settings?.github?.owner || '',
       repos: (organization.settings?.github?.repos || []).join(', '),
     },
   });
+  
+  const isEnabled = form.watch('enabled');
 
   const onSubmit = async (data: GithubFormValues) => {
     if (!user) return;
@@ -41,10 +51,10 @@ export default function GitHubSettings({ organization }: { organization: Organiz
     
     const newSettings = {
         ...organization.settings,
-        github: {
-            owner: data.owner,
-            repos: data.repos.split(',').map(r => r.trim()).filter(Boolean),
-        }
+        github: data.enabled ? {
+            owner: data.owner!,
+            repos: data.repos!.split(',').map(r => r.trim()).filter(Boolean),
+        } : undefined,
     };
 
     const result = await updateOrganization(organization.id, user.id, { settings: newSettings });
@@ -77,35 +87,52 @@ export default function GitHubSettings({ organization }: { organization: Organiz
         </Alert>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                 <FormField
-                    control={form.control}
-                    name="owner"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Eigenaar</FormLabel>
-                        <FormControl>
-                            <Input placeholder="bijv. 'microsoft'" {...field} />
-                        </FormControl>
-                         <FormDescription>De eigenaar van de repositories (gebruiker of organisatie).</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 <FormField
                     control={form.control}
-                    name="repos"
+                    name="enabled"
                     render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Repositories</FormLabel>
-                        <FormControl>
-                            <Input placeholder="bijv. 'vscode, typescript'" {...field} />
-                        </FormControl>
-                        <FormDescription>Een komma-gescheiden lijst van repository namen.</FormDescription>
-                        <FormMessage />
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base">GitHub Integratie Inschakelen</FormLabel>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
                         </FormItem>
                     )}
                 />
-                
+                {isEnabled && (
+                  <div className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="owner"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Eigenaar</FormLabel>
+                            <FormControl>
+                                <Input placeholder="bijv. 'microsoft'" {...field} />
+                            </FormControl>
+                            <FormDescription>De eigenaar van de repositories (gebruiker of organisatie).</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="repos"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Repositories</FormLabel>
+                            <FormControl>
+                                <Input placeholder="bijv. 'vscode, typescript'" {...field} />
+                            </FormControl>
+                            <FormDescription>Een komma-gescheiden lijst van repository namen.</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                  </div>
+                )}
                 <div className="flex justify-end">
                     <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}

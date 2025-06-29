@@ -10,12 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe, Clock } from 'lucide-react';
+import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/organization.actions';
 import type { Organization } from '@/lib/types';
-import { JiraIcon, BitbucketIcon, ClockifyIcon, GitLabIcon } from '../provider-icons';
-
 
 const featureSchema = z.object({
   gamification: z.boolean().default(true),
@@ -26,11 +24,6 @@ const featureSchema = z.object({
   ideas: z.boolean().default(true),
   raci: z.boolean().default(true),
   publicSharing: z.boolean().default(true),
-  toggl: z.boolean().default(false),
-  clockify: z.boolean().default(false),
-  jira: z.boolean().default(false),
-  gitlab: z.boolean().default(false),
-  bitbucket: z.boolean().default(false),
 });
 type FeatureFormValues = z.infer<typeof featureSchema>;
 
@@ -68,11 +61,6 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       ideas: organization.settings?.features?.ideas ?? true,
       raci: organization.settings?.features?.raci ?? true,
       publicSharing: organization.settings?.features?.publicSharing ?? true,
-      toggl: organization.settings?.features?.toggl ?? false,
-      clockify: organization.settings?.features?.clockify ?? false,
-      jira: organization.settings?.features?.jira ?? false,
-      gitlab: organization.settings?.features?.gitlab ?? false,
-      bitbucket: organization.settings?.features?.bitbucket ?? false,
     },
   });
 
@@ -108,19 +96,14 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       { name: 'mentorship', icon: HeartHandshake, label: 'Mentorschap', description: 'Activeer de mentorschapspagina waar gebruikers elkaar kunnen vinden.' },
       { name: 'raci', icon: UserCheck, label: 'RACI Matrix', description: 'Activeer de RACI-matrix voor een overzicht van verantwoordelijkheden.' },
       { name: 'publicSharing', icon: Globe, label: 'Publiek Delen', description: 'Sta toe dat projecten openbaar gedeeld kunnen worden via een link.' },
-      { name: 'toggl', icon: Clock, label: 'Toggl Integratie', description: 'Sta gebruikers toe om hun Toggl-account te koppelen voor tijdregistratie.' },
-      { name: 'clockify', icon: () => <ClockifyIcon className="h-6 w-6" />, label: 'Clockify Integratie', description: 'Sta gebruikers toe om hun Clockify-account te koppelen voor tijdregistratie.' },
-      { name: 'jira', icon: () => <JiraIcon className="h-6 w-6 text-[#0052CC]" />, label: 'Jira Integratie', description: 'Sta toe dat taken gekoppeld worden aan Jira issues.' },
-      { name: 'gitlab', icon: () => <GitLabIcon className="h-6 w-6" />, label: 'GitLab Integratie', description: 'Sta toe dat taken gekoppeld worden aan GitLab issues en MRs.' },
-      { name: 'bitbucket', icon: () => <BitbucketIcon className="h-6 w-6 text-blue-600" />, label: 'Bitbucket Integratie', description: 'Sta toe dat taken gekoppeld worden aan Bitbucket issues.' },
   ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Feature Toggles</CardTitle>
+        <CardTitle>Core Features</CardTitle>
         <CardDescription>
-          Schakel individuele modules aan of uit voor de hele organisatie.
+          Schakel individuele Chorey-modules aan of uit voor de hele organisatie.
         </CardDescription>
       </CardHeader>
       <CardContent>

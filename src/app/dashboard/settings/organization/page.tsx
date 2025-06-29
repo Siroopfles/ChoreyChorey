@@ -7,9 +7,6 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import OrganizationSettings from '@/components/chorey/settings/organization-settings';
 import DangerZone from '@/components/chorey/settings/danger-zone';
 import WorkflowSettings from '@/components/chorey/settings/workflow-settings';
-import FeatureToggleSettings from '@/components/chorey/settings/feature-toggle-settings';
-import BrandingSettings from '@/components/chorey/settings/branding-settings';
-import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
 import WebhookSettings from '@/components/chorey/settings/webhook-settings';
 import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
 import { PERMISSIONS } from '@/lib/types';
@@ -17,11 +14,11 @@ import LimitSettings from '@/components/chorey/settings/limit-settings';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import CustomFieldsSettings from '@/components/chorey/settings/custom-fields-settings';
-import SessionPolicySettings from '@/components/chorey/settings/session-policy-settings';
-import IpWhitelistSettings from '@/components/chorey/settings/ip-whitelist-settings';
+import AnnouncementSettings from '@/components/chorey/settings/announcement-settings';
+
 
 export default function OrganizationSettingsPage() {
-  const { user, loading: authLoading, currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
+  const { user, loading: authLoading, currentOrganization, currentUserPermissions } = useAuth();
 
   if (authLoading || !user) {
     return (
@@ -31,9 +28,8 @@ export default function OrganizationSettingsPage() {
     );
   }
 
-  const isOwnerOrAdmin = currentUserRole === 'Owner' || currentUserRole === 'Admin';
+  const canManageOrg = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
   const canManageApiKeys = currentUserPermissions.includes(PERMISSIONS.MANAGE_API_KEYS);
-  const canManageIpWhitelist = currentUserPermissions.includes(PERMISSIONS.MANAGE_IP_WHITELIST);
   
   if (!currentOrganization) {
     return (
@@ -43,7 +39,7 @@ export default function OrganizationSettingsPage() {
     )
   }
 
-  if (!isOwnerOrAdmin) {
+  if (!canManageOrg) {
     return (
         <div className="text-center">
             <p>U heeft geen permissie om de organisatie-instellingen te bekijken.</p>
@@ -65,15 +61,11 @@ export default function OrganizationSettingsPage() {
 
         <OrganizationSettings organization={currentOrganization} />
         <AnnouncementSettings organization={currentOrganization} />
-        <BrandingSettings organization={currentOrganization} />
-        <SessionPolicySettings organization={currentOrganization} />
-        {canManageIpWhitelist && <IpWhitelistSettings organization={currentOrganization} />}
         <LimitSettings organization={currentOrganization} />
         <WebhookSettings />
         {canManageApiKeys && <ApiKeySettings />}
         <WorkflowSettings organization={currentOrganization} />
         <CustomFieldsSettings organization={currentOrganization} />
-        <FeatureToggleSettings organization={currentOrganization} />
         <DangerZone
             organization={currentOrganization}
             isOwner={currentOrganization.ownerId === user.id}

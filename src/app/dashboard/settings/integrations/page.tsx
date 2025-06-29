@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -16,6 +15,9 @@ import DiscordSettings from '@/components/chorey/settings/discord-settings';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import GitLabSettings from '@/components/chorey/settings/gitlab-settings';
 import BitbucketSettings from '@/components/chorey/settings/bitbucket-settings';
+import JiraSettings from '@/components/chorey/settings/jira-settings';
+import TogglOrgSettings from '@/components/chorey/settings/toggl-org-settings';
+import ClockifyOrgSettings from '@/components/chorey/settings/clockify-org-settings';
 
 export default function IntegrationsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserPermissions } = useAuth();
@@ -97,8 +99,16 @@ export default function IntegrationsPage() {
         <GitHubSettings organization={currentOrganization} />
         <GitLabSettings organization={currentOrganization} />
         <BitbucketSettings organization={currentOrganization} />
+        <JiraSettings organization={currentOrganization} />
         <TeamsSettings organization={currentOrganization} />
         <DiscordSettings organization={currentOrganization} />
+
+        <Separator />
+        
+        <h2 className="text-xl font-semibold">Tijdregistratie Integraties</h2>
+        <TogglOrgSettings organization={currentOrganization} />
+        <ClockifyOrgSettings organization={currentOrganization} />
+
 
         <Separator />
 
