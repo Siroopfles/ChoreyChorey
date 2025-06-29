@@ -5,7 +5,7 @@
 import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider, useTasks } from '@/contexts/task-context';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap, MessageSquare, Pin, Briefcase } from 'lucide-react';
 import {
   SidebarProvider,
@@ -30,6 +30,7 @@ import { PERMISSIONS } from '@/lib/types';
 import { TourProvider } from '@/contexts/tour-context';
 import { IdeaProvider } from '@/contexts/idea-context';
 import { GoalProvider } from '@/contexts/goal-context';
+import { ShortcutHelpDialog } from '@/components/chorey/shortcut-help-dialog';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useAuth();
@@ -61,11 +62,12 @@ const UserCosmeticStyle = () => {
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
     const { tasks, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, setFilters } = useTasks();
-    const { currentUserRole, currentOrganization, users, currentUserPermissions, projects } = useAuth();
+    const { currentUserRole, currentOrganization, users, currentUserPermissions, projects, toggleTaskPin } = useAuth();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
     const announcement = currentOrganization?.settings?.announcement;
+    const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
     
     const isGuest = currentUserRole === 'Guest';
     const features = currentOrganization?.settings?.features;
@@ -127,6 +129,14 @@ function AppShell({ children }: { children: React.ReactNode }) {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
                 setIsAddTaskDialogOpen(true);
+            }
+            if (e.key === '?') {
+                const target = e.target as HTMLElement;
+                if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+                    return;
+                }
+                e.preventDefault();
+                setIsShortcutHelpOpen(true);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -261,6 +271,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                   users={users}
                 />
             )}
+            <ShortcutHelpDialog open={isShortcutHelpOpen} onOpenChange={setIsShortcutHelpOpen} />
         </SidebarProvider>
     );
 }
