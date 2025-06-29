@@ -52,6 +52,18 @@ export async function createProjectGuestInvite(organizationId: string, projectId
     }
 }
 
+export async function markOnboardingComplete(organizationId: string, userId: string) {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        await updateDoc(orgRef, {
+            [`members.${userId}.hasCompletedOnboarding`]: true
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error marking onboarding as complete:", error);
+        return { error: error.message };
+    }
+}
 
 export async function updateUserRoleInOrganization(organizationId: string, targetUserId: string, newRole: RoleName, currentUserId: string) {
     if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_ROLES)) {
