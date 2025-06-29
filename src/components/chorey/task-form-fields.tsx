@@ -9,7 +9,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { Loader2, Bot, X } from 'lucide-react';
 import { handleFindDuplicateTask, handleSuggestProactiveHelp } from '@/app/actions/ai.actions';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
 import type { FindDuplicateTaskOutput } from '@/ai/schemas';

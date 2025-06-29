@@ -76,4 +76,3 @@ export function TaskFormAdvanced({ users, projects, task }: TaskFormAdvancedProp
     </Accordion>
   );
 }
-
