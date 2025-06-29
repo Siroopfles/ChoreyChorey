@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -7,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -44,12 +44,13 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfileSettings({ user }: { user: UserType }) {
-  const { refreshUser, users, currentOrganization } = useAuth();
+  const { refreshUser } = useAuth();
+  const { users, currentOrganization } = useOrganization();
   const { toast } = useToast();
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
 
-  const fullUserData = users.find(u => u.id === user.id) || user;
+  const fullUserData = (users || []).find(u => u.id === user.id) || user;
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
