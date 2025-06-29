@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -21,10 +22,26 @@ export async function hasPermission(userId: string, organizationId: string, perm
     }
 
     const orgData = orgDoc.data() as Organization;
-    const roleId = orgData.members?.[userId]?.role;
-    if (!roleId) {
+    const memberData = orgData.members?.[userId];
+    if (!memberData) {
         console.warn(`Permission check failed: User ${userId} has no role in organization ${organizationId}.`);
         return false;
+    }
+
+    // 1. Check for user-specific overrides first.
+    if (memberData.permissionOverrides) {
+        if (memberData.permissionOverrides.revoked?.includes(permission)) {
+            return false; // Explicitly revoked
+        }
+        if (memberData.permissionOverrides.granted?.includes(permission)) {
+            return true; // Explicitly granted
+        }
+    }
+
+    // 2. Fallback to role-based permissions.
+    const roleId = memberData.role;
+    if (!roleId) {
+        return false; // No overrides and no role.
     }
 
     const allRoles = { ...DEFAULT_ROLES, ...(orgData.settings?.customization?.customRoles || {}) };

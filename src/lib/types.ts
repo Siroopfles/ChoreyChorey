@@ -224,6 +224,10 @@ export type Organization = {
 
 export type OrganizationMember = {
   role: RoleName;
+  permissionOverrides?: {
+    granted?: Permission[];
+    revoked?: Permission[];
+  };
   hasCompletedOnboarding?: boolean;
   points?: number;
   endorsements?: Record<string, string[]>;
@@ -236,9 +240,11 @@ export type OrganizationMember = {
 };
 
 export const PERMISSIONS = {
-  MANAGE_ORGANIZATION: 'MANAGE_ORGANIZATION',
+  MANAGE_GENERAL_SETTINGS: 'MANAGE_GENERAL_SETTINGS',
+  MANAGE_WORKFLOW: 'MANAGE_WORKFLOW',
   MANAGE_ROLES: 'MANAGE_ROLES',
   MANAGE_MEMBERS: 'MANAGE_MEMBERS',
+  MANAGE_MEMBER_PERMISSIONS: 'MANAGE_MEMBER_PERMISSIONS',
   MANAGE_PROJECTS: 'MANAGE_PROJECTS',
   MANAGE_TEAMS: 'MANAGE_TEAMS',
   CREATE_TASK: 'CREATE_TASK',
@@ -252,8 +258,12 @@ export const PERMISSIONS = {
   MANAGE_API_KEYS: 'MANAGE_API_KEYS',
   MANAGE_INTEGRATIONS: 'MANAGE_INTEGRATIONS',
   MANAGE_TEMPLATES: 'MANAGE_TEMPLATES',
-  MANAGE_TIME_TRACKING_INTEGRATIONS: 'MANAGE_TIME_TRACKING_INTEGRATIONS',
+  MANAGE_SECURITY_SETTINGS: 'MANAGE_SECURITY_SETTINGS',
   MANAGE_IP_WHITELIST: 'MANAGE_IP_WHITELIST',
+  MANAGE_ANNOUNCEMENTS: 'MANAGE_ANNOUNCEMENTS',
+  MANAGE_BRANDING: 'MANAGE_BRANDING',
+  MANAGE_SAVED_FILTERS: 'MANAGE_SAVED_FILTERS',
+  MANAGE_FEATURE_TOGGLES: 'MANAGE_FEATURE_TOGGLES',
   PIN_ITEMS: 'PIN_ITEMS',
   MANAGE_AUTOMATIONS: 'MANAGE_AUTOMATIONS',
   MANAGE_WEBHOOKS: 'MANAGE_WEBHOOKS',
@@ -263,9 +273,11 @@ export const PERMISSIONS = {
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
 
 export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, description: string }> = {
-  [PERMISSIONS.MANAGE_ORGANIZATION]: { name: 'Organisatie Beheren', description: 'Kan de naam, workflow en feature instellingen van de organisatie aanpassen.' },
-  [PERMISSIONS.MANAGE_ROLES]: { name: 'Rollen Beheren', description: 'Kan de rollen van andere leden aanpassen (behalve de eigenaar).' },
+  [PERMISSIONS.MANAGE_GENERAL_SETTINGS]: { name: 'Algemene Instellingen Beheren', description: 'Kan de naam van de organisatie aanpassen.' },
+  [PERMISSIONS.MANAGE_WORKFLOW]: { name: 'Workflow Beheren', description: 'Kan statussen, labels, prioriteiten en eigen velden aanpassen.' },
+  [PERMISSIONS.MANAGE_ROLES]: { name: 'Rollen Beheren', description: 'Kan rollen en hun permissies aanmaken en aanpassen.' },
   [PERMISSIONS.MANAGE_MEMBERS]: { name: 'Leden Beheren', description: 'Kan leden uitnodigen voor en verwijderen uit de organisatie.' },
+  [PERMISSIONS.MANAGE_MEMBER_PERMISSIONS]: { name: 'Lid Permissies Beheren', description: 'Kan individuele permissies van leden overschrijven, los van hun rol.' },
   [PERMISSIONS.MANAGE_PROJECTS]: { name: 'Projecten Beheren', description: 'Kan projecten aanmaken, bewerken en verwijderen.' },
   [PERMISSIONS.MANAGE_TEAMS]: { name: 'Teams Beheren', description: 'Kan teams aanmaken en de leden van teams beheren.' },
   [PERMISSIONS.CREATE_TASK]: { name: 'Taken Aanmaken', description: 'Kan nieuwe taken aanmaken binnen de organisatie.' },
@@ -279,8 +291,12 @@ export const PERMISSIONS_DESCRIPTIONS: Record<Permission, { name: string, descri
   [PERMISSIONS.MANAGE_API_KEYS]: { name: 'API Sleutels Beheren', description: 'Kan API-sleutels voor de organisatie aanmaken, inzien en intrekken.' },
   [PERMISSIONS.MANAGE_INTEGRATIONS]: { name: 'Integraties Beheren', description: 'Kan integraties met externe services zoals Slack en GitHub configureren.' },
   [PERMISSIONS.MANAGE_TEMPLATES]: { name: 'Templates Beheren', description: 'Kan taaktemplates voor de organisatie aanmaken, bewerken en verwijderen.' },
-  [PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS]: { name: 'Tijdregistratie Integraties Beheren', description: 'Kan integraties met tijdregistratietools zoals Toggl configureren.' },
+  [PERMISSIONS.MANAGE_SECURITY_SETTINGS]: { name: 'Beveiligingsinstellingen Beheren', description: 'Kan sessiebeleid en andere beveiligingsopties beheren.' },
   [PERMISSIONS.MANAGE_IP_WHITELIST]: { name: 'IP Whitelist Beheren', description: 'Kan de lijst met toegestane IP-adressen voor de organisatie beheren.' },
+  [PERMISSIONS.MANAGE_ANNOUNCEMENTS]: { name: 'Aankondigingen Beheren', description: 'Kan organisatie-brede aankondigingen plaatsen en verwijderen.' },
+  [PERMISSIONS.MANAGE_BRANDING]: { name: 'Branding Beheren', description: 'Kan het uiterlijk, zoals kleuren en logo, van de organisatie aanpassen.' },
+  [PERMISSIONS.MANAGE_SAVED_FILTERS]: { name: 'Opgeslagen Filters Beheren', description: 'Kan opgeslagen filters van andere gebruikers verwijderen.' },
+  [PERMISSIONS.MANAGE_FEATURE_TOGGLES]: { name: 'Feature Vlaggen Beheren', description: 'Kan kernfunctionaliteiten en integraties voor de organisatie in- of uitschakelen.' },
   [PERMISSIONS.PIN_ITEMS]: { name: 'Items Vastpinnen', description: 'Kan taken en projecten vastpinnen in de zijbalk voor iedereen in de organisatie.' },
   [PERMISSIONS.MANAGE_AUTOMATIONS]: { name: 'Automatiseringen Beheren', description: 'Kan automatiseringen voor de organisatie aanmaken, bewerken en verwijderen.' },
   [PERMISSIONS.MANAGE_WEBHOOKS]: { name: 'Webhooks Beheren', description: 'Kan webhooks voor de organisatie aanmaken, bewerken en verwijderen.' },
@@ -295,9 +311,11 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
   [ROLE_ADMIN]: {
     name: 'Beheerder',
     permissions: [
-      PERMISSIONS.MANAGE_ORGANIZATION,
+      PERMISSIONS.MANAGE_GENERAL_SETTINGS,
+      PERMISSIONS.MANAGE_WORKFLOW,
       PERMISSIONS.MANAGE_ROLES,
       PERMISSIONS.MANAGE_MEMBERS,
+      PERMISSIONS.MANAGE_MEMBER_PERMISSIONS,
       PERMISSIONS.MANAGE_PROJECTS,
       PERMISSIONS.MANAGE_TEAMS,
       PERMISSIONS.CREATE_TASK,
@@ -311,8 +329,12 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
       PERMISSIONS.MANAGE_API_KEYS,
       PERMISSIONS.MANAGE_INTEGRATIONS,
       PERMISSIONS.MANAGE_TEMPLATES,
-      PERMISSIONS.MANAGE_TIME_TRACKING_INTEGRATIONS,
+      PERMISSIONS.MANAGE_SECURITY_SETTINGS,
       PERMISSIONS.MANAGE_IP_WHITELIST,
+      PERMISSIONS.MANAGE_ANNOUNCEMENTS,
+      PERMISSIONS.MANAGE_BRANDING,
+      PERMISSIONS.MANAGE_SAVED_FILTERS,
+      PERMISSIONS.MANAGE_FEATURE_TOGGLES,
       PERMISSIONS.PIN_ITEMS,
       PERMISSIONS.MANAGE_AUTOMATIONS,
       PERMISSIONS.MANAGE_WEBHOOKS,
@@ -323,7 +345,7 @@ export const DEFAULT_ROLES: Record<string, { name: string; permissions: Permissi
     name: 'Lid',
     permissions: [
       PERMISSIONS.CREATE_TASK,
-      PERMISSIONS.EDIT_TASK, // Note: Rules should enforce editing only assigned/created tasks
+      PERMISSIONS.EDIT_TASK,
       PERMISSIONS.VIEW_ALL_TASKS,
       PERMISSIONS.PIN_ITEMS,
     ],
@@ -962,4 +984,5 @@ export type Phase = {
   description: string;
   features: Feature[];
 };
+
 

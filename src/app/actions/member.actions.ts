@@ -1,9 +1,10 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, getDoc, writeBatch } from 'firebase/firestore';
-import type { RoleName, UserStatus, OrganizationMember } from '@/lib/types';
+import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, getDoc, writeBatch, deleteField } from 'firebase/firestore';
+import type { RoleName, UserStatus, OrganizationMember, Permission } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';
 import { PERMISSIONS } from '@/lib/types';
 import { ROLE_OWNER } from '@/lib/constants';
@@ -11,10 +12,17 @@ import { ROLE_OWNER } from '@/lib/constants';
 
 export async function markOnboardingComplete(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
-        const orgRef = doc(db, 'organizations', organizationId);
-        await updateDoc(orgRef, {
-            [`members.${userId}.hasCompletedOnboarding`]: true
-        });
+        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+        const memberDoc = await getDoc(memberRef);
+
+        if (!memberDoc.exists()) {
+             // If member doesn't exist, create it. This can happen with guest invites.
+             await updateDoc(doc(db, 'organizations', organizationId), {
+                [`members.${userId}.hasCompletedOnboarding`]: true
+            });
+        } else {
+            await updateDoc(memberRef, { hasCompletedOnboarding: true });
+        }
         return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error marking onboarding as complete:", error);
@@ -115,7 +123,7 @@ export async function reassignTasks(organizationId: string, fromUserId: string, 
     }
 }
 
-export async function updateMemberProfile(organizationId: string, userId: string, data: Partial<Omit<OrganizationMember, 'id' | 'role' | 'points'>>): Promise<{ data: { success: boolean } | null; error: string | null }> {
+export async function updateMemberProfile(organizationId: string, userId: string, data: Partial<Omit<OrganizationMember, 'id' | 'role' | 'points' | 'permissionOverrides'>>): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
         const orgRef = doc(db, 'organizations', organizationId);
         const updates: { [key: string]: any } = {};
@@ -137,14 +145,16 @@ export async function updateUserStatus(organizationId: string, userId: string, s
         const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
         const memberDoc = await getDoc(memberRef);
 
+        const updateData: { [key: string]: any } = {
+            [`members.${userId}.status`]: status
+        };
+
         if (!memberDoc.exists()) {
-             await updateDoc(orgRef, {
-                [`members.${userId}`]: { status }
-            });
+             // If member doesn't exist, create it. This can happen with guest invites.
+             // We'll just set the status and let other processes fill in the role etc.
+             await updateDoc(orgRef, updateData);
         } else {
-             await updateDoc(orgRef, {
-                [`members.${userId}.status`]: status
-            });
+             await updateDoc(orgRef, updateData);
         }
         return { data: { success: true }, error: null };
     } catch (error: any) {
@@ -155,18 +165,18 @@ export async function updateUserStatus(organizationId: string, userId: string, s
 
 export async function toggleMuteTask(organizationId: string, userId: string, taskId: string): Promise<{ data: { success: boolean, newState: 'muted' | 'unmuted' } | null; error: string | null }> {
     try {
-        const orgRef = doc(db, 'organizations', organizationId);
-        const orgDoc = await getDoc(orgRef);
-        if (!orgDoc.exists()) {
-            throw new Error("Organisatie niet gevonden.");
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+
+        if (!userDoc.exists()) {
+            throw new Error("Gebruiker niet gevonden.");
         }
-        const orgData = orgDoc.data() as any;
-        const memberData = orgData.members?.[userId];
-        const mutedTaskIds = memberData?.mutedTaskIds || [];
+        const userData = userDoc.data() as any;
+        const mutedTaskIds = userData.mutedTaskIds || [];
         const isMuted = mutedTaskIds.includes(taskId);
 
-        await updateDoc(orgRef, {
-            [`members.${userId}.mutedTaskIds`]: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
+        await updateDoc(userRef, {
+            mutedTaskIds: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
         });
         
         return { data: { success: true, newState: isMuted ? 'unmuted' : 'muted' }, error: null };
@@ -174,4 +184,35 @@ export async function toggleMuteTask(organizationId: string, userId: string, tas
         console.error("Error toggling task mute:", error);
         return { data: null, error: error.message };
     }
+}
+
+export async function updateMemberPermissions(
+  organizationId: string,
+  targetUserId: string,
+  updates: { granted?: Permission[]; revoked?: Permission[] },
+  currentUserId: string
+): Promise<{ data: { success: boolean } | null; error: string | null }> {
+  if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_MEMBER_PERMISSIONS)) {
+    return { data: null, error: "Je hebt geen permissie om individuele permissies aan te passen." };
+  }
+  
+  try {
+    const orgRef = doc(db, 'organizations', organizationId);
+    const orgDoc = await getDoc(orgRef);
+    if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
+    
+    const orgData = orgDoc.data() as any;
+    if (orgData.ownerId === targetUserId) {
+        throw new Error("De permissies van de eigenaar kunnen niet worden overschreven.");
+    }
+
+    await updateDoc(orgRef, {
+        [`members.${targetUserId}.permissionOverrides`]: updates
+    });
+    
+    return { data: { success: true }, error: null };
+  } catch (error: any) {
+    console.error("Error updating member permissions:", error);
+    return { data: null, error: error.message };
+  }
 }
