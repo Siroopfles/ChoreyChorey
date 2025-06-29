@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,13 +15,12 @@ import Link from 'next/link';
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDebounce } from '@/hooks/use-debounce';
-import { JiraIcon as JiraProviderIcon } from './provider-icons';
+import { JiraIcon as ProviderIcon } from './provider-icons';
 
 
 const JiraIcon = ({ src }: { src: string }) => <img src={src} alt="Jira issue type" className="h-4 w-4 shrink-0" />;
 
-// Renamed from JiraLinearLinker
-export function JiraLinearLinker() {
+export function JiraLinker() {
     const { control, getValues, setValue } = useFormContext();
     const { fields: jiraFields, append: appendJira, remove: removeJira } = useFieldArray({ control, name: 'jiraLinks' });
     

@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, Project, Task, SuggestPriorityOutput, CustomFieldDefinition, TaskRelation, TaskRelationType } from '@/lib/types';
@@ -28,7 +27,7 @@ import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
 import type { FindDuplicateTaskOutput, SuggestProactiveHelpOutput, SuggestStoryPointsOutput } from '@/ai/schemas';
 import { GitHubLinker } from './github-linker';
-import { JiraLinearLinker } from './jira-linear-linker';
+import { JiraLinker } from './jira-linker';
 import { getAttachmentSource } from '@/lib/utils';
 import { AttachmentIcon } from './attachment-icons';
 import { TogglProjectSelector } from './toggl-project-selector';
@@ -1232,7 +1231,7 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
       <GitHubLinker />
       <GitLabLinker />
       <BitbucketLinker />
-      <JiraLinearLinker />
+      <JiraLinker />
 
       <Separator />
 
