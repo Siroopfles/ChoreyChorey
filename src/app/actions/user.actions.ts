@@ -21,8 +21,8 @@ export async function updateUserProfile(userId: string, data: Partial<Omit<Globa
 
 export async function updateUserStatus(organizationId: string, userId: string, status: UserStatus) {
     try {
-        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-        await updateDoc(memberRef, { status });
+        const orgRef = doc(db, 'organizations', organizationId);
+        await updateDoc(orgRef, { [`members.${userId}.status`]: status });
         return { success: true };
     } catch (error: any) {
         console.error("Error updating user status:", error);
@@ -32,17 +32,18 @@ export async function updateUserStatus(organizationId: string, userId: string, s
 
 export async function toggleMuteTask(organizationId: string, userId: string, taskId: string) {
     try {
-        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-        const memberDoc = await getDoc(memberRef);
-        if (!memberDoc.exists()) {
-            throw new Error("Lid niet gevonden in deze organisatie.");
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists()) {
+            throw new Error("Organisatie niet gevonden.");
         }
-        const memberData = memberDoc.data();
-        const mutedTaskIds = memberData.mutedTaskIds || [];
+        const orgData = orgDoc.data();
+        const memberData = orgData.members?.[userId];
+        const mutedTaskIds = memberData?.mutedTaskIds || [];
         const isMuted = mutedTaskIds.includes(taskId);
 
-        await updateDoc(memberRef, {
-            mutedTaskIds: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
+        await updateDoc(orgRef, {
+            [`members.${userId}.mutedTaskIds`]: isMuted ? arrayRemove(taskId) : arrayUnion(taskId)
         });
         
         return { success: true, newState: isMuted ? 'unmuted' : 'muted' };

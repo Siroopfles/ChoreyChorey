@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayUnion, arrayRemove, runTransaction, getDoc, setDoc, deleteDoc, deleteField } from 'firebase/firestore';
 import type { User, Organization, Invite, RoleName, SavedFilter, Filters, Team, Project, Permission, OrganizationMember } from '@/lib/types';
 import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
 import { checkAndGrantTeamAchievements } from './gamification.actions';
@@ -71,8 +71,9 @@ export async function updateUserRoleInOrganization(organizationId: string, targe
              throw new Error("De eigenaar kan zijn eigen rol niet verlagen.");
         }
 
-        const memberRef = doc(db, 'organizations', organizationId, 'members', targetUserId);
-        await updateDoc(memberRef, { role: newRole });
+        await updateDoc(orgRef, {
+            [`members.${targetUserId}.role`]: newRole
+        });
 
         return { success: true };
 
@@ -114,9 +115,11 @@ export async function leaveOrganization(organizationId: string, userId: string) 
         }
 
         const batch = writeBatch(db);
-        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
         
-        batch.delete(memberRef);
+        batch.update(orgRef, {
+            [`members.${userId}`]: deleteField()
+        });
+
         batch.update(userRef, {
             organizationIds: arrayRemove(organizationId)
         });
@@ -360,8 +363,13 @@ export async function completeProject(projectId: string, organizationId: string,
 // --- Organization Member Profile Actions ---
 export async function updateMemberProfile(organizationId: string, userId: string, data: Partial<Omit<OrganizationMember, 'id' | 'role'>>) {
     try {
-        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-        await updateDoc(memberRef, data);
+        const orgRef = doc(db, 'organizations', organizationId);
+        const updates: { [key: string]: any } = {};
+        for (const [key, value] of Object.entries(data)) {
+            updates[`members.${userId}.${key}`] = value;
+        }
+
+        await updateDoc(orgRef, updates);
         return { success: true };
     } catch (error: any) {
         console.error("Error updating member profile:", error);
@@ -375,23 +383,30 @@ export async function purchaseTheme(organizationId: string, userId: string, colo
     }
     
     try {
+        const orgRef = doc(db, 'organizations', organizationId);
         await runTransaction(db, async (transaction) => {
-            const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-            const memberDoc = await transaction.get(memberRef);
+            const orgDoc = await transaction.get(orgRef);
 
-            if (!memberDoc.exists()) {
-                throw new Error("Lid niet gevonden.");
+            if (!orgDoc.exists()) {
+                throw new Error("Organisatie niet gevonden.");
             }
             
-            const memberData = memberDoc.data() as OrganizationMember;
+            const orgData = orgDoc.data() as Organization;
+            const memberData = orgData.members?.[userId];
+            
+            if (!memberData) {
+                throw new Error("Lid niet gevonden.");
+            }
 
             if ((memberData.points || 0) < cost) {
                 throw new Error("Je hebt niet genoeg punten voor dit thema.");
             }
 
-            transaction.update(memberRef, { 
-                points: increment(-cost),
-                'cosmetic.primaryColor': color 
+            const newPoints = (memberData.points || 0) - cost;
+
+            transaction.update(orgRef, { 
+                [`members.${userId}.points`]: newPoints,
+                [`members.${userId}.cosmetic.primaryColor`]: color 
             });
         });
         
@@ -408,25 +423,26 @@ export async function toggleSkillEndorsement(organizationId: string, targetUserI
     }
     
     try {
-        const targetMemberRef = doc(db, 'organizations', organizationId, 'members', targetUserId);
-        
+        const orgRef = doc(db, 'organizations', organizationId);
         await runTransaction(db, async (transaction) => {
-            const targetMemberDoc = await transaction.get(targetMemberRef);
-            if (!targetMemberDoc.exists()) {
+            const orgDoc = await transaction.get(orgRef);
+            if (!orgDoc.exists()) {
+                throw new Error("Organisatie niet gevonden.");
+            }
+
+            const orgData = orgDoc.data() as Organization;
+            const targetMemberData = orgData.members?.[targetUserId];
+            if (!targetMemberData) {
                 throw new Error("Doelgebruiker niet gevonden.");
             }
 
-            const targetMemberData = targetMemberDoc.data() as OrganizationMember;
-            const endorsements = targetMemberData.endorsements || {};
-            const skillEndorsers = endorsements[skill] || [];
+            const currentEndorsers = targetMemberData.endorsements?.[skill] || [];
+            const fieldPath = `members.${targetUserId}.endorsements.${skill}`;
 
-            const fieldPath = `endorsements.${skill}`;
-            if (skillEndorsers.includes(endorserId)) {
-                // User has already endorsed, so retract endorsement
-                transaction.update(targetMemberRef, { [fieldPath]: arrayRemove(endorserId) });
+            if (currentEndorsers.includes(endorserId)) {
+                transaction.update(orgRef, { [fieldPath]: arrayRemove(endorserId) });
             } else {
-                // User has not endorsed, so add endorsement
-                transaction.update(targetMemberRef, { [fieldPath]: arrayUnion(endorserId) });
+                transaction.update(orgRef, { [fieldPath]: arrayUnion(endorserId) });
             }
         });
         
@@ -440,8 +456,8 @@ export async function toggleSkillEndorsement(organizationId: string, targetUserI
 
 export async function markOnboardingComplete(organizationId: string, userId: string) {
     try {
-        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-        await updateDoc(memberRef, { hasCompletedOnboarding: true });
+        const orgRef = doc(db, 'organizations', organizationId);
+        await updateDoc(orgRef, { [`members.${userId}.hasCompletedOnboarding`]: true });
         return { success: true };
     } catch (error: any) {
         console.error("Error marking onboarding as complete:", error);

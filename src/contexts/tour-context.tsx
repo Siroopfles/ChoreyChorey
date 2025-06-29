@@ -14,7 +14,7 @@ type TourContextType = {
 const TourContext = createContext<TourContextType | undefined>(undefined);
 
 export function TourProvider({ children }: { children: ReactNode }) {
-  const { user, currentOrganization, currentUserRole, refreshUser } = useAuth();
+  const { user, currentOrganization, currentUserRole } = useAuth();
   const [run, setRun] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
 
@@ -50,8 +50,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (finishedStatuses.includes(status)) {
       setRun(false);
       if (user && currentOrganization) {
+        // The real-time listener in AuthContext will pick up this change.
+        // No need to force a refresh, which was causing the reload loop.
         await markOnboardingComplete(currentOrganization.id, user.id);
-        await refreshUser();
       }
     }
   };
