@@ -39,9 +39,9 @@ export function InviteGuestDialog({
         setIsLoading(true);
         try {
             const result = await createProjectGuestInvite(currentOrganization.id, projectId, user.id, currentOrganization.name);
-            if(result.error || !result.inviteId) throw new Error(result.error || 'Kon geen invite ID aanmaken');
+            if(result.error || !result.data?.inviteId) throw new Error(result.error || 'Kon geen invite ID aanmaken');
 
-            const link = `${window.location.origin}/invite/${result.inviteId}`;
+            const link = `${window.location.origin}/invite/${result.data.inviteId}`;
             setInviteLink(link);
         } catch (error: any) {
             toast({ title: 'Fout', description: error.message, variant: 'destructive' });

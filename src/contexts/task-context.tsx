@@ -22,7 +22,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import type { Task, TaskFormValues, User, Status, Label, Automation, AutomationFormValues, TaskTemplate, TaskTemplateFormValues, Subtask, Project } from '@/lib/types';
-import { PERMISSIONS } from '@/lib/types';
+import { PERMISSIONS, ROLE_GUEST } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
@@ -126,7 +126,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     if (initial) setLoading(true); else setIsMoreLoading(true);
 
-    const isGuest = currentUserRole === 'Guest';
+    const isGuest = currentUserRole === ROLE_GUEST;
     let tasksQuery;
 
     const baseQueryConstraints = [where("organizationId", "==", currentOrganization.id), orderBy('createdAt', 'desc')];

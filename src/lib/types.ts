@@ -984,5 +984,3 @@ export type Phase = {
   description: string;
   features: Feature[];
 };
-
-
