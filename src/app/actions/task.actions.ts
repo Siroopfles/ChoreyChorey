@@ -1,6 +1,5 @@
 
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -66,7 +65,7 @@ function calculateNextDueDate(currentDueDate: Date | undefined, recurring: Recur
 
 // --- Exported Server Actions ---
 
-export async function handleImportTasks(csvContent: string, mapping: Record<string, string>, organizationId: string, creatorId: string) {
+export async function handleImportTasks(csvContent: string, mapping: Record<string, string>, organizationId: string, creatorId: string): Promise<{ data: { successCount: number; errorCount: number; } | null; error: string | null; }> {
     let successCount = 0;
     let errorCount = 0;
 
@@ -81,7 +80,7 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
         }, {} as Record<string, string>);
 
         if (!invertedMapping.title) {
-            return { error: 'Het "title" veld moet gekoppeld zijn.' };
+            return { data: null, error: 'Het "title" veld moet gekoppeld zijn.' };
         }
 
         const batch = writeBatch(db);
@@ -160,15 +159,15 @@ export async function handleImportTasks(csvContent: string, mapping: Record<stri
 
         await batch.commit();
         
-        return { successCount, errorCount };
+        return { data: { successCount, errorCount }, error: null };
 
     } catch (e: any) {
-        return { error: e.message, successCount, errorCount };
+        return { data: null, error: e.message };
     }
 }
 
 
-export async function createTaskAction(organizationId: string, creatorId: string, creatorName: string, taskData: Partial<TaskFormValues> & { title: string }) {
+export async function createTaskAction(organizationId: string, creatorId: string, creatorName: string, taskData: Partial<TaskFormValues> & { title: string }): Promise<{ data: { success: boolean; taskId: string; } | null; error: string | null; }> {
     try {
         const history = [addHistoryEntry(creatorId, 'Aangemaakt')];
         const firestoreTask: Omit<Task, 'id'> = {
@@ -289,13 +288,13 @@ export async function createTaskAction(organizationId: string, creatorId: string
                 console.error("Microsoft Calendar event creation failed:", e);
             }
         }
-        return { success: true };
+        return { data: { success: true, taskId: docRef.id }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function updateTaskAction(taskId: string, updates: Partial<Task>, userId: string, organizationId: string) {
+export async function updateTaskAction(taskId: string, updates: Partial<Task>, userId: string, organizationId: string): Promise<{ data: { success: boolean; updatedTask: Task; } | null; error: string | null; }> {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
@@ -470,14 +469,14 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
             console.error("Microsoft Calendar event update failed:", e);
         }
         
-        return { success: true, updatedTask };
+        return { data: { success: true, updatedTask }, error: null };
 
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function cloneTaskAction(taskId: string, userId: string, organizationId: string) {
+export async function cloneTaskAction(taskId: string, userId: string, organizationId: string): Promise<{ data: { success: boolean; clonedTaskTitle: string; } | null; error: string | null; }> {
     try {
         const taskDocRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskDocRef);
@@ -512,13 +511,13 @@ export async function cloneTaskAction(taskId: string, userId: string, organizati
         delete (clonedTask as any).id; 
         const docRef = await addDoc(collection(db, 'tasks'), clonedTask);
         await triggerWebhooks(organizationId, 'task.created', { ...clonedTask, id: docRef.id });
-        return { success: true, clonedTaskTitle: clonedTask.title };
+        return { data: { success: true, clonedTaskTitle: clonedTask.title }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function splitTaskAction(taskId: string, userId: string, organizationId: string) {
+export async function splitTaskAction(taskId: string, userId: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
@@ -527,7 +526,7 @@ export async function splitTaskAction(taskId: string, userId: string, organizati
 
         const originalTask = taskDoc.data();
         if (!originalTask.subtasks || originalTask.subtasks.length < 2) {
-            return { error: 'Een taak moet minimaal 2 subtaken hebben om te kunnen splitsen.' };
+            return { data: null, error: 'Een taak moet minimaal 2 subtaken hebben om te kunnen splitsen.' };
         }
 
         const splitIndex = Math.ceil(originalTask.subtasks.length / 2);
@@ -556,17 +555,17 @@ export async function splitTaskAction(taskId: string, userId: string, organizati
 
         await triggerWebhooks(organizationId, 'task.created', { ...newTaskData, id: newTaskRef.id });
         await triggerWebhooks(organizationId, 'task.updated', { ...originalTask, id: taskRef.id, subtasks: originalSubtasks });
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function deleteTaskPermanentlyAction(taskId: string, organizationId: string) {
+export async function deleteTaskPermanentlyAction(taskId: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
-        if(!taskDoc.exists()) return { success: true };
+        if(!taskDoc.exists()) return { data: { success: true }, error: null };
 
         const taskData = { ...taskDoc.data(), id: taskId } as Task;
         await deleteDoc(taskRef);
@@ -590,13 +589,13 @@ export async function deleteTaskPermanentlyAction(taskId: string, organizationId
             }
         }
         
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function reorderTasksAction(tasksToUpdate: {id: string, order: number}[]) {
+export async function reorderTasksAction(tasksToUpdate: {id: string, order: number}[]): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const batch = writeBatch(db);
         tasksToUpdate.forEach(taskUpdate => {
@@ -604,13 +603,13 @@ export async function reorderTasksAction(tasksToUpdate: {id: string, order: numb
             batch.update(taskRef, { order: taskUpdate.order });
         });
         await batch.commit();
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function toggleSubtaskCompletionAction(taskId: string, subtaskId: string, userId: string, organizationId: string) {
+export async function toggleSubtaskCompletionAction(taskId: string, subtaskId: string, userId: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
@@ -629,13 +628,13 @@ export async function toggleSubtaskCompletionAction(taskId: string, subtaskId: s
         
         const updatedTask = { ...taskToUpdate, subtasks: updatedSubtasks, id: taskId };
         await triggerWebhooks(organizationId, 'task.updated', updatedTask);
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function toggleTaskTimerAction(taskId: string, userId: string, organizationId: string) {
+export async function toggleTaskTimerAction(taskId: string, userId: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
         if (!orgDoc.exists()) {
@@ -644,7 +643,7 @@ export async function toggleTaskTimerAction(taskId: string, userId: string, orga
         const organization = orgDoc.data() as Organization;
 
         if (organization.settings?.features?.timeTracking === false) {
-            return { error: 'Tijdregistratie is uitgeschakeld voor deze organisatie.' };
+            return { data: null, error: 'Tijdregistratie is uitgeschakeld voor deze organisatie.' };
         }
         
         const taskRef = doc(db, "tasks", taskId);
@@ -695,13 +694,13 @@ export async function toggleTaskTimerAction(taskId: string, userId: string, orga
             });
             await triggerWebhooks(organizationId, 'task.updated', {...task, activeTimerStartedAt: new Date(), id: taskId});
         }
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function resetSubtasksAction(taskId: string, userId: string, organizationId: string) {
+export async function resetSubtasksAction(taskId: string, userId: string, organizationId: string): Promise<{ data: { success: boolean, taskTitle: string } | null; error: string | null; }> {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
@@ -709,7 +708,7 @@ export async function resetSubtasksAction(taskId: string, userId: string, organi
 
         const taskToUpdate = taskDoc.data() as Task;
         if (!taskToUpdate.subtasks || taskToUpdate.subtasks.length === 0) {
-            return { error: 'Geen subtaken om te resetten.' };
+            return { data: null, error: 'Geen subtaken om te resetten.' };
         }
 
         const resetSubtasks: Subtask[] = taskToUpdate.subtasks.map(subtask => ({ ...subtask, completed: false }));
@@ -719,13 +718,13 @@ export async function resetSubtasksAction(taskId: string, userId: string, organi
         
         const updatedTask = { ...taskToUpdate, subtasks: resetSubtasks, id: taskId };
         await triggerWebhooks(organizationId, 'task.updated', updatedTask);
-        return { success: true, taskTitle: taskToUpdate.title };
+        return { data: { success: true, taskTitle: taskToUpdate.title }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function setChoreOfTheWeekAction(taskId: string, organizationId: string) {
+export async function setChoreOfTheWeekAction(taskId: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const batch = writeBatch(db);
         
@@ -746,13 +745,13 @@ export async function setChoreOfTheWeekAction(taskId: string, organizationId: st
         if (newChoreDoc.exists()) {
              await triggerWebhooks(organizationId, 'task.updated', {...newChoreDoc.data(), id: newChoreDoc.id, isChoreOfTheWeek: true });
         }
-        return { success: true };
+        return { data: { success: true }, error: null };
     } catch (e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }
 
-export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtask, userId: string) {
+export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtask, userId: string): Promise<{ data: { success: boolean; newTaskId: string; newTastTitle: string; } | null; error: string | null; }> {
     try {
         const batch = writeBatch(db);
         const parentTaskRef = doc(db, 'tasks', parentTaskId);
@@ -814,9 +813,9 @@ export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtas
         await triggerWebhooks(parentTask.organizationId, 'task.created', { ...newTaskData, id: newTaskRef.id });
         await triggerWebhooks(parentTask.organizationId, 'task.updated', { ...parentTask, id: parentTask.id, subtasks: updatedSubtasks });
         
-        return { success: true, newTaskId: newTaskRef.id, newTastTitle: newTaskData.title };
+        return { data: { success: true, newTaskId: newTaskRef.id, newTastTitle: newTaskData.title }, error: null };
 
     } catch(e: any) {
-        return { error: e.message };
+        return { data: null, error: e.message };
     }
 }

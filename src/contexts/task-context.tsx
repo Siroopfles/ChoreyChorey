@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -80,7 +81,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const handleError = (error: any, context: string) => {
     console.error(`Error in ${context}:`, error);
-    toast({ title: `Fout bij ${context}`, description: error.message, variant: 'destructive' });
+    toast({ title: `Fout bij ${context}`, description: error.message || error, variant: 'destructive' });
   };
   
   useEffect(() => {
@@ -138,36 +139,36 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }): Promise<boolean> => {
     if (!user || !currentOrganization) { handleError({ message: 'Selecteer een organisatie.' }, 'toevoegen taak'); return false; }
-    const result = await TaskActions.createTaskAction(currentOrganization.id, user.id, user.name, taskData);
-    if (result.error) { handleError({ message: result.error }, 'opslaan taak'); return false; }
-    return true;
+    const { data, error } = await TaskActions.createTaskAction(currentOrganization.id, user.id, user.name, taskData);
+    if (error) { handleError(error, 'opslaan taak'); return false; }
+    return !!data?.success;
   };
   
   const cloneTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const result = await TaskActions.cloneTaskAction(taskId, user.id, currentOrganization.id);
-    if (result.error) { handleError({ message: result.error }, 'klonen taak'); } 
-    else { toast({ title: 'Taak Gekloond!', description: `Een kopie van "${result.clonedTaskTitle}" is aangemaakt.` }); }
+    const { data, error } = await TaskActions.cloneTaskAction(taskId, user.id, currentOrganization.id);
+    if (error) { handleError(error, 'klonen taak'); } 
+    else { toast({ title: 'Taak Gekloond!', description: `Een kopie van "${data?.clonedTaskTitle}" is aangemaakt.` }); }
   };
 
   const splitTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const result = await TaskActions.splitTaskAction(taskId, user.id, currentOrganization.id);
-    if (result.error) { handleError({ message: result.error }, 'splitsen taak'); } 
+    const { data, error } = await TaskActions.splitTaskAction(taskId, user.id, currentOrganization.id);
+    if (error) { handleError(error, 'splitsen taak'); } 
     else { toast({ title: 'Taak gesplitst!', description: `Een nieuwe taak is aangemaakt.` }); }
   };
 
   const deleteTaskPermanently = async (taskId: string) => {
     if (!currentOrganization) return;
-    const result = await TaskActions.deleteTaskPermanentlyAction(taskId, currentOrganization.id);
-    if (result.error) { handleError({ message: result.error }, 'verwijderen taak'); }
+    const { data, error } = await TaskActions.deleteTaskPermanentlyAction(taskId, currentOrganization.id);
+    if (error) { handleError(error, 'verwijderen taak'); }
     else { toast({ title: 'Taak Permanent Verwijderd', variant: 'destructive' }); }
   };
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     if (!user || !currentOrganization) return;
-    const result = await TaskActions.updateTaskAction(taskId, updates, user.id, currentOrganization.id);
-    if (result.error) handleError({ message: result.error }, 'bijwerken taak');
+    const { data, error } = await TaskActions.updateTaskAction(taskId, updates, user.id, currentOrganization.id);
+    if (error) handleError(error, 'bijwerken taak');
   };
 
   const rateTask = async (taskId: string, rating: number) => {
@@ -179,52 +180,54 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const thankForTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const assignees = tasks.find(t => t.id === taskId)?.assigneeIds.map(id => ({ id, name: '' })) || [];
-    const result = await thankForTaskAction(taskId, user.id, assignees, currentOrganization.id);
-    if (result.error) { handleError({ message: result.error }, 'bedanken voor taak'); }
-    else { toast({ title: 'Bedankt!', description: `Bonuspunten gegeven aan ${result.assigneesNames}.` }); }
+    const taskAssignees = tasks.find(t => t.id === taskId)?.assigneeIds || [];
+    const fullAssigneeInfo = users.filter(u => taskAssignees.includes(u.id));
+
+    const { data, error } = await thankForTaskAction(taskId, user.id, fullAssigneeInfo, currentOrganization.id);
+    if (error) { handleError({ message: error }, 'bedanken voor taak'); }
+    else if (data) { toast({ title: 'Bedankt!', description: `Bonuspunten gegeven aan ${data.assigneesNames}.` }); }
   };
   
   const reorderTasks = async (tasksToUpdate: {id: string, order: number}[]) => {
-      const result = await TaskActions.reorderTasksAction(tasksToUpdate);
-      if (result.error) handleError({ message: result.error }, 'herordenen taken');
+      const { error } = await TaskActions.reorderTasksAction(tasksToUpdate);
+      if (error) handleError(error, 'herordenen taken');
   };
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
     if (!user || !currentOrganization) return;
-    const result = await TaskActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id);
-    if (result.error) handleError({ message: result.error }, 'bijwerken subtaak');
+    const { error } = await TaskActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id);
+    if (error) handleError(error, 'bijwerken subtaak');
   };
   
   const toggleTaskTimer = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const result = await TaskActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);
-    if (result.error) handleError({ message: result.error }, 'tijdregistratie');
+    const { error } = await TaskActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);
+    if (error) handleError(error, 'tijdregistratie');
   };
 
   const resetSubtasks = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const result = await TaskActions.resetSubtasksAction(taskId, user.id, currentOrganization.id);
-    if (result.error) { handleError({ message: result.error }, 'resetten subtaken'); }
-    else if (result.success) { toast({ title: 'Subtaken gereset!', description: `Alle subtaken voor "${result.taskTitle}" zijn gereset.` }); }
+    const { data, error } = await TaskActions.resetSubtasksAction(taskId, user.id, currentOrganization.id);
+    if (error) { handleError(error, 'resetten subtaken'); }
+    else if (data?.success) { toast({ title: 'Subtaken gereset!', description: `Alle subtaken voor "${data.taskTitle}" zijn gereset.` }); }
   };
 
   const setChoreOfTheWeek = async (taskId: string) => {
     if (!currentOrganization) return;
-    const result = await TaskActions.setChoreOfTheWeekAction(taskId, currentOrganization.id);
-    if (result.error) { handleError({ message: result.error }, 'instellen klus v/d week'); }
+    const { error } = await TaskActions.setChoreOfTheWeekAction(taskId, currentOrganization.id);
+    if (error) { handleError(error, 'instellen klus v/d week'); }
     else { toast({ title: 'Klus van de Week ingesteld!' }); }
   };
 
   const promoteSubtaskToTask = async (parentTaskId: string, subtask: Subtask) => {
     if (!user) return;
-    const result = await TaskActions.promoteSubtaskToTask(parentTaskId, subtask, user.id);
-    if (result.error) {
-      handleError({ message: result.error }, 'promoveren subtaak');
-    } else {
+    const { data, error } = await TaskActions.promoteSubtaskToTask(parentTaskId, subtask, user.id);
+    if (error) {
+      handleError(error, 'promoveren subtaak');
+    } else if (data?.success) {
       toast({
         title: 'Subtaak Gepromoveerd!',
-        description: `"${result.newTastTitle}" is nu een losstaande taak.`
+        description: `"${data.newTastTitle}" is nu een losstaande taak.`
       });
     }
   };
