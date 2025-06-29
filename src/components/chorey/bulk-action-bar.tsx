@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import { useTasks } from "@/contexts/task-context";
-import { useAuth } from "@/contexts/auth-context";
+import { useOrganization } from "@/contexts/organization-context";
 import { Button } from "@/components/ui/button";
 import { 
     DropdownMenu, 
@@ -23,7 +22,7 @@ import { useFilters } from "@/contexts/filter-context";
 export default function BulkActionBar() {
     const { bulkUpdateTasks } = useTasks();
     const { selectedTaskIds, setSelectedTaskIds } = useFilters();
-    const { currentOrganization, users, projects } = useAuth();
+    const { currentOrganization, users, projects } = useOrganization();
     
     const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
     const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
@@ -60,10 +59,10 @@ export default function BulkActionBar() {
                     <DropdownMenuContent>
                         {allStatuses.map(status => (
                             <DropdownMenuItem 
-                                key={status}
-                                onSelect={() => handleUpdate({ status })}
+                                key={status.name}
+                                onSelect={() => handleUpdate({ status: status.name })}
                             >
-                                {status}
+                                {status.name}
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuContent>
@@ -77,7 +76,7 @@ export default function BulkActionBar() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        {users.map(user => (
+                        {(users || []).map(user => (
                             <DropdownMenuItem 
                                 key={user.id}
                                 onSelect={() => handleUpdate({ assigneeIds: [user.id] })}
@@ -105,7 +104,7 @@ export default function BulkActionBar() {
                             Geen project
                         </DropdownMenuItem>
                         <DdSeparator/>
-                        {projects.map(project => (
+                        {(projects || []).map(project => (
                             <DropdownMenuItem 
                                 key={project.id}
                                 onSelect={() => handleUpdate({ projectId: project.id })}
@@ -167,10 +166,10 @@ export default function BulkActionBar() {
                     <DropdownMenuContent>
                         {allPriorities.map(priority => (
                             <DropdownMenuItem 
-                                key={priority}
-                                onSelect={() => handleUpdate({ priority: priority })}
+                                key={priority.name}
+                                onSelect={() => handleUpdate({ priority: priority.name })}
                             >
-                                {priority}
+                                {priority.name}
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuContent>
