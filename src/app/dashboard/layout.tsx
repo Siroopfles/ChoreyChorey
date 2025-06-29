@@ -202,10 +202,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarProvider>
             <BrandingStyle />
             <UserCosmeticStyle />
-            <Sidebar>
+            <Sidebar collapsible="icon">
                 <SidebarHeader className="p-4 border-b border-sidebar-border">
                     <Link href="/dashboard">
-                        <h1 className="text-2xl font-bold text-sidebar-primary">{currentOrganization?.name || 'Chorey'}</h1>
+                        <h1 className="text-2xl font-bold text-sidebar-primary group-data-[state=collapsed]:hidden">{currentOrganization?.name || 'Chorey'}</h1>
                     </Link>
                 </SidebarHeader>
                 <SidebarContent className="p-4 flex flex-col">
