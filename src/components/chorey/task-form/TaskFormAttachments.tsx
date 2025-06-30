@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFormContext, useFieldArray } from 'react-hook-form';
@@ -5,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label as UiLabel } from '@/components/ui/label';
-import { Loader2, ImageIcon, PlusCircle, Trash2, Link as LinkIcon } from 'lucide-react';
+import { Loader2, ImageIcon, PlusCircle, Trash2, Link as LinkIcon, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/auth-context';
 import { getAttachmentSource } from '@/lib/utils';
@@ -16,12 +17,15 @@ import { AttachmentIcon } from '../attachment-icons';
 import { FigmaEmbed } from '../figma-embed';
 import { GoogleDocEmbed } from '../google-doc-embed';
 import { AdobeXdEmbed } from '../adobe-xd-embed';
+import { uploadAttachmentFromDataUrl } from '@/app/actions/attachment.actions';
 
 export function TaskFormAttachments() {
     const { control, getValues, setValue } = useFormContext();
     const { toast } = useToast();
     const { currentOrganization } = useAuth();
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     
     const { fields, append, remove } = useFieldArray({
         control,
@@ -51,6 +55,39 @@ export function TaskFormAttachments() {
         }
         setIsGeneratingImage(false);
     };
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !currentOrganization) return;
+    
+        setIsUploading(true);
+    
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const dataUrl = event.target?.result as string;
+                const { url, error } = await uploadAttachmentFromDataUrl(dataUrl, file.name, currentOrganization.id);
+                if (error) throw new Error(error);
+                
+                append({ name: file.name, url });
+                toast({ title: 'Foto geüpload!', description: `${file.name} is succesvol als bijlage toegevoegd.` });
+            } catch (err: any) {
+                toast({ title: 'Fout bij uploaden', description: err.message, variant: 'destructive' });
+            } finally {
+                setIsUploading(false);
+                // Reset file input to allow selecting the same file again
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            }
+        };
+        reader.onerror = () => {
+             toast({ title: 'Fout bij lezen bestand', description: 'Kon het fotobestand niet lezen.', variant: 'destructive' });
+             setIsUploading(false);
+        };
+        reader.readAsDataURL(file);
+    };
+
 
     return (
         <div className="space-y-4">
@@ -116,10 +153,24 @@ export function TaskFormAttachments() {
                         </div>
                     )
                 })}
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', url: '' })}>
-                    <LinkIcon className="mr-2 h-4 w-4" />
-                    Link toevoegen
-                </Button>
+                 <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                 />
+                <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', url: '' })}>
+                        <LinkIcon className="mr-2 h-4 w-4" />
+                        Link toevoegen
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                        Maak Foto
+                    </Button>
+                </div>
                 </div>
             </div>
         </div>
