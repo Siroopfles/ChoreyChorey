@@ -1,12 +1,11 @@
 
-
 'use client';
 
-import type { User, Task as TaskType, Comment as CommentType } from '@/lib/types';
+import type { User, Task as TaskType, Comment as CommentType, Subtask } from '@/lib/types';
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Bot, Loader2, Speaker, Eye } from 'lucide-react';
+import { Bot, Loader2, Speaker, Eye, CornerUpRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { summarizeComments } from '@/ai/flows/summarize-comments';
 import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
@@ -19,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useAuth } from '@/contexts/auth-context';
 import { useNotifications } from '@/contexts/notification-context';
 import { updateTypingStatusAction } from '@/app/actions/task.actions';
+import { useTasks } from '@/contexts/task-context';
 
 const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }) => {
     const readers = (comment.readBy || [])
@@ -47,7 +47,7 @@ const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }
     );
 };
 
-const CommentItem = ({ comment, user, onVisible, allUsers }: { comment: CommentType; user?: User; onVisible: () => void; allUsers: User[] }) => {
+const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask }: { comment: CommentType; user?: User; onVisible: () => void; allUsers: User[]; onConvertToSubtask: (text: string) => void; }) => {
     const commentRef = useRef<HTMLLIElement>(null);
     const { user: currentUser } = useAuth();
     
@@ -74,7 +74,7 @@ const CommentItem = ({ comment, user, onVisible, allUsers }: { comment: CommentT
     }, [onVisible, hasBeenReadByMe]);
 
   return (
-    <li ref={commentRef} className="flex items-start gap-3">
+    <li ref={commentRef} className="flex items-start gap-3 group/comment">
       <Avatar className="h-8 w-8 border">
         <AvatarImage src={user?.avatar} />
         <AvatarFallback>{user?.name.charAt(0) ?? '?'}</AvatarFallback>
@@ -87,7 +87,18 @@ const CommentItem = ({ comment, user, onVisible, allUsers }: { comment: CommentT
                     {formatDistanceToNow(comment.createdAt, { addSuffix: true, locale: nl })}
                 </p>
             </div>
-            <ReadReceipt comment={comment} users={allUsers} />
+            <div className="flex items-center gap-1">
+              <ReadReceipt comment={comment} users={allUsers} />
+              <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 opacity-0 group-hover/comment:opacity-100"
+                  onClick={() => onConvertToSubtask(comment.text)}
+                  title="Converteer naar subtaak"
+              >
+                  <CornerUpRight className="h-4 w-4" />
+              </Button>
+            </div>
         </div>
         <div className="text-sm text-foreground/90 prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: comment.text }} />
       </div>
@@ -104,6 +115,7 @@ type TaskCommentsProps = {
 export function TaskComments({ task, users, addComment }: TaskCommentsProps) {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+  const { updateTask } = useTasks();
   const { markSingleNotificationAsRead } = useNotifications();
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState('');
@@ -203,6 +215,26 @@ export function TaskComments({ task, users, addComment }: TaskCommentsProps) {
     // when they enter the viewport.
   };
 
+  const handleConvertCommentToSubtask = (commentText: string) => {
+    const plainText = commentText.replace(/<[^>]*>/g, '').trim();
+    if (!plainText) return;
+
+    const newSubtask: Omit<Subtask, 'id'> = {
+      text: plainText,
+      completed: false,
+      isPrivate: false,
+    };
+    
+    const updatedSubtasks = [...task.subtasks, { ...newSubtask, id: crypto.randomUUID() }];
+    
+    updateTask(task.id, { subtasks: updatedSubtasks });
+
+    toast({
+        title: 'Subtaak aangemaakt',
+        description: `De reactie is omgezet naar een nieuwe subtaak.`,
+    });
+  };
+
   const typingUsers = useMemo(() => {
     if (!task?.typing || !currentUser) return [];
     
@@ -260,6 +292,7 @@ export function TaskComments({ task, users, addComment }: TaskCommentsProps) {
                     user={users.find(u => u.id === comment.userId)}
                     onVisible={() => {}}
                     allUsers={users}
+                    onConvertToSubtask={handleConvertCommentToSubtask}
                   />
               ))
           ) : (
