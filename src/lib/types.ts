@@ -1,5 +1,4 @@
 
-
 import { z } from 'zod';
 import type { Layout } from 'react-grid-layout';
 import { ROLE_ADMIN, ROLE_GUEST, ROLE_MEMBER, ROLE_OWNER } from './constants';
@@ -75,16 +74,6 @@ export const MyTasksWidgetConfigSchema = z.object({
 export type MyTasksWidgetConfig = z.infer<typeof MyTasksWidgetConfigSchema>;
 
 export const NoConfigSchema = z.object({});
-
-export const widgetConfigSchemas = {
-  tasksByStatus: ChartWidgetConfigSchema,
-  tasksByPriority: ChartWidgetConfigSchema,
-  leaderboard: LeaderboardWidgetConfigSchema,
-  myTasks: MyTasksWidgetConfigSchema,
-  activityFeed: NoConfigSchema,
-  recentActivity: NoConfigSchema,
-  welcome: NoConfigSchema,
-};
 
 export const widgetInstanceSchema = z.discriminatedUnion("type", [
   z.object({
@@ -651,6 +640,10 @@ export type Task = {
   clockifyProjectId?: string;
   customFieldValues?: Record<string, any>;
   pinned?: boolean;
+  callSession?: {
+    isActive: boolean;
+    participants: Record<string, { name: string; avatar: string; isMuted: boolean }>;
+  };
 };
 
 export const NOTIFICATION_EVENT_TYPES_FOR_SOUNDS = {

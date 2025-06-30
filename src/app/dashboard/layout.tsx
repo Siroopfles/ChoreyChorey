@@ -39,6 +39,8 @@ import { NotificationsProvider } from '@/contexts/notification-context';
 import { FilterProvider, useFilters } from '@/contexts/filter-context';
 import { useTasks } from '@/contexts/task-context';
 import { ROLE_GUEST } from '@/lib/constants';
+import { CallProvider } from '@/contexts/call-context';
+import { AudioHuddle } from '@/components/chorey/audio-huddle/AudioHuddle';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useOrganization();
@@ -346,6 +348,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                 />
             )}
             <ShortcutHelpDialog open={isShortcutHelpOpen} onOpenChange={setIsShortcutHelpOpen} />
+            <AudioHuddle />
         </SidebarProvider>
     );
 }
@@ -428,17 +431,19 @@ export default function DashboardLayout({
       <TaskProvider>
         <FilterProvider>
           <NotificationsProvider>
-              <IdeaProvider>
-                <GoalProvider>
-                  <ChecklistProvider>
+            <IdeaProvider>
+              <GoalProvider>
+                <ChecklistProvider>
+                  <CallProvider>
                     <AuthGuard>
                       <TourProvider>
                         {children}
                       </TourProvider>
                     </AuthGuard>
-                  </ChecklistProvider>
-                </GoalProvider>
-              </IdeaProvider>
+                  </CallProvider>
+                </ChecklistProvider>
+              </GoalProvider>
+            </IdeaProvider>
           </NotificationsProvider>
         </FilterProvider>
       </TaskProvider>

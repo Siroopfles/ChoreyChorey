@@ -17,7 +17,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
-import { MessageSquare, History, ClipboardCopy } from 'lucide-react';
+import { MessageSquare, History, ClipboardCopy, Phone, PhoneOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
 import { useOrganization } from '@/contexts/organization-context';
@@ -30,6 +30,7 @@ import { TaskComments } from './task-comments';
 import { TaskHistory } from './task-history';
 import { addCommentAction } from '@/app/actions/comment.actions';
 import { useNotifications } from '@/contexts/notification-context';
+import { useCall } from '@/contexts/call-context';
 
 
 type EditTaskDialogProps = {
@@ -45,6 +46,10 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
   const { markSingleNotificationAsRead } = useNotifications();
   const { user: currentUser } = useAuth();
   const { users, projects, currentOrganization } = useOrganization();
+  const { startOrJoinCall, leaveCall, activeCall } = useCall();
+
+  const isHuddleActive = task.callSession?.isActive;
+  const isInThisHuddle = activeCall?.taskId === task.id;
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -131,16 +136,29 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="font-headline flex items-center gap-2">
-            <span>Taak Bewerken: {task.title}</span>
-             <Badge variant="outline">{task.status}</Badge>
-          </DialogTitle>
-          <DialogDescription>
-            <button onClick={handleCopyId} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                ID: {task.id}
-                <ClipboardCopy className="h-3 w-3" />
-            </button>
-          </DialogDescription>
+          <div className="flex justify-between items-start">
+            <div className="space-y-1.5">
+              <DialogTitle className="font-headline flex items-center gap-2">
+                <span>Taak Bewerken: {task.title}</span>
+                <Badge variant="outline">{task.status}</Badge>
+              </DialogTitle>
+              <DialogDescription>
+                <button onClick={handleCopyId} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    ID: {task.id}
+                    <ClipboardCopy className="h-3 w-3" />
+                </button>
+              </DialogDescription>
+            </div>
+            <Button
+                variant={isHuddleActive ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => isInThisHuddle ? leaveCall() : startOrJoinCall(task)}
+                className="shrink-0"
+            >
+                {isInThisHuddle ? <PhoneOff className="mr-2 h-4 w-4" /> : <Phone className="mr-2 h-4 w-4" />}
+                {isInThisHuddle ? 'Verlaat Huddle' : (isHuddleActive ? 'Neem Deel' : 'Start Huddle')}
+            </Button>
+          </div>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 flex-1 min-h-0">
             <FormProvider {...form}>
