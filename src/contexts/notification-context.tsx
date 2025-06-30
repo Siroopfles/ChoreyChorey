@@ -19,6 +19,8 @@ import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
 import { addHours } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import { ToastAction } from '@/components/ui/toast';
 
 type NotificationContextType = {
   notifications: Notification[];
@@ -36,6 +38,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const router = useRouter();
   const prevNotificationsRef = useRef<Notification[]>([]);
 
   const handleError = (error: any, context: string) => {
@@ -97,8 +100,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     );
 
     if (newNotifications.length > 0) {
-      const notificationToPlaySoundFor = newNotifications[0];
-      const eventType = notificationToPlaySoundFor.eventType || 'default';
+      const latestNotification = newNotifications[0];
+      
+      // Play sound
+      const eventType = latestNotification.eventType || 'default';
       const soundSettings = user.notificationSounds || {};
       const soundToPlay = soundSettings[eventType] || soundSettings['default'] || NOTIFICATION_SOUNDS[1].id;
 
@@ -106,10 +111,21 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const audio = new Audio(`/sounds/${soundToPlay}`);
         audio.play().catch(error => console.error("Audio playback failed:", error));
       }
+      
+      // Show toast
+      toast({
+        title: "Nieuwe Notificatie",
+        description: latestNotification.message,
+        action: latestNotification.taskId ? (
+          <ToastAction altText="Bekijken" onClick={() => router.push(`/dashboard`)}>
+            Bekijken
+          </ToastAction>
+        ) : undefined,
+      });
     }
 
     prevNotificationsRef.current = notifications;
-  }, [notifications, user, loading, authLoading]);
+  }, [notifications, user, loading, authLoading, toast, router]);
 
   const markAllNotificationsAsRead = async () => {
     if (!user) return;
