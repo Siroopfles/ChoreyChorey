@@ -5,7 +5,7 @@ export const phase8: Phase = {
     name: "Fase 8: Mobiele Ervaring & PWA",
     description: "Een naadloze en krachtige ervaring creëren voor gebruikers die onderweg zijn.",
     features: [
-      { id: 8001, title: "PWA Offline First Architectuur", description: "Verbeter de offline mogelijkheden van de Progressive Web App. Implementeer een service worker strategie die niet alleen data cachet, maar ook volledige taakcreatie en -bewerking offline mogelijk maakt, met een robuust achtergrond-synchronisatiesysteem.", completed: false },
+      { id: 8001, title: "PWA Offline First Architectuur", description: "Verbeter de offline mogelijkheden van de Progressive Web App. Implementeer een service worker strategie die niet alleen data cachet, maar ook volledige taakcreatie en -bewerking offline mogelijk maakt, met een robuust achtergrond-synchronisatiesysteem.", completed: true },
       { id: 8002, title: "Mobiel-specifieke UI/UX", description: "Ontwikkel specifieke mobiele componenten voor een betere gebruikerservaring, zoals een 'bottom navigation bar' voor snelle toegang tot 'Dashboard', 'Mijn Taken', 'Inbox' en een centrale 'Taak Toevoegen' knop.", completed: false },
       { id: 8003, title: "Web Push Notificaties", description: "Implementeer web push notificaties via een service als Firebase Cloud Messaging. Gebruikers kunnen dan notificaties ontvangen voor @mentions en belangrijke updates, zelfs als de app gesloten is.", completed: false },
       { id: 8004, title: "Mobiele Home Screen Widgets", description: "Ontwikkel widgets voor iOS en Android die gebruikers op hun home screen kunnen plaatsen. Bied een 'takenoverzicht'-widget en een snelle 'taak toevoegen'-widget.", completed: false },
