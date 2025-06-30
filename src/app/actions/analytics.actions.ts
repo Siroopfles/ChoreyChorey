@@ -3,8 +3,8 @@
 
 import { collection, query, where, getDocs, Timestamp, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Task, HistoryEntry, Project, User } from '@/lib/types';
-import { differenceInDays, startOfWeek, endOfWeek, eachWeekOfInterval, format } from 'date-fns';
+import type { Task, HistoryEntry, Project, User, StatusDefinition } from '@/lib/types';
+import { differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, format, formatISO, isAfter, endOfDay } from 'date-fns';
 
 type TimePoint = {
   name: string; // Task title
@@ -49,6 +49,10 @@ type GetCostAnalysisDataInput = {
   projectId: string;
 };
 
+export type CfdDataPoint = {
+  date: string;
+  [status: string]: number | string;
+};
 
 function findFirstOccurrence(history: HistoryEntry[], action: string): Date | null {
   const entry = history.find(h => h.action === action);
@@ -274,5 +278,73 @@ export async function getCostAnalysisData(input: GetCostAnalysisDataInput): Prom
   } catch (e: any) {
     console.error("Error fetching cost analysis data:", e);
     return { data: null, error: e.message };
+  }
+}
+
+export async function getCfdData(input: {
+  organizationId: string;
+  startDate: string;
+  endDate: string;
+}): Promise<{ data: CfdDataPoint[] | null; statuses: string[] | null; error: string | null; }> {
+  const { organizationId, startDate, endDate } = input;
+
+  try {
+    const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+    if (!orgDoc.exists()) {
+      return { data: null, statuses: null, error: 'Organisatie niet gevonden.' };
+    }
+    const statuses = (orgDoc.data().settings?.customization?.statuses || []).map((s: StatusDefinition) => s.name);
+
+    const tasksQuery = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('createdAt', '<=', Timestamp.fromDate(new Date(endDate)))
+    );
+    const tasksSnapshot = await getDocs(tasksQuery);
+    const tasks = tasksSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, createdAt: (doc.data().createdAt as Timestamp).toDate() } as Task));
+
+    const dateRange = eachDayOfInterval({ start: new Date(startDate), end: new Date(endDate) });
+    
+    const cfdData = dateRange.map(day => {
+      const dayStr = formatISO(day, { representation: 'date' });
+      const counts: CfdDataPoint = { date: dayStr };
+      
+      statuses.forEach((status: string) => {
+        counts[status] = 0;
+      });
+
+      tasks.forEach(task => {
+        // Task did not exist yet on this day
+        if (isAfter(task.createdAt, endOfDay(day))) {
+          return;
+        }
+
+        let statusOnDay: string = 'Te Doen';
+        
+        const history = (task.history || [])
+            .map(h => ({ ...h, timestamp: (h.timestamp as Timestamp).toDate() }))
+            .filter(h => h.action.startsWith('Status gewijzigd') && !isAfter(h.timestamp, endOfDay(day)))
+            .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+            
+        if (history.length > 0) {
+            const lastStatusChange = history[history.length - 1];
+            const match = lastStatusChange.details?.match(/naar "(.*?)"/);
+            if(match && match[1]) {
+                statusOnDay = match[1];
+            }
+        }
+        
+        // Only count if status exists in org's statuses.
+        if (counts[statusOnDay] !== undefined) {
+            (counts[statusOnDay] as number)++;
+        }
+      });
+      return counts;
+    });
+
+    return { data: cfdData, statuses, error: null };
+  } catch (e: any) {
+    console.error("Error fetching CFD data:", e);
+    return { data: null, statuses: null, error: e.message };
   }
 }

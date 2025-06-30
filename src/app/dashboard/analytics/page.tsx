@@ -8,13 +8,16 @@ import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Loader2, AreaChart, GitBranch } from 'lucide-react';
+import { CalendarIcon, Loader2, AreaChart, GitBranch, DatabaseZap } from 'lucide-react';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { getCycleTimeData, type CycleTimeData } from '@/app/actions/analytics.actions';
+import { getCycleTimeData, type CycleTimeData, getCfdData, type CfdDataPoint } from '@/app/actions/analytics.actions';
 import { useToast } from '@/hooks/use-toast';
 import { CycleTimeChart } from '@/components/chorey/analytics/cycle-time-chart';
+import { CfdChart } from '@/components/chorey/analytics/cfd-chart';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AnalyticsPage() {
     const { currentOrganization } = useAuth();
@@ -24,24 +27,43 @@ export default function AnalyticsPage() {
         to: new Date(),
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [data, setData] = useState<CycleTimeData | null>(null);
+    const [cycleTimeData, setCycleTimeData] = useState<CycleTimeData | null>(null);
+    const [cfdData, setCfdData] = useState<CfdDataPoint[] | null>(null);
+    const [cfdStatuses, setCfdStatuses] = useState<string[] | null>(null);
 
     const handleFetchData = async () => {
         if (!currentOrganization || !date?.from || !date?.to) return;
         setIsLoading(true);
-        setData(null);
+        setCycleTimeData(null);
+        setCfdData(null);
+        setCfdStatuses(null);
 
-        const result = await getCycleTimeData({
-            organizationId: currentOrganization.id,
-            startDate: date.from.toISOString(),
-            endDate: date.to.toISOString(),
-        });
+        const [cycleTimeResult, cfdResult] = await Promise.all([
+            getCycleTimeData({
+                organizationId: currentOrganization.id,
+                startDate: date.from.toISOString(),
+                endDate: date.to.toISOString(),
+            }),
+            getCfdData({
+                organizationId: currentOrganization.id,
+                startDate: date.from.toISOString(),
+                endDate: date.to.toISOString(),
+            })
+        ]);
         
-        if (result.error) {
-            toast({ title: 'Fout bij ophalen data', description: result.error, variant: 'destructive' });
+        if (cycleTimeResult.error) {
+            toast({ title: 'Fout bij ophalen Cycle Time data', description: cycleTimeResult.error, variant: 'destructive' });
         } else {
-            setData(result.data);
+            setCycleTimeData(cycleTimeResult.data);
         }
+
+        if (cfdResult.error) {
+            toast({ title: 'Fout bij ophalen CFD data', description: cfdResult.error, variant: 'destructive' });
+        } else {
+            setCfdData(cfdResult.data);
+            setCfdStatuses(cfdResult.statuses);
+        }
+
         setIsLoading(false);
     };
 
@@ -51,24 +73,89 @@ export default function AnalyticsPage() {
     }, [currentOrganization]);
     
     const averageCycleTime = useMemo(() => {
-        if (!data?.cycleTime || data.cycleTime.length === 0) return 'N/A';
-        const total = data.cycleTime.reduce((sum, item) => sum + item.value, 0);
-        const avg = total / data.cycleTime.length;
+        if (!cycleTimeData?.cycleTime || cycleTimeData.cycleTime.length === 0) return 'N/A';
+        const total = cycleTimeData.cycleTime.reduce((sum, item) => sum + item.value, 0);
+        const avg = total / cycleTimeData.cycleTime.length;
         return `${avg.toFixed(1)} dagen`;
-    }, [data]);
+    }, [cycleTimeData]);
     
     const averageLeadTime = useMemo(() => {
-        if (!data?.leadTime || data.leadTime.length === 0) return 'N/A';
-        const total = data.leadTime.reduce((sum, item) => sum + item.value, 0);
-        const avg = total / data.leadTime.length;
+        if (!cycleTimeData?.leadTime || cycleTimeData.leadTime.length === 0) return 'N/A';
+        const total = cycleTimeData.leadTime.reduce((sum, item) => sum + item.value, 0);
+        const avg = total / cycleTimeData.leadTime.length;
         return `${avg.toFixed(1)} dagen`;
-    }, [data]);
+    }, [cycleTimeData]);
+
+    const renderCycleTimeContent = () => (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Cycle Time</CardTitle>
+                        <CardDescription>
+                            De tijd van 'In Uitvoering' tot 'Voltooid'. Gemiddeld: <span className="font-bold">{averageCycleTime}</span>.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <CycleTimeChart data={cycleTimeData?.cycleTime || []} />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Lead Time</CardTitle>
+                        <CardDescription>
+                            De tijd van creatie tot 'Voltooid'. Gemiddeld: <span className="font-bold">{averageLeadTime}</span>.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <CycleTimeChart data={cycleTimeData?.leadTime || []} />
+                    </CardContent>
+                </Card>
+            </div>
+             {cycleTimeData && cycleTimeData.bottlenecks.length > 0 && (
+                <Alert>
+                    <GitBranch className="h-4 w-4" />
+                    <AlertTitle>Potentiële Knelpunten Geïdentificeerd</AlertTitle>
+                    <AlertDescription>
+                        <ul className="list-disc pl-5 mt-2 space-y-1">
+                            {cycleTimeData.bottlenecks.map((bottleneck, index) => (
+                                <li key={index}>{bottleneck}</li>
+                            ))}
+                        </ul>
+                    </AlertDescription>
+                </Alert>
+            )}
+        </div>
+    );
+    
+    const renderCfdContent = () => (
+        <Card>
+            <CardHeader>
+                <CardTitle>Cumulative Flow Diagram (CFD)</CardTitle>
+                <CardDescription>
+                    Visualiseer de voortgang van taken door de verschillende workflow-statussen over tijd. Dit helpt bij het identificeren van knelpunten en het managen van werk-in-uitvoering (WIP).
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {cfdData && cfdStatuses ? (
+                    <CfdChart data={cfdData} statuses={cfdStatuses} />
+                ) : <p>Geen data om weer te geven.</p>}
+            </CardContent>
+        </Card>
+    );
+
+    const renderSkeleton = () => (
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card><CardContent className="h-[400px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin"/></CardContent></Card>
+            <Card><CardContent className="h-[400px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin"/></CardContent></Card>
+         </div>
+    );
 
     return (
         <div className="space-y-6">
             <div>
                 <h1 className="text-3xl font-bold flex items-center gap-2"><AreaChart /> Workflow Analyse</h1>
-                <p className="text-muted-foreground">Krijg inzicht in de doorlooptijden van uw taken om knelpunten te identificeren.</p>
+                <p className="text-muted-foreground">Krijg inzicht in de flow en doorlooptijden van uw taken.</p>
             </div>
             
             <Card>
@@ -118,53 +205,18 @@ export default function AnalyticsPage() {
                 </CardContent>
             </Card>
 
-            {isLoading && (
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card><CardContent className="h-[400px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin"/></CardContent></Card>
-                    <Card><CardContent className="h-[400px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin"/></CardContent></Card>
-                 </div>
-            )}
-            
-            {data && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Cycle Time</CardTitle>
-                            <CardDescription>
-                                De tijd van 'In Uitvoering' tot 'Voltooid'. Gemiddeld: <span className="font-bold">{averageCycleTime}</span>.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <CycleTimeChart data={data.cycleTime} />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Lead Time</CardTitle>
-                            <CardDescription>
-                                De tijd van creatie tot 'Voltooid'. Gemiddeld: <span className="font-bold">{averageLeadTime}</span>.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <CycleTimeChart data={data.leadTime} />
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {data && data.bottlenecks.length > 0 && (
-                <Alert>
-                    <GitBranch className="h-4 w-4" />
-                    <AlertTitle>Potentiële Knelpunten Geïdentificeerd</AlertTitle>
-                    <AlertDescription>
-                        <ul className="list-disc pl-5 mt-2 space-y-1">
-                            {data.bottlenecks.map((bottleneck, index) => (
-                                <li key={index}>{bottleneck}</li>
-                            ))}
-                        </ul>
-                    </AlertDescription>
-                </Alert>
-            )}
+            <Tabs defaultValue="cycle-time" className="w-full">
+                <TabsList>
+                    <TabsTrigger value="cycle-time"><GitBranch className="mr-2 h-4 w-4" /> Cycle & Lead Time</TabsTrigger>
+                    <TabsTrigger value="cfd"><DatabaseZap className="mr-2 h-4 w-4" /> Cumulative Flow</TabsTrigger>
+                </TabsList>
+                <TabsContent value="cycle-time" className="mt-6">
+                    {isLoading ? renderSkeleton() : renderCycleTimeContent()}
+                </TabsContent>
+                <TabsContent value="cfd" className="mt-6">
+                    {isLoading ? renderSkeleton() : renderCfdContent()}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }
