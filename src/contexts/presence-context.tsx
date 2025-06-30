@@ -10,6 +10,7 @@ import { doc, onSnapshot, collection, query, where, serverTimestamp, setDoc, del
 
 interface PresenceContextType {
   others: Record<string, Presence>;
+  setViewingTask: (taskId: string | null) => void;
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
@@ -52,47 +53,60 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [others, setOthers] = useState<Record<string, Presence>>({});
-  const presenceRef = useRef<any>(null);
+  const presenceRef = useRef<Partial<Presence>>({});
 
   const updateMyPresence = useCallback(
-    (position: { x: number; y: number } | null) => {
+    (presenceUpdate: Partial<Omit<Presence, 'id' | 'organizationId'>>) => {
       if (!user || !currentOrganization) return;
-      presenceRef.current = {
+
+      const newPresenceData = {
+        id: user.id,
+        organizationId: currentOrganization.id,
+        name: user.name,
+        avatar: user.avatar,
         ...presenceRef.current,
-        cursor: position,
+        ...presenceUpdate,
         lastSeen: serverTimestamp(),
       };
-       setDoc(doc(db, 'presence', user.id), presenceRef.current, { merge: true });
+      
+      presenceRef.current = newPresenceData;
+      setDoc(doc(db, 'presence', user.id), newPresenceData, { merge: true });
     },
     [user, currentOrganization]
   );
   
-  const throttledUpdate = useRef(throttle(updateMyPresence, 100)).current;
+  const throttledCursorUpdate = useRef(throttle((cursor: {x: number, y: number} | null) => {
+      updateMyPresence({ cursor });
+  }, 100)).current;
 
+  const setViewingTask = useCallback((taskId: string | null) => {
+      updateMyPresence({ viewingTaskId: taskId });
+  }, [updateMyPresence]);
+  
   useEffect(() => {
     if (!user || !currentOrganization) {
       setOthers({});
       return;
     }
     
-    presenceRef.current = {
+    const userPresenceDocRef = doc(db, 'presence', user.id);
+    
+    const initialPresence = {
       id: user.id,
       organizationId: currentOrganization.id,
       name: user.name,
       avatar: user.avatar,
       cursor: null,
+      viewingTaskId: null,
     };
-    
-    // Set initial presence and on disconnect
-    const userPresenceDocRef = doc(db, 'presence', user.id);
-    setDoc(userPresenceDocRef, presenceRef.current);
+    presenceRef.current = initialPresence;
+    setDoc(userPresenceDocRef, { ...initialPresence, lastSeen: serverTimestamp() });
     
     const handleBeforeUnload = () => {
        deleteDoc(userPresenceDocRef);
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Subscribe to others
     const q = query(
       collection(db, 'presence'),
       where('organizationId', '==', currentOrganization.id)
@@ -109,11 +123,11 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
     });
     
     const handleMouseMove = (e: MouseEvent) => {
-      throttledUpdate({ x: e.clientX, y: e.clientY });
+      throttledCursorUpdate({ x: e.clientX, y: e.clientY });
     };
 
     const handleMouseLeave = () => {
-        throttledUpdate(null);
+        throttledCursorUpdate(null);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -127,10 +141,10 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
       deleteDoc(userPresenceDocRef);
     };
 
-  }, [user, currentOrganization, throttledUpdate]);
+  }, [user, currentOrganization, throttledCursorUpdate]);
   
   return (
-    <PresenceContext.Provider value={{ others }}>
+    <PresenceContext.Provider value={{ others, setViewingTask }}>
       {children}
     </PresenceContext.Provider>
   );

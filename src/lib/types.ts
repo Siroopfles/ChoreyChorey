@@ -483,6 +483,7 @@ export type Presence = {
   name: string;
   avatar: string;
   lastSeen: Timestamp;
+  viewingTaskId?: string | null;
 };
 
 export const ACHIEVEMENTS = {

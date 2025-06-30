@@ -4,7 +4,7 @@
 
 import type { User, TaskFormValues, Task, Label, Project } from '@/lib/types';
 import { taskFormSchema } from '@/lib/types';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,53 @@ import { LiveDescriptionEditor } from './live-description-editor';
 import { Separator } from '../ui/separator';
 import { Poll } from './Poll';
 import { TldrawWhiteboard } from './tldraw-whiteboard';
+import { usePresence } from '@/contexts/presence-context';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+
+const LiveViewers = ({ taskId }: { taskId: string }) => {
+    const { user: currentUser } = useAuth();
+    const { users } = useOrganization();
+    const { others } = usePresence();
+
+    const viewers = useMemo(() => 
+        Object.values(others)
+            .filter(p => p.viewingTaskId === taskId && p.id !== currentUser?.id)
+            .map(p => users.find(u => u.id === p.id))
+            .filter(Boolean) as User[],
+        [others, taskId, users, currentUser]
+    );
+
+    if (viewers.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="flex items-center -space-x-2">
+            <TooltipProvider>
+                {viewers.slice(0, 3).map(viewer => (
+                    <Tooltip key={viewer.id}>
+                        <TooltipTrigger asChild>
+                             <Avatar className="h-6 w-6 border-2 border-background">
+                                <AvatarImage src={viewer.avatar} />
+                                <AvatarFallback>{viewer.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{viewer.name} bekijkt dit ook</p>
+                        </TooltipContent>
+                    </Tooltip>
+                ))}
+            </TooltipProvider>
+            {viewers.length > 3 && (
+                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold border-2 border-background">
+                    +{viewers.length - 3}
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 type EditTaskDialogProps = {
@@ -51,6 +98,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
   const { user: currentUser } = useAuth();
   const { users, projects, currentOrganization } = useOrganization();
   const { startOrJoinCall, leaveCall, activeCall } = useCall();
+  const { setViewingTask } = usePresence();
 
   const isHuddleActive = task.callSession?.isActive;
   const isInThisHuddle = activeCall?.taskId === task.id;
@@ -61,6 +109,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
 
   useEffect(() => {
     if (task && isOpen) {
+      setViewingTask(task.id);
       form.reset({
         title: task.title,
         assigneeIds: task.assigneeIds || [],
@@ -85,7 +134,15 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
         poll: task.poll || undefined,
       });
     }
-  }, [task, isOpen, form]);
+
+    return () => {
+        // This cleanup function runs when the component unmounts or dependencies change.
+        // We only clear the viewing state if the dialog was open and is now closing.
+        if (isOpen) {
+            setViewingTask(null);
+        }
+    };
+  }, [task, isOpen, form, setViewingTask]);
 
 
   function onSubmit(data: Omit<TaskFormValues, 'description'>) {
@@ -153,15 +210,18 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                 </button>
               </DialogDescription>
             </div>
-            <Button
-                variant={isHuddleActive ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => isInThisHuddle ? leaveCall() : startOrJoinCall(task)}
-                className="shrink-0"
-            >
-                {isInThisHuddle ? <PhoneOff className="mr-2 h-4 w-4" /> : <Phone className="mr-2 h-4 w-4" />}
-                {isInThisHuddle ? 'Verlaat Huddle' : (isHuddleActive ? 'Neem Deel' : 'Start Huddle')}
-            </Button>
+             <div className="flex items-center gap-2">
+                <LiveViewers taskId={task.id} />
+                <Button
+                    variant={isHuddleActive ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => isInThisHuddle ? leaveCall() : startOrJoinCall(task)}
+                    className="shrink-0"
+                >
+                    {isInThisHuddle ? <PhoneOff className="mr-2 h-4 w-4" /> : <Phone className="mr-2 h-4 w-4" />}
+                    {isInThisHuddle ? 'Verlaat Huddle' : (isHuddleActive ? 'Neem Deel' : 'Start Huddle')}
+                </Button>
+            </div>
           </div>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 flex-1 min-h-0">
