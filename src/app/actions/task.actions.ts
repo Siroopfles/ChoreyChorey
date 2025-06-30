@@ -218,6 +218,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           isChoreOfTheWeek: false,
           customFieldValues: taskData.customFieldValues || {},
           poll: taskData.poll ? { ...taskData.poll, options: taskData.poll.options.map(o => ({...o, id: crypto.randomUUID()}))} : null,
+          whiteboard: null,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -875,7 +876,7 @@ export async function handOffTaskAction(
     
     createNotification(
         toUserId,
-        `${fromUserName} heeft taak "${taskData.title}" aan jou overgedragen.`,
+        `"${taskData.title}" is aan jou overgedragen door ${fromUserName}.`,
         taskId,
         taskData.organizationId,
         fromUserId,

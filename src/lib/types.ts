@@ -673,6 +673,7 @@ export type Task = {
     participants: Record<string, { name: string; avatar: string; isMuted: boolean }>;
   };
   poll?: Poll | null;
+  whiteboard?: string;
 };
 
 export const NOTIFICATION_EVENT_TYPES_FOR_SOUNDS = {

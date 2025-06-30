@@ -17,7 +17,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
-import { MessageSquare, History, ClipboardCopy, Phone, PhoneOff } from 'lucide-react';
+import { MessageSquare, History, ClipboardCopy, Phone, PhoneOff, PenSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
 import { useOrganization } from '@/contexts/organization-context';
@@ -34,6 +34,7 @@ import { useCall } from '@/contexts/call-context';
 import { LiveDescriptionEditor } from './live-description-editor';
 import { Separator } from '../ui/separator';
 import { Poll } from './Poll';
+import { TldrawWhiteboard } from './tldraw-whiteboard';
 
 
 type EditTaskDialogProps = {
@@ -190,9 +191,10 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
             </div>
             <div className="flex flex-col min-h-0">
                 <Tabs defaultValue="comments" className="flex flex-col flex-1 min-h-0">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/> Reacties</TabsTrigger>
                         <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/> Geschiedenis</TabsTrigger>
+                        <TabsTrigger value="whiteboard"><PenSquare className="mr-2 h-4 w-4"/> Whiteboard</TabsTrigger>
                     </TabsList>
                     <TabsContent value="comments" className="flex-1 flex flex-col gap-4 min-h-0 mt-2">
                         <TaskComments 
@@ -204,6 +206,9 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                     </TabsContent>
                     <TabsContent value="history" className="flex-1 min-h-0 mt-2">
                         <TaskHistory task={task} users={users} />
+                    </TabsContent>
+                    <TabsContent value="whiteboard" className="flex-1 min-h-0 mt-2">
+                        <TldrawWhiteboard taskId={task.id} whiteboardData={task.whiteboard} />
                     </TabsContent>
                 </Tabs>
             </div>
