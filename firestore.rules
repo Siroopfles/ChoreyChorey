@@ -1,106 +1,103 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
     function isMember(orgId) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.hasAny([orgId]);
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.has(orgId);
     }
     
-    function getRole(orgId) {
-    	return get(/databases/$(database)/documents/organizations/$(orgId)).data.members[request.auth.uid].role;
-    }
-    
-    function hasPermission(orgId, permission) {
-    	let roleId = getRole(orgId);
-      // This is a simplified check. A full implementation would check the permissions array for the role.
-      // For now, we allow Owner and Admin full access.
-      return roleId == 'Owner' || roleId == 'Admin';
+    function isOwner(orgId) {
+       return request.auth != null && get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
     }
 
-    function isGuest(orgId) {
-        return getRole(orgId) == 'Guest';
-    }
-    
-    function isGuestOfProject(orgId, projectId) {
-        let guestAccess = get(/databases/$(database)/documents/organizations/$(orgId)).data.settings.guestAccess;
-        return guestAccess != null && request.auth.uid in guestAccess && guestAccess[request.auth.uid].projectIds.hasAny([projectId]);
-    }
-    
     match /users/{userId} {
-      allow read;
+      allow read: if request.auth != null;
       allow write: if request.auth.uid == userId;
     }
-    
+
     match /organizations/{orgId} {
-    	allow read: if isMember(orgId);
-      allow write: if hasPermission(orgId, 'MANAGE_ORGANIZATION');
+      allow read: if isMember(orgId);
+      allow write: if isOwner(orgId);
     }
-    
+
+    match /organizations/{orgId}/members/{memberId} {
+      allow read: if isMember(orgId);
+      allow write: if isOwner(orgId); // Or more granular permissions if needed
+    }
+
     match /tasks/{taskId} {
-    	allow read: if isMember(resource.data.organizationId) || 
-                       (isGuest(resource.data.organizationId) && 
-                        resource.data.projectId != null && 
-                        isGuestOfProject(resource.data.organizationId, resource.data.projectId));
-      allow create: if isMember(request.resource.data.organizationId);
-      allow update: if isMember(resource.data.organizationId);
-      allow delete: if hasPermission(resource.data.organizationId, 'DELETE_TASK');
-    }
-    
-    match /taskTemplates/{templateId} {
-      allow read: if isMember(resource.data.organizationId);
-      allow create, update, delete: if hasPermission(request.resource.data.organizationId, 'MANAGE_TEMPLATES');
+      allow read, write: if request.auth != null && isMember(resource.data.organizationId);
     }
 
     match /projects/{projectId} {
-        allow read: if isMember(resource.data.organizationId) || 
-                       isGuestOfProject(resource.data.organizationId, projectId);
-        allow create, update, delete: if hasPermission(request.resource.data.organizationId, 'MANAGE_PROJECTS');
+       allow read, write: if request.auth != null && isMember(resource.data.organizationId);
     }
-
+    
     match /teams/{teamId} {
-        allow read: if isMember(resource.data.organizationId);
-        allow create, update, delete: if hasPermission(request.resource.data.organizationId, 'MANAGE_TEAMS');
+       allow read, write: if request.auth != null && isMember(resource.data.organizationId);
     }
-    
+
     match /invites/{inviteId} {
-        allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null;
+    }
+    
+    match /taskTemplates/{templateId} {
+       allow read, write: if request.auth != null && isMember(resource.data.organizationId);
     }
 
-    match /notifications/{notificationId} {
-        allow read, write: if request.auth.uid == resource.data.userId;
+    match /checklistTemplates/{templateId} {
+       allow read, write: if request.auth != null && isMember(resource.data.organizationId);
     }
     
-    match /personalGoals/{goalId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
-    }
-    
-    match /teamChallenges/{challengeId} {
-      allow read: if isMember(resource.data.organizationId);
-      allow create, update, delete: if hasPermission(request.resource.data.organizationId, 'MANAGE_TEAMS');
-    }
-    
-     match /ideas/{ideaId} {
-      allow read: if isMember(resource.data.organizationId);
-      allow create: if isMember(request.resource.data.organizationId);
-      allow update: if isMember(resource.data.organizationId); // Allow upvoting, status change is controlled by server action
-    }
-    
-    match /activityFeed/{itemId} {
-      allow read: if isMember(resource.data.organizationId);
-      allow create: if request.auth != null;
-    }
-
-    match /webhooks/{webhookId} {
-      allow read, write: if hasPermission(resource.data.organizationId, 'MANAGE_INTEGRATIONS');
-    }
-
-    match /apiKeys/{keyId} {
-      allow read, write, delete: if hasPermission(resource.data.organizationId, 'MANAGE_API_KEYS');
+    match /automations/{automationId} {
+       allow read, write: if request.auth != null && isMember(resource.data.organizationId);
     }
     
     match /sessions/{sessionId} {
-      allow read, write: if request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
+
+    match /apiKeys/{keyId} {
+      allow read, create: if request.auth != null && isMember(resource.data.organizationId);
+      allow delete, update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+    }
+
+    match /webhooks/{webhookId} {
+       allow read, write: if request.auth != null && isMember(resource.data.organizationId);
+    }
+
+    match /aiFeedback/{feedbackId} {
+      allow create: if request.auth != null;
+    }
+    
+    match /personalGoals/{goalId} {
+       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    match /teamChallenges/{challengeId} {
+       allow read, write: if request.auth != null && isMember(resource.data.organizationId);
+    }
+
+    match /ideas/{ideaId} {
+       allow read, create: if request.auth != null && isMember(resource.data.organizationId);
+       allow update: if request.auth != null; // Let backend logic handle permissions
+    }
+
+    match /notifications/{notificationId} {
+       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    match /activityFeed/{feedItemId} {
+       allow read: if isMember(resource.data.organizationId);
+       allow create: if request.auth != null;
+    }
+
+    match /presence/{userId} {
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds.has(resource.data.organizationId);
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
   }
 }

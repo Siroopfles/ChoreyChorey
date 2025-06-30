@@ -41,6 +41,8 @@ import { useTasks } from '@/contexts/task-context';
 import { ROLE_GUEST } from '@/lib/constants';
 import { CallProvider } from '@/contexts/call-context';
 import { AudioHuddle } from '@/components/chorey/audio-huddle/AudioHuddle';
+import { PresenceProvider } from '@/contexts/presence-context';
+import { LiveCursors } from '@/components/chorey/live-cursors';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useOrganization();
@@ -335,6 +337,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
                 <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
                     {announcement && <AnnouncementBanner announcement={announcement} />}
                     {children}
+                    <LiveCursors />
                 </main>
                 <BulkActionBar />
             </SidebarInset>
@@ -435,11 +438,13 @@ export default function DashboardLayout({
               <GoalProvider>
                 <ChecklistProvider>
                   <CallProvider>
-                    <AuthGuard>
-                      <TourProvider>
-                        {children}
-                      </TourProvider>
-                    </AuthGuard>
+                    <PresenceProvider>
+                        <AuthGuard>
+                        <TourProvider>
+                            {children}
+                        </TourProvider>
+                        </AuthGuard>
+                    </PresenceProvider>
                   </CallProvider>
                 </ChecklistProvider>
               </GoalProvider>

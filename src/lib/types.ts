@@ -1,7 +1,9 @@
 
+
 import { z } from 'zod';
 import type { Layout } from 'react-grid-layout';
 import { ROLE_ADMIN, ROLE_GUEST, ROLE_MEMBER, ROLE_OWNER } from './constants';
+import type { Timestamp } from 'firebase/firestore';
 
 export const customFieldDefinitionSchema = z.object({
   id: z.string(),
@@ -472,6 +474,15 @@ export type Session = {
   lastAccessed: Date;
   userAgent: string;
   isActive: boolean;
+};
+
+export type Presence = {
+  id: string; // same as userId
+  organizationId: string;
+  cursor: { x: number; y: number } | null;
+  name: string;
+  avatar: string;
+  lastSeen: Timestamp;
 };
 
 export const ACHIEVEMENTS = {
