@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useTasks } from '@/contexts/task-context';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type CalendarViewProps = {
   tasks: Task[];
@@ -26,7 +27,8 @@ const priorityBorderColor: Record<Priority, string> = {
 export default function CalendarView({ tasks, users }: CalendarViewProps) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
-  const { setViewedUser } = useTasks();
+  const { navigateToUserProfile } = useTasks();
+  const isMobile = useIsMobile();
 
   // Set initial date on the client-side to avoid hydration mismatch
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function CalendarView({ tasks, users }: CalendarViewProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+    <div className={cn("p-4", isMobile ? 'flex flex-col gap-4' : 'grid grid-cols-1 md:grid-cols-2 gap-6')}>
       <Calendar
         mode="single"
         selected={date}
@@ -79,7 +81,7 @@ export default function CalendarView({ tasks, users }: CalendarViewProps) {
           {selectedTasks.length > 0 ? (
             <ul className="space-y-3">
               {selectedTasks.map(task => {
-                const assignee = users.find(u => u.id === task.assigneeId);
+                const assignee = users.find(u => u.id === task.assigneeIds[0]);
                 return (
                   <li key={task.id} className={cn("flex items-center justify-between p-3 rounded-lg border bg-background border-l-4", priorityBorderColor[task.priority])}>
                     <div className="flex-1">
@@ -90,7 +92,7 @@ export default function CalendarView({ tasks, users }: CalendarViewProps) {
                       <button
                         type="button"
                         className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        onClick={() => setViewedUser(assignee)}
+                        onClick={() => navigateToUserProfile(assignee.id)}
                       >
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={assignee.avatar} alt={assignee.name} />
