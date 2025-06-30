@@ -579,6 +579,7 @@ export type Comment = {
   createdAt: Date;
   readBy?: string[];
   reactions?: Record<string, string[]>;
+  parentId?: string | null;
 };
 
 export type HistoryEntry = {

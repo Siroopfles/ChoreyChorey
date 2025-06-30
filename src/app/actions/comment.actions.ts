@@ -12,7 +12,14 @@ import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
 import { JIRA_BOT_USER_ID, JIRA_BOT_USER_NAME, SYSTEM_USER_ID } from '@/lib/constants';
 
 
-export async function addCommentAction(taskId: string, text: string, userId: string, userName: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null; }> {
+export async function addCommentAction(
+  taskId: string,
+  text: string,
+  userId: string,
+  userName: string,
+  organizationId: string,
+  parentId: string | null = null
+): Promise<{ data: { success: boolean } | null; error: string | null; }> {
     try {
         const taskRef = doc(db, 'tasks', taskId);
         const taskDoc = await getDoc(taskRef);
@@ -20,8 +27,14 @@ export async function addCommentAction(taskId: string, text: string, userId: str
         
         const taskData = taskDoc.data() as Task;
 
-        const newComment: Omit<Comment, 'id'> = { userId, text, createdAt: new Date(), readBy: [userId] };
-        const historyEntry = addHistoryEntry(userId, 'Reactie toegevoegd', `"${text.replace(/<[^>]*>?/gm, '')}"`);
+        const newComment: Omit<Comment, 'id'> = {
+            userId,
+            text,
+            createdAt: new Date(),
+            readBy: [userId],
+            parentId: parentId || null,
+        };
+        const historyEntry = addHistoryEntry(userId, parentId ? 'Gereageerd op een opmerking' : 'Reactie toegevoegd', `"${text.replace(/<[^>]*>?/gm, '')}"`);
         
         await updateDoc(taskRef, {
             comments: arrayUnion({ ...newComment, id: crypto.randomUUID() }),
@@ -29,12 +42,24 @@ export async function addCommentAction(taskId: string, text: string, userId: str
         });
         
         const recipients = new Set([...taskData.assigneeIds, taskData.creatorId]);
+        if (parentId) {
+          const parentComment = taskData.comments.find(c => c.id === parentId);
+          if (parentComment) {
+            recipients.add(parentComment.userId);
+          }
+        }
+        
         recipients.delete(userId);
+
         recipients.forEach(recipientId => {
           if (recipientId) {
+            const message = parentId
+              ? `${userName} heeft gereageerd op een opmerking in: "${taskData.title}"`
+              : `${userName} heeft gereageerd op: "${taskData.title}"`;
+
             createNotification(
               recipientId,
-              `${userName} heeft gereageerd op: "${taskData.title}"`,
+              message,
               taskId,
               organizationId,
               userId,

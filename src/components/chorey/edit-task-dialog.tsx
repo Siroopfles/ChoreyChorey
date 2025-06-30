@@ -121,14 +121,14 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
     })
   }
 
-  const handleAddComment = (text: string) => {
+  const handleAddComment = (text: string, parentId: string | null = null) => {
     if (!currentUser || !currentOrganization) return;
-    addCommentAction(task.id, text, currentUser.id, currentUser.name, currentOrganization.id);
+    addCommentAction(task.id, text, currentUser.id, currentUser.name, currentOrganization.id, parentId);
   }
 
   const handleMarkCommentAsRead = (commentId: string) => {
     if (!currentUser) return;
-    // This is handled by the notification system now.
+    // This action is now handled by the notification system now.
     // The presence of this function is kept for components that might still call it.
   }
 

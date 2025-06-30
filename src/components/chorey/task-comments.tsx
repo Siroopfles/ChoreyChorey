@@ -6,7 +6,7 @@ import type { User, Task as TaskType, Comment as CommentType, Subtask } from '@/
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Bot, Loader2, Speaker, Eye, CornerUpRight, SmilePlus } from 'lucide-react';
+import { Bot, Loader2, Speaker, Eye, CornerUpRight, SmilePlus, Reply as ReplyIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { summarizeComments } from '@/ai/flows/summarize-comments';
 import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
@@ -99,7 +99,33 @@ const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }
     );
 };
 
-const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask, toggleCommentReaction, task }: { comment: CommentType; user?: User; onVisible: () => void; allUsers: User[]; onConvertToSubtask: (text: string) => void; toggleCommentReaction: (taskId: string, commentId: string, emoji: string) => void; task: TaskType }) => {
+const ReplyForm = ({ parentId, taskId, onReply, onCancel }: { parentId: string, taskId: string, onReply: (text: string, parentId: string) => void, onCancel: () => void }) => {
+  const [replyText, setReplyText] = useState('');
+  
+  const handleReplySubmit = () => {
+    if (replyText.replace(/<[^>]*>/g, '').trim()) {
+      onReply(replyText, parentId);
+      setReplyText('');
+      onCancel();
+    }
+  };
+
+  return (
+    <div className="mt-2 pl-4 border-l-2 space-y-2">
+      <RichTextEditor
+        value={replyText}
+        onChange={setReplyText}
+        placeholder="Schrijf een antwoord..."
+      />
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={onCancel}>Annuleren</Button>
+        <Button size="sm" onClick={handleReplySubmit} disabled={!replyText.replace(/<[^>]*>/g, '').trim()}>Antwoord</Button>
+      </div>
+    </div>
+  );
+};
+
+const CommentItem = ({ comment, user, allUsers, onConvertToSubtask, toggleCommentReaction, task, onReplyClick }: { comment: CommentType; user?: User; allUsers: User[]; onConvertToSubtask: (text: string) => void; toggleCommentReaction: (taskId: string, commentId: string, emoji: string) => void; task: TaskType; onReplyClick: (commentId: string) => void; }) => {
     const commentRef = useRef<HTMLLIElement>(null);
     const { user: currentUser } = useAuth();
     
@@ -111,7 +137,7 @@ const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask, t
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
-                    onVisible();
+                    // onVisible(); // This logic is now handled globally by NotificationContext
                     observer.disconnect();
                 }
             },
@@ -123,7 +149,7 @@ const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask, t
         }
 
         return () => observer.disconnect();
-    }, [onVisible, hasBeenReadByMe]);
+    }, [hasBeenReadByMe]);
 
   return (
     <li ref={commentRef} className="flex items-start gap-3 group/comment">
@@ -142,13 +168,10 @@ const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask, t
             <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-100 transition-opacity">
               <ReadReceipt comment={comment} users={allUsers} />
               <EmojiPickerPopover onSelect={(emoji) => toggleCommentReaction(task.id, comment.id, emoji)} />
-              <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => onConvertToSubtask(comment.text)}
-                  title="Converteer naar subtaak"
-              >
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onReplyClick(comment.id)} title="Antwoorden">
+                <ReplyIcon className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onConvertToSubtask(comment.text)} title="Converteer naar subtaak">
                   <CornerUpRight className="h-4 w-4" />
               </Button>
             </div>
@@ -175,10 +198,73 @@ const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask, t
   );
 };
 
+type CommentWithReplies = CommentType & { replies: CommentWithReplies[] };
+
+const buildThreads = (comments: CommentType[]): CommentWithReplies[] => {
+  const commentMap = new Map<string, CommentWithReplies>();
+  const rootComments: CommentWithReplies[] = [];
+
+  comments.forEach(comment => {
+    commentMap.set(comment.id, { ...comment, replies: [] });
+  });
+
+  comments.forEach(comment => {
+    if (comment.parentId && commentMap.has(comment.parentId)) {
+      commentMap.get(comment.parentId)!.replies.push(commentMap.get(comment.id)!);
+    } else {
+      rootComments.push(commentMap.get(comment.id)!);
+    }
+  });
+
+  return rootComments;
+};
+
+const CommentThread = ({ comments, allUsers, onConvertToSubtask, toggleCommentReaction, task, onReplyClick, replyingToId, handleReplySubmit, nestingLevel = 0 }: { comments: CommentWithReplies[], allUsers: User[], onConvertToSubtask: (text: string) => void, toggleCommentReaction: (taskId: string, commentId: string, emoji: string) => void, task: TaskType, onReplyClick: (commentId: string) => void, replyingToId: string | null, handleReplySubmit: (text: string, parentId: string) => void, nestingLevel?: number }) => {
+    return (
+        <ul className={cn("space-y-4", nestingLevel > 0 && "pl-5 mt-4 border-l-2")}>
+            {comments.map(comment => (
+                <div key={comment.id}>
+                    <CommentItem 
+                        comment={comment}
+                        user={allUsers.find(u => u.id === comment.userId)}
+                        allUsers={allUsers}
+                        onConvertToSubtask={onConvertToSubtask}
+                        toggleCommentReaction={toggleCommentReaction}
+                        task={task}
+                        onReplyClick={onReplyClick}
+                    />
+                    {replyingToId === comment.id && (
+                        <ReplyForm
+                            parentId={comment.id}
+                            taskId={task.id}
+                            onReply={handleReplySubmit}
+                            onCancel={() => onReplyClick('')}
+                        />
+                    )}
+                    {comment.replies && comment.replies.length > 0 && (
+                        <CommentThread 
+                            comments={comment.replies}
+                            allUsers={allUsers}
+                            onConvertToSubtask={onConvertToSubtask}
+                            toggleCommentReaction={toggleCommentReaction}
+                            task={task}
+                            onReplyClick={onReplyClick}
+                            replyingToId={replyingToId}
+                            handleReplySubmit={handleReplySubmit}
+                            nestingLevel={nestingLevel + 1}
+                        />
+                    )}
+                </div>
+            ))}
+        </ul>
+    );
+};
+
+
 type TaskCommentsProps = {
   task: TaskType;
   users: User[];
-  addComment: (text: string) => void;
+  addComment: (text: string, parentId?: string | null) => void;
   toggleCommentReaction: (taskId: string, commentId: string, emoji: string) => void;
 };
 
@@ -186,19 +272,22 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { updateTask } = useTasks();
-  const { markSingleNotificationAsRead } = useNotifications();
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState('');
   const [newComment, setNewComment] = useState('');
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const typingTimeout = useRef<NodeJS.Timeout>();
   
-  const sortedComments = [...(task.comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
+  const threadedComments = useMemo(() => {
+    const sortedComments = [...(task.comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return buildThreads(sortedComments);
+  }, [task.comments]);
+  
   const onSummarizeComments = async () => {
-    const commentsToSummarize = sortedComments.map(c => c.text);
+    const commentsToSummarize = (task.comments || []).map(c => c.text);
     if (commentsToSummarize.length < 2) {
       toast({ title: 'Niet genoeg reacties om samen te vatten.', variant: 'destructive' });
       return;
@@ -218,7 +307,7 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
   };
 
   const onReadAloud = async () => {
-    if (sortedComments.length === 0) {
+    if (!task.comments || task.comments.length === 0) {
       toast({ title: 'Geen reacties om voor te lezen.', variant: 'destructive' });
       return;
     }
@@ -228,7 +317,7 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
     setSummary('');
 
     try {
-      const commentsWithNames = sortedComments.map(comment => {
+      const commentsWithNames = task.comments.map(comment => {
         const user = users.find(u => u.id === comment.userId);
         return {
           userId: comment.userId,
@@ -269,20 +358,23 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
     }
   }, [newComment, updateTypingStatus]);
 
-  const handleAddComment = () => {
-    const plainText = newComment.replace(/<[^>]*>/g, '').trim();
+  const handleAddComment = (text: string, parentId: string | null = null) => {
+    const plainText = text.replace(/<[^>]*>/g, '').trim();
     if (plainText) {
       if (typingTimeout.current) clearTimeout(typingTimeout.current);
       updateTypingStatus(false);
-      addComment(newComment);
-      setNewComment('');
+      addComment(text, parentId);
     }
   };
   
-  const handleCommentVisible = (commentId: string) => {
-    // This action is now handled by the notification context,
-    // which listens for unread notifications and marks them as read
-    // when they enter the viewport.
+  const handleAddTopLevelComment = () => {
+    handleAddComment(newComment, null);
+    setNewComment('');
+  };
+
+  const handleReplySubmit = (text: string, parentId: string) => {
+    handleAddComment(text, parentId);
+    setReplyingToId(null);
   };
 
   const handleConvertCommentToSubtask = (commentText: string) => {
@@ -321,56 +413,54 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
   return (
     <div className="flex-1 flex flex-col gap-2 min-h-0">
       <ScrollArea className="flex-1 pr-2">
-        <ul className="space-y-4">
-          {sortedComments.length > 1 && (
-              <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing || isReadingAloud} className="flex-1">
-                  {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                  Samenvatten
-              </Button>
-              <Button variant="outline" size="sm" onClick={onReadAloud} disabled={isReadingAloud || isSummarizing} className="flex-1">
-                  {isReadingAloud ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Speaker className="mr-2 h-4 w-4" />}
-                  Voorlezen
-              </Button>
-              </div>
-          )}
-          {summary && (
-              <Alert>
-                  <Bot className="h-4 w-4" />
-                  <AlertTitle>AI Samenvatting</AlertTitle>
-                  <AlertDescription>{summary}</AlertDescription>
-              </Alert>
-          )}
-          {audioSrc && (
-              <div className="mt-2">
-                  <audio controls autoPlay src={audioSrc} className="w-full h-10">
-                      Your browser does not support the audio element.
-                  </audio>
-              </div>
-          )}
-          {audioError && (
-              <Alert variant="destructive" className="mt-2">
-                  <AlertTitle>Fout bij voorlezen</AlertTitle>
-                  <AlertDescription>{audioError}</AlertDescription>
-              </Alert>
-          )}
-          {sortedComments.length > 0 ? (
-              sortedComments.map(comment => (
-                  <CommentItem 
-                    key={comment.id}
-                    comment={comment}
-                    user={users.find(u => u.id === comment.userId)}
-                    onVisible={() => {}}
-                    allUsers={users}
-                    onConvertToSubtask={handleConvertCommentToSubtask}
-                    toggleCommentReaction={toggleCommentReaction}
-                    task={task}
-                  />
-              ))
-          ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">Nog geen reacties.</p>
-          )}
-        </ul>
+        <div className="space-y-4">
+        {task.comments?.length > 1 && (
+            <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing || isReadingAloud} className="flex-1">
+                {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                Samenvatten
+            </Button>
+            <Button variant="outline" size="sm" onClick={onReadAloud} disabled={isReadingAloud || isSummarizing} className="flex-1">
+                {isReadingAloud ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Speaker className="mr-2 h-4 w-4" />}
+                Voorlezen
+            </Button>
+            </div>
+        )}
+        {summary && (
+            <Alert>
+                <Bot className="h-4 w-4" />
+                <AlertTitle>AI Samenvatting</AlertTitle>
+                <AlertDescription>{summary}</AlertDescription>
+            </Alert>
+        )}
+        {audioSrc && (
+            <div className="mt-2">
+                <audio controls autoPlay src={audioSrc} className="w-full h-10">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        )}
+        {audioError && (
+            <Alert variant="destructive" className="mt-2">
+                <AlertTitle>Fout bij voorlezen</AlertTitle>
+                <AlertDescription>{audioError}</AlertDescription>
+            </Alert>
+        )}
+        {threadedComments.length > 0 ? (
+            <CommentThread 
+                comments={threadedComments}
+                allUsers={users}
+                onConvertToSubtask={handleConvertCommentToSubtask}
+                toggleCommentReaction={toggleCommentReaction}
+                task={task}
+                onReplyClick={setReplyingToId}
+                replyingToId={replyingToId}
+                handleReplySubmit={handleReplySubmit}
+            />
+        ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">Nog geen reacties.</p>
+        )}
+        </div>
       </ScrollArea>
        <div className="h-4 px-1 text-xs text-muted-foreground italic flex items-center gap-1">
         {typingUsers.length > 0 && (
@@ -386,9 +476,9 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
           <RichTextEditor
             value={newComment}
             onChange={setNewComment}
-            placeholder="Voeg een reactie toe..."
+            placeholder="Voeg een nieuwe reactie toe..."
           />
-          <Button onClick={handleAddComment} disabled={!newComment.replace(/<[^>]*>/g, '').trim()} className="self-end">
+          <Button onClick={handleAddTopLevelComment} disabled={!newComment.replace(/<[^>]*>/g, '').trim()} className="self-end">
               Plaats
           </Button>
       </div>
