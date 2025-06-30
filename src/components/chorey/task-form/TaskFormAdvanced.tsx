@@ -20,6 +20,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TaskFormPoll } from './TaskFormPoll';
 
 
 type TaskFormAdvancedProps = {
@@ -47,6 +48,13 @@ export function TaskFormAdvanced({ users, projects, task }: TaskFormAdvancedProp
         <AccordionTrigger className="text-sm font-semibold">Relaties & Blokkeringen</AccordionTrigger>
         <AccordionContent className="pt-2 space-y-4">
           <TaskFormRelations task={task} />
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="poll">
+        <AccordionTrigger className="text-sm font-semibold">Poll</AccordionTrigger>
+        <AccordionContent className="pt-2 space-y-4">
+          <TaskFormPoll />
         </AccordionContent>
       </AccordionItem>
 

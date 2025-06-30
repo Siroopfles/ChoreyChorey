@@ -4,7 +4,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, runTransaction, Timestamp, deleteField } from 'firebase/firestore';
-import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization } from '@/lib/types';
+import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Poll } from '@/lib/types';
 import { calculatePoints, addHistoryEntry } from '@/lib/utils';
 import { grantAchievements, checkAndGrantTeamAchievements } from './gamification.actions';
 import { createNotification } from './notification.actions';
@@ -217,6 +217,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           helpNeeded: taskData.helpNeeded ?? false,
           isChoreOfTheWeek: false,
           customFieldValues: taskData.customFieldValues || {},
+          poll: taskData.poll ? { ...taskData.poll, options: taskData.poll.options.map(o => ({...o, id: crypto.randomUUID()}))} : null,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -319,6 +320,9 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         
         if (updates.githubLinks) finalUpdates.githubLinkUrls = updates.githubLinks.map(link => link.url);
         if (updates.jiraLinks) finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);
+        if (updates.poll && !taskToUpdate.poll) {
+             finalUpdates.poll.options = updates.poll.options.map(o => ({...o, id: crypto.randomUUID()}));
+        }
 
         if (updates.relations) {
             const oldRelations = taskToUpdate.relations?.map(r => `${r.type}:${r.taskId}`).sort().join(',') || '';
@@ -771,5 +775,66 @@ export async function updateTypingStatusAction(taskId: string, userId: string, i
     // and don't bother the user with a toast.
     console.error('Error updating typing status:', error);
     return { success: false };
+  }
+}
+
+export async function voteOnPollAction(
+  taskId: string,
+  optionId: string,
+  userId: string,
+  organizationId: string
+): Promise<{ success: boolean; error?: string }> {
+  const taskRef = doc(db, 'tasks', taskId);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const taskDoc = await transaction.get(taskRef);
+      if (!taskDoc.exists()) {
+        throw new Error('Taak niet gevonden');
+      }
+      const taskData = taskDoc.data() as Task;
+      if (!taskData.poll) {
+        throw new Error('Geen poll gevonden voor deze taak');
+      }
+
+      const poll = taskData.poll;
+      const newOptions = poll.options.map(option => {
+        const voterIds = option.voterIds || [];
+        
+        // Remove user's previous vote if it's a single vote poll
+        if (!poll.isMultiVote) {
+          const voterIndex = voterIds.indexOf(userId);
+          if (voterIndex > -1) {
+            voterIds.splice(voterIndex, 1);
+          }
+        }
+        
+        // Add or remove vote for the selected option
+        if (option.id === optionId) {
+          const voterIndex = voterIds.indexOf(userId);
+          if (voterIndex > -1) {
+            // User is removing their vote
+            voterIds.splice(voterIndex, 1);
+          } else {
+            // User is adding their vote
+            voterIds.push(userId);
+          }
+        }
+        return { ...option, voterIds };
+      });
+
+      transaction.update(taskRef, { 'poll.options': newOptions });
+    });
+    
+    // Trigger webhook for task update
+    const updatedTaskDoc = await getDoc(taskRef);
+    if(updatedTaskDoc.exists()) {
+        await triggerWebhooks(organizationId, 'task.updated', { id: taskId, ...updatedTaskDoc.data() });
+    }
+
+    return { success: true };
+  } catch (e: any) {
+    console.error("Error voting on poll:", e);
+    return { success: false, error: e.message };
   }
 }

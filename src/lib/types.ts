@@ -599,6 +599,21 @@ export const taskRelationSchema = z.object({
 });
 export type TaskRelation = z.infer<typeof taskRelationSchema>;
 
+export const pollOptionSchema = z.object({
+  id: z.string(),
+  text: z.string().min(1, "Optie mag niet leeg zijn."),
+  voterIds: z.array(z.string()),
+});
+
+export const pollSchema = z.object({
+  question: z.string().min(3, "Poll-vraag moet minimaal 3 karakters bevatten."),
+  options: z.array(pollOptionSchema).min(2, "Een poll moet minimaal 2 opties hebben."),
+  isMultiVote: z.boolean().default(false),
+});
+
+export type Poll = z.infer<typeof pollSchema>;
+export type PollOption = z.infer<typeof pollOptionSchema>;
+
 export type Task = {
   id: string;
   title: string;
@@ -657,6 +672,7 @@ export type Task = {
     isActive: boolean;
     participants: Record<string, { name: string; avatar: string; isMuted: boolean }>;
   };
+  poll?: Poll | null;
 };
 
 export const NOTIFICATION_EVENT_TYPES_FOR_SOUNDS = {
@@ -767,6 +783,7 @@ export const taskFormSchema = z.object({
   clockifyWorkspaceId: z.string().optional(),
   clockifyProjectId: z.string().optional(),
   customFieldValues: z.record(z.any()).optional(),
+  poll: pollSchema.optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;

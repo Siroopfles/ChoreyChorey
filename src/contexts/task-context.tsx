@@ -67,6 +67,7 @@ type TaskContextType = {
   setViewedTask: (task: Task | null) => void;
   toggleMuteTask: (taskId: string) => Promise<void>;
   manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
+  voteOnPoll: (taskId: string, optionId: string) => Promise<void>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -453,6 +454,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const voteOnPoll = async (taskId: string, optionId: string) => {
+    if (!user || !currentOrganization) return;
+    const { error } = await TaskActions.voteOnPollAction(taskId, optionId, user.id, currentOrganization.id);
+    if (error) {
+        handleError({ message: error }, 'stemmen op poll');
+    }
+  };
+
 
   return (
     <TaskContext.Provider value={{ 
@@ -461,7 +470,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask,
       bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
       navigateToUserProfile, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, 
-      toggleMuteTask, manageAutomation,
+      toggleMuteTask, manageAutomation, voteOnPoll,
     }}>
       {children}
     </TaskContext.Provider>

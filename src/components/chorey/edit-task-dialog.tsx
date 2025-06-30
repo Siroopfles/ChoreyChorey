@@ -33,6 +33,7 @@ import { useNotifications } from '@/contexts/notification-context';
 import { useCall } from '@/contexts/call-context';
 import { LiveDescriptionEditor } from './live-description-editor';
 import { Separator } from '../ui/separator';
+import { Poll } from './Poll';
 
 
 type EditTaskDialogProps = {
@@ -80,6 +81,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
         reviewerId: task.reviewerId,
         consultedUserIds: task.consultedUserIds || [],
         informedUserIds: task.informedUserIds || [],
+        poll: task.poll || undefined,
       });
     }
   }, [task, isOpen, form]);
@@ -165,6 +167,11 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
             <div className="flex flex-col min-h-0">
               <ScrollArea className="flex-1 pr-4 -mr-4">
                 <LiveDescriptionEditor task={task} />
+                {task.poll && (
+                    <div className="my-4">
+                        <Poll taskId={task.id} poll={task.poll} />
+                    </div>
+                )}
                 <Separator className="my-4" />
                 <FormProvider {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
