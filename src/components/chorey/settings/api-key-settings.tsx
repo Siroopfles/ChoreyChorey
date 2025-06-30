@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -34,8 +35,8 @@ export default function ApiKeySettings() {
     useEffect(() => {
         if (currentOrganization && user) {
             getApiKeys(currentOrganization.id, user.id).then(result => {
-                if (result.keys) {
-                    setKeys(result.keys);
+                if (result.data?.keys) {
+                    setKeys(result.data.keys);
                 }
                 setIsLoading(false);
             });
@@ -51,10 +52,10 @@ export default function ApiKeySettings() {
         const result = await generateApiKey(currentOrganization.id, user.id, keyName, selectedPermissions);
         if (result.error) {
             toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        } else {
-            setNewKeyDialog({ open: true, key: result.plainTextKey });
+        } else if (result.data) {
+            setNewKeyDialog({ open: true, key: result.data.plainTextKey });
             const fetchResult = await getApiKeys(currentOrganization.id, user.id);
-            if (fetchResult.keys) setKeys(fetchResult.keys);
+            if (fetchResult.data?.keys) setKeys(fetchResult.data.keys);
             setKeyName('');
             setSelectedPermissions([]);
         }

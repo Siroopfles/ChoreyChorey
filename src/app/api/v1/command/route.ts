@@ -1,3 +1,4 @@
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { processCommand } from '@/ai/flows/process-command';

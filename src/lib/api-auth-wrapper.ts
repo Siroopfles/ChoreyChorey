@@ -102,8 +102,8 @@ export function withResourceAuth(
                  return NextResponse.json({ error: `Forbidden: Resource not in your organization.` }, { status: 403 });
             }
 
-            const resourceWithId = { id: resourceDoc.id, ...resourceData };
-            return handler(request, context, authResult, resourceWithId);
+            const resourceWithIdAndRef = { id: resourceDoc.id, ref: resourceRef, ...resourceData };
+            return handler(request, context, authResult, resourceWithIdAndRef);
 
         } catch (error: any) {
             console.error(`API Error fetching resource from ${collectionName}:`, error);

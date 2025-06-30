@@ -19,6 +19,6 @@ export const phase9: Phase = {
     { id: 9012, title: "Aanpasbare Notificatiedrempels", description: "Laat beheerders drempels instellen die automatisch notificaties triggeren, bijvoorbeeld: 'Stuur een waarschuwing naar de projectmanager als het projectbudget voor 80% is verbruikt'.", completed: true },
     { id: 9013, title: "Analyse van Blocker-impact", description: "Genereer een rapport dat de meest voorkomende blokkerende taken identificeert. Analyseer welke taken het vaakst de voortgang van anderen belemmeren om knelpunten in de workflow op te lossen.", completed: true },
     { id: 9014, title: "Voorspelling van Taakvoltooiing", description: "Een AI-model dat, op basis van historische data, een voorspelling doet over de waarschijnlijke voltooiingsdatum van een nieuwe taak zodra deze wordt aangemaakt, wat helpt bij een realistischere planning.", completed: true },
-    { id: 9015, title: "Integratie met Business Intelligence Tools", description: "Bied een connector of exportfunctie om Chorey-data te laden in externe BI-tools zoals Tableau, Power BI of Google Looker Studio voor nog diepgaandere, op maat gemaakte analyses.", completed: false }
+    { id: 9015, title: "Integratie met Business Intelligence Tools", description: "Bied een uitgebreide, beveiligde v1 REST API waarmee externe BI-tools zoals Tableau, Power BI of Looker Studio verbinding kunnen maken om diepgaande, op maat gemaakte analyses uit te voeren.", completed: true }
     ]
   };

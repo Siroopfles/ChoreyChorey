@@ -84,7 +84,7 @@ const createTaskHandler = async (
             storyPoints: body.storyPoints || null,
             isSensitive: body.isSensitive || false,
             helpNeeded: body.helpNeeded || false,
-            imageDataUri: null,
+            imageUrl: null,
             thanked: false,
             timeLogged: 0,
             activeTimerStartedAt: null,
