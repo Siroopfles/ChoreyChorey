@@ -139,23 +139,12 @@ export async function updateMemberProfile(organizationId: string, userId: string
     }
 }
 
-export async function updateUserStatus(organizationId: string, userId: string, status: UserStatus): Promise<{ data: { success: boolean } | null; error: string | null }> {
+export async function updateUserStatus(userId: string, status: UserStatus): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
-        const orgRef = doc(db, 'organizations', organizationId);
-        const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-        const memberDoc = await getDoc(memberRef);
-
-        const updateData: { [key: string]: any } = {
-            [`members.${userId}.status`]: status
-        };
-
-        if (!memberDoc.exists()) {
-             // If member doesn't exist, create it. This can happen with guest invites.
-             // We'll just set the status and let other processes fill in the role etc.
-             await updateDoc(orgRef, updateData);
-        } else {
-             await updateDoc(orgRef, updateData);
-        }
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            status: status
+        });
         return { data: { success: true }, error: null };
     } catch (error: any) {
         console.error("Error updating user status:", error);

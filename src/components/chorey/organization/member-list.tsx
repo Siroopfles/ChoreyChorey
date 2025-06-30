@@ -68,6 +68,8 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
                             const isOwner = member.id === currentOrganization.ownerId;
                             const status = member.status?.type || 'Offline';
                             const statusStyle = statusStyles[status] || statusStyles.Offline;
+                            const presence = member.status?.currentPage;
+                            const statusLabel = presence || statusStyle.label;
                             const canBeManaged = !isOwner;
                             const hasOverrides = !!(memberData?.permissionOverrides?.granted?.length || memberData?.permissionOverrides?.revoked?.length);
 
@@ -86,7 +88,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
                                                     </div>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>{statusStyle.label}</p>
+                                                    <p>{statusLabel}</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
@@ -152,4 +154,3 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
         </>
     );
 }
-

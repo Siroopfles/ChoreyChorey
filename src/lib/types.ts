@@ -429,6 +429,7 @@ export const statusStyles: Record<string, { dot: string; label: string }> = {
 export type UserStatus = {
   type: 'Online' | 'Afwezig' | 'In vergadering' | 'Niet storen' | 'Offline';
   until?: Date | null;
+  currentPage?: string;
 };
 
 export type GlobalUserProfile = {

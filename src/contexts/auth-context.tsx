@@ -50,6 +50,7 @@ type AuthContextType = {
     currentOrganization: Organization | null;
     switchOrganization: (orgId: string) => Promise<void>;
     updateUserDashboard: (updates: Partial<{ dashboardConfig: WidgetInstance[]; dashboardLayout: Layouts }>) => Promise<void>;
+    updateUserPresence: (presenceUpdate: Partial<UserStatus>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -86,8 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = useCallback(async (message?: { title: string, description: string }) => {
         try {
-            if (user?.id && currentOrganization?.id) {
-              await updateUserStatusAction(currentOrganization.id, user.id, { type: 'Offline', until: null });
+            if (user?.id) {
+              await updateUserStatusAction(user.id, { type: 'Offline', until: null });
             }
             if (currentSessionId) {
                 const sessionRef = doc(db, 'sessions', currentSessionId);
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             handleError(error, 'uitloggen');
         }
-    }, [user?.id, currentOrganization?.id, currentSessionId, setCurrentSessionId, toast, router]);
+    }, [user?.id, currentSessionId, setCurrentSessionId, toast, router]);
 
     const fetchUserAndOrgData = useCallback(async (firebaseUser: FirebaseUser) => {
         if (isDebugMode) console.log('[DEBUG] AuthContext: Running fetchUserAndOrgData for', firebaseUser.uid);
@@ -514,6 +515,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const updateUserPresence = useCallback(async (presenceUpdate: Partial<UserStatus>) => {
+        if (!user) return;
+        const currentStatus = user.status || { type: 'Offline', until: null };
+        const newStatus: UserStatus = {
+            type: currentStatus.type,
+            until: currentStatus.until,
+            ...presenceUpdate,
+        };
+        await updateUserStatusAction(user.id, newStatus);
+    }, [user]);
+
     const value = {
         authUser,
         user,
@@ -530,6 +542,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentOrganization,
         switchOrganization,
         updateUserDashboard,
+        updateUserPresence,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

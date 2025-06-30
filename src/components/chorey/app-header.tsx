@@ -40,7 +40,7 @@ export default function AppHeader() {
   const { setTheme, theme } = useTheme();
   const { notifications, markAllNotificationsAsRead, snoozeNotification } = useNotifications();
   const { setIsAddTaskDialogOpen } = useTasks();
-  const { user, logout, organizations, currentOrganization, switchOrganization, updateUserStatus: updateUserStatusInContext } = useAuth();
+  const { user, logout, organizations, currentOrganization, switchOrganization, refreshUser } = useAuth();
   const router = useRouter();
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
 
@@ -58,9 +58,9 @@ export default function AppHeader() {
   }
 
   const handleUpdateUserStatus = async (status: UserStatus) => {
-    if (!user || !currentOrganization) return;
-    await updateUserStatusAction(currentOrganization.id, user.id, status);
-    updateUserStatusInContext(status);
+    if (!user) return;
+    await updateUserStatusAction(user.id, status);
+    // The change will be picked up by the onSnapshot listener in AuthContext
   };
 
   const currentStatus = user?.status?.type || 'Offline';

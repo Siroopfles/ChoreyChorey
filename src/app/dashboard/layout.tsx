@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -27,7 +28,7 @@ import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
 import Link from 'next/link';
 import AnnouncementBanner from '@/components/chorey/announcement-banner';
-import { PERMISSIONS } from '@/lib/types';
+import { PERMISSIONS, UserStatus } from '@/lib/types';
 import { TourProvider } from '@/contexts/tour-context';
 import { IdeaProvider } from '@/contexts/idea-context';
 import { GoalProvider } from '@/contexts/goal-context';
@@ -107,7 +108,8 @@ function SidebarToggle() {
 function AppShell({ children }: { children: React.ReactNode }) {
     const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks, toggleTaskPin } = useTasks();
     const { setFilters } = useFilters();
-    const { currentOrganization, projects, users, currentUserRole, currentUserPermissions } = useOrganization();
+    const { user, updateUserPresence } = useAuth();
+    const { currentOrganization, projects, users, currentUserRole, currentUserPermissions, loading: orgLoading } = useOrganization();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -120,6 +122,29 @@ function AppShell({ children }: { children: React.ReactNode }) {
     const showGoals = features?.goals !== false;
     const showIdeas = features?.ideas !== false;
     const showMentorship = features?.mentorship !== false;
+
+    useEffect(() => {
+        if (!user || !updateUserPresence || orgLoading) return;
+
+        let currentPage = '';
+
+        if (viewedTask) {
+            currentPage = `Bewerkt taak: "${viewedTask.title}"`;
+        } else if (pathname.startsWith('/dashboard/focus/')) {
+            const taskId = pathname.split('/').pop();
+            const task = tasks.find(t => t.id === taskId);
+            currentPage = `Focust op: "${task?.title || 'een taak'}"`;
+        } else if (pathname === '/dashboard') {
+            currentPage = 'Op Dashboard';
+        } else {
+            const pageName = pathname.replace('/dashboard/', '').split('/')[0];
+            currentPage = `Op pagina: ${pageName.charAt(0).toUpperCase() + pageName.slice(1)}`;
+        }
+        
+        const presenceUpdate: Partial<UserStatus> = { currentPage };
+        updateUserPresence(presenceUpdate);
+
+    }, [pathname, viewedTask, user, updateUserPresence, tasks, orgLoading]);
 
     const mainNavItems = [
         { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },

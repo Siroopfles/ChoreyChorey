@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo } from 'react';
@@ -9,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const STATUS_PRIORITY: Record<Status, number> = {
     'In Uitvoering': 1,
@@ -44,7 +46,7 @@ const STATUS_POSITIONS: Record<Status | 'Idle', { top: string; left: string; are
 
 export default function TeamRoomPage() {
     const { users, loading: authLoading } = useAuth();
-    const { tasks, loading: tasksLoading, setViewedUser } = useTasks();
+    const { tasks, loading: tasksLoading, navigateToUserProfile } = useTasks();
 
     const userPositions = useMemo(() => {
         return users.map(user => {
@@ -55,13 +57,16 @@ export default function TeamRoomPage() {
             const topJitter = (Math.random() - 0.5) * 10;
             const leftJitter = (Math.random() - 0.5) * 10;
 
+            const presencePage = user.status?.currentPage;
+            const area = basePosition.area;
+
             return {
                 user,
                 style: {
                     top: `calc(${basePosition.top} + ${topJitter}%)`,
                     left: `calc(${basePosition.left} + ${leftJitter}%)`,
                 },
-                area: basePosition.area
+                area: presencePage || area
             };
         });
     }, [users, tasks]);
@@ -100,7 +105,7 @@ export default function TeamRoomPage() {
                                 <button
                                     className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ease-in-out hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full"
                                     style={style}
-                                    onClick={() => setViewedUser(user)}
+                                    onClick={() => navigateToUserProfile(user.id)}
                                 >
                                     <Avatar className="h-12 w-12 border-4 border-background shadow-md">
                                         <AvatarImage src={user.avatar} alt={user.name} />
