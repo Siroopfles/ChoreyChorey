@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame, Mic } from 'lucide-react';
+import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame, Mic, BarChart } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useNotifications } from '@/contexts/notification-context';
 import { useTasks } from '@/contexts/task-context';
@@ -280,6 +280,12 @@ export default function AppHeader() {
                 <Link href="/dashboard/settings/profile">
                   <UserIcon className="mr-2 h-4 w-4" />
                   <span>Profiel</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/my-stats">
+                  <BarChart className="mr-2 h-4 w-4" />
+                  <span>Mijn Statistieken</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
