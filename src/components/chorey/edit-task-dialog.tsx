@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { User, TaskFormValues, Task, Label, Project } from '@/lib/types';
@@ -43,7 +44,7 @@ type EditTaskDialogProps = {
 
 export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
-  const { updateTask } = useTasks();
+  const { updateTask, toggleCommentReaction } = useTasks();
   const { markSingleNotificationAsRead } = useNotifications();
   const { user: currentUser } = useAuth();
   const { users, projects, currentOrganization } = useOrganization();
@@ -191,6 +192,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                             task={task}
                             users={users}
                             addComment={handleAddComment}
+                            toggleCommentReaction={toggleCommentReaction}
                         />
                     </TabsContent>
                     <TabsContent value="history" className="flex-1 min-h-0 mt-2">

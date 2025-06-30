@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import type { User, Task as TaskType, Comment as CommentType, Subtask } from '@/lib/types';
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { Bot, Loader2, Speaker, Eye, CornerUpRight } from 'lucide-react';
+import { Bot, Loader2, Speaker, Eye, CornerUpRight, SmilePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { summarizeComments } from '@/ai/flows/summarize-comments';
 import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
@@ -15,10 +16,61 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/auth-context';
 import { useNotifications } from '@/contexts/notification-context';
 import { updateTypingStatusAction } from '@/app/actions/task.actions';
 import { useTasks } from '@/contexts/task-context';
+import { cn } from '@/lib/utils';
+import { Badge } from '../ui/badge';
+
+const EMOJI_LIST = ['👍', '❤️', '😂', '🎉', '🤔', '🙏'];
+
+const EmojiPickerPopover = ({ onSelect }: { onSelect: (emoji: string) => void }) => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <Button variant="ghost" size="icon" className="h-6 w-6"><SmilePlus className="h-4 w-4" /></Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-auto p-1">
+      <div className="flex gap-1">
+        {EMOJI_LIST.map(emoji => (
+          <Button key={emoji} variant="ghost" size="icon" className="h-8 w-8 text-lg" onClick={() => onSelect(emoji)}>
+            {emoji}
+          </Button>
+        ))}
+      </div>
+    </PopoverContent>
+  </Popover>
+);
+
+const ReactionBadge = ({ emoji, count, users, hasReacted, onClick }: { emoji: string, count: number, users: string[], hasReacted: boolean, onClick: () => void }) => {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        className={cn(
+                            "h-7 px-2.5 py-1 text-xs",
+                            hasReacted && "bg-primary/20 border border-primary/50"
+                        )}
+                        onClick={onClick}
+                    >
+                        <span className="text-sm mr-1.5">{emoji}</span>
+                        <span>{count}</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <ul className="list-disc list-inside">
+                        {users.map(name => <li key={name}>{name}</li>)}
+                    </ul>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
+
 
 const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }) => {
     const readers = (comment.readBy || [])
@@ -47,7 +99,7 @@ const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }
     );
 };
 
-const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask }: { comment: CommentType; user?: User; onVisible: () => void; allUsers: User[]; onConvertToSubtask: (text: string) => void; }) => {
+const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask, toggleCommentReaction, task }: { comment: CommentType; user?: User; onVisible: () => void; allUsers: User[]; onConvertToSubtask: (text: string) => void; toggleCommentReaction: (taskId: string, commentId: string, emoji: string) => void; task: TaskType }) => {
     const commentRef = useRef<HTMLLIElement>(null);
     const { user: currentUser } = useAuth();
     
@@ -87,12 +139,13 @@ const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask }:
                     {formatDistanceToNow(comment.createdAt, { addSuffix: true, locale: nl })}
                 </p>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-100 transition-opacity">
               <ReadReceipt comment={comment} users={allUsers} />
+              <EmojiPickerPopover onSelect={(emoji) => toggleCommentReaction(task.id, comment.id, emoji)} />
               <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 opacity-0 group-hover/comment:opacity-100"
+                  className="h-6 w-6"
                   onClick={() => onConvertToSubtask(comment.text)}
                   title="Converteer naar subtaak"
               >
@@ -101,6 +154,22 @@ const CommentItem = ({ comment, user, onVisible, allUsers, onConvertToSubtask }:
             </div>
         </div>
         <div className="text-sm text-foreground/90 prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: comment.text }} />
+        <div className="mt-2 flex flex-wrap items-center gap-1">
+          {Object.entries(comment.reactions || {}).map(([emoji, userIds]) => {
+              if (userIds.length === 0) return null;
+              const reactedUsers = userIds.map(id => allUsers.find(u => u.id === id)?.name).filter(Boolean) as string[];
+              return (
+                  <ReactionBadge
+                      key={emoji}
+                      emoji={emoji}
+                      count={userIds.length}
+                      users={reactedUsers}
+                      hasReacted={currentUser ? userIds.includes(currentUser.id) : false}
+                      onClick={() => toggleCommentReaction(task.id, comment.id, emoji)}
+                  />
+              );
+          })}
+        </div>
       </div>
     </li>
   );
@@ -110,9 +179,10 @@ type TaskCommentsProps = {
   task: TaskType;
   users: User[];
   addComment: (text: string) => void;
+  toggleCommentReaction: (taskId: string, commentId: string, emoji: string) => void;
 };
 
-export function TaskComments({ task, users, addComment }: TaskCommentsProps) {
+export function TaskComments({ task, users, addComment, toggleCommentReaction }: TaskCommentsProps) {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { updateTask } = useTasks();
@@ -293,6 +363,8 @@ export function TaskComments({ task, users, addComment }: TaskCommentsProps) {
                     onVisible={() => {}}
                     allUsers={users}
                     onConvertToSubtask={handleConvertCommentToSubtask}
+                    toggleCommentReaction={toggleCommentReaction}
+                    task={task}
                   />
               ))
           ) : (

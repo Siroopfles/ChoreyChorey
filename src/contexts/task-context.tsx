@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './auth-context';
 import { useOrganization } from './organization-context';
 import * as TaskActions from '@/app/actions/task.actions';
+import * as CommentActions from '@/app/actions/comment.actions';
 import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
 import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/member.actions';
@@ -53,6 +54,7 @@ type TaskContextType = {
   reorderTasks: (tasksToUpdate: {id: string, order: number}[]) => Promise<void>;
   resetSubtasks: (taskId: string) => Promise<void>;
   thankForTask: (taskId: string) => Promise<void>;
+  toggleCommentReaction: (taskId: string, commentId: string, emoji: string) => Promise<void>;
   addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
   updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
   deleteTemplate: (templateId: string) => Promise<void>;
@@ -246,7 +248,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const taskToRate = tasks.find(t => t.id === taskId);
     if (!taskToRate) return;
     const result = await rateTaskAction(taskId, rating, taskToRate, user.id, currentOrganization.id);
-    if (result.error) { handleError(result.error, 'beoordelen taak', () => rateTask(taskId, rating)); }
+    if (result.error) { handleError({ message: result.error }, 'beoordelen taak', () => rateTask(taskId, rating)); }
     else { toast({ title: 'Taak beoordeeld!', description: `Bonuspunten gegeven.` }); }
   };
 
@@ -256,7 +258,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const fullAssigneeInfo = users.filter(u => taskAssignees.includes(u.id));
 
     const { data, error } = await thankForTaskAction(taskId, user.id, fullAssigneeInfo, currentOrganization.id);
-    if (error) { handleError(error, 'bedanken voor taak', () => thankForTask(taskId)); }
+    if (error) { handleError({ message: error }, 'bedanken voor taak', () => thankForTask(taskId)); }
     else if (data) { toast({ title: 'Bedankt!', description: `Bonuspunten gegeven aan ${data.assigneesNames}.` }); }
   };
   
@@ -429,7 +431,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       data: data,
     });
     if (result.error) {
-      handleError(result.error, 'beheren automatisering', () => manageAutomation(action, data, automation));
+      handleError({ message: result.error }, 'beheren automatisering', () => manageAutomation(action, data, automation));
       return { success: false };
     }
     toast({ title: 'Gelukt!', description: `Automatisering is ${action === 'create' ? 'aangemaakt' : 'bijgewerkt'}.`});
@@ -439,14 +441,23 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const toggleMuteTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
     const result = await toggleMuteTaskAction(currentOrganization.id, user.id, taskId);
-    if (result.error) { handleError(result.error, 'dempen taak', () => toggleMuteTask(taskId)); }
+    if (result.error) { handleError({ message: result.error }, 'dempen taak', () => toggleMuteTask(taskId)); }
     else { toast({ title: `Taak ${result.data?.newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}` }); }
   };
+
+  const toggleCommentReaction = async (taskId: string, commentId: string, emoji: string) => {
+    if (!user) return;
+    const { error } = await CommentActions.toggleCommentReactionAction(taskId, commentId, emoji, user.id);
+    if (error) {
+        handleError({ message: error }, 'reageren op commentaar');
+    }
+  };
+
 
   return (
     <TaskContext.Provider value={{ 
       tasks, templates, automations, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
-      toggleTaskTimer, reorderTasks, resetSubtasks, thankForTask,
+      toggleTaskTimer, reorderTasks, resetSubtasks, thankForTask, toggleCommentReaction,
       addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask,
       bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
       navigateToUserProfile, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, 

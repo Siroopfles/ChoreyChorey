@@ -1,8 +1,9 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, runTransaction } from 'firebase/firestore';
 import type { Comment, Organization, Task } from '@/lib/types';
 import { addHistoryEntry } from '@/lib/utils';
 import { createNotification } from './notification.actions';
@@ -50,13 +51,13 @@ export async function addCommentAction(taskId: string, text: string, userId: str
             const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
             if (orgDoc.exists()) {
                 const orgData = orgDoc.data() as Organization;
-                const availableStatuses = orgData.settings?.customization?.statuses || [];
+                const availableStatuses = (orgData.settings?.customization?.statuses || []).map(s => s.name);
                 
                 const result = await suggestStatusUpdate({
                     taskId,
                     organizationId,
                     currentStatus: taskData.status,
-                    availableStatuses: availableStatuses.map(s => s.name),
+                    availableStatuses: availableStatuses,
                     taskTitle: taskData.title,
                     event: {
                         type: 'comment_added',
@@ -105,4 +106,50 @@ export async function markCommentAsReadAction(taskId: string, commentId: string,
     } catch(e: any) {
         return { data: null, error: e.message };
     }
+}
+
+
+export async function toggleCommentReactionAction(taskId: string, commentId: string, emoji: string, userId: string): Promise<{ success: boolean; error?: string }> {
+  const taskRef = doc(db, 'tasks', taskId);
+  try {
+    await runTransaction(db, async (transaction) => {
+      const taskDoc = await transaction.get(taskRef);
+      if (!taskDoc.exists()) {
+        throw new Error('Taak niet gevonden');
+      }
+
+      const taskData = taskDoc.data() as Task;
+      const comments = taskData.comments || [];
+      const commentIndex = comments.findIndex(c => c.id === commentId);
+
+      if (commentIndex === -1) {
+        throw new Error('Reactie niet gevonden');
+      }
+
+      const comment = comments[commentIndex];
+      const reactions = comment.reactions || {};
+      const userList = reactions[emoji] || [];
+
+      if (userList.includes(userId)) {
+        // User is removing their reaction
+        reactions[emoji] = userList.filter(id => id !== userId);
+        if (reactions[emoji].length === 0) {
+          delete reactions[emoji];
+        }
+      } else {
+        // User is adding a reaction
+        reactions[emoji] = [...userList, userId];
+      }
+
+      // To update an element in an array, we must update the entire array.
+      comments[commentIndex].reactions = reactions;
+
+      transaction.update(taskRef, { comments });
+    });
+
+    return { success: true };
+  } catch (e: any) {
+    console.error("Error toggling comment reaction:", e);
+    return { success: false, error: e.message };
+  }
 }
