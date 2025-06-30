@@ -201,6 +201,12 @@ export type OrganizationSettings = {
     }
   },
   ipWhitelist?: string[];
+  notificationThresholds?: {
+    projectBudget?: {
+      enabled: boolean;
+      percentage: number;
+    };
+  };
 }
 
 export type Organization = {

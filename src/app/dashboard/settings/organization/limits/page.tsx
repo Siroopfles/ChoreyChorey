@@ -11,6 +11,7 @@ import Link from 'next/link';
 import SessionPolicySettings from '@/components/chorey/settings/session-policy-settings';
 import IpWhitelistSettings from '@/components/chorey/settings/ip-whitelist-settings';
 import { useOrganization } from '@/contexts/organization-context';
+import NotificationThresholdSettings from '@/components/chorey/settings/notification-threshold-settings';
 
 export default function LimitsOrgSettingsPage() {
     const { user } = useAuth();
@@ -48,6 +49,7 @@ export default function LimitsOrgSettingsPage() {
             </div>
             <SessionPolicySettings organization={currentOrganization} />
             {canManageIpWhitelist && <IpWhitelistSettings organization={currentOrganization} />}
+            <NotificationThresholdSettings organization={currentOrganization} />
             <LimitSettings organization={currentOrganization} />
             <DangerZone
                 organization={currentOrganization}
