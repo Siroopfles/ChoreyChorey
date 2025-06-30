@@ -22,7 +22,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import CommandBar from '@/components/chorey/command-bar';
-import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart, BrainCircuit, BarChartHorizontal } from 'lucide-react';
+import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart, BrainCircuit, BarChartHorizontal, CircleDollarSign } from 'lucide-react';
 import { ROLE_GUEST, PERMISSIONS } from '@/lib/types';
 
 
@@ -71,6 +71,7 @@ export default function AppSidebar() {
         ...(showIdeas ? [{ href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' }] : []),
         { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
         { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
+        { href: '/dashboard/cost-analysis', icon: CircleDollarSign, label: 'Kostenanalyse' },
         { href: '/dashboard/analytics', icon: AreaChart, label: 'Analyse' },
         { href: '/dashboard/team-velocity', icon: BarChartHorizontal, label: 'Team Velocity' },
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS) ? [{ href: '/dashboard/automations', icon: Zap, label: 'Automatiseringen' }] : []),

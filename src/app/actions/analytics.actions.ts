@@ -3,7 +3,7 @@
 
 import { collection, query, where, getDocs, Timestamp, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Task, HistoryEntry } from '@/lib/types';
+import type { Task, HistoryEntry, Project, User } from '@/lib/types';
 import { differenceInDays, startOfWeek, endOfWeek, eachWeekOfInterval, format } from 'date-fns';
 
 type TimePoint = {
@@ -34,6 +34,21 @@ export type GetTeamVelocityDataInput = {
   startDate: string;
   endDate: string;
 };
+
+export type CostAnalysisData = {
+    totalBudget: number;
+    totalCost: number;
+    remainingBudget: number;
+    budgetProgress: number;
+    costByMember: { name: string; cost: number; taskCount: number }[];
+    costByTask: { id: string; title: string; cost: number }[];
+};
+
+type GetCostAnalysisDataInput = {
+  organizationId: string;
+  projectId: string;
+};
+
 
 function findFirstOccurrence(history: HistoryEntry[], action: string): Date | null {
   const entry = history.find(h => h.action === action);
@@ -180,6 +195,84 @@ export async function getTeamVelocityData(
 
   } catch (e: any) {
     console.error("Error fetching team velocity data:", e);
+    return { data: null, error: e.message };
+  }
+}
+
+
+export async function getCostAnalysisData(input: GetCostAnalysisDataInput): Promise<{ data: CostAnalysisData | null; error: string | null; }> {
+  const { organizationId, projectId } = input;
+
+  try {
+    const projectDoc = await getDoc(doc(db, 'projects', projectId));
+    if (!projectDoc.exists() || projectDoc.data().organizationId !== organizationId) {
+        return { data: null, error: 'Project niet gevonden of behoort niet tot deze organisatie.' };
+    }
+    const project = projectDoc.data() as Project;
+    const totalBudget = project.budget || 0;
+
+    const tasksQuery = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('projectId', '==', projectId)
+    );
+    
+    const tasksSnapshot = await getDocs(tasksQuery);
+    const tasks = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+
+    const totalCost = tasks.reduce((sum, task) => sum + (task.cost || 0), 0);
+
+    const costByTask = tasks
+      .filter(task => task.cost && task.cost > 0)
+      .map(task => ({ id: task.id, title: task.title, cost: task.cost! }))
+      .sort((a, b) => b.cost - a.cost)
+      .slice(0, 10); // Top 10 most expensive tasks
+
+    const memberCosts: Record<string, { cost: number; taskCount: number }> = {};
+    const userIds = new Set<string>();
+    tasks.forEach(task => {
+        if (task.cost && task.cost > 0 && task.assigneeIds.length > 0) {
+            task.assigneeIds.forEach(id => userIds.add(id));
+            const costPerAssignee = task.cost / task.assigneeIds.length; // Evenly split cost
+            task.assigneeIds.forEach(assigneeId => {
+                if (!memberCosts[assigneeId]) {
+                    memberCosts[assigneeId] = { cost: 0, taskCount: 0 };
+                }
+                memberCosts[assigneeId].cost += costPerAssignee;
+                memberCosts[assigneeId].taskCount++;
+            });
+        }
+    });
+    
+    let costByMember: { name: string; cost: number; taskCount: number }[] = [];
+    if (userIds.size > 0) {
+        const usersQuery = query(collection(db, 'users'), where('__name__', 'in', Array.from(userIds)));
+        const usersSnapshot = await getDocs(usersQuery);
+        const userMap = new Map(usersSnapshot.docs.map(doc => [doc.id, doc.data() as User]));
+
+        costByMember = Object.entries(memberCosts)
+            .map(([userId, data]) => ({
+                name: userMap.get(userId)?.name || 'Onbekende gebruiker',
+                cost: data.cost,
+                taskCount: data.taskCount
+            }))
+            .sort((a,b) => b.cost - a.cost);
+    }
+    
+    return { 
+        data: {
+            totalBudget,
+            totalCost,
+            remainingBudget: totalBudget - totalCost,
+            budgetProgress: totalBudget > 0 ? (totalCost / totalBudget) * 100 : 0,
+            costByMember,
+            costByTask
+        }, 
+        error: null 
+    };
+
+  } catch (e: any) {
+    console.error("Error fetching cost analysis data:", e);
     return { data: null, error: e.message };
   }
 }
