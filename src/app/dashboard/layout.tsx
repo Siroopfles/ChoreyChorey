@@ -30,6 +30,7 @@ import MobileBottomNav from '@/components/chorey/mobile-bottom-nav';
 import { cn } from '@/lib/utils';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import { FCMProvider } from '@/contexts/fcm-context';
+import { LiveCursors } from '@/components/chorey/live-cursors';
 
 
 const BrandingStyle = () => {
