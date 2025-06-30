@@ -6,7 +6,7 @@ import type { Status, Task } from '@/lib/types';
 import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
 import { serializeTask } from '@/lib/api-serializers';
-import { addHistoryEntry } from '@/lib/utils';
+import { addHistoryEntry } from '@/lib/history-utils';
 
 
 const getTasksHandler = async (

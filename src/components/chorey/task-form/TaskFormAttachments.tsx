@@ -11,7 +11,7 @@ import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/auth-context';
-import { getAttachmentSource } from '@/lib/utils';
+import { getAttachmentSource } from '@/lib/attachment-utils';
 import { AttachmentIcon } from '../attachment-icons';
 import { FigmaEmbed } from '../figma-embed';
 import { GoogleDocEmbed } from '../google-doc-embed';
