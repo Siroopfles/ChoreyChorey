@@ -42,7 +42,8 @@ import {
   ClipboardCopy,
   CornerUpRight,
   Pin,
-  Timer
+  Timer,
+  ArrowRight
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -56,6 +57,7 @@ import { AttachmentIcon } from './attachment-icons';
 import { TaskCardFooter } from './task-card-footer';
 import { useFilters } from '@/contexts/filter-context';
 import { useOrganization } from '@/contexts/organization-context';
+import { HandoffTaskDialog } from './handoff-task-dialog';
 
 
 type TaskCardProps = {
@@ -115,6 +117,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
   const isSelected = selectedTaskIds.includes(task.id);
   const [liveTime, setLiveTime] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [isHandoffOpen, setIsHandoffOpen] = useState(false);
 
   const statusConfig = useMemo(() => 
     currentOrganization?.settings?.customization?.statuses?.find(s => s.name === task.status),
@@ -154,6 +157,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
   const canRate = showGamification && currentUser && task.status === 'Voltooid' && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id) && !task.rating;
   const canManageChoreOfWeek = currentUserRole === 'Owner' || currentUserRole === 'Admin';
   const canPin = currentUserPermissions.includes(PERMISSIONS.PIN_ITEMS);
+  const canHandOff = currentUser && task.assigneeIds.includes(currentUser.id);
   const showTimeTracking = currentOrganization?.settings?.features?.timeTracking !== false;
 
   const handleCopyId = (e: React.MouseEvent) => {
@@ -264,6 +268,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)} disabled={!showTimeTracking}>
                         {currentUser && task.activeTimerStartedAt?.[currentUser.id] ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
                         <span>{currentUser && task.activeTimerStartedAt?.[currentUser.id] ? 'Stop mijn timer' : 'Start mijn timer'}</span>
+                    </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => setIsHandoffOpen(true)} disabled={!canHandOff}>
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                        <span>Taak Overdragen</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => updateTask(task.id, { helpNeeded: !task.helpNeeded })}>
                         <HandHeart className="mr-2 h-4 w-4" />
@@ -508,6 +516,14 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
             />
         </div>
       </Card>
+       {currentUser && (
+          <HandoffTaskDialog
+            open={isHandoffOpen}
+            onOpenChange={setIsHandoffOpen}
+            task={task}
+            currentUser={currentUser}
+          />
+        )}
     </div>
   );
 };

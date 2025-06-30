@@ -68,6 +68,7 @@ type TaskContextType = {
   toggleMuteTask: (taskId: string) => Promise<void>;
   manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
   voteOnPoll: (taskId: string, optionId: string) => Promise<void>;
+  handOffTask: (taskId: string, fromUserId: string, toUserId: string, message?: string) => Promise<boolean>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -475,6 +476,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handOffTask = async (taskId: string, fromUserId: string, toUserId: string, message: string = ''): Promise<boolean> => {
+    const { data, error } = await TaskActions.handOffTaskAction(taskId, fromUserId, toUserId, message);
+    if (error) {
+        handleError(error, 'overdragen taak', () => handOffTask(taskId, fromUserId, toUserId, message));
+        return false;
+    }
+    return !!data?.success;
+  };
 
   return (
     <TaskContext.Provider value={{ 
@@ -483,7 +492,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask,
       bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
       navigateToUserProfile, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, 
-      toggleMuteTask, manageAutomation, voteOnPoll,
+      toggleMuteTask, manageAutomation, voteOnPoll, handOffTask,
     }}>
       {children}
     </TaskContext.Provider>

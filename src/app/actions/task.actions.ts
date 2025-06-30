@@ -3,7 +3,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, runTransaction, Timestamp, deleteField } from 'firebase/firestore';
+import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, runTransaction, Timestamp, deleteField, arrayRemove } from 'firebase/firestore';
 import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Poll } from '@/lib/types';
 import { calculatePoints, addHistoryEntry, formatTime } from '@/lib/utils';
 import { grantAchievements, checkAndGrantTeamAchievements } from './gamification.actions';
@@ -839,5 +839,54 @@ export async function voteOnPollAction(
   } catch (e: any) {
     console.error("Error voting on poll:", e);
     return { success: false, error: e.message };
+  }
+}
+
+
+export async function handOffTaskAction(
+  taskId: string,
+  fromUserId: string,
+  toUserId: string,
+  message: string = ''
+): Promise<{ data: { success: boolean } | null; error: string | null }> {
+  try {
+    const taskRef = doc(db, 'tasks', taskId);
+    const fromUserDoc = await getDoc(doc(db, 'users', fromUserId));
+    const toUserDoc = await getDoc(doc(db, 'users', toUserId));
+    const taskDoc = await getDoc(taskRef);
+
+    if (!taskDoc.exists() || !fromUserDoc.exists() || !toUserDoc.exists()) {
+      throw new Error("Taak of gebruiker niet gevonden.");
+    }
+
+    const taskData = taskDoc.data() as Task;
+    const fromUserName = fromUserDoc.data()?.name || 'Onbekende Gebruiker';
+    const toUserName = toUserDoc.data()?.name || 'Onbekende Gebruiker';
+
+    const newAssigneeIds = Array.from(new Set([...taskData.assigneeIds.filter(id => id !== fromUserId), toUserId]));
+
+    const historyMessage = `Van ${fromUserName} naar ${toUserName}.${message ? ` Bericht: "${message}"` : ''}`;
+    const historyEntry = addHistoryEntry(fromUserId, 'Taak Overgedragen', historyMessage);
+    
+    await updateDoc(taskRef, {
+        assigneeIds: newAssigneeIds,
+        history: arrayUnion(historyEntry)
+    });
+    
+    createNotification(
+        toUserId,
+        `${fromUserName} heeft taak "${taskData.title}" aan jou overgedragen.`,
+        taskId,
+        taskData.organizationId,
+        fromUserId,
+        { eventType: 'assignment' }
+    );
+    
+    await triggerWebhooks(taskData.organizationId, 'task.updated', { ...taskData, id: taskId, assigneeIds: newAssigneeIds });
+
+    return { data: { success: true }, error: null };
+  } catch (e: any) {
+    console.error("Error handing off task:", e);
+    return { data: null, error: e.message };
   }
 }
