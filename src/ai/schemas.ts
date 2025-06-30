@@ -355,3 +355,21 @@ export const PredictProjectOutcomeOutputSchema = z.object({
   recommendations: z.array(z.string()).describe("A list of actionable recommendations to mitigate risks or improve project outcomes."),
 });
 export type PredictProjectOutcomeOutput = z.infer<typeof PredictProjectOutcomeOutputSchema>;
+
+// From what-if-scenario-flow.ts
+export const WhatIfScenarioInputSchema = z.object({
+  projectId: z.string(),
+  organizationId: z.string(),
+  scenarioDescription: z.string().describe("The user's what-if scenario. For example: 'What if we add two more developers?' or 'What is the impact if the design phase takes 3 weeks longer?'.")
+});
+export type WhatIfScenarioInput = z.infer<typeof WhatIfScenarioInputSchema>;
+
+export const WhatIfScenarioOutputSchema = z.object({
+  impactSummary: z.string().describe("A one-sentence summary of the main impact."),
+  predictedCompletionDateChange: z.string().describe("The change in the predicted completion date. E.g., 'Delayed by 2 weeks', 'No significant change', 'Accelerated by 5 days'."),
+  newPredictedCompletionDate: z.string().describe("The new predicted completion date in YYYY-MM-DD format."),
+  budgetImpact: z.string().describe("A summary of the impact on the budget. E.g., 'Increased cost of €5000', 'Potential savings', 'No direct budget impact'."),
+  reasoning: z.string().describe("A detailed explanation of why the scenario has this impact, considering task dependencies, resource availability, and workload."),
+  recommendations: z.array(z.string()).describe("A list of actionable recommendations to mitigate risks or capitalize on opportunities presented by the scenario."),
+});
+export type WhatIfScenarioOutput = z.infer<typeof WhatIfScenarioOutputSchema>;

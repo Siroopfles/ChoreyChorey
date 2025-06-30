@@ -20,7 +20,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import CommandBar from '@/components/chorey/command-bar';
-import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart } from 'lucide-react';
+import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart, BrainCircuit } from 'lucide-react';
 import { ROLE_GUEST, PERMISSIONS } from '@/lib/types';
 
 
@@ -91,6 +91,7 @@ export default function AppSidebar() {
         { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
         { href: '/dashboard/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
         { href: '/dashboard/predictive-analysis', icon: UserCog, label: 'AI Voorspellende Analyse' },
+        { href: '/dashboard/scenario-planner', icon: BrainCircuit, label: 'AI Scenario Planner' },
     ];
     
     const adminNavItems = isGuest ? [] : [

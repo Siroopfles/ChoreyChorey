@@ -1,4 +1,3 @@
-
 'use server';
 import '@/ai/flows/suggest-task-assignee.ts';
 import '@/ai/flows/suggest-subtasks.ts';
@@ -23,3 +22,4 @@ import '@/ai/flows/suggest-status-update-flow.ts';
 import '@/ai/flows/predict-burnout-risk-flow.ts';
 import '@/ai/flows/generate-project-report-flow.ts';
 import '@/ai/flows/predict-project-outcome-flow.ts';
+import '@/ai/flows/what-if-scenario-flow.ts';
