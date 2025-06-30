@@ -54,6 +54,13 @@ export type CfdDataPoint = {
   [status: string]: number | string;
 };
 
+export type BlockerAnalysisData = {
+    id: string;
+    title: string;
+    blockedCount: number;
+}[];
+
+
 function findFirstOccurrence(history: HistoryEntry[], action: string): Date | null {
   const entry = history.find(h => h.action === action);
   return entry ? entry.timestamp : null;
@@ -347,4 +354,44 @@ export async function getCfdData(input: {
     console.error("Error fetching CFD data:", e);
     return { data: null, statuses: null, error: e.message };
   }
+}
+
+
+export async function getBlockerAnalysisData(
+    input: { organizationId: string }
+): Promise<{ data: BlockerAnalysisData | null, error: string | null }> {
+    const { organizationId } = input;
+    try {
+        const tasksQuery = query(collection(db, 'tasks'), where('organizationId', '==', organizationId));
+        const tasksSnapshot = await getDocs(tasksQuery);
+        const tasks = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+        
+        const blockerCounts = new Map<string, number>();
+        tasks.forEach(task => {
+            (task.blockedBy || []).forEach(blockerId => {
+                blockerCounts.set(blockerId, (blockerCounts.get(blockerId) || 0) + 1);
+            });
+        });
+
+        if (blockerCounts.size === 0) {
+            return { data: [], error: null };
+        }
+
+        const taskMap = new Map(tasks.map(task => [task.id, task.title]));
+        
+        const analysisData: BlockerAnalysisData = Array.from(blockerCounts.entries())
+            .map(([id, count]) => ({
+                id,
+                title: taskMap.get(id) || 'Onbekende Taak',
+                blockedCount: count,
+            }))
+            .sort((a, b) => b.blockedCount - a.blockedCount)
+            .slice(0, 10); // Return top 10
+
+        return { data: analysisData, error: null };
+
+    } catch (e: any) {
+        console.error("Error fetching blocker analysis data:", e);
+        return { data: null, error: e.message };
+    }
 }

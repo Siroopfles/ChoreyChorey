@@ -8,16 +8,17 @@ import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Loader2, AreaChart, GitBranch, DatabaseZap } from 'lucide-react';
+import { CalendarIcon, Loader2, AreaChart, GitBranch, DatabaseZap, AlertOctagon } from 'lucide-react';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { getCycleTimeData, type CycleTimeData, getCfdData, type CfdDataPoint } from '@/app/actions/analytics.actions';
+import { getCycleTimeData, type CycleTimeData, getCfdData, type CfdDataPoint, getBlockerAnalysisData, type BlockerAnalysisData } from '@/app/actions/analytics.actions';
 import { useToast } from '@/hooks/use-toast';
 import { CycleTimeChart } from '@/components/chorey/analytics/cycle-time-chart';
 import { CfdChart } from '@/components/chorey/analytics/cfd-chart';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function AnalyticsPage() {
     const { currentOrganization } = useAuth();
@@ -30,6 +31,7 @@ export default function AnalyticsPage() {
     const [cycleTimeData, setCycleTimeData] = useState<CycleTimeData | null>(null);
     const [cfdData, setCfdData] = useState<CfdDataPoint[] | null>(null);
     const [cfdStatuses, setCfdStatuses] = useState<string[] | null>(null);
+    const [blockerData, setBlockerData] = useState<BlockerAnalysisData | null>(null);
 
     const handleFetchData = async () => {
         if (!currentOrganization || !date?.from || !date?.to) return;
@@ -37,8 +39,9 @@ export default function AnalyticsPage() {
         setCycleTimeData(null);
         setCfdData(null);
         setCfdStatuses(null);
+        setBlockerData(null);
 
-        const [cycleTimeResult, cfdResult] = await Promise.all([
+        const [cycleTimeResult, cfdResult, blockerResult] = await Promise.all([
             getCycleTimeData({
                 organizationId: currentOrganization.id,
                 startDate: date.from.toISOString(),
@@ -48,7 +51,10 @@ export default function AnalyticsPage() {
                 organizationId: currentOrganization.id,
                 startDate: date.from.toISOString(),
                 endDate: date.to.toISOString(),
-            })
+            }),
+            getBlockerAnalysisData({
+                organizationId: currentOrganization.id,
+            }),
         ]);
         
         if (cycleTimeResult.error) {
@@ -62,6 +68,12 @@ export default function AnalyticsPage() {
         } else {
             setCfdData(cfdResult.data);
             setCfdStatuses(cfdResult.statuses);
+        }
+        
+        if (blockerResult.error) {
+            toast({ title: 'Fout bij ophalen Blocker data', description: blockerResult.error, variant: 'destructive' });
+        } else {
+            setBlockerData(blockerResult.data);
         }
 
         setIsLoading(false);
@@ -144,6 +156,39 @@ export default function AnalyticsPage() {
         </Card>
     );
 
+    const renderBlockerContent = () => (
+        <Card>
+            <CardHeader>
+                <CardTitle>Top 10 Blokkades</CardTitle>
+                <CardDescription>
+                   Taken die het vaakst de voortgang van andere taken blokkeren.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {blockerData && blockerData.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Blokkerende Taak</TableHead>
+                                <TableHead className="text-right">Aantal Taken Geblokkeerd</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {blockerData.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell className="font-medium">{item.title}</TableCell>
+                                    <TableCell className="text-right font-bold">{item.blockedCount}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-8">Geen blokkerende taken gevonden in deze organisatie.</p>
+                )}
+            </CardContent>
+        </Card>
+    );
+
     const renderSkeleton = () => (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card><CardContent className="h-[400px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin"/></CardContent></Card>
@@ -161,6 +206,7 @@ export default function AnalyticsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Analyse Periode</CardTitle>
+                    <CardDescription>De Blocker Analyse kijkt naar alle taken, ongeacht de periode.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-end gap-4">
                     <div className="grid gap-2">
@@ -209,12 +255,16 @@ export default function AnalyticsPage() {
                 <TabsList>
                     <TabsTrigger value="cycle-time"><GitBranch className="mr-2 h-4 w-4" /> Cycle & Lead Time</TabsTrigger>
                     <TabsTrigger value="cfd"><DatabaseZap className="mr-2 h-4 w-4" /> Cumulative Flow</TabsTrigger>
+                    <TabsTrigger value="blockers"><AlertOctagon className="mr-2 h-4 w-4" /> Blocker Analyse</TabsTrigger>
                 </TabsList>
                 <TabsContent value="cycle-time" className="mt-6">
                     {isLoading ? renderSkeleton() : renderCycleTimeContent()}
                 </TabsContent>
                 <TabsContent value="cfd" className="mt-6">
                     {isLoading ? renderSkeleton() : renderCfdContent()}
+                </TabsContent>
+                 <TabsContent value="blockers" className="mt-6">
+                    {isLoading ? renderSkeleton() : renderBlockerContent()}
                 </TabsContent>
             </Tabs>
         </div>
