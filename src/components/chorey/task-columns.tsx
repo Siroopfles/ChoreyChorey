@@ -14,6 +14,7 @@ import { FileUp, Loader2, XCircle } from 'lucide-react';
 import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
 import { useOrganization } from '@/contexts/organization-context';
 import { cn } from '@/lib/utils';
+import { triggerHapticFeedback } from '@/lib/haptics';
 
 const TaskColumn = ({ 
   title, 
@@ -226,7 +227,7 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
             updates.projectId = project ? project.id : null;
             break;
       }
-
+      triggerHapticFeedback(20);
       updateTask(activeId, updates);
 
     } else {

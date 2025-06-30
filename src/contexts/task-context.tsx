@@ -36,6 +36,7 @@ import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/member.act
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/gamification.actions';
 import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
+import { triggerHapticFeedback } from '@/lib/haptics';
 
 type TaskContextType = {
   tasks: Task[];
@@ -209,6 +210,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         console.error("Optimistic update failed: Task not found in local state.");
         return;
     }
+
+    if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
+        triggerHapticFeedback([100, 30, 100]);
+    }
     
     const newTasks = originalTasks.map(t => 
         t.id === taskId ? { ...t, ...updates } : t
@@ -253,7 +258,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!taskToRate) return;
     const result = await rateTaskAction(taskId, rating, taskToRate, user.id, currentOrganization.id);
     if (result.error) { handleError({ message: result.error }, 'beoordelen taak', () => rateTask(taskId, rating)); }
-    else { toast({ title: 'Taak beoordeeld!', description: `Bonuspunten gegeven.` }); }
+    else { 
+        toast({ title: 'Taak beoordeeld!', description: `Bonuspunten gegeven.` }); 
+        triggerHapticFeedback([50, 50, 50]);
+    }
   };
 
   const thankForTask = async (taskId: string) => {
@@ -263,7 +271,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await thankForTaskAction(taskId, user.id, fullAssigneeInfo, currentOrganization.id);
     if (error) { handleError({ message: error }, 'bedanken voor taak', () => thankForTask(taskId)); }
-    else if (data) { toast({ title: 'Bedankt!', description: `Bonuspunten gegeven aan ${data.assigneesNames}.` }); }
+    else if (data) { 
+        toast({ title: 'Bedankt!', description: `Bonuspunten gegeven aan ${data.assigneesNames}.` }); 
+        triggerHapticFeedback(200);
+    }
   };
   
   const reorderTasks = async (tasksToUpdate: {id: string, order: number}[]) => {
