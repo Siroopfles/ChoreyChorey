@@ -50,7 +50,7 @@
     --status-archived: 240 5% 65%;
     
     /* Font variables */
-    --font-sans: var(--font-inter);
+    --font-sans: var(--font-pt-sans);
     --font-code: var(--font-roboto-mono);
 
     /* Sidebar is always dark */

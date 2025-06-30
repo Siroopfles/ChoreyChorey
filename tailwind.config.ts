@@ -97,10 +97,40 @@ const config: Config = {
             height: '0',
           },
         },
+        'in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'out': {
+          from: { opacity: '1' },
+          to: { opacity: '0' },
+        }
+      },
+      transitionProperty: {
+        'width': 'width',
+        'height': 'height',
+        'spacing': 'margin, padding',
+        'all': 'all',
+      },
+      transitionTimingFunction: {
+        'linear': 'linear',
+      },
+      transitionDuration: {
+        'DEFAULT': 'calc(150ms * var(--animation-speed-modifier, 1))',
+        '75': 'calc(75ms * var(--animation-speed-modifier, 1))',
+        '100': 'calc(100ms * var(--animation-speed-modifier, 1))',
+        '150': 'calc(150ms * var(--animation-speed-modifier, 1))',
+        '200': 'calc(200ms * var(--animation-speed-modifier, 1))',
+        '300': 'calc(300ms * var(--animation-speed-modifier, 1))',
+        '500': 'calc(500ms * var(--animation-speed-modifier, 1))',
+        '700': 'calc(700ms * var(--animation-speed-modifier, 1))',
+        '1000': 'calc(1000ms * var(--animation-speed-modifier, 1))',
       },
       animation: {
         'accordion-down': 'accordion-down calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
         'accordion-up': 'accordion-up calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'in': 'in calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'out': 'out calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
       },
       typography: ({ theme }: { theme: (path: string) => string }) => ({
         DEFAULT: {
