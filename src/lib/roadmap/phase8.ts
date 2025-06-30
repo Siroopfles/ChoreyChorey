@@ -2,7 +2,7 @@
 import type { Phase } from '../types';
 
 export const phase8: Phase = {
-    name: "Fase 8: Mobiele Ervaring & PWA",
+    name: "Fase 8: Mobiele Ervaring & PWA (Voltooid)",
     description: "Een naadloze en krachtige ervaring creëren voor gebruikers die onderweg zijn.",
     features: [
       { id: 8001, title: "PWA Offline First Architectuur", description: "Verbeter de offline mogelijkheden van de Progressive Web App. Implementeer een service worker strategie die niet alleen data cachet, maar ook volledige taakcreatie en -bewerking offline mogelijk maakt, met een robuust achtergrond-synchronisatiesysteem.", completed: true },

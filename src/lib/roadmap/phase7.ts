@@ -2,7 +2,7 @@
 import type { Phase } from '../types';
 
 export const phase7: Phase = {
-    name: "Fase 7: 'Real-time' Samenwerking",
+    name: "Fase 7: 'Real-time' Samenwerking (Voltooid)",
     description: "De app transformeren van een reactieve naar een proactieve, live samenwerkingsomgeving.",
     features: [
       { id: 7001, title: "Live Aanwezigheidsindicatoren", description: "Implementeer een systeem dat real-time laat zien wie er online is. Toon een subtiele indicator naast gebruikersavatars in de hele applicatie. Bonus: toon op welke taak- of projectpagina een gebruiker zich momenteel bevindt.", completed: true },
@@ -17,7 +17,7 @@ export const phase7: Phase = {
       { id: 7010, title: "Real-time Polls in Taken", description: "Voeg een 'Poll' feature toe aan taken. Hiermee kunnen teamleden snel stemmen over beslissingen, zoals de aanpak van een feature of de prioriteit van een bug, met live-updating resultaten.", completed: true },
       { id: 7011, title: "Gedeelde Timers", description: "Maak het mogelijk voor meerdere teamleden om tegelijkertijd een timer op dezelfde taak te starten, bijvoorbeeld tijdens een 'pair programming' sessie. De gecombineerde tijd wordt opgeteld bij de totale geregistreerde tijd.", completed: true },
       { id: 7012, title: "Taak Overdracht", description: "Een 'Geef door' knop die de huidige toegewezen gebruiker in staat stelt de taak naadloos over te dragen aan een ander teamlid, inclusief een kort overdrachtsbericht. De nieuwe persoon krijgt direct een notificatie.", completed: true },
-      { id: 7013, title: "Notificaties voor Taakweergave", description: "Toon een subtiele notificatie binnen een taak wanneer een ander teamlid dezelfde taak op dat moment bekijkt, om te voorkomen dat er tegelijkertijd tegenstrijdige wijzigingen worden gemaakt.", completed: false },
+      { id: 7013, title: "Notificaties voor Taakweergave", description: "Toon een subtiele notificatie binnen een taak wanneer een ander teamlid dezelfde taak op dat moment bekijkt, om te voorkomen dat er tegelijkertijd tegenstrijdige wijzigingen worden gemaakt.", completed: true },
       { id: 7014, title: "Gedeelde Tekenblokken (Whiteboarding)", description: "Integreer een lichtgewicht, real-time whiteboarding-tool (zoals `tldraw`) binnen de taakdetails. Ideaal voor het snel schetsen van diagrammen, wireframes of het visualiseren van ideeën tijdens een discussie.", completed: true },
       { id: 7015, title: "Live Notificatie Feed", description: "Vervang de statische notificatie-inbox door een live-updating feed. Nieuwe notificaties verschijnen direct bovenaan de lijst zonder dat de pagina ververst hoeft te worden, wat zorgt voor een onmiddellijke feedback-loop.", completed: true }
     ]

@@ -2,7 +2,7 @@
 import type { Phase } from '../types';
 
 export const phase6: Phase = {
-    name: "Fase 6: 'Quality of Life' & Onboarding",
+    name: "Fase 6: 'Quality of Life' & Onboarding (Voltooid)",
     description: "Focus op de initiële gebruikerservaring en het verfijnen van bestaande workflows om dagelijks gebruik nog aangenamer en efficiënter te maken.",
     features: [
       { id: 6001, title: "Interactieve Onboarding Tour", description: "Implementeer een multi-step geleide tour (bijv. met 'react-joyride') voor nieuwe gebruikers. De tour moet UI-elementen uitlichten en gebruikers aanzetten tot actie. Maak rol-specifieke tours: een 'Eigenaar' krijgt de stap 'Nodig Leden Uit', een 'Lid' niet.", completed: true },
