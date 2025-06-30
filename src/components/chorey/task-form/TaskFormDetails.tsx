@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import type { User, Project, SuggestPriorityOutput, SuggestStoryPointsOutput } from '@/lib/types';

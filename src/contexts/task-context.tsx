@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -137,7 +135,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       title: `Fout bij ${context}`,
       description: error?.message || String(error),
       variant: 'destructive',
-      action: isNetworkError && retryAction ? (
+      action: retryAction ? (
         <ToastAction altText="Probeer opnieuw" onClick={retryAction}>
           Probeer opnieuw
         </ToastAction>

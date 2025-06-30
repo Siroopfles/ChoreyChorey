@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFormContext, useFieldArray } from 'react-hook-form';
@@ -117,7 +116,7 @@ export function TaskFormAttachments() {
             </div>
 
             <div>
-                <UiLabel>Links & Bijlagen</UiLabel>
+                <UiLabel>Links &amp; Bijlagen</UiLabel>
                 <div className="space-y-2 mt-2">
                 {fields.map((field, index) => {
                     const urlValue = getValues(`attachments.${index}.url`);

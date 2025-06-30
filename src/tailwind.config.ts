@@ -11,8 +11,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-sans)', 'sans-serif'],
-        body: ['var(--font-sans)', 'sans-serif'],
-        headline: ['var(--font-sans)', 'sans-serif'],
+        body: ['var(--font-body)', 'sans-serif'],
+        headline: ['var(--font-headline)', 'sans-serif'],
         code: ['var(--font-code)', 'monospace'],
       },
       colors: {
@@ -116,17 +116,46 @@ const config: Config = {
         'linear': 'linear',
       },
       transitionDuration: {
-        '200': '200ms',
         'DEFAULT': 'calc(150ms * var(--animation-speed-modifier, 1))',
+        '75': 'calc(75ms * var(--animation-speed-modifier, 1))',
+        '100': 'calc(100ms * var(--animation-speed-modifier, 1))',
+        '150': 'calc(150ms * var(--animation-speed-modifier, 1))',
+        '200': 'calc(200ms * var(--animation-speed-modifier, 1))',
+        '300': 'calc(300ms * var(--animation-speed-modifier, 1))',
+        '500': 'calc(500ms * var(--animation-speed-modifier, 1))',
+        '700': 'calc(700ms * var(--animation-speed-modifier, 1))',
+        '1000': 'calc(1000ms * var(--animation-speed-modifier, 1))',
       },
       animation: {
         'accordion-down': 'accordion-down calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
         'accordion-up': 'accordion-up calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
         'in': 'in calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
         'out': 'out calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
-      }
+      },
+      typography: ({ theme }: { theme: (path: string) => string }) => ({
+        DEFAULT: {
+          css: {
+            '--tw-prose-body': theme('colors.foreground / 0.9'),
+            '--tw-prose-headings': theme('colors.foreground'),
+            '--tw-prose-lead': theme('colors.foreground / 0.9'),
+            '--tw-prose-links': theme('colors.primary.DEFAULT'),
+            '--tw-prose-bold': theme('colors.foreground'),
+            '--tw-prose-counters': theme('colors.muted.foreground'),
+            '--tw-prose-bullets': theme('colors.border'),
+            '--tw-prose-hr': theme('colors.border'),
+            '--tw-prose-quotes': theme('colors.foreground'),
+            '--tw-prose-quote-borders': theme('colors.border'),
+            '--tw-prose-captions': theme('colors.muted.foreground'),
+            '--tw-prose-code': theme('colors.foreground'),
+            '--tw-prose-pre-code': theme('colors.foreground'),
+            '--tw-prose-pre-bg': theme('colors.muted'),
+            '--tw-prose-th-borders': theme('colors.border'),
+            '--tw-prose-td-borders': theme('colors.border'),
+          },
+        },
+      }),
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
 };
 export default config;

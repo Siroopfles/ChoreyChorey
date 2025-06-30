@@ -11,16 +11,17 @@ interface AIFeedbackProps {
   flowName: string;
   input: any;
   output: any;
+  className?: string;
 }
 
-export function AIFeedback({ flowName, input, output }: AIFeedbackProps) {
-  const [feedbackGiven, setFeedbackGiven] = useState(false);
+export function AIFeedback({ flowName, input, output, className }: AIFeedbackProps) {
+  const [feedbackGiven, setFeedbackGiven] = useState<null | 'positive' | 'negative'>(null);
   const { user, currentOrganization } = useAuth();
   const { toast } = useToast();
 
   const handleFeedback = async (feedback: 'positive' | 'negative') => {
     if (!user || !currentOrganization || feedbackGiven) return;
-    setFeedbackGiven(true);
+    setFeedbackGiven(feedback);
 
     const result = await submitAiFeedback({
       flowName,
@@ -35,7 +36,7 @@ export function AIFeedback({ flowName, input, output }: AIFeedbackProps) {
       toast({ title: 'Feedback ontvangen!', description: 'Bedankt voor je hulp om de AI te verbeteren.' });
     } else {
       toast({ title: 'Fout', description: 'Kon feedback niet verzenden.', variant: 'destructive' });
-      setFeedbackGiven(false); // Allow user to try again
+      setFeedbackGiven(null); // Allow user to try again
     }
   };
 
@@ -44,7 +45,7 @@ export function AIFeedback({ flowName, input, output }: AIFeedbackProps) {
   }
 
   return (
-    <div className="flex items-center gap-1 mt-2 pt-2 border-t">
+    <div className={`flex items-center gap-1 mt-2 pt-2 border-t ${className}`}>
       <p className="text-xs text-muted-foreground mr-auto">Nuttig?</p>
       <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFeedback('positive')} aria-label="Positieve feedback">
         <ThumbsUp className="h-4 w-4" />
