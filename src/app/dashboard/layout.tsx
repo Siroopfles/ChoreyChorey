@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import { FCMProvider } from '@/contexts/fcm-context';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const BrandingStyle = () => {
