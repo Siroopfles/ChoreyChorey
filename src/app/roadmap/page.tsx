@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import LandingFooter from "@/components/landing/footer"
 import LandingHeader from "@/components/landing/header"
-import { Check } from "lucide-react"
+import { Check, Smartphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { roadmapPhases } from "@/lib/roadmap"
 
@@ -39,6 +39,29 @@ export default function RoadmapPage() {
                       </Card>
                     ))}
                   </div>
+
+                   {phase.nativeFeatures && phase.nativeFeatures.length > 0 && (
+                    <div className="space-y-4 pt-8">
+                      <h3 className="text-2xl font-semibold flex items-center gap-2">
+                        <Smartphone className="h-6 w-6 text-muted-foreground" />
+                        Native Mobiele Features
+                      </h3>
+                       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {phase.nativeFeatures.sort((a, b) => a.id - b.id).map((item) => (
+                          <Card key={item.id} className={cn("flex flex-col border-dashed", item.completed ? "bg-secondary/50 border-green-500/20" : "bg-card")}>
+                            <CardHeader className="flex flex-row items-start justify-between gap-4">
+                              <CardTitle className={cn("text-base", item.completed && "text-muted-foreground")}>{item.title}</CardTitle>
+                              {item.completed && <Check className="h-6 w-6 text-green-500 shrink-0" />}
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                              <p className={cn("text-sm text-muted-foreground", item.completed && "text-muted-foreground/80")}>{item.description}</p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               ))}
             </div>
