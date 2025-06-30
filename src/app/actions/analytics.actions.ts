@@ -1,9 +1,10 @@
+
 'use server';
 
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Task, HistoryEntry } from '@/lib/types';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, startOfWeek, endOfWeek, eachWeekOfInterval, format } from 'date-fns';
 
 type TimePoint = {
   name: string; // Task title
@@ -18,6 +19,18 @@ export type CycleTimeData = {
 
 type GetCycleTimeDataInput = {
   organizationId: string;
+  startDate: string;
+  endDate: string;
+};
+
+export type VelocityDataPoint = {
+  period: string;
+  velocity: number;
+};
+
+export type GetTeamVelocityDataInput = {
+  organizationId: string;
+  teamId: string;
   startDate: string;
   endDate: string;
 };
@@ -102,6 +115,71 @@ export async function getCycleTimeData(input: GetCycleTimeDataInput): Promise<{ 
 
   } catch (e: any) {
     console.error("Error fetching cycle time data:", e);
+    return { data: null, error: e.message };
+  }
+}
+
+export async function getTeamVelocityData(
+  input: GetTeamVelocityDataInput
+): Promise<{ data: VelocityDataPoint[] | null; error: string | null }> {
+  const { organizationId, teamId, startDate, endDate } = input;
+
+  try {
+    const teamDoc = await getDoc(doc(db, 'teams', teamId));
+    if (!teamDoc.exists() || teamDoc.data().organizationId !== organizationId) {
+      return { data: null, error: 'Team niet gevonden.' };
+    }
+    const teamMemberIds = teamDoc.data().memberIds || [];
+    if (teamMemberIds.length === 0) {
+      return { data: [], error: null };
+    }
+
+    const q = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('assigneeIds', 'array-contains-any', teamMemberIds),
+      where('status', '==', 'Voltooid'),
+      where('completedAt', '>=', Timestamp.fromDate(new Date(startDate))),
+      where('completedAt', '<=', Timestamp.fromDate(new Date(endDate)))
+    );
+
+    const snapshot = await getDocs(q);
+    const tasks = snapshot.docs.map(doc => ({ ...doc.data(), completedAt: (doc.data().completedAt as Timestamp)?.toDate() } as Task));
+
+    const weeks = eachWeekOfInterval(
+      { start: new Date(startDate), end: new Date(endDate) },
+      { weekStartsOn: 1 } // Monday
+    );
+
+    const velocityByWeek: Record<string, number> = {};
+
+    weeks.forEach(weekStart => {
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      const weekLabel = `${format(weekStart, 'd MMM')} - ${format(weekEnd, 'd MMM')}`;
+      velocityByWeek[weekLabel] = 0;
+    });
+
+    tasks.forEach(task => {
+        if (task.completedAt && task.storyPoints) {
+            const weekStart = startOfWeek(task.completedAt, { weekStartsOn: 1 });
+            const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+            const weekLabel = `${format(weekStart, 'd MMM')} - ${format(weekEnd, 'd MMM')}`;
+
+            if (velocityByWeek.hasOwnProperty(weekLabel)) {
+                velocityByWeek[weekLabel] += task.storyPoints;
+            }
+      }
+    });
+
+    const data: VelocityDataPoint[] = Object.entries(velocityByWeek).map(([period, velocity]) => ({
+      period,
+      velocity,
+    }));
+
+    return { data, error: null };
+
+  } catch (e: any) {
+    console.error("Error fetching team velocity data:", e);
     return { data: null, error: e.message };
   }
 }
