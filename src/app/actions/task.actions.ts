@@ -4,7 +4,7 @@
 
 import { db } from '@/lib/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, runTransaction, Timestamp, deleteField, arrayRemove } from 'firebase/firestore';
-import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Poll } from '@/lib/types';
+import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Poll, Project } from '@/lib/types';
 import { calculatePoints, addHistoryEntry, formatTime } from '@/lib/utils';
 import { grantAchievements, checkAndGrantTeamAchievements } from './gamification.actions';
 import { createNotification } from './notification.actions';
@@ -15,6 +15,7 @@ import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@
 import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/microsoft-graph-service';
 import { createTogglTimeEntry } from '@/lib/toggl-service';
 import { createClockifyTimeEntry } from '@/lib/clockify-service';
+import { SYSTEM_USER_ID } from '@/lib/constants';
 
 // --- Internal Helper Functions ---
 
@@ -405,6 +406,39 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
 
         const updatedTask = { ...taskToUpdate, ...finalUpdates, id: taskId };
         await triggerWebhooks(organizationId, 'task.updated', updatedTask);
+
+        // Check for project budget notification threshold
+        if (updatedTask.projectId && (updates.cost !== undefined || updates.status === 'Voltooid')) {
+            try {
+                const projectDoc = await getDoc(doc(db, 'projects', updatedTask.projectId));
+                if (projectDoc.exists()) {
+                    const projectData = projectDoc.data() as Project;
+                    const thresholdConfig = organization.settings?.notificationThresholds?.projectBudget;
+                    
+                    if (thresholdConfig?.enabled && projectData.budget && !projectData.budgetNotificationSent) {
+                        const tasksQuery = query(collection(db, 'tasks'), where('projectId', '==', updatedTask.projectId));
+                        const tasksSnapshot = await getDocs(tasksQuery);
+                        const totalCost = tasksSnapshot.docs.reduce((sum, taskDoc) => sum + (taskDoc.data().cost || 0), 0);
+
+                        const percentageUsed = (totalCost / projectData.budget) * 100;
+                        if (percentageUsed >= thresholdConfig.percentage) {
+                            const message = `Budgetwaarschuwing: Het budget voor project "${projectData.name}" is voor ${Math.round(percentageUsed)}% verbruikt.`;
+                            await createNotification(
+                                organization.ownerId, 
+                                message, 
+                                null, 
+                                organizationId, 
+                                SYSTEM_USER_ID, 
+                                { eventType: 'system' }
+                            );
+                            await updateDoc(projectDoc.ref, { budgetNotificationSent: true });
+                        }
+                    }
+                }
+            } catch (e: any) {
+                console.error("Failed to process budget threshold notification:", e.message);
+            }
+        }
         
         return { data: { success: true, updatedTask }, error: null };
 

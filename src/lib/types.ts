@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 import type { Layout } from 'react-grid-layout';
 import { ROLE_ADMIN, ROLE_GUEST, ROLE_MEMBER, ROLE_OWNER } from './constants';
@@ -372,6 +373,7 @@ export type Project = {
   deadline?: Date;
   pinned?: boolean;
   projectRoles?: Record<string, RoleName>;
+  budgetNotificationSent?: boolean;
 };
 
 export type Team = {
