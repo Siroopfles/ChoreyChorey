@@ -4,7 +4,7 @@
 
 import type { User, TaskFormValues, Task, Label, Project } from '@/lib/types';
 import { taskFormSchema } from '@/lib/types';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
-import { MessageSquare, History, ClipboardCopy, Phone, PhoneOff, PenSquare } from 'lucide-react';
+import { MessageSquare, History, ClipboardCopy, Phone, PhoneOff, PenSquare, QrCode } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
 import { useOrganization } from '@/contexts/organization-context';
@@ -38,6 +38,7 @@ import { TldrawWhiteboard } from './tldraw-whiteboard';
 import { usePresence } from '@/contexts/presence-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { TaskQrCodeDialog } from './TaskQrCodeDialog';
 
 
 const LiveViewers = ({ taskId }: { taskId: string }) => {
@@ -99,6 +100,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
   const { users, projects, currentOrganization } = useOrganization();
   const { startOrJoinCall, leaveCall, activeCall } = useCall();
   const { setViewingTask } = usePresence();
+  const [isQrCodeOpen, setIsQrCodeOpen] = useState(false);
 
   const isHuddleActive = task.callSession?.isActive;
   const isInThisHuddle = activeCall?.taskId === task.id;
@@ -212,6 +214,9 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
             </div>
              <div className="flex items-center gap-2">
                 <LiveViewers taskId={task.id} />
+                 <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setIsQrCodeOpen(true)}>
+                    <QrCode className="h-4 w-4" />
+                </Button>
                 <Button
                     variant={isHuddleActive ? 'default' : 'outline'}
                     size="sm"
@@ -273,6 +278,12 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                 </Tabs>
             </div>
         </div>
+        <TaskQrCodeDialog
+            open={isQrCodeOpen}
+            onOpenChange={setIsQrCodeOpen}
+            taskId={task.id}
+            taskTitle={task.title}
+        />
       </DialogContent>
     </Dialog>
   );

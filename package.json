@@ -59,6 +59,7 @@
     "genkit": "^1.13.0",
     "googleapis": "^140.0.1",
     "html2canvas": "^1.4.1",
+    "html5-qrcode": "^2.3.8",
     "isomorphic-fetch": "^3.0.0",
     "jspdf": "^2.5.1",
     "lucide-react": "^0.523.0",
