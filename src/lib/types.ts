@@ -786,7 +786,10 @@ export const taskFormSchema = z.object({
   clockifyWorkspaceId: z.string().optional(),
   clockifyProjectId: z.string().optional(),
   customFieldValues: z.record(z.any()).optional(),
+  pinned: z.boolean().optional(),
+  callSession: z.any().optional(),
   poll: pollSchema.optional(),
+  whiteboard: z.string().optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -1036,4 +1039,5 @@ export type Phase = {
   name: string;
   description: string;
   features: Feature[];
+  nativeFeatures?: Feature[];
 };
