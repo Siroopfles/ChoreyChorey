@@ -26,11 +26,10 @@ import { PresenceProvider } from '@/contexts/presence-context';
 import { LiveCursors } from '@/components/chorey/live-cursors';
 import AppSidebar from '@/components/chorey/app-sidebar';
 import MobileBottomNav from '@/components/chorey/mobile-bottom-nav';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import { FCMProvider } from '@/contexts/fcm-context';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 
 const BrandingStyle = () => {
@@ -142,32 +141,34 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
 
     return (
-        <div className="flex flex-col h-screen">
-          <BrandingStyle />
-          <UserCosmeticStyle />
-          <AppSidebar />
-          <div className={cn("flex flex-col flex-1", isMobile ? "pb-16" : "")}>
-            <AppHeader />
-            <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
-              {announcement && <AnnouncementBanner announcement={announcement} />}
-              {children}
-              <LiveCursors />
-            </main>
-            <BulkActionBar />
-          </div>
-          <MobileBottomNav />
-
-          <AddTaskDialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
-          {viewedTask && (
-            <EditTaskDialog
-              isOpen={!!viewedTask}
-              setIsOpen={(isOpen) => { if (!isOpen) setViewedTask(null); }}
-              task={viewedTask}
-            />
-          )}
-          <ShortcutHelpDialog open={isShortcutHelpOpen} onOpenChange={setIsShortcutHelpOpen} />
-          <AudioHuddle />
+    <>
+      <BrandingStyle />
+      <UserCosmeticStyle />
+      <AppSidebar />
+      <SidebarInset className={cn(isMobile ? 'pb-16' : '')}>
+        <AppHeader />
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+          {announcement && <AnnouncementBanner announcement={announcement} />}
+          {children}
+          <LiveCursors />
         </div>
+        <BulkActionBar />
+      </SidebarInset>
+      <MobileBottomNav />
+
+      <AddTaskDialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
+      {viewedTask && (
+        <EditTaskDialog
+          isOpen={!!viewedTask}
+          setIsOpen={(isOpen) => {
+            if (!isOpen) setViewedTask(null);
+          }}
+          task={viewedTask}
+        />
+      )}
+      <ShortcutHelpDialog open={isShortcutHelpOpen} onOpenChange={setIsShortcutHelpOpen} />
+      <AudioHuddle />
+    </>
     );
 }
 
