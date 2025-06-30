@@ -168,8 +168,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                     </TabsList>
                     <TabsContent value="comments" className="flex-1 flex flex-col gap-4 min-h-0 mt-2">
                         <TaskComments 
-                            taskId={task.id}
-                            comments={task.comments}
+                            task={task}
                             users={users}
                             addComment={handleAddComment}
                         />

@@ -626,6 +626,7 @@ export type Task = {
   dependencyConfig?: { [taskId: string]: { lag: number; unit: 'days' | 'hours' } };
   recurring?: Recurring;
   organizationId: string;
+  typing?: { [key: string]: Date };
   imageUrl?: string | null;
   thanked?: boolean;
   timeLogged?: number; // in seconds

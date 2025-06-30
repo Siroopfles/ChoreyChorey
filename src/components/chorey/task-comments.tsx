@@ -1,8 +1,9 @@
 
+
 'use client';
 
-import type { User, Comment as CommentType } from '@/lib/types';
-import { useState, useRef, useEffect } from 'react';
+import type { User, Task as TaskType, Comment as CommentType } from '@/lib/types';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Bot, Loader2, Speaker, Eye } from 'lucide-react';
@@ -17,6 +18,7 @@ import { RichTextEditor } from '../ui/rich-text-editor';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
 import { useNotifications } from '@/contexts/notification-context';
+import { updateTypingStatusAction } from '@/app/actions/task.actions';
 
 const ReadReceipt = ({ comment, users }: { comment: CommentType; users: User[] }) => {
     const readers = (comment.readBy || [])
@@ -94,14 +96,14 @@ const CommentItem = ({ comment, user, onVisible, allUsers }: { comment: CommentT
 };
 
 type TaskCommentsProps = {
-  taskId: string;
-  comments: CommentType[];
+  task: TaskType;
   users: User[];
   addComment: (text: string) => void;
 };
 
-export function TaskComments({ taskId, comments, users, addComment }: TaskCommentsProps) {
+export function TaskComments({ task, users, addComment }: TaskCommentsProps) {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const { markSingleNotificationAsRead } = useNotifications();
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState('');
@@ -109,8 +111,9 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const typingTimeout = useRef<NodeJS.Timeout>();
   
-  const sortedComments = [...(comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  const sortedComments = [...(task.comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   const onSummarizeComments = async () => {
     const commentsToSummarize = sortedComments.map(c => c.text);
@@ -162,9 +165,33 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
     }
   };
 
+  const updateTypingStatus = useCallback((isTyping: boolean) => {
+    if (!currentUser || !task?.id) return;
+    updateTypingStatusAction(task.id, currentUser.id, isTyping);
+  }, [currentUser, task?.id]);
+
+  useEffect(() => {
+    return () => {
+        if (typingTimeout.current) clearTimeout(typingTimeout.current);
+        updateTypingStatus(false);
+    };
+  }, [updateTypingStatus]);
+
+  useEffect(() => {
+    if (newComment.length > 0) {
+        updateTypingStatus(true);
+        if (typingTimeout.current) clearTimeout(typingTimeout.current);
+        typingTimeout.current = setTimeout(() => {
+            updateTypingStatus(false);
+        }, 3000); // 3 seconds of inactivity
+    }
+  }, [newComment, updateTypingStatus]);
+
   const handleAddComment = () => {
     const plainText = newComment.replace(/<[^>]*>/g, '').trim();
     if (plainText) {
+      if (typingTimeout.current) clearTimeout(typingTimeout.current);
+      updateTypingStatus(false);
       addComment(newComment);
       setNewComment('');
     }
@@ -176,8 +203,21 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
     // when they enter the viewport.
   };
 
+  const typingUsers = useMemo(() => {
+    if (!task?.typing || !currentUser) return [];
+    
+    const now = new Date();
+    return Object.entries(task.typing)
+      .filter(([userId, timestamp]) => {
+        const isOld = (now.getTime() - (timestamp as Date).getTime()) > 5000;
+        return userId !== currentUser.id && !isOld;
+      })
+      .map(([userId]) => users.find(u => u.id === userId)?.name)
+      .filter(Boolean) as string[];
+  }, [task?.typing, users, currentUser]);
+
   return (
-    <div className="flex-1 flex flex-col gap-4 min-h-0">
+    <div className="flex-1 flex flex-col gap-2 min-h-0">
       <ScrollArea className="flex-1 pr-2">
         <ul className="space-y-4">
           {sortedComments.length > 1 && (
@@ -227,7 +267,17 @@ export function TaskComments({ taskId, comments, users, addComment }: TaskCommen
           )}
         </ul>
       </ScrollArea>
-      <div className="flex flex-col gap-2 mt-auto pt-4 border-t">
+       <div className="h-4 px-1 text-xs text-muted-foreground italic flex items-center gap-1">
+        {typingUsers.length > 0 && (
+          <>
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>
+              {typingUsers.join(', ')} {typingUsers.length > 1 ? 'zijn' : 'is'} aan het typen...
+            </span>
+          </>
+        )}
+      </div>
+      <div className="flex flex-col gap-2 pt-2 border-t">
           <RichTextEditor
             value={newComment}
             onChange={setNewComment}

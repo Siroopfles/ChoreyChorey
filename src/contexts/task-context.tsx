@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -79,6 +80,9 @@ const processTaskDoc = (doc: any, projects: Project[], canViewSensitive: boolean
         activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
         history: (data.history || []).map((h: any) => ({ ...h, timestamp: (h.timestamp as Timestamp)?.toDate() })),
         comments: (data.comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate(), readBy: c.readBy || [] })),
+        typing: data.typing ? Object.fromEntries(
+          Object.entries(data.typing).map(([key, value]) => [key, (value as Timestamp).toDate()])
+        ) : undefined,
     };
     
     // Mask sensitive data

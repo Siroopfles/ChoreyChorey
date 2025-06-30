@@ -3,7 +3,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, runTransaction, Timestamp } from 'firebase/firestore';
+import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, runTransaction, Timestamp, deleteField } from 'firebase/firestore';
 import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization } from '@/lib/types';
 import { calculatePoints, addHistoryEntry } from '@/lib/utils';
 import { grantAchievements, checkAndGrantTeamAchievements } from './gamification.actions';
@@ -751,4 +751,25 @@ export async function promoteSubtaskToTask(parentTaskId: string, subtask: Subtas
     } catch(e: any) {
         return { data: null, error: e.message };
     }
+}
+
+export async function updateTypingStatusAction(taskId: string, userId: string, isTyping: boolean): Promise<{ success: boolean }> {
+  const taskRef = doc(db, 'tasks', taskId);
+  try {
+    if (isTyping) {
+      await updateDoc(taskRef, {
+        [`typing.${userId}`]: new Date(),
+      });
+    } else {
+      await updateDoc(taskRef, {
+        [`typing.${userId}`]: deleteField(),
+      });
+    }
+    return { success: true };
+  } catch (error) {
+    // This is a non-critical background operation, so we just log the error
+    // and don't bother the user with a toast.
+    console.error('Error updating typing status:', error);
+    return { success: false };
+  }
 }
