@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame } from 'lucide-react';
+import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame, Mic } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useNotifications } from '@/contexts/notification-context';
 import { useTasks } from '@/contexts/task-context';
@@ -35,6 +35,7 @@ import { isAfter } from 'date-fns';
 import { statusStyles } from '@/lib/types';
 import { CreateOrganizationDialog } from './organization/create-organization-dialog';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/member.actions';
+import { MobileCommandDialog } from './mobile-command-dialog';
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();
@@ -43,6 +44,7 @@ export default function AppHeader() {
   const { user, logout, organizations, currentOrganization, switchOrganization, refreshUser } = useAuth();
   const router = useRouter();
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
+  const [isMobileCommandOpen, setIsMobileCommandOpen] = useState(false);
 
   const displayedNotifications = useMemo(() => {
     return notifications.filter(n => !n.snoozedUntil || isAfter(new Date(), n.snoozedUntil));
@@ -80,9 +82,8 @@ export default function AppHeader() {
   return (
     <>
       <header className="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 sticky top-0 z-30">
-        <SidebarTrigger className="md:hidden" />
-        
-        <div>
+        <div className="flex items-center gap-1">
+          <SidebarTrigger className="md:hidden" />
           {currentOrganization && (
               <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -136,9 +137,14 @@ export default function AppHeader() {
             </TooltipProvider>
           )}
 
-          <Button onClick={() => setIsAddTaskDialogOpen(true)} data-tour-id="add-task-button">
+          <Button onClick={() => setIsAddTaskDialogOpen(true)} data-tour-id="add-task-button" className="hidden md:flex">
             <PlusCircle className="mr-2 h-4 w-4" /> Taak Toevoegen
           </Button>
+
+           <Button variant="ghost" size="icon" className="rounded-full md:hidden" onClick={() => setIsMobileCommandOpen(true)}>
+              <Mic className="h-5 w-5" />
+              <span className="sr-only">Spraakcommando</span>
+            </Button>
 
           <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -286,6 +292,7 @@ export default function AppHeader() {
         </div>
       </header>
       <CreateOrganizationDialog open={isCreateOrgOpen} onOpenChange={setIsCreateOrgOpen} />
+      <MobileCommandDialog open={isMobileCommandOpen} onOpenChange={setIsMobileCommandOpen} />
     </>
   );
 }
