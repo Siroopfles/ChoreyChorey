@@ -40,6 +40,7 @@ export function SortableTaskCard({ task, users, currentUser, projects, blockingT
             style={style}
             {...attributes}
             {...listeners}
+            data-cy={`task-card-${task.id}`}
             aria-roledescription="sortable item"
         >
             <TaskCard 

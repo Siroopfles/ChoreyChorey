@@ -89,6 +89,7 @@ const TaskColumn = ({
        <SortableContext id={title} items={tasks} strategy={verticalListSortingStrategy}>
         <div 
             ref={setNodeRef}
+            data-cy={`task-column-${title}`}
             role="group"
             aria-label={title}
             className={cn(

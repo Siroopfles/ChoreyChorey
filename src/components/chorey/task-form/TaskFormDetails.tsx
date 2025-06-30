@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { User, Project, SuggestPriorityOutput, SuggestStoryPointsOutput } from '@/lib/types';
@@ -231,7 +232,7 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
                <div className="flex items-center gap-2">
                 <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger data-cy="priority-select">
                         <SelectValue placeholder="Selecteer een prioriteit" />
                     </SelectTrigger>
                     </FormControl>
