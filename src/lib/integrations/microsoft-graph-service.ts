@@ -4,12 +4,12 @@
 import 'isomorphic-fetch'; // Required for microsoft-graph-client
 import { Client } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
-import { getMicrosoftAuthClient, scopes, redirectUri } from '@/lib/microsoft-graph-auth';
+import { getMicrosoftAuthClient, scopes, redirectUri } from './microsoft-graph-auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { Task, User } from '@/lib/types';
 import { addHours } from 'date-fns';
-import { env } from '@/lib/env';
+import { env } from '@/lib/core/env';
 
 async function getAuthenticatedClient(userId: string) {
     if (!env.MICROSOFT_CLIENT_ID || !env.MICROSOFT_CLIENT_SECRET || !env.MICROSOFT_TENANT_ID) {

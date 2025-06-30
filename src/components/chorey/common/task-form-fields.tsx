@@ -16,7 +16,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { TaskFormDetails } from './task-form/TaskFormDetails';
 import { TaskFormSubtasks } from './task-form/TaskFormSubtasks';
 import { TaskFormAdvanced } from './task-form/TaskFormAdvanced';
-'''import { AIFeedback } from './ai-feedback';
+import { AIFeedback } from './ai-feedback';
 import { CustomFieldDefinition } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
@@ -221,4 +221,4 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
 
     </div>
   );
-}''
+}

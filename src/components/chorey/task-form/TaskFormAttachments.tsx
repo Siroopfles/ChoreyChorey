@@ -11,12 +11,12 @@ import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/auth-context';
-import { getAttachmentSource } from '@/lib/attachment-utils';
-import { AttachmentIcon } from '../attachment-icons';
-import { FigmaEmbed } from '../figma-embed';
-import { GoogleDocEmbed } from '../google-doc-embed';
-import { AdobeXdEmbed } from '../adobe-xd-embed';
-import { uploadAttachmentFromDataUrl } from '@/app/actions/attachment.actions';
+import { getAttachmentSource } from '@/lib/utils/attachment-utils';
+import { AttachmentIcon } from '../common/attachment-icons';
+import { FigmaEmbed } from '../integrations/figma-embed';
+import { GoogleDocEmbed } from '../integrations/google-doc-embed';
+import { AdobeXdEmbed } from '../integrations/adobe-xd-embed';
+import { uploadAttachmentFromDataUrl } from '@/app/actions/core/attachment.actions';
 
 export function TaskFormAttachments() {
     const { control, getValues, setValue } = useFormContext();

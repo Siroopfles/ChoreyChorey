@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { 
@@ -20,16 +21,16 @@ import {
     getAdditionalUserInfo,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc, arrayUnion } from 'firebase/firestore';
-import { auth, db, googleProvider, microsoftProvider } from '@/lib/firebase';
+import { auth, db, googleProvider, microsoftProvider } from '@/lib/core/firebase';
 import type { User, Organization, RoleName, UserStatus, Permission, WidgetInstance } from '@/lib/types';
 import { WIDGET_TYPES, DEFAULT_ROLES, widgetConfigSchemas } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserStatus as updateUserStatusAction } from '@/app/actions/member.actions';
-import { sendDailyDigest } from '@/app/actions/digest.actions';
-import { useDebug } from './debug-context';
+import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user/member.actions';
+import { sendDailyDigest } from '@/app/actions/core/digest.actions';
+import { useDebug } from '../system/debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Layouts } from 'react-grid-layout';
-import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
+import { generateAvatar } from '@/ai/flows/generative-ai/generate-avatar-flow';
 
 
 const SESSION_STORAGE_KEY = 'chorey_session_id';
@@ -558,7 +559,15 @@ export function useAuth() {
     const { user, currentOrganization } = context;
     const currentUserRole = (currentOrganization?.members || {})[user?.id || '']?.role || null;
     const allRoles = { ...DEFAULT_ROLES, ...(currentOrganization?.settings?.customization?.customRoles || {}) };
-    const currentUserPermissions = currentUserRole ? allRoles[currentUserRole]?.permissions || [] : [];
+    const memberData = user && currentOrganization?.members?.[user.id];
+    
+    const basePermissions = currentUserRole ? allRoles[currentUserRole]?.permissions || [] : [];
+    const grantedOverrides = memberData?.permissionOverrides?.granted || [];
+    const revokedOverrides = memberData?.permissionOverrides?.revoked || [];
+
+    const currentUserPermissions = [
+        ...new Set([...basePermissions, ...grantedOverrides])
+    ].filter(p => !revokedOverrides.includes(p));
     
     return { ...context, currentUserRole, currentUserPermissions };
 }

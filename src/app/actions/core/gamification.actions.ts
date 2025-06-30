@@ -1,14 +1,15 @@
 
+
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, increment, arrayUnion, runTransaction, addDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
 import type { Task, User, Organization, ActivityFeedItem, Team, GlobalUserProfile, OrganizationMember } from '@/lib/types';
 import { ACHIEVEMENTS } from '@/lib/types';
 import { createNotification } from './notification.actions';
-import { addHistoryEntry } from '@/lib/history-utils';
-import { calculatePoints } from '@/lib/gamification-utils';
-import { SYSTEM_USER_ID } from '@/lib/constants';
+import { addHistoryEntry } from '@/lib/utils/history-utils';
+import { calculatePoints } from '@/lib/utils/gamification-utils';
+import { SYSTEM_USER_ID } from '@/lib/core/constants';
 
 async function grantAchievements(userId: string, organizationId: string, type: 'completed' | 'thanked', task?: Task) {
     const memberRef = doc(db, 'organizations', organizationId, 'members', userId);

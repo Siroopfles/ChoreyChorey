@@ -1,4 +1,4 @@
-import type { HistoryEntry } from "./types";
+import type { HistoryEntry } from "@/lib/types";
 
 /**
  * Creates a standard history entry object for tasks.

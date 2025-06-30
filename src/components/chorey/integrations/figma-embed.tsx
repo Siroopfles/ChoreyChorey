@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 export function FigmaEmbed({ url, className }: { url: string; className?: string }) {
     if (!url.includes('figma.com/file/')) {

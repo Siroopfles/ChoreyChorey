@@ -2,8 +2,8 @@
 'use server';
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { emailToTask } from '@/ai/flows/email-to-task-flow';
-import { env } from '@/lib/env';
+import { emailToTask } from '@/ai/flows/task-management/email-to-task-flow';
+import { env } from '@/lib/core/env';
 
 export async function POST(request: NextRequest) {
     const { searchParams } = new URL(request.url);

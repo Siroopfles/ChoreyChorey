@@ -1,8 +1,8 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { authenticateApiKey } from '@/lib/api-auth';
+import { authenticateApiKey } from './api-auth';
 import type { ApiPermission } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export type AuthenticatedApiHandlerContext = {

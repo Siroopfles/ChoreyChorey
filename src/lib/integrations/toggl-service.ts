@@ -1,7 +1,8 @@
 
+
 'use server';
 
-import type { Task } from './types';
+import type { Task } from '@/lib/types';
 
 const togglApiBase = 'https://api.track.toggl.com/api/v9';
 

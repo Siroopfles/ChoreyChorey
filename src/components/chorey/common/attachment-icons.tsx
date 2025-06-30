@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import type { AttachmentSource } from '@/lib/utils';
+import type { AttachmentSource } from '@/lib/utils/attachment-utils';
 import { Link, Figma } from 'lucide-react';
 import { GitLabIcon, BitbucketIcon } from './provider-icons';
 

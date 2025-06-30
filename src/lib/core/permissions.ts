@@ -2,7 +2,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Organization, Permission, Project } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';

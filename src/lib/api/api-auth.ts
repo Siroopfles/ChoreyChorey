@@ -1,10 +1,11 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import crypto from 'crypto';
-import type { ApiPermission } from './types';
+import type { ApiPermission } from '@/lib/types';
 
 function hashKey(key: string): string {
     return crypto.createHash('sha256').update(key).digest('hex');

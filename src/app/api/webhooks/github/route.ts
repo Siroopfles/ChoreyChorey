@@ -1,14 +1,15 @@
 
+
 'use server';
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, writeBatch } from 'firebase/firestore';
 import crypto from 'crypto';
 import type { Organization, Task, GitHubLink } from '@/lib/types';
-import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
-import { createNotification } from '@/app/actions/notification.actions';
-import { env } from '@/lib/env';
+import { suggestStatusUpdate } from '@/ai/flows/assistance-suggestion/suggest-status-update-flow';
+import { createNotification } from '@/app/actions/core/notification.actions';
+import { env } from '@/lib/core/env';
 
 async function verifySignature(request: NextRequest): Promise<{ isValid: boolean; body?: any }> {
   try {

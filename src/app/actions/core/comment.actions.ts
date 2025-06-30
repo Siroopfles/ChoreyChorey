@@ -2,14 +2,14 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, runTransaction } from 'firebase/firestore';
 import type { Comment, Organization, Task } from '@/lib/types';
-import { addHistoryEntry } from '@/lib/history-utils';
+import { addHistoryEntry } from '@/lib/utils/history-utils';
 import { createNotification } from './notification.actions';
-import { triggerWebhooks } from '@/lib/webhook-service';
-import { suggestStatusUpdate } from '@/ai/flows/suggest-status-update-flow';
-import { JIRA_BOT_USER_ID, JIRA_BOT_USER_NAME, SYSTEM_USER_ID } from '@/lib/constants';
+import { triggerWebhooks } from '@/lib/integrations/webhook-service';
+import { suggestStatusUpdate } from '@/ai/flows/assistance-suggestion/suggest-status-update-flow';
+import { JIRA_BOT_USER_ID, JIRA_BOT_USER_NAME, SYSTEM_USER_ID } from '@/lib/core/constants';
 
 
 export async function addCommentAction(

@@ -1,8 +1,8 @@
 
 'use server';
 
-import type { BitbucketLink } from './types';
-import { env } from '@/lib/env';
+import type { BitbucketLink } from '@/lib/types';
+import { env } from '@/lib/core/env';
 
 const bitbucketApiBase = 'https://api.bitbucket.org/2.0';
 

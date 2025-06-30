@@ -1,7 +1,8 @@
 
+
 'use server';
 
-import type { Task } from './types';
+import type { Task } from '@/lib/types';
 
 const clockifyApiBase = 'https://api.clockify.me/api/v1';
 
@@ -55,4 +56,3 @@ export async function createClockifyTimeEntry(
         body: JSON.stringify(body),
     });
 }
-

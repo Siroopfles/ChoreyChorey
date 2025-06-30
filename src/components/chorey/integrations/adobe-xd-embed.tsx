@@ -35,7 +35,7 @@ export function AdobeXdEmbed({ url }: AdobeXdEmbedProps) {
   }
 
   return (
-    <div className="w-full h-full aspect-video">
+    <div className="w-full aspect-video">
       <iframe
         className="w-full h-full rounded-lg border"
         src={embedUrl}

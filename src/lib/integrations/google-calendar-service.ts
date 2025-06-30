@@ -2,8 +2,8 @@
 
 import { google } from 'googleapis';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { getGoogleAuthClient } from '@/lib/google-auth';
+import { db } from '@/lib/core/firebase';
+import { getGoogleAuthClient } from './google-auth';
 import type { Task, User } from '@/lib/types';
 import { format, addHours } from 'date-fns';
 

@@ -1,6 +1,6 @@
-import type { Priority } from "./types";
+import type { Priority } from "@/lib/types";
 
-export const calculatePoints = (priority: Priority, storyPoints?: number): number => {
+export const calculatePoints = (priority: Priority, storyPoints?: number | null): number => {
     let priorityPoints = 0;
     switch (priority) {
         case 'Urgent': priorityPoints = 30; break;

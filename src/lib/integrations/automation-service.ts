@@ -1,13 +1,14 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
-import type { Automation, Task, Priority, Label, Comment } from './types';
-import { createNotification } from '@/app/actions/notification.actions';
-import { SYSTEM_USER_ID } from './constants';
+import type { Automation, Task, Priority, Label, Comment } from '@/lib/types';
+import { createNotification } from '@/app/actions/core/notification.actions';
+import { SYSTEM_USER_ID } from '@/lib/core/constants';
 
-import { addHistoryEntry } from '@/lib/history-utils';
+import { addHistoryEntry } from '@/lib/utils/history-utils';
 
 async function executeTaskAssignAction(task: Task, automation: Automation) {
     if (!automation.action.params.assigneeId) return;

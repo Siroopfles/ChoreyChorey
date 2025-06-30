@@ -1,8 +1,8 @@
 
 'use server';
 
-import type { JiraLink } from './types';
-import { env } from '@/lib/env';
+import type { JiraLink } from '@/lib/types';
+import { env } from '@/lib/core/env';
 
 const baseUrl = env.JIRA_BASE_URL;
 const email = env.JIRA_USER_EMAIL;

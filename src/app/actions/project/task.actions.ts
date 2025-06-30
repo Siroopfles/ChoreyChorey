@@ -2,22 +2,22 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, runTransaction, Timestamp, deleteField, arrayRemove } from 'firebase/firestore';
 import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Poll, Project } from '@/lib/types';
-import { calculatePoints } from '@/lib/gamification-utils';
-import { addHistoryEntry } from '@/lib/history-utils';
-import { formatTime } from '@/lib/time-utils';
-import { grantAchievements, checkAndGrantTeamAchievements } from './gamification.actions';
-import { createNotification } from './notification.actions';
-import { triggerWebhooks } from '@/lib/webhook-service';
+import { calculatePoints } from '@/lib/utils/gamification-utils';
+import { addHistoryEntry } from '@/lib/utils/history-utils';
+import { formatTime } from '@/lib/utils/time-utils';
+import { grantAchievements, checkAndGrantTeamAchievements } from '@/app/actions/core/gamification.actions';
+import { createNotification } from '@/app/actions/core/notification.actions';
+import { triggerWebhooks } from '@/lib/integrations/webhook-service';
 import Papa from 'papaparse';
 import { addDays, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
-import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar-service';
-import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/microsoft-graph-service';
-import { createTogglTimeEntry } from '@/lib/toggl-service';
-import { createClockifyTimeEntry } from '@/lib/clockify-service';
-import { SYSTEM_USER_ID } from '@/lib/constants';
+import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/integrations/google-calendar-service';
+import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/integrations/microsoft-graph-service';
+import { createTogglTimeEntry } from '@/lib/integrations/toggl-service';
+import { createClockifyTimeEntry } from '@/lib/integrations/clockify-service';
+import { SYSTEM_USER_ID } from '@/lib/core/constants';
 
 // --- Internal Helper Functions ---
 
@@ -227,7 +227,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
 
         // Trigger automations for the new task
         try {
-            const { processTriggers } = await import('@/lib/automation-service');
+            const { processTriggers } = await import('@/lib/integrations/automation-service');
             // We need to pass the full task object including the new ID
             await processTriggers('task.created', { task: { ...firestoreTask, id: docRef.id } });
         } catch (e) {

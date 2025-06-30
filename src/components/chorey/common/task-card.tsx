@@ -3,7 +3,7 @@
 'use client';
 import { PERMISSIONS, type Task, type User, type Project, type Subtask, type Comment, type StatusDefinition } from '@/lib/types';
 import { useMemo, useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,12 +52,12 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
-import { getAttachmentSource } from '@/lib/utils';
+import { getAttachmentSource } from '@/lib/utils/attachment-utils';
 import { AttachmentIcon } from './attachment-icons';
 import { TaskCardFooter } from './task-card-footer';
 import { useFilters } from '@/contexts/filter-context';
 import { useOrganization } from '@/contexts/organization-context';
-import { HandoffTaskDialog } from './handoff-task-dialog';
+import { HandoffTaskDialog } from '../dialogs/handoff-task-dialog';
 
 
 type TaskCardProps = {

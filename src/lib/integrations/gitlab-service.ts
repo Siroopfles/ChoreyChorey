@@ -1,6 +1,6 @@
 'use server';
-import type { GitLabLink } from './types';
-import { env } from '@/lib/env';
+import type { GitLabLink } from '@/lib/types';
+import { env } from '@/lib/core/env';
 
 const gitlabApiBase = 'https://gitlab.com/api/v4';
 
