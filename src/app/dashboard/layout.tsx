@@ -30,6 +30,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import { FCMProvider } from '@/contexts/fcm-context';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 
 const BrandingStyle = () => {
@@ -254,11 +255,13 @@ export default function DashboardLayout({
                   <FCMProvider>
                     <CallProvider>
                       <PresenceProvider>
+                        <SidebarProvider>
                           <AuthGuard>
                           <TourProvider>
                               {children}
                           </TourProvider>
                           </AuthGuard>
+                        </SidebarProvider>
                       </PresenceProvider>
                     </CallProvider>
                   </FCMProvider>

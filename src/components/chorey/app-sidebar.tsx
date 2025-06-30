@@ -9,7 +9,6 @@ import { useTasks } from '@/contexts/task-context';
 import { useFilters } from '@/contexts/filter-context';
 import { useAuth } from '@/contexts/auth-context';
 import {
-  SidebarProvider,
   Sidebar,
   SidebarHeader,
   SidebarContent,
@@ -111,107 +110,105 @@ export default function AppSidebar() {
 
 
     return (
-        <SidebarProvider>
-            <Sidebar collapsible="icon" className="hidden md:flex">
-                <SidebarHeader className="p-4 border-b border-sidebar-border">
-                    <Link href="/dashboard">
-                        <h1 className="text-2xl font-bold text-sidebar-primary group-data-[state=collapsed]:hidden">{currentOrganization?.name || 'Chorey'}</h1>
-                    </Link>
-                </SidebarHeader>
-                <SidebarContent className="p-4 flex flex-col">
-                    <CommandBar />
-                    <SidebarMenu className="mt-4">
-                        {mainNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                        ))}
+        <Sidebar collapsible="icon" className="hidden md:flex">
+            <SidebarHeader className="p-4 border-b border-sidebar-border">
+                <Link href="/dashboard">
+                    <h1 className="text-2xl font-bold text-sidebar-primary group-data-[state=collapsed]:hidden">{currentOrganization?.name || 'Chorey'}</h1>
+                </Link>
+            </SidebarHeader>
+            <SidebarContent className="p-4 flex flex-col">
+                <CommandBar />
+                <SidebarMenu className="mt-4">
+                    {mainNavItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                            <Link href={item.href} passHref>
+                                <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
 
-                        {(pinnedProjects.length > 0 || pinnedTasks.length > 0) && (
-                            <>
-                                <SidebarSeparator className="my-2" />
-                                <SidebarGroupLabel className="flex items-center gap-2"><Pin className="h-4 w-4"/>Vastgezet</SidebarGroupLabel>
-                                {pinnedProjects.map((project) => (
-                                     <SidebarMenuItem key={`pin-proj-${project.id}`}>
-                                        <SidebarMenuButton tooltip={project.name} onClick={() => handleProjectClick(project.id)} aria-label={`Ga naar project ${project.name}`}>
-                                            <Briefcase />
-                                            <span>{project.name}</span>
+                    {(pinnedProjects.length > 0 || pinnedTasks.length > 0) && (
+                        <>
+                            <SidebarSeparator className="my-2" />
+                            <SidebarGroupLabel className="flex items-center gap-2"><Pin className="h-4 w-4"/>Vastgezet</SidebarGroupLabel>
+                            {pinnedProjects.map((project) => (
+                                 <SidebarMenuItem key={`pin-proj-${project.id}`}>
+                                    <SidebarMenuButton tooltip={project.name} onClick={() => handleProjectClick(project.id)} aria-label={`Ga naar project ${project.name}`}>
+                                        <Briefcase />
+                                        <span>{project.name}</span>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                            {pinnedTasks.map((task) => (
+                                 <SidebarMenuItem key={`pin-task-${task.id}`}>
+                                    <SidebarMenuButton tooltip={task.title} onClick={() => setViewedTask(task)} aria-label={`Open taak ${task.title}`}>
+                                        <ClipboardList />
+                                        <span>{task.title}</span>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </>
+                    )}
+
+                    {planningNavItems.length > 0 && <SidebarSeparator className="my-2" />}
+                    {planningNavItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                            <Link href={item.href} passHref>
+                                <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+                    
+                    {communityNavItems.length > 0 && <SidebarSeparator className="my-2" />}
+                    {communityNavItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                            <Link href={item.href} passHref>
+                                <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} data-tour-id={item['data-tour-id'] as string} aria-label={item.label}>
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+
+                    {aiToolsNavItems.length > 0 && <SidebarSeparator className="my-2" />}
+                    {aiToolsNavItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                            <Link href={item.href} passHref>
+                                <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+
+                     {adminNavItems.length > 0 && (
+                        <>
+                            <SidebarSeparator className="my-2" />
+                            {adminNavItems.map((item) => (
+                                <SidebarMenuItem key={item.href}>
+                                    <Link href={item.href} passHref>
+                                        <SidebarMenuButton tooltip={item.label} isActive={pathname.startsWith(item.href)} data-tour-id={item['data-tour-id'] as string} aria-label={item.label}>
+                                            <item.icon />
+                                            <span>{item.label}</span>
                                         </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                                {pinnedTasks.map((task) => (
-                                     <SidebarMenuItem key={`pin-task-${task.id}`}>
-                                        <SidebarMenuButton tooltip={task.title} onClick={() => setViewedTask(task)} aria-label={`Open taak ${task.title}`}>
-                                            <ClipboardList />
-                                            <span>{task.title}</span>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                            </>
-                        )}
-
-                        {planningNavItems.length > 0 && <SidebarSeparator className="my-2" />}
-                        {planningNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                        ))}
-                        
-                        {communityNavItems.length > 0 && <SidebarSeparator className="my-2" />}
-                        {communityNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} data-tour-id={item['data-tour-id'] as string} aria-label={item.label}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                        ))}
-
-                        {aiToolsNavItems.length > 0 && <SidebarSeparator className="my-2" />}
-                        {aiToolsNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                        ))}
-
-                         {adminNavItems.length > 0 && (
-                            <>
-                                <SidebarSeparator className="my-2" />
-                                {adminNavItems.map((item) => (
-                                    <SidebarMenuItem key={item.href}>
-                                        <Link href={item.href} passHref>
-                                            <SidebarMenuButton tooltip={item.label} isActive={pathname.startsWith(item.href)} data-tour-id={item['data-tour-id'] as string} aria-label={item.label}>
-                                                <item.icon />
-                                                <span>{item.label}</span>
-                                            </SidebarMenuButton>
-                                        </Link>
-                                    </SidebarMenuItem>
-                                ))}
-                            </>
-                        )}
-                    </SidebarMenu>
-                </SidebarContent>
-                <SidebarFooter className="mt-auto border-t border-sidebar-border p-2">
-                    <SidebarToggle />
-                </SidebarFooter>
-            </Sidebar>
-        </SidebarProvider>
+                                    </Link>
+                                </SidebarMenuItem>
+                            ))}
+                        </>
+                    )}
+                </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter className="mt-auto border-t border-sidebar-border p-2">
+                <SidebarToggle />
+            </SidebarFooter>
+        </Sidebar>
     );
 }
