@@ -105,9 +105,9 @@ export default function UserProfilePage() {
                 </Link>
             </Button>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
                 {/* Left Column - Profile Info */}
-                <div className="lg:col-span-1 space-y-6">
+                <div className="md:col-span-1 space-y-6">
                     <Card>
                         <CardContent className="pt-6">
                             <div className="flex flex-col items-center text-center">
@@ -143,7 +143,7 @@ export default function UserProfilePage() {
                 </div>
 
                 {/* Right Column - Activity */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="md:col-span-2 space-y-6">
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

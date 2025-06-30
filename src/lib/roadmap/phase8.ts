@@ -19,6 +19,6 @@ export const phase8: Phase = {
       { id: 8012, title: "Geoptimaliseerde Mobiele Kalender", description: "Ontwerp een compacte, touch-vriendelijke versie van de kalenderweergave die specifiek is geoptimaliseerd voor kleinere schermen, met een focus op dag- en agendaweergaven.", completed: true },
       { id: 8013, title: "Biometrische App-vergrendeling", description: "Voeg een extra beveiligingslaag toe aan de mobiele app door gebruikers de optie te geven om de app te vergrendelen met Face ID, Touch ID of een vingerafdrukscanner.", completed: false },
       { id: 8014, title: "Aanpasbaar 'Snelle Acties' Menu", description: "Laat gebruikers via een 'lang indrukken' gebaar op een taak een contextmenu openen met hun meest gebruikte acties, zoals 'Toewijzen aan mij', 'Prioriteit verhogen' of 'Verplaatsen naar morgen'.", completed: false },
-      { id: 8015, title: "Optimalisatie voor Tablets", description: "Zorg voor een uitstekende ervaring op tablets door een twee- of drie-koloms layout te gebruiken die de extra schermruimte optimaal benut, bijvoorbeeld met een permanente takenlijst aan de zijkant.", completed: false }
+      { id: 8015, title: "Optimalisatie voor Tablets", description: "Zorg voor een uitstekende ervaring op tablets door een twee- of drie-koloms layout te gebruiken die de extra schermruimte optimaal benut, bijvoorbeeld met een permanente takenlijst aan de zijkant.", completed: true }
     ]
   };
