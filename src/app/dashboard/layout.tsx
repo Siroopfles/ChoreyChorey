@@ -1,32 +1,14 @@
 
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
 import { TaskProvider } from '@/contexts/task-context';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { Loader2, LayoutDashboard, Users, Settings, Inbox, Home, ShieldCheck, Trophy, HeartHandshake, Store, Lightbulb, Award, SquareStack, UserCog, FilePieChart, CalendarCheck, GitGraph, Globe, Plug, Bookmark, ShieldAlert, ClipboardList, BrainCircuit, Zap, MessageSquare, Pin, Briefcase, Trash2, ChevronsLeft } from 'lucide-react';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarSeparator,
-  SidebarGroupLabel,
-  SidebarFooter,
-  useSidebar,
-} from '@/components/ui/sidebar';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import AppHeader from '@/components/chorey/app-header';
-import CommandBar from '@/components/chorey/command-bar';
-import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import AddTaskDialog from '@/components/chorey/add-task-dialog';
 import EditTaskDialog from '@/components/chorey/edit-task-dialog';
-import Link from 'next/link';
 import AnnouncementBanner from '@/components/chorey/announcement-banner';
 import { PERMISSIONS, UserStatus } from '@/lib/types';
 import { TourProvider } from '@/contexts/tour-context';
@@ -36,13 +18,18 @@ import { ChecklistProvider } from '@/contexts/checklist-context';
 import { ShortcutHelpDialog } from '@/components/chorey/shortcut-help-dialog';
 import { OrganizationProvider, useOrganization } from '@/contexts/organization-context';
 import { NotificationsProvider } from '@/contexts/notification-context';
-import { FilterProvider, useFilters } from '@/contexts/filter-context';
+import { FilterProvider } from '@/contexts/filter-context';
 import { useTasks } from '@/contexts/task-context';
-import { ROLE_GUEST } from '@/lib/constants';
 import { CallProvider } from '@/contexts/call-context';
 import { AudioHuddle } from '@/components/chorey/audio-huddle/AudioHuddle';
 import { PresenceProvider } from '@/contexts/presence-context';
 import { LiveCursors } from '@/components/chorey/live-cursors';
+import AppSidebar from '@/components/chorey/app-sidebar';
+import MobileBottomNav from '@/components/chorey/mobile-bottom-nav';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import { BulkActionBar } from '@/components/chorey/bulk-action-bar';
+
 
 const BrandingStyle = () => {
   const { currentOrganization } = useOrganization();
@@ -89,49 +76,23 @@ const UserCosmeticStyle = () => {
   return <style dangerouslySetInnerHTML={{ __html: css }} />;
 };
 
-function SidebarToggle() {
-  const { toggleSidebar, state } = useSidebar();
-
-  return (
-    <SidebarMenuButton
-      onClick={toggleSidebar}
-      tooltip={state === "expanded" ? "Inklappen" : "Uitklappen"}
-      className="h-9 justify-start"
-      aria-label={state === "expanded" ? "Zijbalk inklappen" : "Zijbalk uitklappen"}
-    >
-      <ChevronsLeft className="size-4 shrink-0 duration-200 group-data-[state=collapsed]:rotate-180" />
-      <span className="group-data-[state=collapsed]:hidden">
-        Inklappen
-      </span>
-    </SidebarMenuButton>
-  );
-}
-
 
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
-    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks, toggleTaskPin } = useTasks();
-    const { setFilters } = useFilters();
-    const { user, updateUserPresence } = useAuth();
-    const { currentOrganization, projects, users, currentUserRole, currentUserPermissions, loading: orgLoading } = useOrganization();
+    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks } = useTasks();
+    const { updateUserPresence } = useAuth();
+    const { currentOrganization } = useOrganization();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const router = useRouter();
-    const announcement = currentOrganization?.settings?.announcement;
-    const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
+    const isMobile = useIsMobile();
     
-    const isGuest = currentUserRole === ROLE_GUEST;
-    const features = currentOrganization?.settings?.features;
-    const showGamification = features?.gamification !== false;
-    const showGoals = features?.goals !== false;
-    const showIdeas = features?.ideas !== false;
-    const showMentorship = features?.mentorship !== false;
+    const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
+    const announcement = currentOrganization?.settings?.announcement;
 
     useEffect(() => {
-        if (!user || !updateUserPresence || orgLoading) return;
+        if (!updateUserPresence) return;
 
         let currentPage = '';
-
         if (viewedTask) {
             currentPage = `Bewerkt taak: "${viewedTask.title}"`;
         } else if (pathname.startsWith('/dashboard/focus/')) {
@@ -148,57 +109,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
         const presenceUpdate: Partial<UserStatus> = { currentPage };
         updateUserPresence(presenceUpdate);
 
-    }, [pathname, viewedTask, user, updateUserPresence, tasks, orgLoading]);
+    }, [pathname, viewedTask, updateUserPresence, tasks]);
 
-    const mainNavItems = [
-        { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        ...(!isGuest ? [{ href: '/dashboard/chat', icon: MessageSquare, label: 'Chat' }] : []),
-        ...(!isGuest ? [{ href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' }] : []),
-        ...(!isGuest ? [{ href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' }] : []),
-    ];
-    
-    const planningNavItems = isGuest ? [] : [
-        ...(showGoals ? [{ href: '/dashboard/goals', icon: Trophy, label: 'Doelen' }] : []),
-        ...(showIdeas ? [{ href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' }] : []),
-        { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
-        { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
-        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS) ? [{ href: '/dashboard/automations', icon: Zap, label: 'Automatiseringen' }] : []),
-        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_TEMPLATES) ? [{ href: '/dashboard/templates', icon: SquareStack, label: 'Templates' }] : []),
-        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_CHECKLISTS) ? [{ href: '/dashboard/checklists', icon: ClipboardList, label: 'Checklists' }] : []),
-    ];
-    
-    const communityNavItems = isGuest ? [] : [
-        { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden', 'data-tour-id': 'organization-link' },
-        { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
-        { href: '/dashboard/team-health', icon: ShieldAlert, label: 'Team Welzijn'},
-        ...(showGamification ? [
-            { href: '/dashboard/leaderboard', icon: Award, label: 'Prestaties' },
-            ...(showMentorship ? [{ href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' }] : []),
-            { href: '/dashboard/shop', icon: Store, label: 'Winkel' },
-        ] : []),
-    ];
-
-    const aiToolsNavItems = isGuest ? [] : [
-        { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
-        { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
-        { href: '/dashboard/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
-        { href: '/dashboard/predictive-analysis', icon: BrainCircuit, label: 'AI Voorspellende Analyse' },
-    ];
-    
-    const adminNavItems = isGuest ? [] : [
-        ...(currentUserPermissions.includes(PERMISSIONS.VIEW_ORGANIZATION_SETTINGS) ? [{ href: '/dashboard/settings', icon: Settings, label: 'Instellingen', 'data-tour-id': 'settings-link' }] : []),
-        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS) ? [{ href: '/dashboard/settings/integrations', icon: Plug, label: 'Integraties' }] : []),
-        ...(currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) ? [{ href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }] : []),
-        { href: '/dashboard/trash', icon: Trash2, label: 'Prullenbak' },
-    ];
-
-    const pinnedProjects = useMemo(() => projects.filter(p => p.pinned), [projects]);
-    const pinnedTasks = useMemo(() => tasks.filter(t => t.pinned), [tasks]);
-    
-    const handleProjectClick = (projectId: string) => {
-      setFilters({ projectId });
-      router.push('/dashboard');
-    };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -228,131 +140,32 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
 
     return (
-        <SidebarProvider>
-            <BrandingStyle />
-            <UserCosmeticStyle />
-            <Sidebar collapsible="icon">
-                <SidebarHeader className="p-4 border-b border-sidebar-border">
-                    <Link href="/dashboard">
-                        <h1 className="text-2xl font-bold text-sidebar-primary group-data-[state=collapsed]:hidden">{currentOrganization?.name || 'Chorey'}</h1>
-                    </Link>
-                </SidebarHeader>
-                <SidebarContent className="p-4 flex flex-col">
-                    <CommandBar />
-                    <SidebarMenu className="mt-4">
-                        {mainNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                        ))}
+        <div className="flex flex-col h-screen">
+          <BrandingStyle />
+          <UserCosmeticStyle />
+          <AppSidebar />
+          <div className={cn("flex flex-col flex-1", isMobile ? "pb-16" : "")}>
+            <AppHeader />
+            <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
+              {announcement && <AnnouncementBanner announcement={announcement} />}
+              {children}
+              <LiveCursors />
+            </main>
+            <BulkActionBar />
+          </div>
+          <MobileBottomNav />
 
-                        {(pinnedProjects.length > 0 || pinnedTasks.length > 0) && (
-                            <>
-                                <SidebarSeparator className="my-2" />
-                                <SidebarGroupLabel className="flex items-center gap-2"><Pin className="h-4 w-4"/>Vastgezet</SidebarGroupLabel>
-                                {pinnedProjects.map((project) => (
-                                     <SidebarMenuItem key={`pin-proj-${project.id}`}>
-                                        <SidebarMenuButton tooltip={project.name} onClick={() => handleProjectClick(project.id)} aria-label={`Ga naar project ${project.name}`}>
-                                            <Briefcase />
-                                            <span>{project.name}</span>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                                {pinnedTasks.map((task) => (
-                                     <SidebarMenuItem key={`pin-task-${task.id}`}>
-                                        <SidebarMenuButton tooltip={task.title} onClick={() => setViewedTask(task)} aria-label={`Open taak ${task.title}`}>
-                                            <ClipboardList />
-                                            <span>{task.title}</span>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                            </>
-                        )}
-
-                        {planningNavItems.length > 0 && <SidebarSeparator className="my-2" />}
-                        {planningNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                        ))}
-                        
-                        {communityNavItems.length > 0 && <SidebarSeparator className="my-2" />}
-                        {communityNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} data-tour-id={item['data-tour-id'] as string} aria-label={item.label}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                        ))}
-
-                        {aiToolsNavItems.length > 0 && <SidebarSeparator className="my-2" />}
-                        {aiToolsNavItems.map((item) => (
-                            <SidebarMenuItem key={item.href}>
-                                <Link href={item.href} passHref>
-                                    <SidebarMenuButton tooltip={item.label} isActive={pathname === item.href} aria-label={item.label}>
-                                        <item.icon />
-                                        <span>{item.label}</span>
-                                    </SidebarMenuButton>
-                                </Link>
-                            </SidebarMenuItem>
-                        ))}
-
-                         {adminNavItems.length > 0 && (
-                            <>
-                                <SidebarSeparator className="my-2" />
-                                {adminNavItems.map((item) => (
-                                    <SidebarMenuItem key={item.href}>
-                                        <Link href={item.href} passHref>
-                                            <SidebarMenuButton tooltip={item.label} isActive={pathname.startsWith(item.href)} data-tour-id={item['data-tour-id'] as string} aria-label={item.label}>
-                                                <item.icon />
-                                                <span>{item.label}</span>
-                                            </SidebarMenuButton>
-                                        </Link>
-                                    </SidebarMenuItem>
-                                ))}
-                            </>
-                        )}
-                    </SidebarMenu>
-                </SidebarContent>
-                <SidebarFooter className="mt-auto border-t border-sidebar-border p-2">
-                    <SidebarToggle />
-                </SidebarFooter>
-            </Sidebar>
-
-            <SidebarInset className="flex flex-col">
-                <AppHeader />
-                <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative">
-                    {announcement && <AnnouncementBanner announcement={announcement} />}
-                    {children}
-                    <LiveCursors />
-                </main>
-                <BulkActionBar />
-            </SidebarInset>
-            
-            <AddTaskDialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
-            {viewedTask && (
-                <EditTaskDialog
-                  isOpen={!!viewedTask}
-                  setIsOpen={(isOpen) => { if (!isOpen) setViewedTask(null); }}
-                  task={viewedTask}
-                />
-            )}
-            <ShortcutHelpDialog open={isShortcutHelpOpen} onOpenChange={setIsShortcutHelpOpen} />
-            <AudioHuddle />
-        </SidebarProvider>
+          <AddTaskDialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
+          {viewedTask && (
+            <EditTaskDialog
+              isOpen={!!viewedTask}
+              setIsOpen={(isOpen) => { if (!isOpen) setViewedTask(null); }}
+              task={viewedTask}
+            />
+          )}
+          <ShortcutHelpDialog open={isShortcutHelpOpen} onOpenChange={setIsShortcutHelpOpen} />
+          <AudioHuddle />
+        </div>
     );
 }
 
