@@ -29,17 +29,20 @@ import { cn } from '@/lib/utils';
 import { InviteGuestDialog } from './invite-guest-dialog';
 import { PermissionProtectedButton } from '@/components/ui/permission-protected-button';
 import { ManageProjectAccessDialog } from './manage-project-access-dialog';
+import { ShareProjectDialog } from './ShareProjectDialog';
 
 
 export function ProjectCard({ project, usersInOrg, allTeams, allTasks }: { project: Project, usersInOrg: User[], allTeams: Team[], allTasks: Task[] }) {
     const { toast } = useToast();
-    const { user, currentUserPermissions } = useAuth();
+    const { user, currentOrganization, currentUserPermissions } = useAuth();
     const [isCompleting, setIsCompleting] = useState(false);
     const [isGuestInviteOpen, setIsGuestInviteOpen] = useState(false);
     const [isAccessDialogOpen, setIsAccessDialogOpen] = useState(false);
     const [isPinning, setIsPinning] = useState(false);
+    const [isShareOpen, setIsShareOpen] = useState(false);
     
     const canInviteGuests = currentUserPermissions.includes(PERMISSIONS.MANAGE_MEMBERS);
+    const canSharePublicly = currentOrganization?.settings?.features?.publicSharing !== false;
 
     const assignedTeams = useMemo(() => {
         return (project.teamIds || []).map(id => allTeams.find(t => t.id === id)).filter(Boolean) as Team[];
@@ -58,15 +61,6 @@ export function ProjectCard({ project, usersInOrg, allTeams, allTasks }: { proje
             budgetProgress: (total / project.budget) * 100
         };
     }, [allTasks, project]);
-    
-    const handleShare = () => {
-        const link = `${window.location.origin}/public/project/${project.id}`;
-        navigator.clipboard.writeText(link);
-        toast({
-            title: 'Link Gekopieerd!',
-            description: 'De openbare link naar dit projectbord is gekopieerd.',
-        });
-    }
 
     const handleCompleteProject = async () => {
         if (!user) return;
@@ -116,6 +110,15 @@ export function ProjectCard({ project, usersInOrg, allTeams, allTasks }: { proje
                         )}
                     </CardTitle>
                     <div className="flex items-center gap-2">
+                        <PermissionProtectedButton
+                            requiredPermission={PERMISSIONS.MANAGE_PROJECTS}
+                            variant="ghost" size="icon" className="h-8 w-8"
+                            onClick={() => setIsShareOpen(true)}
+                            manualDisableCondition={!canSharePublicly}
+                            manualDisableTooltip="Publiek delen is uitgeschakeld in de organisatie-instellingen."
+                        >
+                            <Share2 className="h-4 w-4 text-blue-500"/>
+                        </PermissionProtectedButton>
                         <PermissionProtectedButton
                             requiredPermission={PERMISSIONS.MANAGE_PROJECT_ROLES}
                             variant="ghost" size="icon" className="h-8 w-8"
@@ -212,10 +215,10 @@ export function ProjectCard({ project, usersInOrg, allTeams, allTasks }: { proje
                     ) : (
                         <p className="text-sm text-muted-foreground">Geen teams toegewezen.</p>
                     )}
-                    {project.isPublic && <Button variant="outline" size="sm" onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Deel Link</Button>}
                 </div>
             </CardContent>
         </Card>
+        <ShareProjectDialog open={isShareOpen} onOpenChange={setIsShareOpen} project={project} />
         <InviteGuestDialog open={isGuestInviteOpen} onOpenChange={setIsGuestInviteOpen} projectId={project.id} projectName={project.name} />
         <ManageProjectAccessDialog open={isAccessDialogOpen} onOpenChange={setIsAccessDialogOpen} project={project} />
         </>

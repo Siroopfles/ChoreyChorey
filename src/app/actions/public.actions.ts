@@ -1,11 +1,12 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
-import type { Task, User, Project, Organization } from '@/lib/types';
+import type { Task, User, Project, Organization, StatusDefinition } from '@/lib/types';
 
-export async function getPublicProjectData(projectId: string): Promise<{ data: { project: Project, tasks: Task[], users: Pick<User, 'id' | 'name' | 'avatar'>[] } | null; error: string | null; }> {
+export async function getPublicProjectData(projectId: string): Promise<{ data: { project: Project, tasks: Task[], users: Pick<User, 'id' | 'name' | 'avatar'>[], statuses: StatusDefinition[] } | null; error: string | null; }> {
     try {
         const projectRef = doc(db, 'projects', projectId);
         const projectDoc = await getDoc(projectRef);
@@ -21,6 +22,9 @@ export async function getPublicProjectData(projectId: string): Promise<{ data: {
         if (!orgDoc.exists() || orgDoc.data().settings?.features?.publicSharing === false) {
             return { data: null, error: 'Publiek delen is uitgeschakeld voor deze organisatie.' };
         }
+        
+        const orgData = orgDoc.data() as Organization;
+        const statuses = orgData.settings?.customization?.statuses || [];
 
         if (!project.isPublic) {
             return { data: null, error: 'Dit project is niet openbaar.' };
@@ -43,6 +47,7 @@ export async function getPublicProjectData(projectId: string): Promise<{ data: {
         const userIds = new Set<string>();
         tasks.forEach(task => {
             task.assigneeIds.forEach(id => userIds.add(id));
+            if (task.creatorId) userIds.add(task.creatorId);
         });
 
         const users: Pick<User, 'id' | 'name' | 'avatar'>[] = [];
@@ -59,7 +64,7 @@ export async function getPublicProjectData(projectId: string): Promise<{ data: {
             });
         }
         
-        return { data: { project, tasks, users }, error: null };
+        return { data: { project, tasks, users, statuses }, error: null };
 
     } catch (e: any) {
         console.error("Error fetching public project data:", e);

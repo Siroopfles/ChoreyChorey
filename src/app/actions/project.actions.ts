@@ -106,3 +106,23 @@ export async function updateProjectRole(projectId: string, organizationId: strin
         return { data: null, error: error.message };
     }
 }
+
+
+export async function setProjectPublicStatus(
+  projectId: string, 
+  organizationId: string, 
+  userId: string, 
+  isPublic: boolean
+): Promise<{ data: { success: boolean } | null; error: string | null; }> {
+    if (!await hasPermission(userId, organizationId, PERMISSIONS.MANAGE_PROJECTS)) {
+        return { data: null, error: "U heeft geen permissie om de publieke status van dit project te wijzigen." };
+    }
+    try {
+        const projectRef = doc(db, 'projects', projectId);
+        await updateDoc(projectRef, { isPublic });
+        return { data: { success: true }, error: null };
+    } catch (error: any) {
+        console.error("Error setting project public status:", error);
+        return { data: null, error: error.message };
+    }
+}
