@@ -80,7 +80,9 @@ const processTaskDoc = (doc: any, projects: Project[], canViewSensitive: boolean
         createdAt: (data.createdAt as Timestamp)?.toDate(),
         dueDate: (data.dueDate as Timestamp)?.toDate(),
         completedAt: (data.completedAt as Timestamp)?.toDate(),
-        activeTimerStartedAt: (data.activeTimerStartedAt as Timestamp)?.toDate(),
+        activeTimerStartedAt: data.activeTimerStartedAt ? Object.fromEntries(
+          Object.entries(data.activeTimerStartedAt).map(([key, value]) => [key, (value as Timestamp).toDate()])
+        ) : null,
         history: (data.history || []).map((h: any) => ({ ...h, timestamp: (h.timestamp as Timestamp)?.toDate() })),
         comments: (data.comments || []).map((c: any) => ({ ...c, createdAt: (c.createdAt as Timestamp)?.toDate(), readBy: c.readBy || [] })),
         typing: data.typing ? Object.fromEntries(
@@ -313,21 +315,32 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const taskToUpdate = originalTasks.find(t => t.id === taskId);
     if (!taskToUpdate) return;
     
-    const isStarting = !taskToUpdate.activeTimerStartedAt;
-    let newTimeLogged = taskToUpdate.timeLogged || 0;
-    
-    if (!isStarting) {
-        const startTime = (taskToUpdate.activeTimerStartedAt as Date).getTime();
+    const activeTimers = taskToUpdate.activeTimerStartedAt || {};
+    const myTimerIsRunning = !!activeTimers[user.id];
+    let optimisticUpdate: Partial<Task>;
+
+    if (myTimerIsRunning) {
+        // Stopping my timer
+        const startTime = (activeTimers[user.id] as Date).getTime();
         const now = new Date().getTime();
         const elapsed = Math.floor((now - startTime) / 1000);
-        newTimeLogged += elapsed;
+        const newTimeLogged = (taskToUpdate.timeLogged || 0) + elapsed;
+        
+        const newActiveTimers = { ...activeTimers };
+        delete newActiveTimers[user.id];
+        
+        optimisticUpdate = {
+            timeLogged: newTimeLogged,
+            activeTimerStartedAt: Object.keys(newActiveTimers).length > 0 ? newActiveTimers : null,
+        };
+    } else {
+        // Starting my timer
+        const newActiveTimers = { ...activeTimers, [user.id]: new Date() };
+        optimisticUpdate = {
+            activeTimerStartedAt: newActiveTimers,
+        };
     }
-    
-    const optimisticUpdate = {
-        activeTimerStartedAt: isStarting ? new Date() : null,
-        timeLogged: isStarting ? (taskToUpdate.timeLogged || 0) : newTimeLogged,
-    };
-    
+
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...optimisticUpdate } : t));
 
     const { error } = await TaskActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);

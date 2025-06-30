@@ -647,7 +647,7 @@ export type Task = {
   imageUrl?: string | null;
   thanked?: boolean;
   timeLogged?: number; // in seconds
-  activeTimerStartedAt?: Date | null;
+  activeTimerStartedAt?: Record<string, Date> | null;
   rating?: number | null;
   reviewerId?: string | null;
   consultedUserIds?: string[];

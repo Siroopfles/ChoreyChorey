@@ -42,6 +42,8 @@ import { GitLabIcon, JiraIcon, BitbucketIcon } from './provider-icons';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/organization-context';
+import { formatTime } from '@/lib/utils';
+
 
 type TaskCardFooterProps = {
     task: Task;
@@ -100,15 +102,6 @@ export function TaskCardFooter({
 
     const PriorityIcon = priorityConfig ? Icons[priorityConfig.icon as keyof typeof Icons] || Equal : Equal;
     const priorityColorStyle = priorityConfig ? { color: `hsl(${priorityConfig.color})` } : {};
-
-    const formatTime = (seconds: number) => {
-        if (seconds < 60) return `${seconds}s`;
-        const minutes = Math.floor(seconds / 60);
-        if (minutes < 60) return `${minutes}m`;
-        const hours = Math.floor(minutes / 60);
-        const remainingMinutes = minutes % 60;
-        return `${hours}u ${remainingMinutes}m`;
-    };
 
     const onTextToSpeech = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -257,8 +250,8 @@ export function TaskCardFooter({
                 )}
                 
                 {/* Time & Points */}
-                {showTimeTracking && (totalTimeLogged > 0 || task.activeTimerStartedAt) && (
-                    <div className={cn("flex items-center gap-1", task.activeTimerStartedAt && "text-primary animate-pulse font-semibold")}>
+                {showTimeTracking && (totalTimeLogged > 0 || (task.activeTimerStartedAt && Object.keys(task.activeTimerStartedAt).length > 0)) && (
+                    <div className={cn("flex items-center gap-1", task.activeTimerStartedAt && Object.keys(task.activeTimerStartedAt).length > 0 && "text-primary animate-pulse font-semibold")}>
                         <Timer className="h-3 w-3" />
                         <span>{formatTime(totalTimeLogged)}</span>
                     </div>

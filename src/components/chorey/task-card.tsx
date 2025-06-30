@@ -1,4 +1,5 @@
 
+
 'use client';
 import { PERMISSIONS, type Task, type User, type Project, type Subtask, type Comment, type StatusDefinition } from '@/lib/types';
 import { useMemo, useState, useEffect } from 'react';
@@ -40,7 +41,8 @@ import {
   BellOff,
   ClipboardCopy,
   CornerUpRight,
-  Pin
+  Pin,
+  Timer
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -127,16 +129,23 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
-    if (task.activeTimerStartedAt) {
+    const activeTimers = task.activeTimerStartedAt;
+
+    if (activeTimers && Object.keys(activeTimers).length > 0) {
         const updateLiveTime = () => {
-            const elapsed = Math.floor((new Date().getTime() - (task.activeTimerStartedAt as Date).getTime()) / 1000);
-            setLiveTime(elapsed);
+            const now = new Date().getTime();
+            const totalElapsed = Object.values(activeTimers).reduce((sum, startTime) => {
+                const elapsed = Math.floor((now - (startTime as Date).getTime()) / 1000);
+                return sum + elapsed;
+            }, 0);
+            setLiveTime(totalElapsed);
         };
         updateLiveTime();
         interval = setInterval(updateLiveTime, 1000);
     } else {
         setLiveTime(0);
     }
+
     return () => clearInterval(interval);
   }, [task.activeTimerStartedAt]);
 
@@ -145,6 +154,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
   const canRate = showGamification && currentUser && task.status === 'Voltooid' && task.creatorId === currentUser.id && !task.assigneeIds.includes(currentUser.id) && !task.rating;
   const canManageChoreOfWeek = currentUserRole === 'Owner' || currentUserRole === 'Admin';
   const canPin = currentUserPermissions.includes(PERMISSIONS.PIN_ITEMS);
+  const showTimeTracking = currentOrganization?.settings?.features?.timeTracking !== false;
 
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -250,6 +260,10 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                         <Crosshair className="mr-2 h-4 w-4" />
                         Focus
                       </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)} disabled={!showTimeTracking}>
+                        {currentUser && task.activeTimerStartedAt?.[currentUser.id] ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
+                        <span>{currentUser && task.activeTimerStartedAt?.[currentUser.id] ? 'Stop mijn timer' : 'Start mijn timer'}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => updateTask(task.id, { helpNeeded: !task.helpNeeded })}>
                         <HandHeart className="mr-2 h-4 w-4" />

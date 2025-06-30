@@ -5,7 +5,7 @@
 import { db } from '@/lib/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc, increment, runTransaction, Timestamp, deleteField } from 'firebase/firestore';
 import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Poll } from '@/lib/types';
-import { calculatePoints, addHistoryEntry } from '@/lib/utils';
+import { calculatePoints, addHistoryEntry, formatTime } from '@/lib/utils';
 import { grantAchievements, checkAndGrantTeamAchievements } from './gamification.actions';
 import { createNotification } from './notification.actions';
 import { triggerWebhooks } from '@/lib/webhook-service';
@@ -587,20 +587,22 @@ export async function toggleTaskTimerAction(taskId: string, userId: string, orga
         if (!taskDoc.exists()) throw new Error("Taak niet gevonden");
         const task = taskDoc.data() as Task;
         
-        const { addHours } = await import('date-fns');
+        const activeTimers = (task.activeTimerStartedAt || {}) as Record<string, Timestamp>;
+        const myTimerIsRunning = !!activeTimers[userId];
 
-        if (task.activeTimerStartedAt) {
-            const startTime = (task.activeTimerStartedAt as any).toDate();
+        if (myTimerIsRunning) {
+            // Stop timer
+            const startTime = activeTimers[userId].toDate();
             const now = new Date();
             const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
             const newTimeLogged = (task.timeLogged || 0) + elapsed;
             
             await updateDoc(taskRef, {
                 timeLogged: newTimeLogged,
-                activeTimerStartedAt: null,
-                history: arrayUnion(addHistoryEntry(userId, 'Tijdregistratie gestopt', `Totaal gelogd: ${newTimeLogged}s`))
+                [`activeTimerStartedAt.${userId}`]: deleteField(),
+                history: arrayUnion(addHistoryEntry(userId, 'Tijdregistratie gestopt', `Totaal gelogd: ${formatTime(newTimeLogged)}`))
             });
-            await triggerWebhooks(organizationId, 'task.updated', {...task, timeLogged: newTimeLogged, activeTimerStartedAt: null, id: taskId});
+            await triggerWebhooks(organizationId, 'task.updated', {...task, timeLogged: newTimeLogged, activeTimerStartedAt: activeTimers, id: taskId});
             
             const userDoc = await getDoc(doc(db, 'users', userId));
             const user = userDoc.data() as User;
@@ -624,11 +626,12 @@ export async function toggleTaskTimerAction(taskId: string, userId: string, orga
             }
 
         } else {
+            // Start timer
             await updateDoc(taskRef, {
-                activeTimerStartedAt: new Date(),
+                [`activeTimerStartedAt.${userId}`]: new Date(),
                 history: arrayUnion(addHistoryEntry(userId, 'Tijdregistratie gestart'))
             });
-            await triggerWebhooks(organizationId, 'task.updated', {...task, activeTimerStartedAt: new Date(), id: taskId});
+            await triggerWebhooks(organizationId, 'task.updated', {...task, activeTimerStartedAt: { ...activeTimers, [userId]: new Date() }, id: taskId});
         }
         return { data: { success: true }, error: null };
     } catch (e: any) {
