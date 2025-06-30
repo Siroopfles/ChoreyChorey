@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -16,6 +15,7 @@ import TogglSettings from '@/components/chorey/settings/toggl-settings';
 import ClockifySettings from '@/components/chorey/settings/clockify-settings';
 import NotificationSoundSettings from '@/components/chorey/settings/notification-sound-settings';
 import TourSettings from '@/components/chorey/settings/tour-settings';
+import NotificationSettings from '@/components/chorey/settings/notification-settings';
 
 export default function ProfileSettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -42,6 +42,7 @@ export default function ProfileSettingsPage() {
       
       <ProfileSettings user={user} />
       <TwoFactorAuthSettings user={user} />
+      <NotificationSettings />
       <NotificationSoundSettings user={user} />
       <AnimationSettings />
       <TourSettings />

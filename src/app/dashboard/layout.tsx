@@ -29,6 +29,7 @@ import MobileBottomNav from '@/components/chorey/mobile-bottom-nav';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { BulkActionBar } from '@/components/chorey/bulk-action-bar';
+import { FCMProvider } from '@/contexts/fcm-context';
 
 
 const BrandingStyle = () => {
@@ -250,15 +251,17 @@ export default function DashboardLayout({
             <IdeaProvider>
               <GoalProvider>
                 <ChecklistProvider>
-                  <CallProvider>
-                    <PresenceProvider>
-                        <AuthGuard>
-                        <TourProvider>
-                            {children}
-                        </TourProvider>
-                        </AuthGuard>
-                    </PresenceProvider>
-                  </CallProvider>
+                  <FCMProvider>
+                    <CallProvider>
+                      <PresenceProvider>
+                          <AuthGuard>
+                          <TourProvider>
+                              {children}
+                          </TourProvider>
+                          </AuthGuard>
+                      </PresenceProvider>
+                    </CallProvider>
+                  </FCMProvider>
                 </ChecklistProvider>
               </GoalProvider>
             </IdeaProvider>

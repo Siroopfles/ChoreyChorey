@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, runTransaction, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, runTransaction, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { GlobalUserProfile, Organization, OrganizationMember } from '@/lib/types';
 import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
 
@@ -98,5 +98,22 @@ export async function endorseSkill(
   } catch (e: any) {
     console.error("Error endorsing skill:", e);
     return { success: false, error: e.message };
+  }
+}
+
+export async function manageFcmToken(
+  userId: string,
+  token: string,
+  action: 'add' | 'remove'
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      fcmTokens: action === 'add' ? arrayUnion(token) : arrayRemove(token),
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error managing FCM token:", error);
+    return { success: false, error: error.message };
   }
 }

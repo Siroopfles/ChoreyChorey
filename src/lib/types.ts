@@ -445,6 +445,7 @@ export type GlobalUserProfile = {
   location?: string;
   notificationSounds?: Record<string, string>;
   showTour?: boolean;
+  fcmTokens?: string[];
 }
 
 export type User = GlobalUserProfile & OrganizationMember & {

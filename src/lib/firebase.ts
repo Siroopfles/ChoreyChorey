@@ -3,6 +3,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { getMessaging } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,6 +19,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
+const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 const googleProvider = new GoogleAuthProvider();
 const microsoftProvider = new OAuthProvider('microsoft.com');
 
@@ -36,4 +38,4 @@ try {
     console.error("Error enabling Firestore offline persistence", error);
 }
 
-export { db, auth, storage, googleProvider, microsoftProvider };
+export { db, auth, storage, messaging, googleProvider, microsoftProvider };

@@ -9,6 +9,79 @@ import { sendSlackMessage } from '@/lib/slack-service';
 import { sendTeamsMessage } from '@/lib/teams-service';
 import { sendDiscordMessage } from '@/lib/discord-service';
 
+// --- SERVER-SIDE PUSH NOTIFICATION LOGIC (Example for Cloud Function) ---
+/*
+To fully implement Web Push Notifications, you need server-side logic to send messages via FCM.
+This typically lives in a Cloud Function that triggers when a new document is created in the 'notifications' collection.
+This is beyond the scope of what I can implement directly, but here is an example of what that function would look like.
+You would need to set up Firebase Functions in your project and deploy this code.
+
+1. **Install Firebase Admin SDK:** `npm install firebase-admin` in your functions directory.
+2. **Initialize Admin App:**
+   ```typescript
+   import * as admin from 'firebase-admin';
+   admin.initializeApp();
+   ```
+3. **Create the Cloud Function:**
+   ```typescript
+   import * as functions from 'firebase-functions';
+   import * as admin from 'firebase-admin';
+
+   export const sendPushNotification = functions.firestore
+     .document('notifications/{notificationId}')
+     .onCreate(async (snap, context) => {
+       const notification = snap.data();
+       if (!notification) {
+         console.log('No data associated with the event');
+         return;
+       }
+
+       const userId = notification.userId;
+       const userDoc = await admin.firestore().collection('users').doc(userId).get();
+       const userData = userDoc.data();
+       
+       if (!userData || !userData.fcmTokens || userData.fcmTokens.length === 0) {
+         console.log('User has no FCM tokens.');
+         return;
+       }
+
+       const payload = {
+         notification: {
+           title: 'Nieuwe Chorey Melding',
+           body: notification.message,
+           icon: '/icon-192x192.png',
+           click_action: notification.taskId ? `/dashboard` : '/dashboard/inbox', // Simple navigation
+         },
+       };
+       
+       // Send to all tokens for the user
+       const tokens = userData.fcmTokens;
+       const response = await admin.messaging().sendToDevice(tokens, payload);
+
+       // Clean up invalid tokens
+       const tokensToRemove: Promise<any>[] = [];
+       response.results.forEach((result, index) => {
+         const error = result.error;
+         if (error) {
+           console.error('Failure sending notification to', tokens[index], error);
+           if (error.code === 'messaging/invalid-registration-token' ||
+               error.code === 'messaging/registration-token-not-registered') {
+             tokensToRemove.push(
+                admin.firestore().collection('users').doc(userId).update({
+                    fcmTokens: admin.firestore.FieldValue.arrayRemove(tokens[index])
+                })
+             );
+           }
+         }
+       });
+
+       return Promise.all(tokensToRemove);
+     });
+   ```
+*/
+// --- END OF EXAMPLE ---
+
+
 const priorityOrder: Record<Priority, number> = {
     'Laag': 0,
     'Midden': 1,
