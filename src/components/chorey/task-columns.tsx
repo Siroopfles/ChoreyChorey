@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { FileUp, Loader2, XCircle } from 'lucide-react';
 import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
-import { useInView } from 'react-intersection-observer';
 import { useOrganization } from '@/contexts/organization-context';
 import { cn } from '@/lib/utils';
 
@@ -161,7 +160,7 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
-  const { tasks, updateTask, reorderTasks, addTask, loadMoreTasks, hasMoreTasks, isMoreLoading } = useTasks();
+  const { tasks, updateTask, reorderTasks, addTask } = useTasks();
   const { users, projects } = useOrganization();
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
@@ -173,18 +172,7 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
     })
   );
   const [isDragOver, setIsDragOver] = useState(false);
-  const { ref, inView } = useInView({
-    threshold: 0,
-    rootMargin: '400px',
-  });
-
-  useEffect(() => {
-    if (inView && !isMoreLoading) {
-      loadMoreTasks();
-    }
-  }, [inView, isMoreLoading, loadMoreTasks]);
-
-
+  
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
@@ -319,11 +307,6 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
                     allTasks={tasks}
                   />
               ))}
-              {hasMoreTasks && (
-                <div ref={ref} className="flex w-[320px] shrink-0 items-center justify-center">
-                  {isMoreLoading && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
-                </div>
-              )}
           </div>
           <ScrollBar orientation="horizontal" />
           </ScrollArea>

@@ -40,9 +40,6 @@ type TaskContextType = {
   templates: TaskTemplate[];
   automations: Automation[];
   loading: boolean;
-  isMoreLoading: boolean;
-  hasMoreTasks: boolean;
-  loadMoreTasks: () => void;
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   rateTask: (taskId: string, rating: number) => Promise<void>;
@@ -103,9 +100,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isMoreLoading, setIsMoreLoading] = useState(false);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
-  const [hasMoreTasks, setHasMoreTasks] = useState(true);
   
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const [viewedTask, setViewedTask] = useState<Task | null>(null);
@@ -135,55 +129,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       ) : undefined,
     });
   };
-  
-  const fetchTasks = useCallback(async (initial = false) => {
-    if (!currentOrganization || !user) return;
-    if (!initial && (!hasMoreTasks || isMoreLoading)) return;
-
-    if (initial) setLoading(true); else setIsMoreLoading(true);
-
-    const isGuest = currentUserRole === ROLE_GUEST;
-    let tasksQuery;
-
-    const baseQueryConstraints = [where("organizationId", "==", currentOrganization.id), orderBy('__name__', 'desc')];
-    
-    if (isGuest) {
-      const guestAccess = currentOrganization.settings?.guestAccess?.[user.id];
-      const projectIds = guestAccess?.projectIds || [];
-      if (projectIds.length > 0) {
-        baseQueryConstraints.push(where("projectId", "in", projectIds));
-      } else {
-        baseQueryConstraints.push(where('id', '==', 'guest-has-no-access'));
-      }
-    }
-    
-    const paginatedQueryConstraints = [...baseQueryConstraints];
-    if (!initial && lastDoc) {
-      paginatedQueryConstraints.push(startAfter(lastDoc));
-    }
-    paginatedQueryConstraints.push(limit(50));
-
-    tasksQuery = query(collection(db, 'tasks'), ...paginatedQueryConstraints);
-    
-    try {
-      const snapshot = await getDocs(tasksQuery);
-      const newLastDoc = snapshot.docs[snapshot.docs.length - 1];
-      setLastDoc(newLastDoc || null);
-      setHasMoreTasks(snapshot.docs.length === 50);
-
-      const canViewSensitive = currentUserPermissions.includes(PERMISSIONS.VIEW_SENSITIVE_DATA);
-      const tasksData = snapshot.docs
-        .map(doc => processTaskDoc(doc, projects, canViewSensitive, user))
-        .filter(task => !task.isPrivate || task.assigneeIds.includes(user.id) || task.creatorId === user.id);
-        
-      setTasks(prev => initial ? tasksData : [...prev, ...tasksData]);
-    } catch(e) {
-      handleError(e, 'laden van taken', () => fetchTasks(initial));
-    } finally {
-      if(initial) setLoading(false); else setIsMoreLoading(false);
-    }
-
-  }, [user, currentOrganization, currentUserRole, projects, currentUserPermissions, lastDoc, hasMoreTasks, isMoreLoading]);
 
   useEffect(() => {
     if (orgLoading) {
@@ -196,32 +141,52 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    fetchTasks(true);
+    setLoading(true);
+
+    const canViewSensitive = currentUserPermissions.includes(PERMISSIONS.VIEW_SENSITIVE_DATA);
+    const isGuest = currentUserRole === ROLE_GUEST;
+
+    const baseQueryConstraints = [where("organizationId", "==", currentOrganization.id)];
+    if (isGuest) {
+      const guestAccess = currentOrganization.settings?.guestAccess?.[user.id];
+      const projectIds = guestAccess?.projectIds || [];
+      if (projectIds.length > 0) {
+        baseQueryConstraints.push(where("projectId", "in", projectIds));
+      } else {
+        baseQueryConstraints.push(where('id', '==', 'guest-has-no-access'));
+      }
+    }
+    const tasksQuery = query(collection(db, 'tasks'), ...baseQueryConstraints);
+    
+    const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
+      const tasksData = snapshot.docs
+        .map(doc => processTaskDoc(doc, projects, canViewSensitive, user))
+        .filter(task => !task.isPrivate || task.assigneeIds.includes(user.id) || task.creatorId === user.id);
+      
+      setTasks(tasksData);
+      setLoading(false);
+    }, (e) => {
+      handleError(e, 'laden van taken');
+      setLoading(false);
+    });
 
     const commonQuery = (collectionName: string) => query(collection(db, collectionName), where("organizationId", "==", currentOrganization.id));
     const unsubTemplates = onSnapshot(commonQuery('taskTemplates'), (s) => setTemplates(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as TaskTemplate))), (e) => handleError(e, 'laden van templates'));
     const unsubAutomations = onSnapshot(commonQuery('automations'), (s) => setAutomations(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate() } as Automation))), (e) => handleError(e, 'laden van automatiseringen'));
     
-    return () => { unsubTemplates(); unsubAutomations(); };
-  }, [user, currentOrganization, orgLoading]);
-  
-  const loadMoreTasks = useCallback(() => {
-    fetchTasks(false);
-  }, [fetchTasks]);
+    return () => {
+      unsubscribeTasks();
+      unsubTemplates();
+      unsubAutomations();
+    };
+  }, [user, currentOrganization, orgLoading, projects, currentUserPermissions, currentUserRole]);
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }): Promise<boolean> => {
     if (!user || !currentOrganization) { handleError({ message: 'Selecteer een organisatie.' }, 'toevoegen taak'); return false; }
     const { data, error } = await TaskActions.createTaskAction(currentOrganization.id, user.id, user.name, taskData);
     if (error) { handleError(error, 'opslaan taak', () => addTask(taskData)); return false; }
     
-    if (data?.taskId) {
-      const newTaskDoc = await getDoc(doc(db, 'tasks', data.taskId));
-      if (newTaskDoc.exists()) {
-        const canViewSensitive = currentUserPermissions.includes(PERMISSIONS.VIEW_SENSITIVE_DATA);
-        const newTask = processTaskDoc(newTaskDoc, projects, canViewSensitive, user);
-        setTasks(prevTasks => [newTask, ...prevTasks]);
-      }
-    }
+    // No need to manually add task, onSnapshot will do it.
     return !!data?.success;
   };
 
@@ -235,7 +200,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         return;
     }
     
-    // Create a deep copy for the optimistic update to avoid mutation issues
     const newTasks = originalTasks.map(t => 
         t.id === taskId ? { ...t, ...updates } : t
     );
@@ -245,11 +209,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     
     if (error) {
         handleError(error, 'bijwerken taak', () => updateTask(taskId, updates));
-        // Revert on error
         setTasks(originalTasks);
-    } else if (data?.updatedTask) {
-        // Re-sync with the server's response to ensure consistency (e.g., for history entries)
-        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...data.updatedTask } : t));
     }
   };
 
@@ -299,7 +259,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const reorderTasks = async (tasksToUpdate: {id: string, order: number}[]) => {
     const originalTasks = [...tasks];
       
-    // Optimistically update the UI
     setTasks(prevTasks => {
       const tasksMap = new Map(prevTasks.map(t => [t.id, t]));
       tasksToUpdate.forEach(update => {
@@ -311,11 +270,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return Array.from(tasksMap.values());
     });
     
-    // Call server in the background
     const { data, error } = await TaskActions.reorderTasksAction(tasksToUpdate);
     if (error) {
       handleError(error, 'herordenen taken', () => reorderTasks(tasksToUpdate));
-      // Revert on error
       setTasks(originalTasks);
     }
   };
@@ -327,7 +284,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const taskToUpdate = originalTasks.find(t => t.id === taskId);
     if (!taskToUpdate) return;
     
-    // Update the UI immediately
     setTasks(prev => prev.map(t => {
         if (t.id === taskId) {
             const newSubtasks = t.subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st);
@@ -336,13 +292,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         return t;
     }));
 
-    // Call the server action in the background
     const { data, error } = await TaskActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id);
-
-    // If it fails, revert the change and show a toast
     if (error) {
       handleError(error, 'bijwerken subtaak', () => toggleSubtaskCompletion(taskId, subtaskId));
-      setTasks(originalTasks); // Revert to the old state
+      setTasks(originalTasks);
     }
   };
   
@@ -357,7 +310,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     let newTimeLogged = taskToUpdate.timeLogged || 0;
     
     if (!isStarting) {
-        // If stopping, calculate elapsed time optimistically
         const startTime = (taskToUpdate.activeTimerStartedAt as Date).getTime();
         const now = new Date().getTime();
         const elapsed = Math.floor((now - startTime) / 1000);
@@ -369,15 +321,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         timeLogged: isStarting ? (taskToUpdate.timeLogged || 0) : newTimeLogged,
     };
     
-    // Update UI immediately
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...optimisticUpdate } : t));
 
-    // Call server in the background
     const { error } = await TaskActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);
     
     if (error) {
         handleError(error, 'tijdregistratie', () => toggleTaskTimer(taskId));
-        setTasks(originalTasks); // Revert on error
+        setTasks(originalTasks);
     }
   };
 
@@ -491,7 +441,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   return (
     <TaskContext.Provider value={{ 
-      tasks, templates, automations, loading, isMoreLoading, hasMoreTasks, loadMoreTasks, addTask, updateTask, rateTask, toggleSubtaskCompletion,
+      tasks, templates, automations, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
       toggleTaskTimer, reorderTasks, resetSubtasks, thankForTask,
       addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask,
       bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
