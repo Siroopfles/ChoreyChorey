@@ -31,6 +31,8 @@ import { TaskHistory } from './task-history';
 import { addCommentAction } from '@/app/actions/comment.actions';
 import { useNotifications } from '@/contexts/notification-context';
 import { useCall } from '@/contexts/call-context';
+import { LiveDescriptionEditor } from './live-description-editor';
+import { Separator } from '../ui/separator';
 
 
 type EditTaskDialogProps = {
@@ -51,7 +53,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
   const isHuddleActive = task.callSession?.isActive;
   const isInThisHuddle = activeCall?.taskId === task.id;
 
-  const form = useForm<TaskFormValues>({
+  const form = useForm<Omit<TaskFormValues, 'description'>>({
     resolver: zodResolver(taskFormSchema),
   });
 
@@ -59,7 +61,6 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
     if (task && isOpen) {
       form.reset({
         title: task.title,
-        description: task.description,
         assigneeIds: task.assigneeIds || [],
         projectId: task.projectId || undefined,
         dueDate: task.dueDate,
@@ -84,7 +85,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
   }, [task, isOpen, form]);
 
 
-  function onSubmit(data: TaskFormValues) {
+  function onSubmit(data: Omit<TaskFormValues, 'description'>) {
     const updatedSubtasks = data.subtasks?.map((sub, index) => ({
         ...sub,
         id: task.subtasks[index]?.id || crypto.randomUUID(),
@@ -161,23 +162,25 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
           </div>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 flex-1 min-h-0">
-            <FormProvider {...form}>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col min-h-0">
-                    <ScrollArea className="flex-1 pr-4 -mr-4">
-                        <TaskFormFields users={users} projects={projects} task={task} />
-                    </ScrollArea>
-                    <div className="flex justify-end gap-2 pt-4 border-t mt-4">
-                        <DialogClose asChild>
-                            <Button type="button" variant="ghost">
-                                Annuleren
-                            </Button>
-                        </DialogClose>
-                        <Button type="submit">Wijzigingen Opslaan</Button>
-                    </div>
-                </form>
-              </Form>
-            </FormProvider>
+            <div className="flex flex-col min-h-0">
+              <ScrollArea className="flex-1 pr-4 -mr-4">
+                <LiveDescriptionEditor task={task} />
+                <Separator className="my-4" />
+                <FormProvider {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <TaskFormFields users={users} projects={projects} task={task} />
+                      <div className="flex justify-end gap-2 pt-4 border-t mt-4">
+                          <DialogClose asChild>
+                              <Button type="button" variant="ghost">
+                                  Annuleren
+                              </Button>
+                          </DialogClose>
+                          <Button type="submit">Wijzigingen Opslaan</Button>
+                      </div>
+                  </form>
+                </FormProvider>
+              </ScrollArea>
+            </div>
             <div className="flex flex-col min-h-0">
                 <Tabs defaultValue="comments" className="flex flex-col flex-1 min-h-0">
                     <TabsList className="grid w-full grid-cols-2">

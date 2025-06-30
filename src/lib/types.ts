@@ -718,7 +718,6 @@ export const subtaskSchema = z.object({
 
 export const taskFormSchema = z.object({
   title: z.string().min(3, 'Titel moet minimaal 3 karakters lang zijn.'),
-  description: z.string().optional(),
   assigneeIds: z.array(z.string()).optional(),
   projectId: z.string().optional(),
   teamId: z.string().optional(),

@@ -10,7 +10,6 @@ import { Loader2, Bot, X } from 'lucide-react';
 import { findDuplicateTask } from '@/ai/flows/find-duplicate-task-flow';
 import { suggestProactiveHelp } from '@/ai/flows/suggest-proactive-help-flow';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { RichTextEditor } from '../ui/rich-text-editor';
 import { useAuth } from '@/contexts/auth-context';
 import type { FindDuplicateTaskOutput } from '@/ai/schemas';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -128,24 +127,6 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
             </Alert>
           )}
       </div>
-
-      <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Omschrijving</FormLabel>
-            <FormControl>
-              <RichTextEditor
-                placeholder="Voeg een meer gedetailleerde omschrijving toe..."
-                value={field.value ?? ''}
-                onChange={field.onChange}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
 
       {proactiveHelp && (
         <Alert className="mt-4">
