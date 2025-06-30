@@ -8,4 +8,8 @@ export default defineConfig({
       // implement node event listeners here
     },
   },
+  env: {
+    TEST_USER_EMAIL: 'user@test.com',
+    TEST_USER_PASSWORD: 'password'
+  }
 });
