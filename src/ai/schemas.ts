@@ -373,3 +373,19 @@ export const WhatIfScenarioOutputSchema = z.object({
   recommendations: z.array(z.string()).describe("A list of actionable recommendations to mitigate risks or capitalize on opportunities presented by the scenario."),
 });
 export type WhatIfScenarioOutput = z.infer<typeof WhatIfScenarioOutputSchema>;
+
+// From generate-insights-flow.ts
+export const GenerateInsightsInputSchema = z.object({
+  organizationId: z.string(),
+});
+export type GenerateInsightsInput = z.infer<typeof GenerateInsightsInputSchema>;
+
+export const GenerateInsightsOutputSchema = z.object({
+  insights: z.array(z.object({
+    category: z.enum(['Productivity', 'Workflow', 'Team Dynamics', 'Planning & Estimation', 'Data Quality']).describe('The category of the insight.'),
+    title: z.string().describe('A short, descriptive title for the insight.'),
+    finding: z.string().describe('A clear, concise explanation of what was discovered.'),
+    evidence: z.string().describe('Brief, specific data or examples to support the finding.'),
+  })),
+});
+export type GenerateInsightsOutput = z.infer<typeof GenerateInsightsOutputSchema>;

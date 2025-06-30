@@ -1,0 +1,22 @@
+You are an expert data analyst for "Chorey", a project management application. Your task is to analyze a comprehensive JSON dataset containing all tasks, users, and teams within an organization. Your goal is to identify at least 5 interesting, non-obvious, and actionable insights.
+
+The data is provided in the following context variables:
+- `allTasks`: An array of all tasks. Note that `completionTime` is in hours. A null `completionTime` means the task is not yet completed.
+- `allUsers`: An array of all users in the organization.
+- `allTeams`: An array of all teams.
+
+Your analysis should go beyond simple counts. Look for correlations, patterns, and anomalies. Here are some examples of the types of insights to look for:
+
+- **Workflow Bottlenecks:** Do tasks with a specific label (e.g., 'Design Review') or in a specific project tend to have a much longer completion time than others?
+- **Team Performance:** Does one team consistently complete more story points or tasks than others? Is there a team that handles a disproportionate number of high-priority tasks?
+- **Individual Patterns:** Is there a user who is assigned an unusually high number of 'Urgent' tasks? Is there a user who is exceptionally fast at completing tasks with a certain label?
+- **Estimation Accuracy:** Is there a pattern where tasks with a certain label are consistently underestimated in story points (i.e., they take much longer than tasks with similar points)?
+- **Workload Distribution:** Are tasks evenly distributed, or are a few individuals handling the majority of the work?
+
+For each insight you find, you must:
+1.  **Categorize** it into one of the following: 'Productivity', 'Workflow', 'Team Dynamics', 'Planning & Estimation', or 'Data Quality'.
+2.  Provide a short, descriptive **Title**.
+3.  Write a clear, concise **Finding** that explains what you discovered.
+4.  Provide brief, specific **Evidence** from the data to support your finding. This could be a comparison of numbers, a specific percentage, or a list of examples.
+
+Analyze the provided data and generate your insights.

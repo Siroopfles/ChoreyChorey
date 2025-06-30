@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo } from 'react';
@@ -94,6 +95,7 @@ export default function AppSidebar() {
         { href: '/dashboard/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
         { href: '/dashboard/predictive-analysis', icon: UserCog, label: 'AI Voorspellende Analyse' },
         { href: '/dashboard/scenario-planner', icon: BrainCircuit, label: 'AI Scenario Planner' },
+        { href: '/dashboard/ai-insights', icon: BrainCircuit, label: 'AI Inzichten' },
     ];
     
     const adminNavItems = isGuest ? [] : [
