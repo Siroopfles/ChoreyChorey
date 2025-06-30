@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -18,6 +19,8 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useTheme } from 'next-themes';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
 
 const CAPACITY_THRESHOLD = 8;
 
@@ -93,6 +96,22 @@ export default function WorkloadPage() {
 
         return { chartData: data, allUserNames: Array.from(userNames) };
     }, [workloadData, users]);
+
+    const { heatmapDays, heatmapUsersData } = useMemo(() => {
+        if (!workloadData.length || !users.length) {
+            return { heatmapDays: [], heatmapUsersData: [] };
+        }
+
+        const days = workloadData.map(d => format(new Date(d.date), 'EEE d', { locale: nl }));
+        
+        const usersData = users.map(user => {
+            const workloads = workloadData.map(day => day.users[user.id]?.points || 0);
+            const unavailabilities = workloadData.map(day => day.unavailableUserIds.includes(user.id));
+            return { user, workloads, unavailabilities };
+        }).sort((a,b) => a.user.name.localeCompare(b.user.name));
+
+        return { heatmapDays: days, heatmapUsersData: usersData };
+    }, [workloadData, users]);
     
     const userColors = useMemo(() => {
         const colors: Record<string, string> = {};
@@ -102,6 +121,16 @@ export default function WorkloadPage() {
         });
         return colors;
     }, [allUserNames, resolvedTheme]);
+
+    const getHeatmapColor = (value: number, max: number) => {
+        if (value === 0) return 'bg-muted/30';
+        if (value > max) return 'bg-destructive/80 text-destructive-foreground';
+        const percentage = (value / max) * 100;
+        if (percentage < 40) return 'bg-green-500/40';
+        if (percentage < 80) return 'bg-yellow-500/50';
+        return 'bg-orange-500/70';
+    };
+
 
     const handleLeveling = async () => {
         if (!user || !currentOrganization || !selectedUserId || !date?.from || !date?.to) {
@@ -147,8 +176,8 @@ export default function WorkloadPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold flex items-center gap-2"><GitGraph /> Workload</h1>
-                <p className="text-muted-foreground">Visualiseer de werkdruk van het team en balanceer deze met behulp van AI.</p>
+                <h1 className="text-3xl font-bold flex items-center gap-2"><GitGraph /> Workload & Capaciteit</h1>
+                <p className="text-muted-foreground">Visualiseer de werkdruk van het team in een gestapeld diagram en een heatmap, en balanceer de planning met AI.</p>
             </div>
             
             <Card>
@@ -224,6 +253,43 @@ export default function WorkloadPage() {
                         </ResponsiveContainer>
                     )}
                  </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Workload Heatmap</CardTitle>
+                    <CardDescription>Overzicht van de werkdruk per gebruiker per dag. De kleurintensiteit geeft de hoeveelheid werk (in punten) aan.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[200px] sticky left-0 bg-card z-10">Gebruiker</TableHead>
+                                    {heatmapDays.map(day => <TableHead key={day} className="text-center">{day}</TableHead>)}
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {heatmapUsersData.map(({ user, workloads, unavailabilities }) => (
+                                    <TableRow key={user.id}>
+                                        <TableCell className="font-medium sticky left-0 bg-card z-10">{user.name}</TableCell>
+                                        {workloads.map((load, index) => (
+                                            <TableCell key={`${user.id}-${index}`} className="text-center p-1">
+                                                {unavailabilities[index] ? (
+                                                    <div className="h-10 w-full bg-muted flex items-center justify-center text-xs text-muted-foreground rounded">Afwezig</div>
+                                                ) : (
+                                                    <div className={cn("h-10 w-full flex items-center justify-center rounded font-semibold", getHeatmapColor(load, CAPACITY_THRESHOLD))}>
+                                                        {load > 0 && <span>{load}</span>}
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
             </Card>
 
             <Card>
