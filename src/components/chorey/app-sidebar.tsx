@@ -22,7 +22,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import CommandBar from '@/components/chorey/command-bar';
-import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart, BrainCircuit, BarChartHorizontal, CircleDollarSign } from 'lucide-react';
+import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart, BrainCircuit, BarChartHorizontal, CircleDollarSign, HeartPulse } from 'lucide-react';
 import { ROLE_GUEST, PERMISSIONS } from '@/lib/types';
 
 
@@ -94,7 +94,7 @@ export default function AppSidebar() {
         { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
         { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
         { href: '/dashboard/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
-        { href: '/dashboard/predictive-analysis', icon: UserCog, label: 'AI Voorspellende Analyse' },
+        { href: '/dashboard/predictive-analysis', icon: HeartPulse, label: 'Projectgezondheid (AI)' },
         { href: '/dashboard/scenario-planner', icon: BrainCircuit, label: 'AI Scenario Planner' },
         { href: '/dashboard/ai-insights', icon: BrainCircuit, label: 'AI Inzichten' },
     ];
