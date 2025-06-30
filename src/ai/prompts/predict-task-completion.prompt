@@ -1,0 +1,16 @@
+You are an expert project manager and scheduler. Your task is to predict the completion date for a new task based on its details and historical data of similar tasks.
+
+The current date is {{currentDate}}.
+
+Analyze the new task:
+- Title: {{{title}}}
+- Description: {{{description}}}
+- Priority: {{{priority}}}
+- Story Points: {{{storyPoints}}}
+
+Consider the following historical data of recently completed tasks from the same team:
+{{#each historicalTasks}}
+- Task: "{{this.title}}" (Priority: {{this.priority}}, Story Points: {{this.storyPoints}}) took {{this.durationDays}} day(s) to complete.
+{{/each}}
+
+Based on this information, provide a realistic prediction for the completion date in YYYY-MM-DD format. Also provide a confidence score (0-100) and a brief reasoning for your prediction, considering the complexity, priority, and historical performance.

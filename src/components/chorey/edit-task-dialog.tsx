@@ -17,7 +17,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
-import { MessageSquare, History, ClipboardCopy, Phone, PhoneOff, PenSquare, QrCode } from 'lucide-react';
+import { MessageSquare, History, ClipboardCopy, Phone, PhoneOff, PenSquare, QrCode, BrainCircuit, Bot, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTasks } from '@/contexts/task-context';
 import { useOrganization } from '@/contexts/organization-context';
@@ -39,6 +39,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TaskQrCodeDialog } from './TaskQrCodeDialog';
 import Link from 'next/link';
+import { predictTaskCompletion } from '@/ai/flows/predict-task-completion-flow';
+import type { PredictTaskCompletionOutput } from '@/ai/schemas';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { format } from 'date-fns';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader as CardHeaderUI } from '@/components/ui/card';
 
 
 const LiveViewers = ({ taskId }: { taskId: string }) => {
@@ -101,6 +106,8 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
   const { startOrJoinCall, leaveCall, activeCall } = useCall();
   const { setViewingTask } = usePresence();
   const [isQrCodeOpen, setIsQrCodeOpen] = useState(false);
+  const [isPredicting, setIsPredicting] = useState(false);
+  const [prediction, setPrediction] = useState<PredictTaskCompletionOutput | null>(null);
 
   const isHuddleActive = task.callSession?.isActive;
   const isInThisHuddle = activeCall?.taskId === task.id;
@@ -193,6 +200,25 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
     // This action is now handled by the notification system now.
     // The presence of this function is kept for components that might still call it.
   }
+  
+  const handlePredictCompletion = async () => {
+    if (!currentOrganization) return;
+    setIsPredicting(true);
+    setPrediction(null);
+    try {
+        const result = await predictTaskCompletion({
+            organizationId: currentOrganization.id,
+            title: task.title,
+            description: task.description,
+            priority: task.priority,
+            storyPoints: task.storyPoints,
+        });
+        setPrediction(result);
+    } catch (e: any) {
+        toast({ title: 'Fout bij voorspelling', description: e.message, variant: 'destructive' });
+    }
+    setIsPredicting(false);
+  };
 
 
   return (
@@ -256,10 +282,11 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
             </div>
             <div className="flex flex-col min-h-0">
                 <Tabs defaultValue="comments" className="flex flex-col flex-1 min-h-0">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/> Reacties</TabsTrigger>
                         <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/> Geschiedenis</TabsTrigger>
                         <TabsTrigger value="whiteboard"><PenSquare className="mr-2 h-4 w-4"/> Whiteboard</TabsTrigger>
+                        <TabsTrigger value="ai-insights"><BrainCircuit className="mr-2 h-4 w-4" /> AI</TabsTrigger>
                     </TabsList>
                     <TabsContent value="comments" className="flex-1 flex flex-col gap-4 min-h-0 mt-2">
                         <TaskComments 
@@ -283,6 +310,34 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                               Open in Nieuw Tabblad
                           </Link>
                       </Button>
+                    </TabsContent>
+                     <TabsContent value="ai-insights" className="flex-1 flex flex-col gap-4 min-h-0 mt-2 p-1">
+                        <Card>
+                            <CardHeaderUI>
+                                <CardTitle>Voorspel Voltooiingsdatum</CardTitle>
+                                <CardDescription>Laat de AI een inschatting maken van wanneer deze taak voltooid zal zijn, op basis van historische data.</CardDescription>
+                            </CardHeaderUI>
+                            <CardContent>
+                                <Button onClick={handlePredictCompletion} disabled={isPredicting}>
+                                    {isPredicting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                    Voorspel Datum
+                                </Button>
+                            </CardContent>
+                            {prediction && (
+                                <CardFooter className="flex-col items-start gap-2">
+                                    <Alert>
+                                        <AlertTitle>Voorspelling: {format(new Date(prediction.predictedCompletionDate), 'd MMMM yyyy')}</AlertTitle>
+                                        <AlertDescription>{prediction.reasoning}</AlertDescription>
+                                        <div className="flex items-center gap-4 mt-2">
+                                            <span className="text-sm font-medium">Zekerheid: {prediction.confidenceScore}%</span>
+                                            <Button size="sm" variant="outline" onClick={() => form.setValue('dueDate', new Date(prediction.predictedCompletionDate))}>
+                                                Stel in als einddatum
+                                            </Button>
+                                        </div>
+                                    </Alert>
+                                </CardFooter>
+                            )}
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>

@@ -24,3 +24,4 @@ import '@/ai/flows/generate-project-report-flow.ts';
 import '@/ai/flows/predict-project-outcome-flow.ts';
 import '@/ai/flows/what-if-scenario-flow.ts';
 import '@/ai/flows/generate-insights-flow.ts';
+import '@/ai/flows/predict-task-completion-flow.ts';

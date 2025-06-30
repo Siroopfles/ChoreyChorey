@@ -382,10 +382,27 @@ export type GenerateInsightsInput = z.infer<typeof GenerateInsightsInputSchema>;
 
 export const GenerateInsightsOutputSchema = z.object({
   insights: z.array(z.object({
-    category: z.enum(['Productivity', 'Workflow', 'Team Dynamics', 'Planning & Estimation', 'Data Quality']).describe('The category of the insight.'),
+    category: z.enum(['Productivity', 'Workflow', 'Team Dynamics', 'Planning & Estimation', 'Data Quality', 'Data']).describe('The category of the insight.'),
     title: z.string().describe('A short, descriptive title for the insight.'),
     finding: z.string().describe('A clear, concise explanation of what was discovered.'),
     evidence: z.string().describe('Brief, specific data or examples to support the finding.'),
   })),
 });
 export type GenerateInsightsOutput = z.infer<typeof GenerateInsightsOutputSchema>;
+
+// From predict-task-completion-flow.ts
+export const PredictTaskCompletionInputSchema = z.object({
+  organizationId: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  priority: z.string(),
+  storyPoints: z.number().optional().nullable(),
+});
+export type PredictTaskCompletionInput = z.infer<typeof PredictTaskCompletionInputSchema>;
+
+export const PredictTaskCompletionOutputSchema = z.object({
+  predictedCompletionDate: z.string().describe("The predicted completion date in YYYY-MM-DD format."),
+  confidenceScore: z.number().min(0).max(100).describe("A confidence score (0-100) for the prediction."),
+  reasoning: z.string().describe("A brief explanation for the predicted date and confidence score."),
+});
+export type PredictTaskCompletionOutput = z.infer<typeof PredictTaskCompletionOutputSchema>;
