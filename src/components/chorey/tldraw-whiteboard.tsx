@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Tldraw } from '@tldraw/tldraw';
@@ -57,9 +56,6 @@ export function TldrawWhiteboard({ taskId, whiteboardData }: TldrawWhiteboardPro
       } catch (e) {
         console.error("Failed to load whiteboard data", e);
       }
-    } else if (editor && !whiteboardData) {
-      // Clear the canvas if there's no data
-      editor.store.loadSnapshot({ store: {}, schema: editor.store.schema });
     }
   }, [editor, whiteboardData]);
 
