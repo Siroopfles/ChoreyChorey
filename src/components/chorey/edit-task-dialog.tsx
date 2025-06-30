@@ -34,11 +34,11 @@ import { useCall } from '@/contexts/call-context';
 import { LiveDescriptionEditor } from './live-description-editor';
 import { Separator } from '../ui/separator';
 import { Poll } from './Poll';
-import { TldrawWhiteboard } from './tldraw-whiteboard';
 import { usePresence } from '@/contexts/presence-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TaskQrCodeDialog } from './TaskQrCodeDialog';
+import Link from 'next/link';
 
 
 const LiveViewers = ({ taskId }: { taskId: string }) => {
@@ -272,8 +272,17 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                     <TabsContent value="history" className="flex-1 min-h-0 mt-2">
                         <TaskHistory task={task} users={users} />
                     </TabsContent>
-                    <TabsContent value="whiteboard" className="flex-1 min-h-0 mt-2">
-                        <TldrawWhiteboard taskId={task.id} whiteboardData={task.whiteboard} />
+                    <TabsContent value="whiteboard" className="flex-1 min-h-0 mt-2 flex flex-col items-center justify-center text-center gap-4 p-4">
+                      <h3 className="font-semibold text-lg">Open Whiteboard</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">
+                          Werk samen op een volledig scherm canvas. Ideaal voor brainstormsessies en het visualiseren van ideeën.
+                      </p>
+                      <Button asChild>
+                          <Link href={`/dashboard/whiteboard/${task.id}`} target="_blank">
+                              <PenSquare className="mr-2 h-4 w-4" />
+                              Open in Nieuw Tabblad
+                          </Link>
+                      </Button>
                     </TabsContent>
                 </Tabs>
             </div>

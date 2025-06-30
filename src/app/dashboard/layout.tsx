@@ -23,14 +23,13 @@ import { useTasks } from '@/contexts/task-context';
 import { CallProvider } from '@/contexts/call-context';
 import { AudioHuddle } from '@/components/chorey/audio-huddle/AudioHuddle';
 import { PresenceProvider } from '@/contexts/presence-context';
-import { LiveCursors } from '@/components/chorey/live-cursors';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 import AppSidebar from '@/components/chorey/app-sidebar';
 import MobileBottomNav from '@/components/chorey/mobile-bottom-nav';
 import { cn } from '@/lib/utils';
 import BulkActionBar from '@/components/chorey/bulk-action-bar';
 import { FCMProvider } from '@/contexts/fcm-context';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const BrandingStyle = () => {
@@ -223,7 +222,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return <>{children}</>;
   }
   
-  if (pathname.startsWith('/dashboard/focus')) {
+  if (pathname.startsWith('/dashboard/focus') || pathname.startsWith('/dashboard/whiteboard')) {
       return <>{children}</>;
   }
 
