@@ -71,11 +71,21 @@ export default function AddTaskDialog({ template, open, onOpenChange }: AddTaskD
       if (shouldAddTaskFromUrl) {
           const title = searchParams.get('title');
           const url = searchParams.get('url');
+          const text = searchParams.get('text');
+
+          let description = '';
+          if (text) {
+            description += `<p>${decodeURIComponent(text)}</p>`;
+          }
+          if (url) {
+            const decodedUrl = decodeURIComponent(url);
+            description += `<p><a href="${decodedUrl}" target="_blank" rel="noopener noreferrer">${decodedUrl}</a></p>`;
+          }
 
           form.reset({
               ...defaultFormValues,
               title: title ? decodeURIComponent(title) : '',
-              description: url ? `<a href="${decodeURIComponent(url)}" target="_blank">${decodeURIComponent(url)}</a>` : '',
+              description: description,
           });
           
           const newPath = window.location.pathname;
