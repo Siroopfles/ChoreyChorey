@@ -22,7 +22,7 @@ import {
   getDocs,
   orderBy
 } from 'firebase/firestore';
-import type { Task, TaskFormValues, User, Status, Label, Automation, AutomationFormValues, TaskTemplate, TaskTemplateFormValues, Subtask, Project } from '@/lib/types';
+import type { Task, TaskFormValues, User, Status, Label, Automation, AutomationFormValues, TaskTemplate, TaskTemplateFormValues, Subtask, Project, ScheduledReport, ScheduledReportFormValues } from '@/lib/types';
 import { PERMISSIONS, ROLE_GUEST } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ import { addTemplate as addTemplateAction, updateTemplate as updateTemplateActio
 import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/member.actions';
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/gamification.actions';
+import * as ReportActions from '@/app/actions/report.actions';
 import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
 import { triggerHapticFeedback } from '@/lib/haptics';
@@ -42,6 +43,7 @@ type TaskContextType = {
   tasks: Task[];
   templates: TaskTemplate[];
   automations: Automation[];
+  scheduledReports: ScheduledReport[];
   loading: boolean;
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
@@ -70,6 +72,7 @@ type TaskContextType = {
   manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
   voteOnPoll: (taskId: string, optionId: string) => Promise<void>;
   handOffTask: (taskId: string, fromUserId: string, toUserId: string, message?: string) => Promise<boolean>;
+  manageScheduledReport: (action: 'create' | 'update' | 'delete', data?: ScheduledReportFormValues, scheduleId?: string) => Promise<{ success: boolean }>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -110,6 +113,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
   const [automations, setAutomations] = useState<Automation[]>([]);
+  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
@@ -184,11 +188,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const commonQuery = (collectionName: string) => query(collection(db, collectionName), where("organizationId", "==", currentOrganization.id));
     const unsubTemplates = onSnapshot(commonQuery('taskTemplates'), (s) => setTemplates(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as TaskTemplate))), (e) => handleError(e, 'laden van templates'));
     const unsubAutomations = onSnapshot(commonQuery('automations'), (s) => setAutomations(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate() } as Automation))), (e) => handleError(e, 'laden van automatiseringen'));
+    const unsubScheduledReports = onSnapshot(commonQuery('scheduledReports'), s => setScheduledReports(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), lastSentAt: (d.data().lastSentAt as Timestamp)?.toDate() } as ScheduledReport))), e => handleError(e, 'laden geplande rapporten'));
     
     return () => {
       unsubscribeTasks();
       unsubTemplates();
       unsubAutomations();
+      unsubScheduledReports();
     };
   }, [user, currentOrganization, orgLoading, projects, currentUserPermissions, currentUserRole]);
 
@@ -463,6 +469,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     toast({ title: 'Gelukt!', description: `Automatisering is ${action === 'create' ? 'aangemaakt' : 'bijgewerkt'}.`});
     return { success: true };
   };
+  
+  const manageScheduledReport = async (action: 'create' | 'update' | 'delete', data?: ScheduledReportFormValues, scheduleId?: string) => {
+    if (!user || !currentOrganization) {
+      handleError({ message: 'Niet geautoriseerd' }, 'beheren geplande rapporten');
+      return { success: false };
+    }
+    const result = await ReportActions.manageScheduledReport(action, currentOrganization.id, user.id, { scheduleId, data });
+    if (result.error) {
+      handleError({ message: result.error }, 'beheren geplande rapporten');
+      return { success: false };
+    }
+    toast({ title: 'Gelukt!', description: `Rapportplanning is ${action === 'create' ? 'aangemaakt' : 'bijgewerkt'}.`});
+    return { success: true };
+  };
 
   const toggleMuteTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
@@ -498,12 +518,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   return (
     <TaskContext.Provider value={{ 
-      tasks, templates, automations, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
+      tasks, templates, automations, scheduledReports, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
       toggleTaskTimer, reorderTasks, resetSubtasks, thankForTask, toggleCommentReaction,
       addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask,
       bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
       navigateToUserProfile, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, 
-      toggleMuteTask, manageAutomation, voteOnPoll, handOffTask,
+      toggleMuteTask, manageAutomation, voteOnPoll, handOffTask, manageScheduledReport
     }}>
       {children}
     </TaskContext.Provider>

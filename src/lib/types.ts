@@ -1,5 +1,4 @@
 
-
 import { z } from 'zod';
 import type { Layout } from 'react-grid-layout';
 import { ROLE_ADMIN, ROLE_GUEST, ROLE_MEMBER, ROLE_OWNER } from './constants';
@@ -1026,6 +1025,40 @@ export const automationFormSchema = automationSchema.pick({
     action: true,
 });
 export type AutomationFormValues = z.infer<typeof automationFormSchema>;
+
+export type ReportConfig = {
+    name: string;
+    chartType: 'bar' | 'pie';
+    groupBy: 'status' | 'priority' | 'assignee';
+    metric: 'count' | 'storyPoints' | 'points';
+};
+
+export const scheduledReportFormSchema = z.object({
+    name: z.string().min(1, "Naam is vereist."),
+    recipients: z.string().min(1, "Minstens één ontvanger is vereist."),
+    schedule: z.enum(['daily', 'weekly', 'monthly']),
+    reportConfig: z.object({
+        name: z.string(),
+        chartType: z.enum(['bar', 'pie']),
+        groupBy: z.enum(['status', 'priority', 'assignee']),
+        metric: z.enum(['count', 'storyPoints', 'points']),
+    })
+});
+
+export type ScheduledReportFormValues = z.infer<typeof scheduledReportFormSchema>;
+
+export type ScheduledReport = {
+    id: string;
+    organizationId: string;
+    creatorId: string;
+    name: string;
+    recipients: string[];
+    schedule: 'daily' | 'weekly' | 'monthly';
+    reportConfig: ReportConfig;
+    lastSentAt: Date | null;
+    createdAt: Date;
+};
+
 
 // Roadmap specific types
 export type Feature = {

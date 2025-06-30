@@ -9,24 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FilePieChart, BarChart, Settings2, Users as UsersIcon, ListChecks, ArrowUpNarrowWide, Hash, Database, Trophy } from 'lucide-react';
+import { FilePieChart, BarChart, Settings2, Users as UsersIcon, ListChecks, ArrowUpNarrowWide, Hash, Database, Trophy, CalendarClock, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import type { Task, User } from '@/lib/types';
+import type { Task, User, ReportConfig, ScheduledReport } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogTrigger, AlertDialogCancel, AlertDialogAction, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { ScheduleReportDialog } from '@/components/chorey/reports/ScheduleReportDialog';
 
-type ReportConfig = {
-    name: string;
-    chartType: 'bar' | 'pie';
-    groupBy: 'status' | 'priority' | 'assignee';
-    metric: 'count' | 'storyPoints' | 'points';
-};
-
-type ReportData = {
-    name: string;
-    value: number;
-    fill?: string;
-}[];
 
 const chartOptions: { value: 'bar' | 'pie'; label: string; icon: React.ElementType }[] = [
     { value: 'bar', label: 'Staafdiagram', icon: BarChart },
@@ -63,8 +54,10 @@ const OptionCard = ({ option, selected, onSelect }: { option: { value: any; labe
 }
 
 export default function ReportsPage() {
-    const { tasks, users, loading } = useTasks();
+    const { tasks, users, loading, scheduledReports, manageScheduledReport } = useTasks();
     const { resolvedTheme } = useTheme();
+    const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+    const [editingSchedule, setEditingSchedule] = useState<ScheduledReport | null>(null);
 
     const [config, setConfig] = useState<ReportConfig>({
         name: 'Nieuw Rapport',
@@ -72,7 +65,7 @@ export default function ReportsPage() {
         groupBy: 'status',
         metric: 'count',
     });
-    const [reportData, setReportData] = useState<ReportData | null>(null);
+    const [reportData, setReportData] = useState<any[] | null>(null);
 
     const handleGenerateReport = () => {
         const dataMap: { [key: string]: { count: number; storyPoints: number, points: number } } = {};
@@ -110,6 +103,16 @@ export default function ReportsPage() {
         
         setReportData(generatedData);
     };
+    
+    const handleEditSchedule = (schedule: ScheduledReport) => {
+        setEditingSchedule(schedule);
+        setScheduleDialogOpen(true);
+    };
+
+    const handleDeleteSchedule = (scheduleId: string) => {
+        manageScheduledReport('delete', undefined, scheduleId);
+    };
+
 
     const renderChart = () => {
         if (!reportData) return null;
@@ -143,6 +146,7 @@ export default function ReportsPage() {
     };
 
     return (
+        <>
         <div className="space-y-6">
             <div>
                 <h1 className="text-3xl font-bold flex items-center gap-2"><FilePieChart /> Rapportagebouwer</h1>
@@ -211,8 +215,15 @@ export default function ReportsPage() {
 
             {reportData && (
                 <Card>
-                    <CardHeader>
-                        <CardTitle>{config.name}</CardTitle>
+                    <CardHeader className="flex flex-row justify-between items-start">
+                        <div>
+                            <CardTitle>{config.name}</CardTitle>
+                            <CardDescription>Gegevens gebaseerd op de huidige filters.</CardDescription>
+                        </div>
+                        <Button variant="outline" onClick={() => { setEditingSchedule(null); setScheduleDialogOpen(true); }}>
+                            <CalendarClock className="mr-2 h-4 w-4" />
+                            Rapport Inplannen
+                        </Button>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="h-[350px]">
@@ -243,6 +254,71 @@ export default function ReportsPage() {
                 </Card>
             )}
 
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><CalendarClock/>Geplande Rapporten</CardTitle>
+                    <CardDescription>Overzicht van alle rapporten die automatisch worden verzonden.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="border rounded-lg">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Naam</TableHead>
+                                    <TableHead>Frequentie</TableHead>
+                                    <TableHead>Ontvangers</TableHead>
+                                    <TableHead className="text-right"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {scheduledReports.length > 0 ? scheduledReports.map(schedule => (
+                                    <TableRow key={schedule.id}>
+                                        <TableCell className="font-medium">{schedule.name}</TableCell>
+                                        <TableCell className="capitalize">{schedule.schedule}</TableCell>
+                                        <TableCell className="text-muted-foreground truncate max-w-xs">{schedule.recipients.join(', ')}</TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4"/></Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem onSelect={() => handleEditSchedule(schedule)}><Edit className="mr-2 h-4 w-4"/>Bewerken</DropdownMenuItem>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <DropdownMenuItem className="text-destructive" onSelect={e => e.preventDefault()}><Trash2 className="mr-2 h-4 w-4"/>Verwijderen</DropdownMenuItem>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Weet je zeker?</AlertDialogTitle>
+                                                                <AlertDialogDescription>Deze actie kan niet ongedaan worden gemaakt.</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDeleteSchedule(schedule.id)} className="bg-destructive hover:bg-destructive/90">Verwijderen</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center h-24">Geen geplande rapporten.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+             </Card>
         </div>
+        <ScheduleReportDialog
+            open={scheduleDialogOpen}
+            onOpenChange={setScheduleDialogOpen}
+            schedule={editingSchedule}
+            reportConfig={config}
+        />
+        </>
     );
 }
