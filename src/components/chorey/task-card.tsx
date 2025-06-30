@@ -350,6 +350,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     className="w-full mb-2"
                     onClick={(e) => { e.stopPropagation(); thankForTask(task.id); }}
                     disabled={task.thanked}
+                    data-cy="thank-button"
                 >
                     <Heart className="mr-2 h-4 w-4 text-pink-500" />
                     {task.thanked ? 'Bedankt!' : `Bedank team`}
@@ -361,7 +362,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     <p className="text-xs font-medium text-muted-foreground mb-1">Beoordeel deze taak:</p>
                     <div className="flex items-center" onMouseLeave={() => setHoverRating(0)}>
                         {[1, 2, 3, 4, 5].map(star => (
-                            <button key={star} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); rateTask(task.id, star); }} aria-label={`Geef ${star} sterren`}>
+                            <button key={star} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); rateTask(task.id, star); }} aria-label={`Geef ${star} sterren`} data-cy={`rate-star-${star}`}>
                                 <Star className={cn('h-5 w-5', (hoverRating || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
                             </button>
                         ))}

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { User, TaskFormValues, Task, Label, Project } from '@/lib/types';
@@ -175,7 +174,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                                   Annuleren
                               </Button>
                           </DialogClose>
-                          <Button type="submit">Wijzigingen Opslaan</Button>
+                          <Button type="submit" data-cy="save-task-button">Wijzigingen Opslaan</Button>
                       </div>
                   </form>
                 </FormProvider>
