@@ -5,7 +5,7 @@ import { db } from '@/lib/core/firebase';
 import { collection, addDoc, getDocs, query, where, doc, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
 import type { ApiKey, ApiPermission } from '@/lib/types';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission } from '@/lib/core/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 function hashKey(key: string): string {

@@ -4,7 +4,7 @@
 import { db } from '@/lib/core/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayRemove, getDoc, deleteField, deleteDoc } from 'firebase/firestore';
 import type { User, Organization } from '@/lib/types';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission } from '@/lib/core/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 export async function updateOrganization(organizationId: string, userId: string, data: Partial<Pick<Organization, 'name' | 'settings'>>): Promise<{ data: { success: boolean } | null; error: string | null }> {

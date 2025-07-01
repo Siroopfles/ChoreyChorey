@@ -2,11 +2,11 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, writeBatch, arrayUnion, getDoc, query, collection, getDocs, where, updateDoc, deleteField } from 'firebase/firestore';
 import { ACHIEVEMENTS } from '@/lib/types/gamification';
 import { PERMISSIONS } from '@/lib/types/permissions';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission } from '@/lib/core/permissions';
 import { checkAndGrantTeamAchievements } from '@/app/actions/core/gamification.actions';
 import type { Project } from '@/lib/types/projects';
 import type { Team } from '@/lib/types/organizations';

@@ -4,7 +4,7 @@
 import { db } from '@/lib/core/firebase';
 import { updateDoc, doc, getDoc } from 'firebase/firestore';
 import type { Organization, SavedFilter, Filters } from '@/lib/types';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission } from '@/lib/core/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 export async function manageSavedFilter(

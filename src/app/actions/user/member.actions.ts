@@ -3,9 +3,9 @@
 
 import { db } from '@/lib/core/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, getDoc, writeBatch, deleteField } from 'firebase/firestore';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission } from '@/lib/core/permissions';
 import { PERMISSIONS, type RoleName } from '@/lib/types/permissions';
-import { ROLE_OWNER } from '@/lib/constants';
+import { ROLE_OWNER } from '@/lib/core/constants';
 import { addHistoryEntry } from '@/lib/utils/history-utils';
 import type { UserStatus } from '@/lib/types/auth';
 import type { OrganizationMember } from '@/lib/types/organizations';

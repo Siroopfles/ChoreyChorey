@@ -5,9 +5,9 @@ import { db } from '@/lib/core/firebase';
 import { collection, doc, addDoc, getDoc, Timestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import type { User, Task, Priority, Organization, Notification } from '@/lib/types';
 import { isAfter, subMinutes } from 'date-fns';
-import { sendSlackMessage } from '@/lib/slack-service';
-import { sendTeamsMessage } from '@/lib/teams-service';
-import { sendDiscordMessage } from '@/lib/discord-service';
+import { sendSlackMessage } from '@/lib/integrations/slack-service';
+import { sendTeamsMessage } from '@/lib/integrations/teams-service';
+import { sendDiscordMessage } from '@/lib/integrations/discord-service';
 
 // --- SERVER-SIDE PUSH NOTIFICATION LOGIC (Example for Cloud Function) ---
 /*

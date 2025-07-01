@@ -4,7 +4,7 @@
 import { db } from '@/lib/core/firebase';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import type { ChecklistTemplateFormValues } from '@/lib/types';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission } from '@/lib/core/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 export async function manageChecklistTemplate(

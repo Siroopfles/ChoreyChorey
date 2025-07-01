@@ -13,7 +13,7 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import type { IdeaFormValues, IdeaStatus, Organization } from '@/lib/types';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission } from '@/lib/core/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 async function checkIdeasEnabled(organizationId: string): Promise<boolean> {
