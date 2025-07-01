@@ -1,8 +1,7 @@
-
 'use server';
 
-import { searchBitbucketIssues, getBitbucketItem } from '@/lib/bitbucket-service';
-import { getGitProviderConfig } from '@/lib/integration-helper';
+import { searchBitbucketIssues, getBitbucketItem } from '@/lib/integrations/bitbucket-service';
+import { getGitProviderConfig } from '@/lib/integrations/integration-helper';
 import type { BitbucketLink } from '@/lib/types';
 
 export async function searchBitbucketItems(organizationId: string, repo: string, query: string): Promise<{ data: { items: BitbucketLink[] } | null; error: string | null; }> {

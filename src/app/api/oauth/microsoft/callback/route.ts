@@ -1,6 +1,5 @@
-
 import { NextResponse, type NextRequest } from 'next/server';
-import { getMicrosoftAuthClient, scopes, redirectUri } from '@/lib/microsoft-graph-auth';
+import { getMicrosoftAuthClient, scopes, redirectUri } from '@/lib/integrations/microsoft-graph-auth';
 
 // This is the same HTML response helper as the Google one.
 const renderResponse = (success: boolean, error?: string, refreshToken?: string | null) => {

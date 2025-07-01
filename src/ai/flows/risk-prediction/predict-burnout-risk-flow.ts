@@ -10,7 +10,7 @@ import { PredictBurnoutRiskInputSchema, PredictBurnoutRiskOutputSchema } from '@
 import type { PredictBurnoutRiskInput, PredictBurnoutRiskOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { User } from '@/lib/types';
 import { z } from 'genkit';
 

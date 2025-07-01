@@ -9,7 +9,7 @@ import {ai} from '@/ai/genkit';
 import { SuggestHeadcountInputSchema, SuggestHeadcountOutputSchema } from '@/ai/schemas';
 import type { SuggestHeadcountInput, SuggestHeadcountOutput } from '@/ai/schemas';
 import { getDocs, query, collection, where, getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { DEFAULT_ROLES, type User, type Organization } from '@/lib/types';
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-headcount.prompt'), 'utf-8');

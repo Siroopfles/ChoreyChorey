@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getGoogleAuthClient } from '@/lib/google-auth';
+import { getGoogleAuthClient } from '@/lib/integrations/google-auth';
 
 const renderResponse = (success: boolean, error?: string, refreshToken?: string | null) => {
     const message = JSON.stringify({

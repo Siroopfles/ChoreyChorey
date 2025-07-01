@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview An AI agent that predicts project outcomes based on current progress and historical data.
@@ -11,7 +10,7 @@ import { PredictProjectOutcomeInputSchema, PredictProjectOutcomeOutputSchema } f
 import type { PredictProjectOutcomeInput, PredictProjectOutcomeOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { Project, Task } from '@/lib/types';
 import { z } from 'genkit';
 
@@ -79,5 +78,3 @@ const predictProjectOutcomeFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

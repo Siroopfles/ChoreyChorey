@@ -11,7 +11,7 @@ import type { GenerateInsightsInput, GenerateInsightsOutput } from '@/ai/schemas
 import { searchTasks } from '@/ai/tools/task-tools';
 import { getUsers } from '@/ai/tools/user-tools';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { Team } from '@/lib/types';
 import { z } from 'genkit';
 

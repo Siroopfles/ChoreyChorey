@@ -1,9 +1,8 @@
-
 'use server';
 
-import { updateUserProfile } from '@/app/actions/user.actions';
-import { getGoogleAuthClient, scopes as googleScopes } from '@/lib/google-auth';
-import { getMicrosoftAuthClient, scopes as microsoftScopes, redirectUri } from '@/lib/microsoft-graph-auth';
+import { updateUserProfile } from '@/app/actions/user/user.actions';
+import { getGoogleAuthClient, scopes as googleScopes } from '@/lib/integrations/google-auth';
+import { getMicrosoftAuthClient, scopes as microsoftScopes, redirectUri } from '@/lib/integrations/microsoft-graph-auth';
 
 // --- Google Calendar Actions ---
 

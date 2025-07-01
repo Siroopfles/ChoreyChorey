@@ -9,7 +9,7 @@ import { WhatIfScenarioInputSchema, WhatIfScenarioOutputSchema } from '@/ai/sche
 import type { WhatIfScenarioInput, WhatIfScenarioOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { Project, Task } from '@/lib/types';
 import { z } from 'genkit';
 

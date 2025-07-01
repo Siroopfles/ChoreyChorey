@@ -1,8 +1,7 @@
-
 'use server';
 
 import { collection, query, where, getDocs, Timestamp, getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { Task, HistoryEntry, Project, User, StatusDefinition } from '@/lib/types';
 import { differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, format, formatISO, isAfter, endOfDay } from 'date-fns';
 

@@ -1,4 +1,3 @@
-
 'use server';
 
 import 'isomorphic-fetch'; // Required for microsoft-graph-client
