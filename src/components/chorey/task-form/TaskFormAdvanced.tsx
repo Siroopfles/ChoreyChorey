@@ -2,12 +2,6 @@
 'use client';
 
 import type { User, Project, Task } from '@/lib/types';
-import { useFormContext } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import type { CustomFieldDefinition } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { TaskFormScheduling } from './TaskFormScheduling';
 import { TaskFormRelations } from './TaskFormRelations';
@@ -15,14 +9,18 @@ import { TaskFormAttachments } from './TaskFormAttachments';
 import { TaskFormIntegrations } from './TaskFormIntegrations';
 import { TaskFormSettings } from './TaskFormSettings';
 import { TaskFormRaci } from './TaskFormRaci';
+import { TaskFormPoll } from './TaskFormPoll';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { useFormContext } from 'react-hook-form';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/utils';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
-import { TaskFormPoll } from './TaskFormPoll';
-import { useOrganization } from '@/contexts/system/organization-context';
-
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 type TaskFormAdvancedProps = {
   users: User[];
@@ -31,8 +29,8 @@ type TaskFormAdvancedProps = {
 };
 
 export function TaskFormAdvanced({ users, projects, task }: TaskFormAdvancedProps) {
-  const form = useFormContext();
   const { currentOrganization } = useOrganization();
+  const { control } = useFormContext();
 
   const customFields = currentOrganization?.settings?.customization?.customFields || [];
 
@@ -85,7 +83,7 @@ export function TaskFormAdvanced({ users, projects, task }: TaskFormAdvancedProp
                     return (
                     <FormField
                         key={fieldDef.id}
-                        control={form.control}
+                        control={control}
                         name={fieldName}
                         render={({ field }) => (
                         <FormItem>
@@ -102,7 +100,7 @@ export function TaskFormAdvanced({ users, projects, task }: TaskFormAdvancedProp
                     return (
                     <FormField
                         key={fieldDef.id}
-                        control={form.control}
+                        control={control}
                         name={fieldName}
                         render={({ field }) => (
                         <FormItem>
@@ -119,7 +117,7 @@ export function TaskFormAdvanced({ users, projects, task }: TaskFormAdvancedProp
                     return (
                         <FormField
                             key={fieldDef.id}
-                            control={form.control}
+                            control={control}
                             name={fieldName}
                             render={({ field }) => (
                             <FormItem className="flex flex-col">
@@ -146,7 +144,7 @@ export function TaskFormAdvanced({ users, projects, task }: TaskFormAdvancedProp
                     return (
                         <FormField
                             key={fieldDef.id}
-                            control={form.control}
+                            control={control}
                             name={fieldName}
                             render={({ field }) => (
                             <FormItem>

@@ -84,7 +84,7 @@ export function TaskFormRaci({ users }: TaskFormRaciProps) {
                               key={user.id}
                               onSelect={() => {
                                   if (isSelected) {
-                                  field.onChange(field.value?.filter((id) => id !== user.id));
+                                  field.onChange(field.value?.filter((id: string) => id !== user.id));
                                   } else {
                                   field.onChange([...(field.value || []), user.id]);
                                   }
@@ -135,7 +135,7 @@ export function TaskFormRaci({ users }: TaskFormRaciProps) {
                               key={user.id}
                               onSelect={() => {
                                   if (isSelected) {
-                                  field.onChange(field.value?.filter((id) => id !== user.id));
+                                  field.onChange(field.value?.filter((id: string) => id !== user.id));
                                   } else {
                                   field.onChange([...(field.value || []), user.id]);
                                   }
