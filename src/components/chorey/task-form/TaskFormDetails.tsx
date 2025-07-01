@@ -1,14 +1,12 @@
 
 'use client';
 
-import type { User, Project, SuggestPriorityOutput, SuggestStoryPointsOutput } from '@/lib/types';
-import { useState } from 'react';
+import type { User, Project } from '@/lib/types';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils/utils';
@@ -18,12 +16,12 @@ import { suggestStoryPoints } from '@/ai/flows/assistance-suggestion/suggest-sto
 import { suggestPriority } from '@/ai/flows/assistance-suggestion/suggest-priority';
 import { suggestLabels } from '@/ai/flows/assistance-suggestion/suggest-labels-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TaskAssignmentSuggestion } from '@/components/chorey/common/task-assignment-suggestion';
 import { useOrganization } from '@/contexts/system/organization-context';
-import type { SuggestLabelsOutput } from '@/ai/schemas';
 import { AIFeedback } from '@/components/chorey/common/ai-feedback';
+import { Input } from '@/components/ui/input';
+import { useAiSuggestion } from '@/hooks/use-ai-suggestion';
 
 type TaskFormDetailsProps = {
   users: User[];
@@ -40,85 +38,46 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
   const allPriorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
   const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
 
-  const [isSuggestingPoints, setIsSuggestingPoints] = useState(false);
-  const [pointsSuggestion, setPointsSuggestion] = useState<{ output: SuggestStoryPointsOutput, input: any } | null>(null);
-  
-  const [isSuggestingPriority, setIsSuggestingPriority] = useState(false);
-  const [prioritySuggestion, setPrioritySuggestion] = useState<{ output: SuggestPriorityOutput, input: any } | null>(null);
+  const { trigger: triggerPoints, data: pointsSuggestion, isLoading: isSuggestingPoints } = useAiSuggestion(suggestStoryPoints, {
+    onSuccess: (result) => form.setValue('storyPoints', result.output.points)
+  });
 
-  const [isSuggestingLabels, setIsSuggestingLabels] = useState(false);
-  const [labelsSuggestion, setLabelsSuggestion] = useState<{ output: SuggestLabelsOutput, input: any } | null>(null);
-  
-  const onSuggestStoryPoints = async () => {
+  const { trigger: triggerPriority, data: prioritySuggestion, isLoading: isSuggestingPriority } = useAiSuggestion(suggestPriority, {
+    onSuccess: (result) => form.setValue('priority', result.output.priority)
+  });
+
+  const { trigger: triggerLabels, data: labelsSuggestion, isLoading: isSuggestingLabels } = useAiSuggestion(suggestLabels, {
+    onSuccess: (result) => {
+      if (result.output.labels.length > 0) {
+        const currentLabels = form.getValues('labels') || [];
+        const newLabels = Array.from(new Set([...currentLabels, ...result.output.labels]));
+        form.setValue('labels', newLabels);
+        toast({ title: 'Labels toegevoegd!', description: `${result.output.labels.length} label(s) toegevoegd door AI.` });
+      } else {
+        toast({ title: 'Geen nieuwe labels gevonden.', description: 'De AI kon geen relevante nieuwe labels suggereren.' });
+      }
+    }
+  });
+
+  const onSuggestStoryPoints = () => {
     const title = form.getValues('title');
     const description = form.getValues('description');
-     if (!title) {
-        toast({ title: 'Titel vereist', variant: 'destructive' });
-        return;
-    }
-    if (!currentOrganization) {
-        toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
-        return;
-    }
-    setIsSuggestingPoints(true);
-    setPointsSuggestion(null);
-    try {
-        const result = await suggestStoryPoints(title, currentOrganization.id, description);
-        form.setValue('storyPoints', result.output.points);
-        setPointsSuggestion(result);
-    } catch (e: any) {
-        toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
-    }
-    setIsSuggestingPoints(false);
+    if (!title || !currentOrganization) return toast({ title: 'Titel en organisatie zijn vereist.', variant: 'destructive' });
+    triggerPoints({ title, description, organizationId: currentOrganization.id });
   };
   
-  const onSuggestPriority = async () => {
+  const onSuggestPriority = () => {
     const title = form.getValues('title');
     const description = form.getValues('description');
-     if (!title) {
-        toast({ title: 'Titel vereist', variant: 'destructive' });
-        return;
-    }
-    setIsSuggestingPriority(true);
-    setPrioritySuggestion(null);
-    try {
-        const result = await suggestPriority({ title, description, availablePriorities: allPriorities });
-        form.setValue('priority', result.output.priority);
-        setPrioritySuggestion(result);
-    } catch(e: any) {
-        toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
-    }
-    setIsSuggestingPriority(false);
+    if (!title) return toast({ title: 'Titel is vereist.', variant: 'destructive' });
+    triggerPriority({ title, description, availablePriorities: allPriorities });
   };
   
-  const onSuggestLabels = async () => {
+  const onSuggestLabels = () => {
     const title = form.getValues('title');
     const description = form.getValues('description');
-    if (!title) {
-        toast({ title: 'Titel vereist', variant: 'destructive' });
-        return;
-    }
-    if (!currentOrganization) {
-        toast({ title: 'Organisatie niet gevonden', variant: 'destructive' });
-        return;
-    }
-    setIsSuggestingLabels(true);
-    setLabelsSuggestion(null);
-    try {
-        const result = await suggestLabels({ title, description, organizationId: currentOrganization.id });
-        setLabelsSuggestion(result);
-        if (result.output.labels.length > 0) {
-            const currentLabels = form.getValues('labels') || [];
-            const newLabels = Array.from(new Set([...currentLabels, ...result.output.labels]));
-            form.setValue('labels', newLabels);
-            toast({ title: 'Labels toegevoegd!', description: `${result.output.labels.length} label(s) toegevoegd door AI.` });
-        } else {
-             toast({ title: 'Geen nieuwe labels gevonden.', description: 'De AI kon geen relevante nieuwe labels suggereren.' });
-        }
-    } catch (e: any) {
-         toast({ title: 'Fout bij suggereren', description: e.message, variant: 'destructive' });
-    }
-    setIsSuggestingLabels(false);
+    if (!title || !currentOrganization) return toast({ title: 'Titel en organisatie zijn vereist.', variant: 'destructive' });
+    triggerLabels({ title, description, organizationId: currentOrganization.id });
   };
 
   return (

@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -12,45 +11,40 @@ import type { SuggestTaskAssigneeOutput } from '@/ai/schemas';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useTasks } from '@/contexts/feature/task-context';
 import { AIFeedback } from '@/components/chorey/common/ai-feedback';
+import { useAiSuggestion } from '@/hooks/use-ai-suggestion';
 
 export function TaskAssignmentSuggestion() {
-  const [loading, setLoading] = useState(false);
-  const [suggestion, setSuggestion] = useState<{ output: SuggestTaskAssigneeOutput, input: any } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const form = useFormContext();
   const { users: orgUsers, currentOrganization } = useAuth();
   const { tasks } = useTasks();
-  const form = useFormContext();
-  const taskDescription = form.watch('description');
 
-  const onSuggest = async () => {
-    if (!currentOrganization) return;
-    setLoading(true);
-    setError(null);
-    setSuggestion(null);
-
-    try {
-        const result = await suggestTaskAssignee(taskDescription, orgUsers, tasks);
-        setSuggestion(result);
-        const suggestedUser = orgUsers.find(u => u.name === result.output.suggestedAssignee);
-        if(suggestedUser) {
-          form.setValue('assigneeIds', [suggestedUser.id]);
-        }
-    } catch (e: any) {
-        setError(e.message);
+  const { trigger: triggerSuggestion, data: suggestion, isLoading, error } = useAiSuggestion(suggestTaskAssignee, {
+    onSuccess: (result) => {
+      const suggestedUser = orgUsers.find(u => u.name === result.output.suggestedAssignee);
+      if (suggestedUser) {
+        form.setValue('assigneeIds', [suggestedUser.id]);
+      }
     }
-    setLoading(false);
+  });
+  
+  const handleSuggest = async () => {
+    if (!currentOrganization) return;
+    const taskDescription = form.watch('description');
+    triggerSuggestion({ taskDescription, orgUsers, allTasks: tasks });
   };
+
+  const taskDescription = form.watch('description');
   
   return (
     <div className="space-y-2">
       <Button
         type="button"
         variant="outline"
-        onClick={onSuggest}
-        disabled={loading || !taskDescription || !currentOrganization}
+        onClick={handleSuggest}
+        disabled={isLoading || !taskDescription || !currentOrganization}
         className="w-full"
       >
-        {loading ? (
+        {isLoading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           <Lightbulb className="mr-2 h-4 w-4" />
