@@ -4,6 +4,7 @@
 import { useState, useMemo } from 'react';
 import { useTasks } from '@/contexts/feature/task-context';
 import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import type { User, Team } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils/gamification-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,19 +30,22 @@ const getRankIcon = (index: number) => {
 };
 
 function IndividualLeaderboard() {
-  const { tasks, loading: tasksLoading } = useTasks();
-  const { users, currentOrganization, loading: authLoading } = useAuth();
+  const { tasks } = useTasks();
+  const { currentOrganization } = useAuth();
+  const { users } = useOrganization();
   const [selectedTag, setSelectedTag] = useState<string>('Algemeen');
 
   const allLabels = useMemo(() => currentOrganization?.settings?.customization?.labels || [], [currentOrganization]);
 
   const { sortedUsers, maxPoints } = useMemo(() => {
+    if (!users) return { sortedUsers: [], maxPoints: 1 };
+    
     let usersWithPoints: (User & { dynamicPoints: number; tasksCompleted: number })[];
 
     if (selectedTag === 'Algemeen') {
       usersWithPoints = [...users].map(u => ({ 
         ...u, 
-        dynamicPoints: u.points,
+        dynamicPoints: u.points || 0,
         tasksCompleted: tasks.filter(t => t.status === 'Voltooid' && t.assigneeIds.includes(u.id)).length,
       }));
     } else {
@@ -131,9 +135,10 @@ function IndividualLeaderboard() {
 }
 
 function TeamLeaderboard() {
-    const { users, teams } = useAuth();
+    const { users, teams } = useOrganization();
     
     const { sortedTeams, maxPoints } = useMemo(() => {
+        if (!users || !teams) return { sortedTeams: [], maxPoints: 1 };
         const usersById = new Map(users.map(u => [u.id, u]));
         const teamsWithPoints = teams.map(team => {
             const members = team.memberIds.map(id => usersById.get(id)).filter(Boolean) as User[];
@@ -208,8 +213,9 @@ function TeamLeaderboard() {
 export default function LeaderboardPage() {
   const { loading: tasksLoading } = useTasks();
   const { loading: authLoading } = useAuth();
+  const { loading: orgLoading } = useOrganization();
   
-  if (tasksLoading || authLoading) {
+  if (tasksLoading || authLoading || orgLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
