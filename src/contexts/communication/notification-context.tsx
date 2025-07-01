@@ -15,7 +15,7 @@ import {
 } from 'firebase/firestore';
 import type { Notification } from '@/lib/types/notifications';
 import { NOTIFICATION_SOUNDS } from '@/lib/types/notifications';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/user/auth-context';
 import { addHours } from 'date-fns';

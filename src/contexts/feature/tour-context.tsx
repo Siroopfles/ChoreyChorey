@@ -5,7 +5,7 @@ import { createContext, useState, useContext, useEffect, useCallback, type React
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
 import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
-import { ownerSteps, memberSteps } from '@/lib/tour-steps';
+import { ownerSteps, memberSteps } from '@/lib/core/tour-steps';
 import { markOnboardingComplete } from '@/app/actions/user/member.actions';
 
 type TourContextType = {
