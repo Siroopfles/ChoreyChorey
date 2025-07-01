@@ -9,14 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Trash2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getJiraItemFromUrl, searchJiraItems } from '@/app/actions/jira.actions';
-import { useAuth } from '@/contexts/auth-context';
+import { getJiraItemFromUrl, searchJiraItems } from '@/app/actions/integrations/jira.actions';
+import { useAuth } from '@/contexts/user/auth-context';
 import type { JiraLink } from '@/lib/types';
 import Link from 'next/link';
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDebounce } from '@/hooks/use-debounce';
-import { JiraIcon as ProviderIcon } from './provider-icons';
+import { JiraIcon as ProviderIcon } from '@/components/chorey/common/provider-icons';
 
 
 const JiraIcon = ({ src }: { src: string }) => <img src={src} alt="Jira issue type" className="h-4 w-4 shrink-0" />;

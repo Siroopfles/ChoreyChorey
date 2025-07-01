@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useAuth } from '@/contexts/user/auth-context';
-import { useOrganization } from '@/contexts/system/organization-context';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { User, Building, ArrowRight, Plug, Shield, Settings2 } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { PERMISSIONS } from '@/lib/types';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { useAuth } from '@/contexts/user/auth-context';
 
 export default function SettingsPage() {
     const { loading: authLoading } = useAuth();

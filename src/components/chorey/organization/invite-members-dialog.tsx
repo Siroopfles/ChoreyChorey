@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Loader2, Mail, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Input } from '@/components/ui/input';
-import { createOrganizationInvite } from '@/app/actions/invite.actions';
+import { createOrganizationInvite } from '@/app/actions/user/invite.actions';
 
 export function InviteMembersDialog({ 
   organizationId,
@@ -36,9 +36,9 @@ export function InviteMembersDialog({
         setIsLoading(true);
         try {
             const result = await createOrganizationInvite(organizationId, user.id, currentOrganization.name);
-            if(result.error || !result.inviteId) throw new Error(result.error || 'Kon geen invite ID aanmaken');
+            if(result.error || !result.data?.inviteId) throw new Error(result.error || 'Kon geen invite ID aanmaken');
 
-            const link = `${window.location.origin}/invite/${result.inviteId}`;
+            const link = `${window.location.origin}/invite/${result.data.inviteId}`;
             setInviteLink(link);
         } catch (error: any) {
             toast({ title: 'Fout', description: error.message, variant: 'destructive' });

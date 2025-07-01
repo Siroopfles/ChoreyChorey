@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Trophy, Heart, Star, Activity, GripVertical } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 
 const ICONS: Record<ActivityFeedItem['type'], React.ElementType> = {
   achievement: Trophy,

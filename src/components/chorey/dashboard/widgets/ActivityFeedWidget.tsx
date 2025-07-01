@@ -2,8 +2,8 @@
 'use client';
 
 import type { ActivityFeedItem, User, Task } from '@/lib/types';
-import { ActivityFeed } from '@/components/chorey/activity-feed';
-import ActivityFeedSkeleton from '@/components/chorey/activity-feed-skeleton';
+import { ActivityFeed } from '@/components/chorey/common/activity-feed';
+import ActivityFeedSkeleton from '@/components/chorey/common/activity-feed-skeleton';
 
 interface ActivityFeedWidgetProps {
     items: ActivityFeedItem[];

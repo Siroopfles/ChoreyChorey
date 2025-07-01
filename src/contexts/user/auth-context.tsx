@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -39,7 +40,7 @@ import type { Layouts } from 'react-grid-layout';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user/member.actions';
 import { sendDailyDigest } from '@/app/actions/core/digest.actions';
-import { useDebug } from '../system/debug-context';
+import { useDebug } from '@/contexts/system/debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateAvatar } from '@/ai/flows/generative-ai/generate-avatar-flow';
 

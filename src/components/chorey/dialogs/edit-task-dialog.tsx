@@ -25,14 +25,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { TaskFormFields } from '@/components/chorey/common/task-form-fields';
-import { TaskComments } from '../common/task-comments';
-import { TaskHistory } from '../common/task-history';
+import { TaskComments } from '@/components/chorey/common/task-comments';
+import { TaskHistory } from '@/components/chorey/common/task-history';
 import { addCommentAction } from '@/app/actions/core/comment.actions';
 import { useNotifications } from '@/contexts/communication/notification-context';
 import { useCall } from '@/contexts/communication/call-context';
-import { LiveDescriptionEditor } from '../common/live-description-editor';
+import { LiveDescriptionEditor } from '@/components/chorey/common/live-description-editor';
 import { Separator } from '@/components/ui/separator';
-import { Poll } from '../common/Poll';
+import { Poll } from '@/components/chorey/common/Poll';
 import { usePresence } from '@/contexts/communication/presence-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -350,5 +350,3 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
     </Dialog>
   );
 }
-
-    

@@ -2,8 +2,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { useParams, useRouter } from 'next/navigation';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -12,15 +12,15 @@ import { Loader2, ArrowLeft, Trophy, CheckCircle, Award, Rocket, Users, Heart, S
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ACHIEVEMENTS, statusStyles } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import Link from 'next/link';
-import { KudosDialog } from '@/components/chorey/kudos-dialog';
-import { useOrganization } from '@/contexts/organization-context';
-import EditTaskDialog from '@/components/chorey/edit-task-dialog';
+import { KudosDialog } from '@/components/chorey/dialogs/kudos-dialog';
+import { useOrganization } from '@/contexts/system/organization-context';
+import EditTaskDialog from '@/components/chorey/dialogs/edit-task-dialog';
 import type { Task, User } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { endorseSkill } from '@/app/actions/user.actions';
+import { endorseSkill } from '@/app/actions/user/user.actions';
 
 const achievementIcons: Record<string, React.ElementType> = {
     'first_task': Rocket,
@@ -268,7 +268,6 @@ export default function UserProfilePage() {
                   isOpen={!!editingTask}
                   setIsOpen={(isOpen) => { if (!isOpen) setEditingTask(null); }}
                   task={editingTask}
-                  users={users}
                 />
             )}
         </div>

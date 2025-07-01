@@ -1,18 +1,17 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useOrganization } from '@/contexts/organization-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Loader2, GitGraph, CalendarIcon, Bot, BarChart } from 'lucide-react';
-import { levelWorkload } from '@/ai/flows/level-workload-flow';
-import { getWorkloadData, type GetWorkloadDataOutput } from '@/app/actions/workload.actions';
+import { levelWorkload } from '@/ai/flows/task-management/level-workload-flow';
+import { getWorkloadData, type GetWorkloadDataOutput } from '@/app/actions/project/workload.actions';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
 import { nl } from 'date-fns/locale';

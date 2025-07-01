@@ -7,7 +7,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import OrganizationSettings from '@/components/chorey/settings/general/organization-settings';
 import DangerZone from '@/components/chorey/settings/security/danger-zone';
 import WorkflowSettings from '@/components/chorey/settings/general/workflow-settings';
-import FeatureToggleSettings from '@/components/chorey/settings/general/feature-toggle-settings';
+import FeatureToggleSettings from '@/components/chorey/settings/features/feature-toggle-settings';
 import BrandingSettings from '@/components/chorey/settings/general/branding-settings';
 import AnnouncementSettings from '@/components/chorey/settings/general/announcement-settings';
 import WebhookSettings from '@/components/chorey/settings/integrations/webhook-settings';
@@ -54,7 +54,7 @@ export default function OrganizationSettingsPage() {
     <div className="space-y-6">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon">
-                <Link href="/dashboard/settings">
+                <Link href="/dashboard/user-settings/settings/general">
                     <ArrowLeft className="h-4 w-4" />
                     <span className="sr-only">Terug naar Instellingen</span>
                 </Link>
