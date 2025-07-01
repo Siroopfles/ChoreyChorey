@@ -4,6 +4,7 @@
 import { useMemo } from 'react';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useTasks } from '@/contexts/feature/task-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import type { User, Status, Task } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -44,10 +45,12 @@ const STATUS_POSITIONS: Record<Status | 'Idle', { top: string; left: string; are
 
 
 export default function TeamRoomPage() {
-    const { users, loading: authLoading } = useAuth();
+    const { loading: authLoading } = useAuth();
+    const { users, loading: orgLoading } = useOrganization();
     const { tasks, loading: tasksLoading, navigateToUserProfile } = useTasks();
 
     const userPositions = useMemo(() => {
+        if (!users) return [];
         return users.map(user => {
             const status = getUserDominantStatus(tasks, user.id);
             const basePosition = STATUS_POSITIONS[status] || STATUS_POSITIONS['Idle'];
@@ -70,7 +73,7 @@ export default function TeamRoomPage() {
         });
     }, [users, tasks]);
 
-    if (authLoading || tasksLoading) {
+    if (authLoading || tasksLoading || orgLoading) {
         return (
             <div className="flex h-full w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin" />
