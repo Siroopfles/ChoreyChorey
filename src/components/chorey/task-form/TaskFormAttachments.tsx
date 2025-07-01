@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFormContext, useFieldArray } from 'react-hook-form';
@@ -7,15 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label as UiLabel } from '@/components/ui/label';
 import { Loader2, ImageIcon, PlusCircle, Trash2, Link as LinkIcon, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateTaskImage } from '@/ai/flows/generate-task-image-flow';
+import { generateTaskImage } from '@/ai/flows/generative-ai/generate-task-image-flow';
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { getAttachmentSource } from '@/lib/utils/attachment-utils';
-import { AttachmentIcon } from '../common/attachment-icons';
-import { FigmaEmbed } from '../integrations/figma-embed';
-import { GoogleDocEmbed } from '../integrations/google-doc-embed';
-import { AdobeXdEmbed } from '../integrations/adobe-xd-embed';
+import { AttachmentIcon } from '@/components/chorey/common/attachment-icons';
+import { FigmaEmbed } from '@/components/chorey/integrations/figma-embed';
+import { GoogleDocEmbed } from '@/components/chorey/integrations/google-doc-embed';
+import { AdobeXdEmbed } from '@/components/chorey/integrations/adobe-xd-embed';
 import { uploadAttachmentFromDataUrl } from '@/app/actions/core/attachment.actions';
 
 export function TaskFormAttachments() {
