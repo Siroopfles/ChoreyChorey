@@ -1,10 +1,10 @@
 
 'use server';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, doc, addDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
 import type { WebhookFormValues } from '@/lib/types';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission } from '@/lib/core/permissions';
 import { PERMISSIONS } from '@/lib/types';
 
 // Action to manage webhooks

@@ -6,10 +6,10 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
 import type { Status, Task } from '@/lib/types';
-import { addHistoryEntry } from '@/lib/history-utils';
+import { addHistoryEntry } from '@/lib/utils/history-utils';
 
 // Schema for creating a task
 const CreateTaskDataSchema = z.object({

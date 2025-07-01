@@ -3,10 +3,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { processCommand } from '@/ai/flows/process-command';
 import { getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { User } from '@/lib/types';
-import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
-import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+import { withApiKeyAuth } from '@/lib/api/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api/api-auth-wrapper';
 
 const commandRequestSchema = z.object({
   command: z.string(),

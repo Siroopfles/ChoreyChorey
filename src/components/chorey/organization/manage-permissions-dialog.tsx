@@ -10,11 +10,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Save, ShieldBan, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
-import { updateMemberPermissions } from '@/app/actions/member.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { updateMemberPermissions } from '@/app/actions/user/member.actions';
 import { PERMISSIONS, PERMISSIONS_DESCRIPTIONS, type Permission, type User } from '@/lib/types';
 import { cn } from '@/lib/utils/utils';
-import { useOrganization } from '@/contexts/organization-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 // Using a custom SVG for inherit icon
 const InheritIcon = (props: React.ComponentProps<'svg'>) => (

@@ -9,10 +9,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserPlus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { updateDoc, doc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { Team, User } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { PERMISSIONS } from '@/lib/types';
 
 

@@ -19,8 +19,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
-import { manageTeam } from '@/app/actions/team.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { manageTeam } from '@/app/actions/core/team.actions';
 import type { Team } from '@/lib/types';
 
 const teamFormSchema = z.object({

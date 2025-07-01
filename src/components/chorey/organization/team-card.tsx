@@ -11,7 +11,7 @@ import { ManageMembersPopover } from './manage-members-popover';
 import { TeamDialog } from './team-dialog';
 import { Button } from '@/components/ui/button';
 import { PERMISSIONS } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 
 export function TeamCard({ team, usersInOrg }: { team: Team, usersInOrg: User[] }) {
     const { currentUserPermissions } = useAuth();

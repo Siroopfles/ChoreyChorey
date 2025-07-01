@@ -5,7 +5,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ChecklistTemplate, ChecklistTemplateFormValues } from '@/lib/types';
 import { checklistTemplateFormSchema } from '@/lib/types';
-import { useChecklists } from '@/contexts/checklist-context';
+import { useChecklists } from '@/contexts/feature/checklist-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';

@@ -2,8 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useOrganization } from '@/contexts/organization-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Shield, UserCheck, Plus, Briefcase, Users, Edit } from 'lucide-react';
 import type { Team } from '@/lib/types';
@@ -15,7 +15,7 @@ import { ProjectCard } from '@/components/chorey/organization/project-card';
 import { InviteMembersDialog } from '@/components/chorey/organization/invite-members-dialog';
 import { MemberList } from '@/components/chorey/organization/member-list';
 import { TeamDialog } from '@/components/chorey/organization/team-dialog';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { PermissionProtectedButton } from '@/components/ui/permission-protected-button';
 import { TeamCard } from '@/components/chorey/organization/team-card';
 

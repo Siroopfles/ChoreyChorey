@@ -9,7 +9,7 @@ import type { EmailToTaskInput, EmailToTaskOutput } from '@/ai/schemas';
 import { createTask } from '@/ai/tools/task-tools';
 import { findUserByEmail } from '@/ai/tools/user-tools';
 import { getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { Project } from '@/lib/types';
 
 export async function emailToTask(input: EmailToTaskInput): Promise<EmailToTaskOutput> {

@@ -1,8 +1,8 @@
 
 'use server';
 
-import { getJiraIssue, searchJiraIssues } from '@/lib/jira-service';
-import { db } from '@/lib/firebase';
+import { getJiraIssue, searchJiraIssues } from '@/lib/integrations/jira-service';
+import { db } from '@/lib/core/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Organization, JiraLink } from '@/lib/types';
 

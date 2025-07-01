@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Send, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { processCommand } from '@/ai/flows/process-command';
-import { ChatBubble } from '@/components/chorey/chat-bubble';
+import { ChatBubble } from '@/components/chorey/common/chat-bubble';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Message = {

@@ -7,9 +7,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ClipboardList, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { ChecklistTemplateDialog } from './checklist-template-dialog';
-import { useChecklists } from '@/contexts/checklist-context';
+import { useChecklists } from '@/contexts/feature/checklist-context';
 import type { ChecklistTemplate } from '@/lib/types';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 
 export function ChecklistTemplateCard({ template }: { template: ChecklistTemplate }) {
   const [isEditing, setIsEditing] = useState(false);

@@ -4,8 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -26,9 +26,9 @@ interface AutomationDialogProps {
 export function AutomationDialog({ open, onOpenChange, automation }: AutomationDialogProps) {
   const { manageAutomation } = useTasks();
   const { users, currentOrganization } = useAuth();
-  const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+  const allPriorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
-  const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
+  const allStatuses = currentOrganization?.settings?.customization?.statuses?.map(s => s.name) || [];
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AutomationFormValues>({
@@ -53,7 +53,7 @@ export function AutomationDialog({ open, onOpenChange, automation }: AutomationD
 
   const onSubmit = async (data: AutomationFormValues) => {
     setIsSubmitting(true);
-    const result = await manageAutomation(automation ? 'update' : 'create', data, automation);
+    const result = await manageAutomation('update', data, automation);
     if (result.success) {
       onOpenChange(false);
     }
