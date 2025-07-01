@@ -31,13 +31,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, FilePlus, LayoutTemplate, MoreVertical, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTasks } from '@/contexts/feature/task-context';
+import { useTemplates } from '@/contexts/feature/template-context';
 import type { TaskTemplate, User } from '@/lib/types';
 import AddTaskDialog from '@/components/chorey/dialogs/add-task-dialog';
 import { TemplateDialog } from './template-dialog';
 
 export function TemplateCard({ template, users }: { template: TaskTemplate; users: User[] }) {
-  const { deleteTemplate } = useTasks();
+  const { deleteTemplate } = useTemplates();
   const { toast } = useToast();
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useTasks } from '@/contexts/feature/task-context';
+import { useTemplates } from '@/contexts/feature/template-context';
 import { useAuth } from '@/contexts/user/auth-context';
 import { Separator } from '@/components/ui/separator';
 import type { TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
@@ -51,7 +51,7 @@ export function TemplateDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { toast } = useToast();
-  const { addTemplate, updateTemplate } = useTasks();
+  const { addTemplate, updateTemplate } = useTemplates();
   const { currentOrganization } = useAuth();
 
   const allLabels = currentOrganization?.settings?.customization?.labels || [];

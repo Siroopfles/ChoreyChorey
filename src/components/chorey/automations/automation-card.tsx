@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTasks } from '@/contexts/feature/task-context';
+import { useAutomations } from '@/contexts/feature/automation-context';
 import { useAuth } from '@/contexts/user/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -16,18 +16,18 @@ import { AUTOMATION_TRIGGER_TYPES, AUTOMATION_ACTION_TYPES, type Automation } fr
 import { PERMISSIONS } from '@/lib/types';
 
 export function AutomationCard({ automation }: { automation: Automation }) {
-  const { manageAutomation } = useTasks();
+  const { manageAutomation } = useAutomations();
   const { users, currentUserPermissions } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   
-  const canManage = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
+  const canManage = currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS);
 
   const handleToggle = (enabled: boolean) => {
-    manageAutomation('update', { ...automation, enabled });
+    manageAutomation('update', { ...automation, enabled }, automation);
   };
   
   const handleDelete = () => {
-    manageAutomation('delete', automation);
+    manageAutomation('delete', automation, automation);
   };
 
   const triggerText = AUTOMATION_TRIGGER_TYPES[automation.trigger.type];
@@ -121,13 +121,13 @@ export function AutomationCard({ automation }: { automation: Automation }) {
         <CardContent className="flex-grow space-y-4">
             <div className="flex flex-col items-center justify-center space-y-2 text-center text-sm">
                 <div className="p-3 bg-muted rounded-md w-full">
-                    <p className="font-semibold text-muted-foreground text-xs uppercase">Wanneer...</p>
+                    <p className="font-semibold text-muted-foreground text-xs uppercase">WANNEER...</p>
                     <p className="font-semibold">{triggerText}</p>
                     {getTriggerDescription() && <p className="text-xs text-muted-foreground">{getTriggerDescription()}</p>}
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground" />
                  <div className="p-3 bg-muted rounded-md w-full">
-                    <p className="font-semibold text-muted-foreground text-xs uppercase">Doe dan dit...</p>
+                    <p className="font-semibold text-muted-foreground text-xs uppercase">DOE DAN DIT...</p>
                     <p className="font-semibold">{actionText} {getActionDescription()}</p>
                 </div>
             </div>

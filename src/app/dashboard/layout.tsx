@@ -15,6 +15,9 @@ import { TourProvider } from '@/contexts/feature/tour-context';
 import { IdeaProvider } from '@/contexts/feature/idea-context';
 import { GoalProvider } from '@/contexts/feature/goal-context';
 import { ChecklistProvider } from '@/contexts/feature/checklist-context';
+import { TemplateProvider } from '@/contexts/feature/template-context';
+import { AutomationProvider } from '@/contexts/feature/automation-context';
+import { ReportProvider } from '@/contexts/feature/report-context';
 import { ShortcutHelpDialog } from '@/components/chorey/dialogs/shortcut-help-dialog';
 import { OrganizationProvider, useOrganization } from '@/contexts/system/organization-context';
 import { NotificationsProvider } from '@/contexts/communication/notification-context';
@@ -253,21 +256,27 @@ export default function DashboardLayout({
           <NotificationsProvider>
             <IdeaProvider>
               <GoalProvider>
-                <ChecklistProvider>
-                  <FCMProvider>
-                    <CallProvider>
-                      <PresenceProvider>
-                        <SidebarProvider>
-                          <AuthGuard>
-                          <TourProvider>
-                              {children}
-                          </TourProvider>
-                          </AuthGuard>
-                        </SidebarProvider>
-                      </PresenceProvider>
-                    </CallProvider>
-                  </FCMProvider>
-                </ChecklistProvider>
+                <TemplateProvider>
+                  <AutomationProvider>
+                    <ReportProvider>
+                      <ChecklistProvider>
+                        <FCMProvider>
+                          <CallProvider>
+                            <PresenceProvider>
+                              <SidebarProvider>
+                                <AuthGuard>
+                                <TourProvider>
+                                    {children}
+                                </TourProvider>
+                                </AuthGuard>
+                              </SidebarProvider>
+                            </PresenceProvider>
+                          </CallProvider>
+                        </FCMProvider>
+                      </ChecklistProvider>
+                    </ReportProvider>
+                  </AutomationProvider>
+                </TemplateProvider>
               </GoalProvider>
             </IdeaProvider>
           </NotificationsProvider>

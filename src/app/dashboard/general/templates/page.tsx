@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Loader2, Plus } from 'lucide-react';
-import { useTasks } from '@/contexts/feature/task-context';
+import { useTemplates } from '@/contexts/feature/template-context';
 import { useAuth } from '@/contexts/user/auth-context';
 import { Separator } from '@/components/ui/separator';
 import { TemplateCard } from '@/components/chorey/templates/template-card';
@@ -21,7 +21,7 @@ import { PermissionProtectedButton } from '@/components/ui/permission-protected-
 
 
 export default function TemplatesPage() {
-  const { templates, loading } = useTasks();
+  const { templates, loading } = useTemplates();
   const { users } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   

@@ -30,11 +30,8 @@ import * as TaskStateActions from '@/app/actions/project/task-state.actions';
 import * as TaskTimerActions from '@/app/actions/project/task-timer.actions';
 import * as TaskCollaborationActions from '@/app/actions/project/task-collaboration.actions';
 import * as CommentActions from '@/app/actions/core/comment.actions';
-import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/core/template.actions';
-import { manageAutomation as manageAutomationAction } from '@/app/actions/core/automation.actions';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user/member.actions';
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/core/gamification.actions';
-import * as ReportActions from '@/app/actions/core/report.actions';
 import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
 import { triggerHapticFeedback } from '@/lib/core/haptics';
@@ -43,17 +40,11 @@ import { triggerHapticFeedback } from '@/lib/core/haptics';
 import type { User } from '@/lib/types/auth';
 import type { Task, TaskFormValues, Status, Label, Subtask, Priority } from '@/lib/types/tasks';
 import type { Project } from '@/lib/types/projects';
-import type { TaskTemplate, TaskTemplateFormValues } from '@/lib/types/templates';
-import type { Automation, AutomationFormValues } from '@/lib/types/automations';
-import type { ScheduledReport, ScheduledReportFormValues } from '@/lib/types/reports';
 import { PERMISSIONS, ROLE_GUEST } from '@/lib/types/permissions';
 
 
 type TaskContextType = {
   tasks: Task[];
-  templates: TaskTemplate[];
-  automations: Automation[];
-  scheduledReports: ScheduledReport[];
   loading: boolean;
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
@@ -68,9 +59,6 @@ type TaskContextType = {
   resetSubtasks: (taskId: string) => Promise<void>;
   thankForTask: (taskId: string) => Promise<void>;
   toggleCommentReaction: (taskId: string, commentId: string, emoji: string) => Promise<void>;
-  addTemplate: (templateData: TaskTemplateFormValues) => Promise<void>;
-  updateTemplate: (templateId: string, templateData: TaskTemplateFormValues) => Promise<void>;
-  deleteTemplate: (templateId: string) => Promise<void>;
   setChoreOfTheWeek: (taskId: string) => Promise<void>;
   promoteSubtaskToTask: (parentTaskId: string, subtask: Subtask) => Promise<void>;
   navigateToUserProfile: (userId: string) => void;
@@ -79,10 +67,8 @@ type TaskContextType = {
   viewedTask: Task | null;
   setViewedTask: (task: Task | null) => void;
   toggleMuteTask: (taskId: string) => Promise<void>;
-  manageAutomation: (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => Promise<{ success: boolean; }>;
   voteOnPoll: (taskId: string, optionId: string) => Promise<void>;
   handOffTask: (taskId: string, fromUserId: string, toUserId: string, message?: string) => Promise<boolean>;
-  manageScheduledReport: (action: 'create' | 'update' | 'delete', data?: ScheduledReportFormValues, scheduleId?: string) => Promise<{ success: boolean }>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -123,9 +109,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { currentOrganization, currentUserRole, currentUserPermissions, projects, loading: orgLoading } = useOrganization();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [templates, setTemplates] = useState<TaskTemplate[]>([]);
-  const [automations, setAutomations] = useState<Automation[]>([]);
-  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
@@ -164,7 +147,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
     
     if (!currentOrganization || !user) {
-      setTasks([]); setTemplates([]); setAutomations([]); setLoading(false);
+      setTasks([]); 
+      setLoading(false);
       return;
     }
 
@@ -202,16 +186,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const commonQuery = (collectionName: string) => query(collection(db, collectionName), where("organizationId", "==", currentOrganization.id));
-    const unsubTemplates = onSnapshot(commonQuery('taskTemplates'), (s) => setTemplates(s.docs.map(d => ({...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate()} as TaskTemplate))), (e) => handleError(e, 'laden van templates'));
-    const unsubAutomations = onSnapshot(commonQuery('automations'), (s) => setAutomations(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate() } as Automation))), (e) => handleError(e, 'laden van automatiseringen'));
-    const unsubScheduledReports = onSnapshot(commonQuery('scheduledReports'), s => setScheduledReports(s.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp).toDate(), lastSentAt: (d.data().lastSentAt as Timestamp)?.toDate() } as ScheduledReport))), e => handleError(e, 'laden geplande rapporten'));
-    
     return () => {
       unsubscribeTasks();
-      unsubTemplates();
-      unsubAutomations();
-      unsubScheduledReports();
     };
   }, [user, currentOrganization, orgLoading, projects, currentUserPermissions, currentUserRole]);
 
@@ -290,7 +266,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const thankForTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
     const taskAssignees = tasks.find(t => t.id === taskId)?.assigneeIds || [];
-    const fullAssigneeInfo = users.filter(u => taskAssignees.includes(u.id));
+    const fullAssigneeInfo = tasks.filter(u => taskAssignees.includes(u.id));
 
     const { data, error } = await thankForTaskAction(taskId, user.id, fullAssigneeInfo, currentOrganization.id);
     if (error) { handleError({ message: error }, 'bedanken voor taak', () => thankForTask(taskId)); }
@@ -362,7 +338,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const setChoreOfTheWeek = async (taskId: string) => {
     if (!currentOrganization) return;
-    const { data, error } = await updateTaskAction(taskId, { isChoreOfTheWeek: true }, user?.id || 'system', currentOrganization.id);
+    const { data, error } = await TaskCrudActions.updateTaskAction(taskId, { isChoreOfTheWeek: true }, user?.id || 'system', currentOrganization.id);
     if (error) { handleError(error, 'instellen klus v/d week', () => setChoreOfTheWeek(taskId)); }
     else { toast({ title: 'Klus van de Week ingesteld!' }); }
   };
@@ -418,53 +394,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       handleError(e, 'bulk bijwerken taken', () => bulkUpdateTasks(taskIds, updates));
     }
   };
-  
-  const addTemplate = async (templateData: TaskTemplateFormValues) => {
-    if (!user || !currentOrganization) return;
-    const { data, error } = await addTemplateAction(currentOrganization.id, user.id, templateData);
-    if (error) { handleError(error, 'template toevoegen', () => addTemplate(templateData)); }
-  };
-
-  const updateTemplate = async (templateId: string, templateData: TaskTemplateFormValues) => {
-    const { data, error } = await updateTemplateAction(templateId, templateData);
-    if (error) { handleError(error, 'template bijwerken', () => updateTemplate(templateId, templateData)); }
-  };
-
-  const deleteTemplate = async (templateId: string) => {
-    const { data, error } = await deleteTemplateAction(templateId);
-    if (error) { handleError(error, 'template verwijderen', () => deleteTemplate(templateId)); }
-  };
-  
-  const manageAutomation = async (action: 'create' | 'update' | 'delete', data: AutomationFormValues, automation?: Automation) => {
-    if (!user || !currentOrganization) {
-      handleError({ message: 'Niet geautoriseerd' }, 'beheren automatisering');
-      return { success: false };
-    }
-    const result = await manageAutomationAction(action, currentOrganization.id, user.id, {
-      automationId: automation?.id,
-      data: data,
-    });
-    if (result.error) {
-      handleError({ message: result.error }, 'beheren automatisering', () => manageAutomation(action, data, automation));
-      return { success: false };
-    }
-    toast({ title: 'Gelukt!', description: `Automatisering is ${action === 'create' ? 'aangemaakt' : 'bijgewerkt'}.`});
-    return { success: true };
-  };
-  
-  const manageScheduledReport = async (action: 'create' | 'update' | 'delete', data?: ScheduledReportFormValues, scheduleId?: string) => {
-    if (!user || !currentOrganization) {
-      handleError({ message: 'Niet geautoriseerd' }, 'beheren geplande rapporten');
-      return { success: false };
-    }
-    const result = await ReportActions.manageScheduledReport(action, currentOrganization.id, user.id, { scheduleId, data });
-    if (result.error) {
-      handleError({ message: result.error }, 'beheren geplande rapporten');
-      return { success: false };
-    }
-    toast({ title: 'Gelukt!', description: `Rapportplanning is ${action === 'create' ? 'aangemaakt' : 'bijgewerkt'}.`});
-    return { success: true };
-  };
 
   const toggleMuteTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
@@ -500,12 +429,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   return (
     <TaskContext.Provider value={{ 
-      tasks, templates, automations, scheduledReports, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
+      tasks, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
       toggleTaskTimer, reorderTasks, resetSubtasks, thankForTask, toggleCommentReaction,
-      addTemplate, updateTemplate, deleteTemplate, setChoreOfTheWeek, promoteSubtaskToTask,
+      setChoreOfTheWeek, promoteSubtaskToTask,
       bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
       navigateToUserProfile, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, 
-      toggleMuteTask, manageAutomation, voteOnPoll, handOffTask, manageScheduledReport
+      toggleMuteTask, voteOnPoll, handOffTask
     }}>
       {children}
     </TaskContext.Provider>

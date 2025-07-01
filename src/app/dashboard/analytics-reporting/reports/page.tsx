@@ -3,6 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useTasks } from '@/contexts/feature/task-context';
+import { useReports } from '@/contexts/feature/report-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -54,7 +55,8 @@ const OptionCard = ({ option, selected, onSelect }: { option: { value: any; labe
 }
 
 export default function ReportsPage() {
-    const { tasks, users, loading, scheduledReports, manageScheduledReport } = useTasks();
+    const { tasks, users, loading } = useTasks();
+    const { scheduledReports, manageScheduledReport } = useReports();
     const { resolvedTheme } = useTheme();
     const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<ScheduledReport | null>(null);

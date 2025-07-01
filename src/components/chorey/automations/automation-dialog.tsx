@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTasks } from '@/contexts/feature/task-context';
+import { useAutomations } from '@/contexts/feature/automation-context';
 import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
@@ -24,7 +24,7 @@ interface AutomationDialogProps {
 }
 
 export function AutomationDialog({ open, onOpenChange, automation }: AutomationDialogProps) {
-  const { manageAutomation } = useTasks();
+  const { manageAutomation } = useAutomations();
   const { users, currentOrganization } = useAuth();
   const allPriorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
@@ -54,7 +54,7 @@ export function AutomationDialog({ open, onOpenChange, automation }: AutomationD
   const onSubmit = async (data: AutomationFormValues) => {
     setIsSubmitting(true);
     const result = await manageAutomation('update', data, automation);
-    if (result.success) {
+    if (result) {
       onOpenChange(false);
     }
     setIsSubmitting(false);

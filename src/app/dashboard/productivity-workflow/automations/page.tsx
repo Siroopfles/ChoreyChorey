@@ -6,17 +6,17 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Plus, Zap } from 'lucide-react';
-import { useTasks } from '@/contexts/feature/task-context';
+import { useAutomations } from '@/contexts/feature/automation-context';
 import { AutomationCard } from '@/components/chorey/automations/automation-card';
 import { AutomationDialog } from '@/components/chorey/automations/automation-dialog';
 import { PERMISSIONS } from '@/lib/types';
 
 export default function AutomationsPage() {
-  const { automations, loading } = useTasks();
+  const { automations, loading } = useAutomations();
   const { currentUserPermissions } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const canManage = currentUserPermissions.includes(PERMISSIONS.MANAGE_ORGANIZATION);
+  const canManage = currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS);
 
   if (loading) {
     return (
