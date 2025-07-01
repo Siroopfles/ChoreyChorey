@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ClipboardList, Bot, FileDown } from 'lucide-react';
-import { generateProjectReport } from '@/ai/flows/generate-project-report-flow';
+import { generateProjectReport } from '@/ai/flows/reporting-insights/generate-project-report-flow';
 import type { GenerateProjectReportOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,9 +14,11 @@ import type { Project } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 export default function ProjectReportPage() {
-    const { projects, currentOrganization, loading } = useAuth();
+    const { projects, loading: orgLoading } = useOrganization();
+    const { currentOrganization } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -32,7 +34,11 @@ export default function ProjectReportPage() {
         setError('');
 
         try {
-            const reportResult = await generateProjectReport(selectedProject.id, selectedProject.name, currentOrganization.id);
+            const reportResult = await generateProjectReport({
+                projectId: selectedProject.id,
+                projectName: selectedProject.name,
+                organizationId: currentOrganization.id
+            });
             setResult(reportResult);
         } catch (e: any) {
             setError(e.message);
@@ -86,7 +92,7 @@ export default function ProjectReportPage() {
         }
     };
 
-    if (loading) {
+    if (orgLoading) {
         return (
              <div className="space-y-6">
                 <Skeleton className="h-10 w-1/3" />
