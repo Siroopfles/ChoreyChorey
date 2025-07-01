@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, TableProperties } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
-import { handleImportTasks } from '@/app/actions/task.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { handleImportTasks } from '@/app/actions/project/task.actions';
 
 type ImportTasksDialogProps = {
     open: boolean;
@@ -77,8 +76,8 @@ export default function ImportTasksDialog({ open, onOpenChange }: ImportTasksDia
         if (result.error) {
             toast({ title: 'Import Fout', description: result.error, variant: 'destructive' });
             setStep('mapping');
-        } else {
-            toast({ title: 'Import Succesvol', description: `${result.successCount} taken geïmporteerd, ${result.errorCount} mislukt.` });
+        } else if (result.data) {
+            toast({ title: 'Import Succesvol', description: `${result.data.successCount} taken geïmporteerd, ${result.data.errorCount} mislukt.` });
             onOpenChange(false);
             resetState();
         }

@@ -6,9 +6,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Bot, FileText } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
-import { meetingToTasks } from '@/ai/flows/meeting-to-tasks-flow';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { useAuth } from '@/contexts/user/auth-context';
+import { meetingToTasks } from '@/ai/flows/task-management/meeting-to-tasks-flow';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type MeetingImportDialogProps = {
     open: boolean;
