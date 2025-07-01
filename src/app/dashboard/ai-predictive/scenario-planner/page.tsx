@@ -3,10 +3,11 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, BrainCircuit, Lightbulb, TrendingUp, CircleDollarSign, AlertTriangle } from 'lucide-react';
-import { analyzeWhatIfScenario } from '@/ai/flows/what-if-scenario-flow';
+import { analyzeWhatIfScenario } from '@/ai/flows/risk-prediction/what-if-scenario-flow';
 import type { WhatIfScenarioOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +17,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 
 export default function ScenarioPlannerPage() {
-    const { projects, currentOrganization, loading } = useAuth();
+    const { currentOrganization, loading: authLoading } = useAuth();
+    const { projects, loading: orgLoading } = useOrganization();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [scenario, setScenario] = useState('');
@@ -43,7 +45,7 @@ export default function ScenarioPlannerPage() {
         setIsLoading(false);
     };
 
-    if (loading) {
+    if (authLoading || orgLoading) {
         return (
              <div className="space-y-6">
                 <Skeleton className="h-10 w-1/3" />
