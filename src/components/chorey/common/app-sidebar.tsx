@@ -58,51 +58,51 @@ export default function AppSidebar() {
     const showMentorship = features?.mentorship !== false;
 
     const mainNavItems = [
-        { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        ...(!isGuest ? [{ href: '/dashboard/chat', icon: MessageSquare, label: 'Chat' }] : []),
-        { href: '/dashboard/scan', icon: Camera, label: 'Scan' },
-        ...(!isGuest ? [{ href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' }] : []),
-        ...(!isGuest ? [{ href: '/dashboard/inbox', icon: Inbox, label: 'Inbox' }] : []),
+        { href: '/dashboard/general/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        ...(!isGuest ? [{ href: '/dashboard/productivity-workflow/chat', icon: MessageSquare, label: 'Chat' }] : []),
+        { href: '/dashboard/ai-predictive/scan', icon: Camera, label: 'Scan' },
+        ...(!isGuest ? [{ href: '/dashboard/productivity-workflow/my-week', icon: CalendarCheck, label: 'Mijn Week' }] : []),
+        ...(!isGuest ? [{ href: '/dashboard/productivity-workflow/inbox', icon: Inbox, label: 'Inbox' }] : []),
     ];
     
     const planningNavItems = isGuest ? [] : [
-        ...(showGoals ? [{ href: '/dashboard/goals', icon: Trophy, label: 'Doelen' }] : []),
-        ...(showIdeas ? [{ href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' }] : []),
-        { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
-        { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
-        { href: '/dashboard/cost-analysis', icon: CircleDollarSign, label: 'Kostenanalyse' },
-        { href: '/dashboard/analytics', icon: AreaChart, label: 'Analyse' },
-        { href: '/dashboard/team-velocity', icon: BarChartHorizontal, label: 'Team Velocity' },
-        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS) ? [{ href: '/dashboard/automations', icon: Zap, label: 'Automatiseringen' }] : []),
-        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_TEMPLATES) ? [{ href: '/dashboard/templates', icon: SquareStack, label: 'Templates' }] : []),
-        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_CHECKLISTS) ? [{ href: '/dashboard/checklists', icon: ClipboardList, label: 'Checklists' }] : []),
+        ...(showGoals ? [{ href: '/dashboard/general/goals', icon: Trophy, label: 'Doelen' }] : []),
+        ...(showIdeas ? [{ href: '/dashboard/general/ideas', icon: Lightbulb, label: 'Ideeënbus' }] : []),
+        { href: '/dashboard/productivity-workflow/workload', icon: GitGraph, label: 'Workload' },
+        { href: '/dashboard/analytics-reporting/reports', icon: FilePieChart, label: 'Rapporten' },
+        { href: '/dashboard/analytics-reporting/cost-analysis', icon: CircleDollarSign, label: 'Kostenanalyse' },
+        { href: '/dashboard/analytics-reporting/analytics', icon: AreaChart, label: 'Analyse' },
+        { href: '/dashboard/team-organization/team-velocity', icon: BarChartHorizontal, label: 'Team Velocity' },
+        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS) ? [{ href: '/dashboard/productivity-workflow/automations', icon: Zap, label: 'Automatiseringen' }] : []),
+        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_TEMPLATES) ? [{ href: '/dashboard/general/templates', icon: SquareStack, label: 'Templates' }] : []),
+        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_CHECKLISTS) ? [{ href: '/dashboard/productivity-workflow/checklists', icon: ClipboardList, label: 'Checklists' }] : []),
     ];
     
     const communityNavItems = isGuest ? [] : [
-        { href: '/dashboard/organization', icon: Users, label: 'Teams & Leden', 'data-tour-id': 'organization-link' },
-        { href: '/dashboard/team-room', icon: Home, label: 'Team Room' },
-        { href: '/dashboard/team-health', icon: ShieldAlert, label: 'Team Welzijn'},
+        { href: '/dashboard/team-organization/organization', icon: Users, label: 'Teams & Leden', 'data-tour-id': 'organization-link' },
+        { href: '/dashboard/team-organization/team-room', icon: Home, label: 'Team Room' },
+        { href: '/dashboard/team-organization/team-health', icon: ShieldAlert, label: 'Team Welzijn'},
         ...(showGamification ? [
-            { href: '/dashboard/leaderboard', icon: Award, label: 'Prestaties' },
-            ...(showMentorship ? [{ href: '/dashboard/mentorship', icon: HeartHandshake, label: 'Mentorschap' }] : []),
-            { href: '/dashboard/shop', icon: Store, label: 'Winkel' },
+            { href: '/dashboard/team-organization/leaderboard', icon: Award, label: 'Prestaties' },
+            ...(showMentorship ? [{ href: '/dashboard/team-organization/mentorship', icon: HeartHandshake, label: 'Mentorschap' }] : []),
+            { href: '/dashboard/general/shop', icon: Store, label: 'Winkel' },
         ] : []),
     ];
 
     const aiToolsNavItems = isGuest ? [] : [
-        { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
-        { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
-        { href: '/dashboard/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
-        { href: '/dashboard/predictive-analysis', icon: HeartPulse, label: 'Projectgezondheid (AI)' },
-        { href: '/dashboard/scenario-planner', icon: BrainCircuit, label: 'AI Scenario Planner' },
-        { href: '/dashboard/ai-insights', icon: BrainCircuit, label: 'AI Inzichten' },
+        { href: '/dashboard/productivity-workflow/digest', icon: UserCog, label: 'AI Digest' },
+        { href: '/dashboard/team-organization/headcount', icon: UserCog, label: 'AI Headcount' },
+        { href: '/dashboard/analytics-reporting/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
+        { href: '/dashboard/ai-predictive/predictive-analysis', icon: HeartPulse, label: 'Projectgezondheid (AI)' },
+        { href: '/dashboard/ai-predictive/scenario-planner', icon: BrainCircuit, label: 'AI Scenario Planner' },
+        { href: '/dashboard/general/dashboard/ai-insights', icon: BrainCircuit, label: 'AI Inzichten' },
     ];
     
     const adminNavItems = isGuest ? [] : [
-        ...(currentUserPermissions.includes(PERMISSIONS.VIEW_ORGANIZATION_SETTINGS) ? [{ href: '/dashboard/settings', icon: Settings, label: 'Instellingen', 'data-tour-id': 'settings-link' }] : []),
-        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS) ? [{ href: '/dashboard/settings/integrations', icon: Plug, label: 'Integraties' }] : []),
-        ...(currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) ? [{ href: '/dashboard/audit-log', icon: ShieldCheck, label: 'Audit Log' }] : []),
-        { href: '/dashboard/trash', icon: Trash2, label: 'Prullenbak' },
+        ...(currentUserPermissions.includes(PERMISSIONS.VIEW_ORGANIZATION_SETTINGS) ? [{ href: '/dashboard/user-settings/settings/general', icon: Settings, label: 'Instellingen', 'data-tour-id': 'settings-link' }] : []),
+        ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_INTEGRATIONS) ? [{ href: '/dashboard/user-settings/settings/integrations', icon: Plug, label: 'Integraties' }] : []),
+        ...(currentUserPermissions.includes(PERMISSIONS.VIEW_AUDIT_LOG) ? [{ href: '/dashboard/general/audit-log', icon: ShieldCheck, label: 'Audit Log' }] : []),
+        { href: '/dashboard/general/trash', icon: Trash2, label: 'Prullenbak' },
     ];
 
     const pinnedProjects = useMemo(() => projects.filter(p => p.pinned), [projects]);
@@ -110,14 +110,14 @@ export default function AppSidebar() {
     
     const handleProjectClick = (projectId: string) => {
       setFilters({ projectId });
-      router.push('/dashboard');
+      router.push('/dashboard/general');
     };
 
 
     return (
         <Sidebar collapsible="icon" className="hidden md:flex">
             <SidebarHeader className="p-4 border-b border-sidebar-border">
-                <Link href="/dashboard">
+                <Link href="/dashboard/general">
                     <h1 className="text-2xl font-bold text-sidebar-primary group-data-[state=collapsed]:hidden">{currentOrganization?.name || 'Chorey'}</h1>
                 </Link>
             </SidebarHeader>
