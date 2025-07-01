@@ -42,7 +42,7 @@ import { predictTaskCompletion } from '@/ai/flows/risk-prediction/predict-task-c
 import type { PredictTaskCompletionOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader as CardHeaderUI } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader as CardHeaderUI, CardTitle as CardTitleUI } from '@/components/ui/card';
 
 
 const LiveViewers = ({ taskId }: { taskId: string }) => {
@@ -312,7 +312,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
                      <TabsContent value="ai-insights" className="flex-1 flex flex-col gap-4 min-h-0 mt-2 p-1">
                         <Card>
                             <CardHeaderUI>
-                                <CardTitle>Voorspel Voltooiingsdatum</CardTitle>
+                                <CardTitleUI>Voorspel Voltooiingsdatum</CardTitleUI>
                                 <CardDescription>Laat de AI een inschatting maken van wanneer deze taak voltooid zal zijn, op basis van historische data.</CardDescription>
                             </CardHeaderUI>
                             <CardContent>
