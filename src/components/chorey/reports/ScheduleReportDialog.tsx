@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, CalendarClock } from 'lucide-react';
 import type { ScheduledReport, ScheduledReportFormValues, ReportConfig } from '@/lib/types';
 import { scheduledReportFormSchema } from '@/lib/types';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 
 interface ScheduleReportDialogProps {
   open: boolean;
