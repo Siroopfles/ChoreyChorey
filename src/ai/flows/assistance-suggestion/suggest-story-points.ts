@@ -7,7 +7,7 @@ import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { SuggestStoryPointsInputSchema, SuggestStoryPointsOutputSchema } from '@/ai/schemas';
 import type { SuggestStoryPointsInput, SuggestStoryPointsOutput } from '@/ai/schemas';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-story-points.prompt'), 'utf-8');

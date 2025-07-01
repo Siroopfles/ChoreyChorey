@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview AI agent that suggests labels for a task.
@@ -11,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import { SuggestLabelsInputSchema, SuggestLabelsOutputSchema } from '@/ai/schemas';
 import type { SuggestLabelsInput, SuggestLabelsOutput } from '@/ai/schemas';
 import { getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { Organization } from '@/lib/types';
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/suggest-labels.prompt'), 'utf-8');
