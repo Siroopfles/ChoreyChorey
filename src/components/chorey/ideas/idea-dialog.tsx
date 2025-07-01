@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { IdeaFormValues } from '@/lib/types';
 import { ideaFormSchema } from '@/lib/types';
-import { useIdeas } from '@/contexts/idea-context';
+import { useIdeas } from '@/contexts/feature/idea-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
