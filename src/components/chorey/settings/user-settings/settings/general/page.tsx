@@ -41,7 +41,7 @@ export default function SettingsPage() {
                     </CardHeader>
                     <div className="p-6 pt-0">
                          <Button asChild>
-                            <Link href="/dashboard/settings/profile">
+                            <Link href="/dashboard/user-settings/settings/profile">
                                 Profielinstellingen <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
@@ -60,7 +60,7 @@ export default function SettingsPage() {
                     </CardHeader>
                     <div className="p-6 pt-0">
                         <Button asChild>
-                        <Link href="/dashboard/settings/my-permissions">
+                        <Link href="/dashboard/user-settings/settings/my-permissions">
                             Bekijk Mijn Permissies <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                     </Button>
@@ -81,7 +81,7 @@ export default function SettingsPage() {
                         </CardHeader>
                          <div className="p-6 pt-0">
                             <Button asChild>
-                                <Link href="/dashboard/settings/organization">
+                                <Link href="/dashboard/user-settings/settings/organization/general">
                                     Organisatie-instellingen <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>
@@ -103,7 +103,7 @@ export default function SettingsPage() {
                         </CardHeader>
                          <div className="p-6 pt-0">
                             <Button asChild>
-                                <Link href="/dashboard/settings/integrations">
+                                <Link href="/dashboard/user-settings/settings/integrations">
                                     Beheer Integraties <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>

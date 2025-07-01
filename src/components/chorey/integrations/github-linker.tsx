@@ -9,14 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Trash2, Github, GitPullRequest, AlertCircle, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getGithubItemFromUrl, addCommentToGithubItem, getGithubComments } from '@/app/actions/github.actions';
-import { useAuth } from '@/contexts/auth-context';
+import { getGithubItemFromUrl, addCommentToGithubItem, getGithubComments } from '@/app/actions/integrations/github.actions';
+import { useAuth } from '@/contexts/user/auth-context';
 import type { GitHubLink } from '@/lib/types';
 import Link from 'next/link';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Textarea } from '../ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { ScrollArea } from '../ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 
@@ -38,8 +38,8 @@ function GitHubCommentPopover({ item }: { item: GitHubLink }) {
         }
         const [, owner, repo] = urlParts;
         const result = await getGithubComments(owner, repo, item.number);
-        if (result.comments) {
-            setComments(result.comments);
+        if (result.data?.comments) {
+            setComments(result.data.comments);
         }
         setIsFetchingComments(false);
     }, [item.number, item.url]);
@@ -147,13 +147,13 @@ export function GitHubLinker() {
 
         if (result.error) {
             toast({ title: 'Fout bij koppelen', description: result.error, variant: 'destructive' });
-        } else if (result.item) {
+        } else if (result.data?.item) {
             const currentLinks = getValues('githubLinks') || [];
-            if (currentLinks.some((link: GitHubLink) => link.url === result.item.url)) {
+            if (currentLinks.some((link: GitHubLink) => link.url === result.data.item.url)) {
                 toast({ title: 'Al gekoppeld', description: 'Dit item is al aan de taak gekoppeld.', variant: 'default' });
             } else {
-                append(result.item);
-                toast({ title: 'Item gekoppeld!', description: `GitHub item #${result.item.number} is gekoppeld.` });
+                append(result.data.item);
+                toast({ title: 'Item gekoppeld!', description: `GitHub item #${result.data.item.number} is gekoppeld.` });
             }
             setInputValue('');
         }
