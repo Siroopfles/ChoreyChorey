@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import type { User, Task as TaskType, Comment as CommentType, Subtask } from '@/lib/types';
@@ -8,8 +6,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Bot, Loader2, Speaker, Eye, CornerUpRight, SmilePlus, Reply as ReplyIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { summarizeComments } from '@/ai/flows/summarize-comments';
-import { multiSpeakerTextToSpeech } from '@/ai/flows/multi-speaker-tts-flow';
+import { summarizeComments } from '@/ai/flows/reporting-insights/summarize-comments';
+import { multiSpeakerTextToSpeech } from '@/ai/flows/generative-ai/multi-speaker-tts-flow';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -17,11 +15,11 @@ import { Button } from '@/components/ui/button';
 import { RichTextEditor } from '../ui/rich-text-editor';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useAuth } from '@/contexts/auth-context';
-import { useNotifications } from '@/contexts/notification-context';
-import { updateTypingStatusAction } from '@/app/actions/task.actions';
-import { useTasks } from '@/contexts/task-context';
-import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useNotifications } from '@/contexts/communication/notification-context';
+import { updateTypingStatusAction } from '@/app/actions/project/task.actions';
+import { useTasks } from '@/contexts/feature/task-context';
+import { cn } from '@/lib/utils/utils';
 import { Badge } from '../ui/badge';
 
 const EMOJI_LIST = ['👍', '❤️', '😂', '🎉', '🤔', '🙏'];

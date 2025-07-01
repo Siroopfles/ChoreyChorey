@@ -13,7 +13,7 @@ import { FileUp, Loader2, XCircle } from 'lucide-react';
 import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
 import { useOrganization } from '@/contexts/system/organization-context';
 import { cn } from '@/lib/utils/utils';
-import { triggerHapticFeedback } from '@/lib/haptics';
+import { triggerHapticFeedback } from '@/lib/core/haptics';
 import type { Task, Priority } from '@/lib/types/tasks';
 import type { User } from '@/lib/types/auth';
 import type { Project } from '@/lib/types/projects';
