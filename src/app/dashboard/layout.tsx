@@ -197,8 +197,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    if (user && !currentOrganization && !pathname.startsWith('/dashboard/organization') && !pathname.startsWith('/invite/') && !pathname.startsWith('/dashboard/focus')) {
-      router.push('/dashboard/organization');
+    if (user && !currentOrganization && !pathname.startsWith('/dashboard/team-organization/organization') && !pathname.startsWith('/invite/') && !pathname.startsWith('/dashboard/focus')) {
+      router.push('/dashboard/team-organization/organization');
     }
 
   }, [user, loading, currentOrganization, mfaRequired, router, pathname]);
@@ -227,7 +227,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return <>{children}</>;
   }
 
-  if (!currentOrganization && pathname !== '/dashboard/organization') {
+  if (!currentOrganization && pathname !== '/dashboard/team-organization/organization') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2">
