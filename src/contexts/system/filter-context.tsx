@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
 import type { Filters } from '@/lib/types/ui';
 import type { Priority } from '@/lib/types/tasks';
-import { useTasks as useTasksData } from '@/contexts/feature/task-context'; // Renamed to avoid hook name collision
+import { DateRange } from 'react-day-picker';
 
 type FilterContextType = {
   searchTerm: string;
@@ -17,6 +17,8 @@ type FilterContextType = {
   setFilters: (newFilters: Partial<Filters>) => void;
   clearFilters: () => void;
   activeFilterCount: number;
+  dateRange: DateRange | undefined;
+  setDateRange: (dateRange: DateRange | undefined) => void;
 };
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -25,6 +27,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [filters, setRawFilters] = useState<Filters>({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   const setFilters = (newFilters: Partial<Filters>) => {
     setRawFilters(prev => ({ ...prev, ...newFilters }));
@@ -33,6 +36,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const clearFilters = () => {
     setRawFilters({ assigneeId: null, labels: [], priority: null, projectId: null, teamId: null });
     setSearchTerm('');
+    setDateRange(undefined);
   };
   
   const toggleTaskSelection = (taskId: string) => {
@@ -59,7 +63,9 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     filters,
     setFilters,
     clearFilters,
-    activeFilterCount
+    activeFilterCount,
+    dateRange,
+    setDateRange,
   };
 
   return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;

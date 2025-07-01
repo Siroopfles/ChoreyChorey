@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -35,19 +36,24 @@ import { cn } from '@/lib/utils/utils';
 import { ManageDashboardDialog } from '@/components/chorey/dashboard/ManageDashboardDialog';
 
 export default function DashboardRootPage() {
-  const { tasks, loading, setViewedTask } = useTasks();
-  const { searchTerm, setSearchTerm, filters } = useFilters();
+  const { 
+    loading: tasksLoading,
+    setViewedTask, 
+    filteredTasks,
+    groupedTasks,
+    groupBy,
+    setGroupBy
+  } = useTasks();
+  const { searchTerm, setSearchTerm, setDateRange, dateRange } = useFilters();
   const { user: currentUser } = useAuth();
   const { teams, currentOrganization, users, projects } = useOrganization();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [isDashboardManagerOpen, setIsDashboardManagerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('board');
-  const [groupBy, setGroupBy] = useState<'status' | 'assignee' | 'priority' | 'project'>('status');
   const [activityFeedItems, setActivityFeedItems] = useState<ActivityFeedItem[]>([]);
   const [isFeedLoading, setIsFeedLoading] = useState(true);
   const { toast } = useToast();
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   useEffect(() => {
     if (currentOrganization) {
@@ -64,79 +70,9 @@ export default function DashboardRootPage() {
     }
   }, [currentOrganization, toast]);
 
-  const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
-      const searchTermMatch = searchTerm.toLowerCase()
-        ? task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
-        : true;
-
-      const assigneeMatch = filters.assigneeId ? task.assigneeIds.includes(filters.assigneeId) : true;
-      const labelMatch = filters.labels.length > 0 ? task.labels.every(label => task.labels.includes(label as Label)) : true;
-      const priorityMatch = filters.priority ? task.priority === filters.priority : true;
-      const teamMatch = filters.teamId ? task.teamId === filters.teamId : true;
-      const projectMatch = filters.projectId ? task.projectId === filters.projectId : true;
-
-      const dateMatch = dateRange?.from && dateRange?.to && task.createdAt
-        ? isWithinInterval(task.createdAt, { start: dateRange.from, end: dateRange.to })
-        : true;
-
-      return searchTermMatch && assigneeMatch && labelMatch && priorityMatch && teamMatch && dateMatch && projectMatch;
-    });
-  }, [tasks, searchTerm, filters, dateRange]);
-
   const choreOfTheWeek = useMemo(() => filteredTasks.find(t => t.isChoreOfTheWeek), [filteredTasks]);
   const helpNeededTasks = useMemo(() => filteredTasks.filter(t => t.helpNeeded), [filteredTasks]);
   
-  const groupedTasks = useMemo(() => {
-    const tasksToGroup = filteredTasks.filter(t => !t.isChoreOfTheWeek);
-
-    if (groupBy === 'status') {
-      const statuses = currentOrganization?.settings?.customization?.statuses || [];
-      return statuses.map(status => ({
-        title: status.name,
-        tasks: tasksToGroup.filter(task => task.status === status.name).sort((a,b) => a.order - b.order)
-      }));
-    }
-    if (groupBy === 'assignee') {
-      const tasksByAssignee: Record<string, Task[]> = {};
-      tasksToGroup.forEach(task => {
-        if (task.assigneeIds.length === 0) {
-          if (!tasksByAssignee['Niet toegewezen']) tasksByAssignee['Niet toegewezen'] = [];
-          tasksByAssignee['Niet toegewezen'].push(task);
-        } else {
-          task.assigneeIds.forEach(id => {
-            const user = users.find(u => u.id === id);
-            const name = user ? user.name : 'Onbekende gebruiker';
-            if (!tasksByAssignee[name]) tasksByAssignee[name] = [];
-            tasksByAssignee[name].push(task);
-          });
-        }
-      });
-      const sortedEntries = Object.entries(tasksByAssignee).sort(([a], [b]) => a.localeCompare(b));
-      return sortedEntries.map(([title, tasks]) => ({ title, tasks: tasks.sort((a,b) => a.order - b.order) }));
-    }
-    if (groupBy === 'priority') {
-      const priorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
-      return priorities.map(priority => ({
-        title: priority,
-        tasks: tasksToGroup.filter(task => task.priority === priority).sort((a,b) => a.order - b.order)
-      }));
-    }
-    if (groupBy === 'project') {
-        const tasksByProject: Record<string, Task[]> = {};
-        tasksToGroup.forEach(task => {
-            const project = projects.find(p => p.id === task.projectId);
-            const projectName = project ? project.name : 'Geen Project';
-            if (!tasksByProject[projectName]) tasksByProject[projectName] = [];
-            tasksByProject[projectName].push(task);
-        });
-        const sortedEntries = Object.entries(tasksByProject).sort(([a], [b]) => a.localeCompare(b));
-        return sortedEntries.map(([title, tasks]) => ({ title, tasks: tasks.sort((a,b) => a.order - b.order) }));
-    }
-    return [];
-  }, [filteredTasks, groupBy, currentOrganization, users, projects]);
-
   const regularTasks = useMemo(() => {
     return filteredTasks.filter(t => !t.isChoreOfTheWeek && !t.helpNeeded);
   }, [filteredTasks]);
@@ -284,7 +220,7 @@ export default function DashboardRootPage() {
           <TabsTrigger value="gantt">Gantt</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="flex-1 mt-4 overflow-hidden">
-          {loading ? (
+          {tasksLoading ? (
             <TaskColumnsSkeleton />
           ) : groupedTasks.length > 0 ? (
             <TaskColumns groupedTasks={groupedTasks} groupBy={groupBy} />

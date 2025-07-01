@@ -2,7 +2,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   collection, 
   onSnapshot, 
@@ -25,6 +25,7 @@ import { db } from '@/lib/core/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
+import { useFilters } from '@/contexts/system/filter-context';
 import * as TaskCrudActions from '@/app/actions/project/task-crud.actions';
 import * as TaskStateActions from '@/app/actions/project/task-state.actions';
 import * as TaskTimerActions from '@/app/actions/project/task-timer.actions';
@@ -35,6 +36,7 @@ import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '
 import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
 import { triggerHapticFeedback } from '@/lib/core/haptics';
+import { isWithinInterval } from 'date-fns';
 
 // Import all required types from their new modular locations
 import type { User } from '@/lib/types/auth';
@@ -43,8 +45,15 @@ import type { Project } from '@/lib/types/projects';
 import { PERMISSIONS, ROLE_GUEST } from '@/lib/types/permissions';
 
 
+type GroupedTasks = {
+  title: string;
+  tasks: Task[];
+}
+
 type TaskContextType = {
   tasks: Task[];
+  filteredTasks: Task[];
+  groupedTasks: GroupedTasks[];
   loading: boolean;
   addTask: (taskData: Partial<TaskFormValues> & { title: string }) => Promise<boolean>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
@@ -69,6 +78,8 @@ type TaskContextType = {
   toggleMuteTask: (taskId: string) => Promise<void>;
   voteOnPoll: (taskId: string, optionId: string) => Promise<void>;
   handOffTask: (taskId: string, fromUserId: string, toUserId: string, message?: string) => Promise<boolean>;
+  groupBy: 'status' | 'assignee' | 'priority' | 'project';
+  setGroupBy: (groupBy: 'status' | 'assignee' | 'priority' | 'project') => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -107,9 +118,11 @@ const processTaskDoc = (doc: any, projects: Project[], canViewSensitive: boolean
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { currentOrganization, currentUserRole, currentUserPermissions, projects, loading: orgLoading } = useOrganization();
+  const { currentOrganization, currentUserRole, currentUserPermissions, projects, users, loading: orgLoading } = useOrganization();
+  const { filters, searchTerm, dateRange } = useFilters();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [groupBy, setGroupBy] = useState<'status' | 'assignee' | 'priority' | 'project'>('status');
   
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const [viewedTask, setViewedTask] = useState<Task | null>(null);
@@ -122,7 +135,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const handleError = (error: any, context: string, retryAction?: () => void) => {
     console.error(`Error in ${context}:`, error);
-    // More robust check for network-related errors from Firestore or other network issues.
     const isNetworkError =
       error?.code === 'unavailable' ||
       String(error?.message).toLowerCase().includes('network') ||
@@ -171,7 +183,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         collection(db, 'tasks'), 
         ...baseQueryConstraints,
         orderBy('createdAt', 'desc'),
-        limit(200)
+        limit(500) // Increase limit for better local filtering
     );
     
     const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
@@ -191,40 +203,96 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     };
   }, [user, currentOrganization, orgLoading, projects, currentUserPermissions, currentUserRole]);
 
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      const searchTermMatch = searchTerm.toLowerCase()
+        ? task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        : true;
+
+      const assigneeMatch = filters.assigneeId ? task.assigneeIds.includes(filters.assigneeId) : true;
+      const labelMatch = filters.labels.length > 0 ? filters.labels.every(label => task.labels.includes(label as Label)) : true;
+      const priorityMatch = filters.priority ? task.priority === filters.priority : true;
+      const teamMatch = filters.teamId ? task.teamId === filters.teamId : true;
+      const projectMatch = filters.projectId ? task.projectId === filters.projectId : true;
+
+      const dateMatch = dateRange?.from && dateRange?.to && task.createdAt
+        ? isWithinInterval(task.createdAt, { start: dateRange.from, end: dateRange.to })
+        : true;
+
+      return searchTermMatch && assigneeMatch && labelMatch && priorityMatch && teamMatch && dateMatch && projectMatch;
+    });
+  }, [tasks, searchTerm, filters, dateRange]);
+
+  const groupedTasks = useMemo(() => {
+    const tasksToGroup = filteredTasks.filter(t => !t.isChoreOfTheWeek);
+
+    if (groupBy === 'status') {
+      const statuses = currentOrganization?.settings?.customization?.statuses || [];
+      return statuses.map(status => ({
+        title: status.name,
+        tasks: tasksToGroup.filter(task => task.status === status.name).sort((a,b) => a.order - b.order)
+      }));
+    }
+    if (groupBy === 'assignee') {
+      const tasksByAssignee: Record<string, Task[]> = {};
+      tasksToGroup.forEach(task => {
+        if (task.assigneeIds.length === 0) {
+          if (!tasksByAssignee['Niet toegewezen']) tasksByAssignee['Niet toegewezen'] = [];
+          tasksByAssignee['Niet toegewezen'].push(task);
+        } else {
+          task.assigneeIds.forEach(id => {
+            const user = users.find(u => u.id === id);
+            const name = user ? user.name : 'Onbekende gebruiker';
+            if (!tasksByAssignee[name]) tasksByAssignee[name] = [];
+            tasksByAssignee[name].push(task);
+          });
+        }
+      });
+      const sortedEntries = Object.entries(tasksByAssignee).sort(([a], [b]) => a.localeCompare(b));
+      return sortedEntries.map(([title, tasks]) => ({ title, tasks: tasks.sort((a,b) => a.order - b.order) }));
+    }
+    if (groupBy === 'priority') {
+      const priorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
+      return priorities.map(priority => ({
+        title: priority,
+        tasks: tasksToGroup.filter(task => task.priority === priority).sort((a,b) => a.order - b.order)
+      }));
+    }
+    if (groupBy === 'project') {
+        const tasksByProject: Record<string, Task[]> = {};
+        tasksToGroup.forEach(task => {
+            const project = projects.find(p => p.id === task.projectId);
+            const projectName = project ? project.name : 'Geen Project';
+            if (!tasksByProject[projectName]) tasksByProject[projectName] = [];
+            tasksByProject[projectName].push(task);
+        });
+        const sortedEntries = Object.entries(tasksByProject).sort(([a], [b]) => a.localeCompare(b));
+        return sortedEntries.map(([title, tasks]) => ({ title, tasks: tasks.sort((a,b) => a.order - b.order) }));
+    }
+    return [];
+  }, [filteredTasks, groupBy, currentOrganization, users, projects]);
+
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }): Promise<boolean> => {
     if (!user || !currentOrganization) { handleError({ message: 'Selecteer een organisatie.' }, 'toevoegen taak'); return false; }
     const { data, error } = await TaskCrudActions.createTaskAction(currentOrganization.id, user.id, user.name, taskData);
     if (error) { handleError(error, 'opslaan taak', () => addTask(taskData)); return false; }
     
-    // No need to manually add task, onSnapshot will do it.
     return !!data?.success;
   };
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     if (!user || !currentOrganization) return;
     
-    const originalTasks = [...tasks];
-    const taskToUpdate = originalTasks.find(t => t.id === taskId);
-    if (!taskToUpdate) {
-        console.error("Optimistic update failed: Task not found in local state.");
-        return;
-    }
-
-    if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
-        triggerHapticFeedback([100, 30, 100]);
+    if (updates.status === 'Voltooid') {
+        const taskToUpdate = tasks.find(t => t.id === taskId);
+        if (taskToUpdate?.status !== 'Voltooid') {
+             triggerHapticFeedback([100, 30, 100]);
+        }
     }
     
-    const newTasks = originalTasks.map(t => 
-        t.id === taskId ? { ...t, ...updates } : t
-    );
-    setTasks(newTasks);
-
     const { data, error } = await TaskCrudActions.updateTaskAction(taskId, updates, user.id, currentOrganization.id);
-    
-    if (error) {
-        handleError(error, 'bijwerken taak', () => updateTask(taskId, updates));
-        setTasks(originalTasks);
-    }
+    if (error) handleError(error, 'bijwerken taak', () => updateTask(taskId, updates));
   };
 
   const cloneTask = async (taskId: string) => {
@@ -266,7 +334,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const thankForTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
     const taskAssignees = tasks.find(t => t.id === taskId)?.assigneeIds || [];
-    const fullAssigneeInfo = tasks.filter(u => taskAssignees.includes(u.id));
+    const fullAssigneeInfo = users.filter(u => taskAssignees.includes(u.id));
 
     const { data, error } = await thankForTaskAction(taskId, user.id, fullAssigneeInfo, currentOrganization.id);
     if (error) { handleError({ message: error }, 'bedanken voor taak', () => thankForTask(taskId)); }
@@ -277,54 +345,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   };
   
   const reorderTasks = async (tasksToUpdate: {id: string, order: number}[]) => {
-    const originalTasks = [...tasks];
-      
-    setTasks(prevTasks => {
-      const tasksMap = new Map(prevTasks.map(t => [t.id, t]));
-      tasksToUpdate.forEach(update => {
-        const task = tasksMap.get(update.id);
-        if(task) {
-          tasksMap.set(update.id, { ...task, order: update.order });
-        }
-      });
-      return Array.from(tasksMap.values());
-    });
-    
-    const { data, error } = await TaskStateActions.reorderTasksAction(tasksToUpdate);
-    if (error) {
-      handleError(error, 'herordenen taken', () => reorderTasks(tasksToUpdate));
-      setTasks(originalTasks);
-    }
+    const { error } = await TaskStateActions.reorderTasksAction(tasksToUpdate);
+    if (error) handleError(error, 'herordenen taken', () => reorderTasks(tasksToUpdate));
   };
 
   const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
     if (!user || !currentOrganization) return;
-    
-    const originalTasks = [...tasks];
-    const taskToUpdate = originalTasks.find(t => t.id === taskId);
-    if (!taskToUpdate) return;
-    
-    setTasks(prev => prev.map(t => {
-        if (t.id === taskId) {
-            const newSubtasks = t.subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st);
-            return { ...t, subtasks: newSubtasks };
-        }
-        return t;
-    }));
-
-    const { data, error } = await TaskStateActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id);
-    if (error) {
-      handleError(error, 'bijwerken subtaak', () => toggleSubtaskCompletion(taskId, subtaskId));
-      setTasks(originalTasks);
-    }
+    const { error } = await TaskStateActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id);
+    if (error) handleError(error, 'bijwerken subtaak', () => toggleSubtaskCompletion(taskId, subtaskId));
   };
   
   const toggleTaskTimer = async (taskId: string) => {
     if (!user || !currentOrganization) return;
     const { error } = await TaskTimerActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);
-    if (error) {
-        handleError(error, 'tijdregistratie', () => toggleTaskTimer(taskId));
-    }
+    if (error) handleError(error, 'tijdregistratie', () => toggleTaskTimer(taskId));
   };
 
   const resetSubtasks = async (taskId: string) => {
@@ -429,12 +463,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   return (
     <TaskContext.Provider value={{ 
-      tasks, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
+      tasks, filteredTasks, groupedTasks, loading, addTask, updateTask, rateTask, toggleSubtaskCompletion,
       toggleTaskTimer, reorderTasks, resetSubtasks, thankForTask, toggleCommentReaction,
       setChoreOfTheWeek, promoteSubtaskToTask,
       bulkUpdateTasks, cloneTask, splitTask, deleteTaskPermanently,
       navigateToUserProfile, isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, 
-      toggleMuteTask, voteOnPoll, handOffTask
+      toggleMuteTask, voteOnPoll, handOffTask,
+      groupBy, setGroupBy
     }}>
       {children}
     </TaskContext.Provider>
