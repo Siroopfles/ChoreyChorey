@@ -1,9 +1,9 @@
 
 
 'use client';
-import { useFilters } from "@/contexts/filter-context";
-import { useAuth } from "@/contexts/auth-context";
-import { useOrganization } from "@/contexts/organization-context";
+import { useFilters } from "@/contexts/system/filter-context";
+import { useAuth } from "@/contexts/user/auth-context";
+import { useOrganization } from "@/contexts/system/organization-context";
 import type { User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

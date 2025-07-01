@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -7,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { processCommand } from '@/ai/flows/core-utility/process-command';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/utils';
 
 // Declare the SpeechRecognition types for browsers that support it
