@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Users, BrainCircuit } from 'lucide-react';
-import { suggestHeadcount } from '@/ai/flows/suggest-headcount-flow';
+import { suggestHeadcount } from '@/ai/flows/assistance-suggestion/suggest-headcount-flow';
 import type { SuggestHeadcountOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
