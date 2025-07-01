@@ -3,9 +3,9 @@
     
 import { db } from '@/lib/core/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import { generateNotificationDigest } from '@/ai/flows/notification-digest-flow';
+import { generateNotificationDigest } from '@/ai/flows/reporting-insights/notification-digest-flow';
 import { createNotification } from './notification.actions';
-import { SYSTEM_USER_ID } from '@/lib/constants';
+import { SYSTEM_USER_ID } from '@/lib/core/constants';
 
 export async function sendDailyDigest(userId: string, organizationId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {

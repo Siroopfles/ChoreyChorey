@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent that generates a digest of notifications.
@@ -8,7 +9,7 @@ import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { NotificationDigestInputSchema, NotificationDigestOutputSchema } from '@/ai/schemas';
 import type { NotificationDigestInput, NotificationDigestOutput } from '@/ai/schemas';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { subDays } from 'date-fns';
 
