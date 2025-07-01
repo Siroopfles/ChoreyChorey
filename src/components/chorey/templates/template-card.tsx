@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -118,11 +119,13 @@ export function TemplateCard({ template, users }: { template: TaskTemplate; user
           </Button>
         </CardFooter>
       </Card>
+      
       <AddTaskDialog
         open={isAddTaskOpen}
         onOpenChange={setIsAddTaskOpen}
         template={template}
       />
+      
       <TemplateDialog
         open={isTemplateDialogOpen}
         onOpenChange={setIsTemplateDialogOpen}

@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ShieldAlert, User, Heart, AlertTriangle, CheckCircle, Activity, Lightbulb } from 'lucide-react';
@@ -13,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils/utils';
 
 export default function TeamHealthPage() {
-    const { users, currentOrganization } = useAuth();
+    const { currentOrganization } = useAuth();
+    const { users } = useOrganization();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string>('');
     const [result, setResult] = useState<PredictBurnoutRiskOutput | null>(null);
@@ -69,7 +71,7 @@ export default function TeamHealthPage() {
                                 <SelectValue placeholder="Selecteer een teamlid..." />
                             </SelectTrigger>
                             <SelectContent>
-                                {users.map(u => (
+                                {(users || []).map(u => (
                                     <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                                 ))}
                             </SelectContent>
