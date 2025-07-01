@@ -1,8 +1,7 @@
-
 'use server';
 
-import { getIssueOrPr, searchIssuesAndPRs, addComment, getComments } from '@/lib/github-service';
-import { getGitProviderConfig } from '@/lib/integration-helper';
+import { getIssueOrPr, searchIssuesAndPRs, addComment, getComments } from '@/lib/integrations/github-service';
+import { getGitProviderConfig } from '@/lib/integrations/integration-helper';
 
 export async function searchGithubItems(organizationId: string, repo: string, query: string): Promise<{ data: any | null; error: string | null; }> {
     try {

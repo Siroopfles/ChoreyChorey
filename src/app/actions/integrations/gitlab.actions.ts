@@ -1,8 +1,7 @@
-
 'use server';
 
-import { searchGitLab, getGitLabItem } from '@/lib/gitlab-service';
-import { getGitProviderConfig } from '@/lib/integration-helper';
+import { searchGitLab, getGitLabItem } from '@/lib/integrations/gitlab-service';
+import { getGitProviderConfig } from '@/lib/integrations/integration-helper';
 import type { GitLabLink } from '@/lib/types';
 
 export async function searchGitLabItems(organizationId: string, projectPath: string, query: string): Promise<{ data: { items: GitLabLink[] } | null; error: string | null; }> {

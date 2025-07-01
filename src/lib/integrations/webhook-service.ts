@@ -1,6 +1,6 @@
 
 'use server';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { Webhook, WebhookEvent } from '@/lib/types';
 import crypto from 'crypto';

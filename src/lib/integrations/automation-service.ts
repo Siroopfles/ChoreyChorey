@@ -1,8 +1,7 @@
 
-
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import type { Automation, Task, Priority, Label, Comment } from '@/lib/types';
 import { createNotification } from '@/app/actions/core/notification.actions';
