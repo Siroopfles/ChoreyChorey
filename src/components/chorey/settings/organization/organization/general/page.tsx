@@ -13,35 +13,35 @@ export default function OrganizationSettingsHubPage() {
 
     const settingsPages = [
         {
-            href: '/dashboard/settings/organization/general',
+            href: '/dashboard/user-settings/settings/organization',
             icon: Settings,
             title: 'Algemeen & Branding',
             description: 'Beheer de naam, aankondigingen en het uiterlijk van de organisatie.',
             permission: PERMISSIONS.MANAGE_GENERAL_SETTINGS,
         },
         {
-            href: '/dashboard/settings/organization/workflow',
+            href: '/dashboard/user-settings/settings/organization/workflow',
             icon: Workflow,
             title: 'Workflow & Velden',
             description: 'Pas statussen, labels, prioriteiten en eigen velden aan.',
             permission: PERMISSIONS.MANAGE_WORKFLOW,
         },
         {
-            href: '/dashboard/settings/organization/developer',
+            href: '/dashboard/user-settings/settings/organization/developer',
             icon: Code2,
             title: 'Developer Instellingen',
             description: 'Beheer API-sleutels en webhooks voor integraties.',
             permission: PERMISSIONS.MANAGE_WEBHOOKS, // A base permission to see the page
         },
         {
-            href: '/dashboard/settings/organization/limits',
+            href: '/dashboard/user-settings/settings/organization/limits',
             icon: Shield,
             title: 'Beveiliging & Limieten',
             description: 'Beheer sessiebeleid, IP-whitelisting en risicovolle acties.',
             permission: PERMISSIONS.MANAGE_SECURITY_SETTINGS,
         },
         {
-            href: '/dashboard/settings/features',
+            href: '/dashboard/user-settings/settings/features',
             icon: ShieldQuestion,
             title: 'Feature Vlaggen',
             description: 'Schakel kernmodules van de applicatie in of uit.',

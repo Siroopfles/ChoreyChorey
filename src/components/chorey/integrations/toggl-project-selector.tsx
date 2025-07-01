@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { getTogglWorkspaces, getTogglProjects } from '@/app/actions/toggl.actions';
+import { getTogglWorkspaces, getTogglProjects } from '@/app/actions/integrations/toggl.actions';
 import { Clock, Loader2 } from 'lucide-react';
 
 interface TogglEntity {

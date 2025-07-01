@@ -5,15 +5,24 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe } from 'lucide-react';
+import { Loader2, Save, Gamepad2, Database, Timer, HeartHandshake, Trophy, Lightbulb, UserCheck, Globe, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateOrganization } from '@/app/actions/organization.actions';
+import { updateOrganization } from '@/app/actions/core/organization.actions';
 import type { Organization } from '@/lib/types';
+import { JiraIcon, BitbucketIcon, GitLabIcon } from '@/components/chorey/common/provider-icons';
+
+
+const ClockifyIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
+        <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586z"></path>
+    </svg>
+);
+
 
 const featureSchema = z.object({
   gamification: z.boolean().default(true),
@@ -24,6 +33,11 @@ const featureSchema = z.object({
   ideas: z.boolean().default(true),
   raci: z.boolean().default(true),
   publicSharing: z.boolean().default(true),
+  toggl: z.boolean().default(false),
+  clockify: z.boolean().default(false),
+  jira: z.boolean().default(false),
+  gitlab: z.boolean().default(false),
+  bitbucket: z.boolean().default(false),
 });
 type FeatureFormValues = z.infer<typeof featureSchema>;
 
@@ -61,6 +75,11 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       ideas: organization.settings?.features?.ideas ?? true,
       raci: organization.settings?.features?.raci ?? true,
       publicSharing: organization.settings?.features?.publicSharing ?? true,
+      toggl: organization.settings?.features?.toggl ?? false,
+      clockify: organization.settings?.features?.clockify ?? false,
+      jira: organization.settings?.features?.jira ?? false,
+      gitlab: organization.settings?.features?.gitlab ?? false,
+      bitbucket: organization.settings?.features?.bitbucket ?? false,
     },
   });
 
@@ -96,14 +115,19 @@ export default function FeatureToggleSettings({ organization }: { organization: 
       { name: 'mentorship', icon: HeartHandshake, label: 'Mentorschap', description: 'Activeer de mentorschapspagina waar gebruikers elkaar kunnen vinden.' },
       { name: 'raci', icon: UserCheck, label: 'RACI Matrix', description: 'Activeer de RACI-matrix voor een overzicht van verantwoordelijkheden.' },
       { name: 'publicSharing', icon: Globe, label: 'Publiek Delen', description: 'Sta toe dat projecten openbaar gedeeld kunnen worden via een link.' },
+      { name: 'toggl', icon: Clock, label: 'Toggl Integratie', description: 'Sta gebruikers toe om hun Toggl-account te koppelen voor tijdregistratie.' },
+      { name: 'clockify', icon: ClockifyIcon, label: 'Clockify Integratie', description: 'Sta gebruikers toe om hun Clockify-account te koppelen voor tijdregistratie.' },
+      { name: 'jira', icon: JiraIcon, label: 'Jira Integratie', description: 'Sta toe dat taken gekoppeld worden aan Jira issues.' },
+      { name: 'gitlab', icon: GitLabIcon, label: 'GitLab Integratie', description: 'Sta toe dat taken gekoppeld worden aan GitLab issues en MRs.' },
+      { name: 'bitbucket', icon: BitbucketIcon, label: 'Bitbucket Integratie', description: 'Sta toe dat taken gekoppeld worden aan Bitbucket issues.' },
   ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Core Features</CardTitle>
+        <CardTitle>Feature Toggles</CardTitle>
         <CardDescription>
-          Schakel individuele Chorey-modules aan of uit voor de hele organisatie.
+          Schakel individuele modules aan of uit voor de hele organisatie.
         </CardDescription>
       </CardHeader>
       <CardContent>
