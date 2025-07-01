@@ -1,14 +1,13 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect } from 'react';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { useToast } from '@/hooks/use-toast';
-import { app } from '@/lib/firebase';
+import { app } from '@/lib/core/firebase';
 import { useAuth } from '@/contexts/user/auth-context';
 import { manageFcmToken } from '@/app/actions/user/user.actions';
-import { env } from '@/lib/env';
+import { env } from '@/lib/core/env';
 
 type FCMContextType = {
   requestPermission: () => Promise<void>;

@@ -4,7 +4,7 @@
 import type { Task, TaskRelation, TaskRelationType } from '@/lib/types';
 import { useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { Button } from '@/components/ui/button';
 import { Label as UiLabel } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
