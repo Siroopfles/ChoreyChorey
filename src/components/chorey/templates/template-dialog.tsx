@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, type ReactNode, useEffect } from 'react';
@@ -25,8 +24,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Separator } from '@/components/ui/separator';
 import type { TaskTemplate, TaskTemplateFormValues } from '@/lib/types';
 import { taskTemplateSchema } from '@/lib/types';
@@ -35,7 +34,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { Tags, Check, PlusCircle, Trash2, Repeat, Lock, EyeOff, Link as LinkIcon } from 'lucide-react';
 import { Label as UiLabel } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -62,7 +61,7 @@ export function TemplateDialog({
   const { currentOrganization } = useAuth();
 
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
-  const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+  const allPriorities = (currentOrganization?.settings?.customization?.priorities || []).map(p => p.name);
 
   const form = useForm<TaskTemplateFormValues>({
     resolver: zodResolver(taskTemplateSchema),

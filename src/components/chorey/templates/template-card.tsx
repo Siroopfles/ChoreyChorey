@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -30,9 +31,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, FilePlus, LayoutTemplate, MoreVertical, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import type { TaskTemplate, User } from '@/lib/types';
-import AddTaskDialog from '@/components/chorey/add-task-dialog';
+import AddTaskDialog from '@/components/chorey/dialogs/add-task-dialog';
 import { TemplateDialog } from './template-dialog';
 
 export function TemplateCard({ template, users }: { template: TaskTemplate; users: User[] }) {
