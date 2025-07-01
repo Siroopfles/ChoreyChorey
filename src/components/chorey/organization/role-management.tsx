@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/contexts/user/auth-context';
@@ -10,9 +9,10 @@ import type { Organization, Permission } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { CreateEditRoleDialog } from './create-edit-role-dialog';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 export function RoleManagement() {
-    const { currentOrganization } = useAuth();
+    const { currentOrganization } = useOrganization();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<{ id: string, name: string, permissions: Permission[] } | null>(null);
 
