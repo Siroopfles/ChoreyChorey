@@ -1,7 +1,7 @@
 
 'use server';
 
-import { storage } from '@/lib/firebase';
+import { storage } from '@/lib/core/firebase';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 
 export async function uploadAttachmentFromDataUrl(

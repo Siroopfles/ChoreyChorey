@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent that predicts the completion date of a task.
@@ -7,7 +8,7 @@ import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { PredictTaskCompletionInputSchema, PredictTaskCompletionOutputSchema } from '@/ai/schemas';
 import type { PredictTaskCompletionInput, PredictTaskCompletionOutput } from '@/ai/schemas';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { z } from 'genkit';
 import type { Task } from '@/lib/types';
