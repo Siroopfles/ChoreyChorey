@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { useDebounce } from '@/hooks/use-debounce';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import type { Task } from '@/lib/types';

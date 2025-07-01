@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { usePresence } from '@/contexts/presence-context';
+import { usePresence } from '@/contexts/communication/presence-context';
 
 const Cursor = ({ x, y, name, color }: { x: number; y: number; name: string; color: string }) => {
   return (
