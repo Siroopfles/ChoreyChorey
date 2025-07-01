@@ -5,9 +5,9 @@ import type { Task, User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star, Eye } from 'lucide-react';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { useState } from 'react';
-import EditTaskDialog from './edit-task-dialog';
+import EditTaskDialog from '@/components/chorey/dialogs/edit-task-dialog';
 
 type ChoreOfTheWeekCardProps = {
   task: Task;
@@ -46,7 +46,6 @@ export function ChoreOfTheWeekCard({ task, users }: ChoreOfTheWeekCardProps) {
             isOpen={isEditDialogOpen}
             setIsOpen={setIsEditDialogOpen}
             task={task}
-            users={users}
         />
       )}
     </>
