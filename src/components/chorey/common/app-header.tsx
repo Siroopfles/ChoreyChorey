@@ -35,7 +35,6 @@ import { statusStyles } from '@/lib/types';
 import { CreateOrganizationDialog } from '../organization/create-organization-dialog';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user/member.actions';
 import { MobileCommandDialog } from '../dialogs/mobile-command-dialog';
-import CommandBar from './command-bar';
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();

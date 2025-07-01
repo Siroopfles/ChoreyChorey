@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -39,6 +40,8 @@ export default function CommandBar() {
             recognition.onresult = (event: any) => {
                 const transcript = event.results[0][0].transcript;
                 setCommand(transcript);
+                // Automatically submit after voice input
+                handleSubmit(transcript);
             };
 
             recognition.onerror = (event: any) => {
@@ -57,14 +60,19 @@ export default function CommandBar() {
         }
     }, [toast]);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!command.trim() || !user || !currentOrganization) return;
+    const handleSubmit = async (commandText: string | React.FormEvent<HTMLFormElement>) => {
+        if (typeof commandText === 'object') {
+            commandText.preventDefault();
+        }
+        
+        const finalCommand = typeof commandText === 'string' ? commandText : command;
+
+        if (!finalCommand.trim() || !user || !currentOrganization) return;
 
         setIsLoading(true);
 
         try {
-            const result = await processCommand({ command, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
+            const result = await processCommand({ command: finalCommand, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
             toast({
                 title: 'AI Assistent',
                 description: result,
@@ -112,7 +120,7 @@ export default function CommandBar() {
             <Input
                 type="search"
                 placeholder="Zoek, maak of wijzig een taak..."
-                className="pl-8 pr-10 w-full bg-sidebar-accent border-sidebar-border"
+                className="pl-8 pr-10 w-full bg-sidebar-accent border-sidebar-border focus-visible:ring-sidebar-ring"
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 disabled={isLoading || !user || !currentOrganization}
@@ -123,7 +131,7 @@ export default function CommandBar() {
                 variant="ghost"
                 onClick={toggleListening}
                 disabled={isLoading}
-                className={cn("absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7", isListening && "text-destructive")}
+                className={cn("absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7", isListening && "text-destructive animate-pulse")}
             >
                 <Mic className="h-4 w-4" />
                 <span className="sr-only">Spraakherkenning</span>
