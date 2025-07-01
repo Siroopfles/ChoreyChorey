@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ShieldAlert, User, Heart, AlertTriangle, CheckCircle, Activity, Lightbulb } from 'lucide-react';
-import { predictBurnoutRisk } from '@/ai/flows/predict-burnout-risk-flow';
+import { predictBurnoutRisk } from '@/ai/flows/risk-prediction/predict-burnout-risk-flow';
 import type { PredictBurnoutRiskOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,7 +30,11 @@ export default function TeamHealthPage() {
         setError('');
 
         try {
-            const riskResult = await predictBurnoutRisk(selectedUser.id, selectedUser.name, currentOrganization.id);
+            const riskResult = await predictBurnoutRisk({
+              userId: selectedUser.id,
+              userName: selectedUser.name,
+              organizationId: currentOrganization.id
+            });
             setResult(riskResult);
         } catch (e: any) {
             setError(e.message);
