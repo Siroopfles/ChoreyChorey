@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -132,7 +131,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   
   const navigateToUserProfile = (userId: string) => {
-    router.push(`/dashboard/profile/${userId}`);
+    router.push(`/dashboard/user-settings/profile/${userId}`);
   };
 
   const handleError = (error: any, context: string, retryAction?: () => void) => {

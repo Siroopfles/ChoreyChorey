@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormControl } from '@/components/ui/form';
 import { Label as UiLabel } from '@/components/ui/label';
@@ -10,10 +10,10 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Loader2, Bot, PlusCircle, Trash2, CornerUpRight, ClipboardList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { suggestSubtasks } from '@/ai/flows/suggest-subtasks';
+import { suggestSubtasks } from '@/ai/flows/assistance-suggestion/suggest-subtasks';
 import { useState } from 'react';
 import type { Task, Subtask } from '@/lib/types';
-import { useChecklists } from '@/contexts/checklist-context';
+import { useChecklists } from '@/contexts/feature/checklist-context';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
