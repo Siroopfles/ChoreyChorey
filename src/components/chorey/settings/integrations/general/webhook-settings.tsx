@@ -1,8 +1,9 @@
+
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useOrganization } from '@/contexts/organization-context';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import type { Webhook, WebhookEvent } from '@/lib/types';
 import { WEBHOOK_EVENTS } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +14,7 @@ import { Loader2, Plus, Webhook as WebhookIcon, MoreVertical, Edit, Trash2, Glob
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { manageWebhook, regenerateWebhookSecret } from '@/app/actions/webhook.actions';
+import { manageWebhook, regenerateWebhookSecret } from '@/app/actions/core/webhook.actions';
 import { WebhookDialog } from './webhook-dialog';
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -46,7 +47,7 @@ export default function WebhookSettings() {
     const result = await regenerateWebhookSecret(secretDialog.webhook.id, user.id);
      if (result.error) {
       toast({ title: "Fout bij genereren", description: result.error, variant: 'destructive' });
-    } else {
+    } else if (result.newSecret){
       setSecretDialog(prev => ({...prev, secret: result.newSecret}));
       toast({ title: "Nieuw geheim gegenereerd!" });
     }

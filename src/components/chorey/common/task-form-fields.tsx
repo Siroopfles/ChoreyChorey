@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, Project, Task, SuggestProactiveHelpOutput } from '@/lib/types';
@@ -7,16 +8,16 @@ import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Loader2, Bot, X } from 'lucide-react';
-import { findDuplicateTask } from '@/ai/flows/find-duplicate-task-flow';
-import { suggestProactiveHelp } from '@/ai/flows/suggest-proactive-help-flow';
+import { findDuplicateTask } from '@/ai/flows/task-management/find-duplicate-task-flow';
+import { suggestProactiveHelp } from '@/ai/flows/assistance-suggestion/suggest-proactive-help-flow';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import type { FindDuplicateTaskOutput } from '@/ai/schemas';
 import { useDebounce } from '@/hooks/use-debounce';
 import { TaskFormDetails } from './task-form/TaskFormDetails';
 import { TaskFormSubtasks } from './task-form/TaskFormSubtasks';
 import { TaskFormAdvanced } from './task-form/TaskFormAdvanced';
-import { AIFeedback } from './ai-feedback';
+import { AIFeedback } from '../common/ai-feedback';
 import { CustomFieldDefinition } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 

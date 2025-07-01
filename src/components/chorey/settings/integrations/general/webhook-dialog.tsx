@@ -1,11 +1,10 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
@@ -16,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2 } from 'lucide-react';
 import type { Webhook, WebhookFormValues } from '@/lib/types';
 import { webhookFormSchema, WEBHOOK_EVENTS } from '@/lib/types';
-import { manageWebhook } from '@/app/actions/webhook.actions';
+import { manageWebhook } from '@/app/actions/core/webhook.actions';
 
 interface WebhookDialogProps {
   isOpen: boolean;

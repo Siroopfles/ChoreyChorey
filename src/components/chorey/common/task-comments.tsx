@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, Task as TaskType, Comment as CommentType, Subtask } from '@/lib/types';
@@ -12,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { RichTextEditor } from '../ui/rich-text-editor';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/user/auth-context';
@@ -20,7 +21,7 @@ import { useNotifications } from '@/contexts/communication/notification-context'
 import { updateTypingStatusAction } from '@/app/actions/project/task.actions';
 import { useTasks } from '@/contexts/feature/task-context';
 import { cn } from '@/lib/utils/utils';
-import { Badge } from '../ui/badge';
+import { Badge } from '@/components/ui/badge';
 
 const EMOJI_LIST = ['👍', '❤️', '😂', '🎉', '🤔', '🙏'];
 

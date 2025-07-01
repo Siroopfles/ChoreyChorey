@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Check, Plus } from 'lucide-react';
@@ -27,8 +27,8 @@ export function RoleManagement() {
     const permissionKeys = Object.values(PERMISSIONS);
 
     const handleEditRole = (roleId: string) => {
-        if (DEFAULT_ROLES[roleId]) return; // Don't allow editing default roles
-        const role = allRoles[roleId];
+        if (DEFAULT_ROLES[roleId as keyof typeof DEFAULT_ROLES]) return; // Don't allow editing default roles
+        const role = allRoles[roleId as keyof typeof allRoles];
         setEditingRole({ id: roleId, ...role });
         setDialogOpen(true);
     };
@@ -61,10 +61,10 @@ export function RoleManagement() {
                                         <TableHead key={roleKey} className="text-center">
                                             <button 
                                                 onClick={() => handleEditRole(roleKey)}
-                                                disabled={!!DEFAULT_ROLES[roleKey]}
+                                                disabled={!!DEFAULT_ROLES[roleKey as keyof typeof DEFAULT_ROLES]}
                                                 className="font-semibold disabled:cursor-not-allowed disabled:opacity-70 hover:underline"
                                             >
-                                                {allRoles[roleKey].name}
+                                                {allRoles[roleKey as keyof typeof allRoles].name}
                                             </button>
                                         </TableHead>
                                     ))}
@@ -79,7 +79,7 @@ export function RoleManagement() {
                                         </TableCell>
                                         {roleKeys.map(roleKey => (
                                             <TableCell key={`${permissionKey}-${roleKey}`} className="text-center">
-                                                {allRoles[roleKey].permissions.includes(permissionKey) && (
+                                                {allRoles[roleKey as keyof typeof allRoles].permissions.includes(permissionKey) && (
                                                     <div className="flex justify-center">
                                                         <Check className="h-5 w-5 text-green-500" />
                                                     </div>

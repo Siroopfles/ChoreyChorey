@@ -2,13 +2,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Palette, Sparkles, Store, Check, Coins, Type, Droplets, Milestone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { purchaseCosmeticItem } from '@/app/actions/user.actions';
+import { cn } from '@/lib/utils/utils';
+import { purchaseCosmeticItem } from '@/app/actions/user/user.actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,7 +99,7 @@ export default function ShopPage() {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {THEMES.map((theme) => {
                 const isOwned = currentCosmetic.primaryColor === theme.primary;
-                const canAfford = user.points >= theme.cost;
+                const canAfford = (user.points || 0) >= theme.cost;
                 const purchaseKey = JSON.stringify({ primaryColor: theme.primary });
                 return (
                     <AlertDialog key={theme.name}>
@@ -149,7 +149,7 @@ export default function ShopPage() {
               <CardContent className="space-y-4">
                   {FONTS.map(font => {
                       const isOwned = currentCosmetic.font === font.id;
-                      const canAfford = user.points >= font.cost;
+                      const canAfford = (user.points || 0) >= font.cost;
                       const purchaseKey = JSON.stringify({ font: font.id });
                       return (
                           <AlertDialog key={font.id}>
@@ -184,7 +184,7 @@ export default function ShopPage() {
               <CardContent className="space-y-4">
                    {RADII.map(radius => {
                       const isOwned = currentCosmetic.radius === radius.id;
-                      const canAfford = user.points >= radius.cost;
+                      const canAfford = (user.points || 0) >= radius.cost;
                       const purchaseKey = JSON.stringify({ radius: radius.id });
                       return (
                           <AlertDialog key={radius.id}>

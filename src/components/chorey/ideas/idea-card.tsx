@@ -2,8 +2,8 @@
 'use client';
 
 import type { Idea, Permission } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
-import { useIdeas } from '@/contexts/idea-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useIdeas } from '@/contexts/feature/idea-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

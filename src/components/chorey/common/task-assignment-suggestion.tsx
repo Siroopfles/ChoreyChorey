@@ -1,15 +1,16 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { suggestTaskAssignee } from '@/ai/flows/suggest-task-assignee';
+import { suggestTaskAssignee } from '@/ai/flows/assistance-suggestion/suggest-task-assignee';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import type { SuggestTaskAssigneeOutput } from '@/ai/schemas';
-import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { AIFeedback } from './ai-feedback';
 
 export function TaskAssignmentSuggestion() {
