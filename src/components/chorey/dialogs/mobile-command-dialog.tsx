@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -5,10 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Mic, Send } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { processCommand } from '@/ai/flows/process-command';
-import { cn } from '@/lib/utils';
+import { processCommand } from '@/ai/flows/core-utility/process-command';
+import { cn } from '@/lib/utils/utils';
 
 declare global {
   interface Window {
