@@ -5,8 +5,8 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Settings, Workflow, Code2, BarChartBig, ArrowRight, Shield, ShieldQuestion } from 'lucide-react';
-import { PERMISSIONS } from '@/lib/types';
 import { useOrganization } from '@/contexts/system/organization-context';
+import { PERMISSIONS } from '@/lib/types';
 
 export default function OrganizationSettingsHubPage() {
     const { currentUserPermissions } = useOrganization();

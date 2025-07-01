@@ -54,7 +54,7 @@ const UserCosmeticStyle = () => {
   const cosmetic = user?.cosmetic;
 
   const fontMap = {
-    'inter': 'var(--font-inter)',
+    'inter': 'var(--font-pt-sans)',
     'source-sans': 'var(--font-source-sans)',
     'roboto-mono': 'var(--font-roboto-mono)',
   }
@@ -85,7 +85,7 @@ const UserCosmeticStyle = () => {
 // The main app shell with sidebar and header
 function AppShell({ children }: { children: React.ReactNode }) {
     const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks } = useTasks();
-    const { updateUserPresence } = useAuth();
+    const { updateUserPresence, user } = useAuth();
     const { currentOrganization } = useOrganization();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -104,11 +104,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
             const taskId = pathname.split('/').pop();
             const task = tasks.find(t => t.id === taskId);
             currentPage = `Focust op: "${task?.title || 'een taak'}"`;
-        } else if (pathname === '/dashboard') {
-            currentPage = 'Op Dashboard';
-        } else {
-            const pageName = pathname.replace('/dashboard/', '').split('/')[0];
+        } else if (pathname.includes('/dashboard')) {
+            const pageName = pathname.split('/').pop() || 'dashboard';
             currentPage = `Op pagina: ${pageName.charAt(0).toUpperCase() + pageName.slice(1)}`;
+        } else {
+             currentPage = `Op pagina: ${pathname.split('/').pop() || 'onbekend'}`;
         }
         
         const presenceUpdate: Partial<UserStatus> = { currentPage };
@@ -177,7 +177,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading, currentOrganization, mfaRequired } = useAuth();
+  const { user, loading, mfaRequired, currentOrganizationId } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -192,7 +192,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     }
     
     if (!user) {
-      const allowedPaths = ['/login', '/signup', '/invite/[inviteId]'];
+      const allowedPaths = ['/login', '/signup', '/invite/[inviteId]', '/public/project/[projectId]'];
       const isAllowed = allowedPaths.some(p => pathname.startsWith(p.replace(/\[.*?\]/, '')))
       if (!isAllowed) {
         router.push('/login');
@@ -200,13 +200,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    if (user && !currentOrganization && !pathname.startsWith('/dashboard/team-organization/organization') && !pathname.startsWith('/invite/') && !pathname.startsWith('/dashboard/focus')) {
+    if (user && !currentOrganizationId && !pathname.startsWith('/dashboard/team-organization/organization') && !pathname.startsWith('/invite/') && !pathname.startsWith('/dashboard/focus')) {
       router.push('/dashboard/team-organization/organization');
     }
 
-  }, [user, loading, currentOrganization, mfaRequired, router, pathname]);
+  }, [user, loading, currentOrganizationId, mfaRequired, router, pathname]);
 
-  if (loading || (!user && !pathname.startsWith('/invite/') && pathname !== '/login/verify')) {
+  if (loading || (!user && !['/login', '/signup', '/invite', '/public/project'].some(p => pathname.startsWith(p)) && pathname !== '/login/verify')) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -222,7 +222,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
   
-  if (pathname.startsWith('/invite/')) {
+  if (['/login', '/signup', '/invite', '/public/project'].some(p => pathname.startsWith(p))) {
       return <>{children}</>;
   }
   
@@ -230,7 +230,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return <>{children}</>;
   }
 
-  if (!currentOrganization && pathname !== '/dashboard/team-organization/organization') {
+  if (!currentOrganizationId && pathname !== '/dashboard/team-organization/organization') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2">
