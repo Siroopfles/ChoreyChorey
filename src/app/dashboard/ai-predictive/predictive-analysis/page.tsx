@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Loader2, BrainCircuit, Bot, AlertTriangle, CheckCircle, TrendingUp, CircleDollarSign, Lightbulb, HeartPulse } from 'lucide-react';
-import { predictProjectOutcome } from '@/ai/flows/predict-project-outcome-flow';
+import { predictProjectOutcome } from '@/ai/flows/risk-prediction/predict-project-outcome-flow';
 import type { PredictProjectOutcomeOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,9 +15,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils/utils';
 import { format } from 'date-fns';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 export default function ProjectHealthPage() {
-    const { projects, currentOrganization, loading } = useAuth();
+    const { projects, loading: orgLoading } = useOrganization();
+    const { currentOrganization, loading: authLoading } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [result, setResult] = useState<PredictProjectOutcomeOutput | null>(null);
@@ -43,7 +45,7 @@ export default function ProjectHealthPage() {
         setIsLoading(false);
     };
 
-    if (loading) {
+    if (authLoading || orgLoading) {
         return (
              <div className="space-y-6">
                 <Skeleton className="h-10 w-1/3" />
