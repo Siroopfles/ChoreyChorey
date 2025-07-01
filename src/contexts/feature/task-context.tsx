@@ -180,7 +180,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         baseQueryConstraints.push(where('id', '==', 'guest-has-no-access'));
       }
     }
-    const tasksQuery = query(collection(db, 'tasks'), ...baseQueryConstraints);
+    const tasksQuery = query(
+        collection(db, 'tasks'), 
+        ...baseQueryConstraints,
+        orderBy('createdAt', 'desc'),
+        limit(200)
+    );
     
     const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
       const tasksData = snapshot.docs
