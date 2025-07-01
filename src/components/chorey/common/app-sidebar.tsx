@@ -110,14 +110,14 @@ export default function AppSidebar() {
     
     const handleProjectClick = (projectId: string) => {
       setFilters({ projectId });
-      router.push('/dashboard/general');
+      router.push('/dashboard/general/dashboard');
     };
 
 
     return (
         <Sidebar collapsible="icon" className="hidden md:flex">
             <SidebarHeader className="p-4 border-b border-sidebar-border">
-                <Link href="/dashboard/general">
+                <Link href="/dashboard/general/dashboard">
                     <h1 className="text-2xl font-bold text-sidebar-primary group-data-[state=collapsed]:hidden">{currentOrganization?.name || 'Chorey'}</h1>
                 </Link>
             </SidebarHeader>
