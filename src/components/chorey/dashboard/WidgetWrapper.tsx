@@ -26,7 +26,7 @@ export function WidgetWrapper({ children, widget }: WidgetWrapperProps) {
     if (!user?.dashboardConfig) return;
 
     const newConfig = user.dashboardConfig.filter(w => w.id !== widget.id);
-    const result = await updateUserDashboard({ dashboardConfig: newConfig });
+    await updateUserDashboard({ dashboardConfig: newConfig });
     
     toast({ title: "Widget verwijderd" });
   };

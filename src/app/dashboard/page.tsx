@@ -13,7 +13,7 @@ import { FileDown, Download, FileText, HandHeart, MoreHorizontal, Group, Briefca
 import TaskColumnsSkeleton from '@/components/chorey/common/task-columns-skeleton';
 import FilterBar from '@/components/chorey/common/filter-bar';
 import { Input } from '@/components/ui/input';
-import type { Task, User, Label, Priority, Project, ActivityFeedItem } from '@/lib/types';
+import type { Task, ActivityFeedItem } from '@/lib/types';
 import ImportTasksDialog from '@/components/chorey/dialogs/import-tasks-dialog';
 import MeetingImportDialog from '@/components/chorey/dialogs/meeting-import-dialog';
 import DashboardView from '@/components/chorey/views/dashboard-view';
@@ -30,7 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, isWithinInterval } from 'date-fns';
+import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils/utils';
 import { ManageDashboardDialog } from '@/components/chorey/dashboard/ManageDashboardDialog';
@@ -38,15 +38,13 @@ import { ManageDashboardDialog } from '@/components/chorey/dashboard/ManageDashb
 export default function DashboardRootPage() {
   const { 
     loading: tasksLoading,
-    setViewedTask, 
     filteredTasks,
     groupedTasks,
     groupBy,
     setGroupBy
   } = useTasks();
   const { searchTerm, setSearchTerm, setDateRange, dateRange } = useFilters();
-  const { user: currentUser } = useAuth();
-  const { teams, currentOrganization, users, projects } = useOrganization();
+  const { users, projects } = useOrganization();
   const [isImporting, setIsImporting] = useState(false);
   const [isMeetingImporting, setIsMeetingImporting] = useState(false);
   const [isDashboardManagerOpen, setIsDashboardManagerOpen] = useState(false);
@@ -54,6 +52,8 @@ export default function DashboardRootPage() {
   const [activityFeedItems, setActivityFeedItems] = useState<ActivityFeedItem[]>([]);
   const [isFeedLoading, setIsFeedLoading] = useState(true);
   const { toast } = useToast();
+  const { currentOrganization } = useAuth();
+
 
   useEffect(() => {
     if (currentOrganization) {
@@ -117,7 +117,7 @@ export default function DashboardRootPage() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      {choreOfTheWeek && <ChoreOfTheWeekCard task={choreOfTheWeek} users={users} />}
+      {choreOfTheWeek && <ChoreOfTheWeekCard task={choreOfTheWeek} />}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <Input
@@ -233,10 +233,10 @@ export default function DashboardRootPage() {
           )}
         </TabsContent>
         <TabsContent value="list" className="flex-1 mt-4 overflow-y-auto">
-          <TaskListView tasks={regularTasks} users={users} />
+          <TaskListView tasks={regularTasks} />
         </TabsContent>
         <TabsContent value="help" className="flex-1 mt-4 overflow-y-auto">
-          <TaskListView tasks={helpNeededTasks} users={users} />
+          <TaskListView tasks={helpNeededTasks} />
         </TabsContent>
         <TabsContent value="dashboard" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<DashboardViewSkeleton />}>
@@ -248,7 +248,7 @@ export default function DashboardRootPage() {
            </Suspense>
         </TabsContent>
         <TabsContent value="calendar" className="flex-1 mt-4 overflow-y-auto">
-          <CalendarView tasks={filteredTasks} users={users} />
+          <CalendarView tasks={filteredTasks} />
         </TabsContent>
         <TabsContent value="gantt" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<GanttViewSkeleton />}>

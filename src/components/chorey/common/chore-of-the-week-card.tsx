@@ -11,10 +11,9 @@ import EditTaskDialog from '@/components/chorey/dialogs/edit-task-dialog';
 
 type ChoreOfTheWeekCardProps = {
   task: Task;
-  users: User[];
 };
 
-export function ChoreOfTheWeekCard({ task, users }: ChoreOfTheWeekCardProps) {
+export function ChoreOfTheWeekCard({ task }: ChoreOfTheWeekCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   return (

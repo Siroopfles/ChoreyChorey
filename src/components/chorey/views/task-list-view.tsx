@@ -13,15 +13,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTasks } from '@/contexts/feature/task-context';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { HandHeart, Loader2 } from 'lucide-react';
 import EditTaskDialog from '@/components/chorey/dialogs/edit-task-dialog';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 
-export default function TaskListView({ tasks, users }: { tasks: Task[], users: User[] }) {
+export default function TaskListView({ tasks }: { tasks: Task[] }) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const { users } = useOrganization();
   
   const handleRowClick = (task: Task) => {
     setEditingTask(task);
@@ -72,7 +74,7 @@ export default function TaskListView({ tasks, users }: { tasks: Task[], users: U
                       <span className="text-muted-foreground">Niemand</span>
                     )}
                   </TableCell>
-                  <TableCell>{task.dueDate ? format(task.dueDate, 'd MMM yyyy', { locale: nl }) : '-'}</TableCell>
+                  <TableCell>{task.dueDate ? format(new Date(task.dueDate), 'd MMM yyyy', { locale: nl }) : '-'}</TableCell>
                 </TableRow>
               );
             })}
@@ -84,7 +86,6 @@ export default function TaskListView({ tasks, users }: { tasks: Task[], users: U
           isOpen={!!editingTask}
           setIsOpen={(isOpen) => { if (!isOpen) setEditingTask(null); }}
           task={editingTask}
-          users={users}
         />
       )}
     </>

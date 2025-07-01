@@ -4,17 +4,18 @@
 import type { ActivityFeedItem, User, Task } from '@/lib/types';
 import { ActivityFeed } from '@/components/chorey/common/activity-feed';
 import ActivityFeedSkeleton from '@/components/chorey/common/activity-feed-skeleton';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 interface ActivityFeedWidgetProps {
     items: ActivityFeedItem[];
-    users: User[];
-    tasks: Task[];
     isLoading: boolean;
-    setViewedTask: (task: Task | null) => void;
-    navigateToUserProfile: (userId: string) => void;
 }
 
-export function ActivityFeedWidget({ items, users, tasks, isLoading, setViewedTask, navigateToUserProfile }: ActivityFeedWidgetProps) {
+export function ActivityFeedWidget({ items, isLoading }: ActivityFeedWidgetProps) {
+    const { users } = useOrganization();
+    const { tasks, setViewedTask, navigateToUserProfile } = useTasks();
+
     if (isLoading) {
         return <ActivityFeedSkeleton />;
     }

@@ -8,18 +8,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { ClipboardList, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 
-export function MyTasksWidget({
-  tasks,
-  currentUser,
-  setViewedTask,
-  config
-}: {
-  tasks: Task[];
-  currentUser: User | null;
-  setViewedTask: (task: Task | null) => void;
-  config: MyTasksWidgetConfig;
-}) {
+export function MyTasksWidget({ config }: { config: MyTasksWidgetConfig }) {
+  const { tasks, setViewedTask } = useTasks();
+  const { user: currentUser } = useAuth();
+    
   const myTasks = useMemo(() => {
     if (!currentUser || !tasks) return [];
     

@@ -8,9 +8,8 @@ import type { Layouts } from 'react-grid-layout';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
 import { useTasks } from '@/contexts/feature/task-context';
-import { useMemo, useCallback, useRef } from 'react';
-import type { Task, User, ActivityFeedItem, WidgetInstance } from '@/lib/types';
-import { WIDGET_TYPES } from '@/lib/types';
+import { useCallback, useRef } from 'react';
+import type { Task, ActivityFeedItem, WidgetInstance } from '@/lib/types';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 
 // Import Widgets
@@ -34,24 +33,10 @@ interface DashboardViewProps {
 export default function DashboardView({ tasks, activityFeedItems, isFeedLoading }: DashboardViewProps) {
   const { user, loading: authLoading, updateUserDashboard } = useAuth();
   const { users, loading: orgLoading } = useOrganization();
-  const { setViewedTask, navigateToUserProfile } = useTasks();
   const layoutChangeTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const { dashboardConfig, layouts } = useMemo(() => {
-      const config = user?.dashboardConfig || [];
-      const defaultLayouts: Layouts = {
-          lg: config.map((widget, index) => ({
-              i: widget.id,
-              x: (index % 3) * 4,
-              y: Math.floor(index / 3) * 2,
-              w: 4, h: 2, minW: 3, minH: 2
-          })),
-      };
-      return {
-          dashboardConfig: config,
-          layouts: user?.dashboardLayout || defaultLayouts,
-      };
-  }, [user]);
+  const dashboardConfig = user?.dashboardConfig || [];
+  const layouts = user?.dashboardLayout;
   
   const handleLayoutChange = useCallback(
     (_currentLayout: any, allLayouts: Layouts) => {
@@ -79,13 +64,13 @@ export default function DashboardView({ tasks, activityFeedItems, isFeedLoading 
         case 'leaderboard':
             return <LeaderboardWidget users={users} config={widget.config} />;
         case 'activityFeed':
-            return <ActivityFeedWidget items={activityFeedItems} users={users} tasks={tasks} isLoading={isFeedLoading} setViewedTask={setViewedTask} navigateToUserProfile={navigateToUserProfile} />;
+            return <ActivityFeedWidget items={activityFeedItems} isLoading={isFeedLoading} />;
         case 'recentActivity':
-            return <RecentActivityWidget tasks={tasks} currentUser={user} setViewedTask={setViewedTask} isLoading={authLoading || orgLoading} />;
+            return <RecentActivityWidget isLoading={authLoading || orgLoading} />;
         case 'welcome':
             return <WelcomeWidget name={user?.name || 'gebruiker'} />;
         case 'myTasks':
-            return <MyTasksWidget tasks={tasks} currentUser={user} setViewedTask={setViewedTask} config={widget.config} />;
+            return <MyTasksWidget config={widget.config} />;
         default:
             return <div>Onbekend widget type: {widget.type}</div>;
     }

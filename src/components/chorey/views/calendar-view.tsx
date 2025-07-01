@@ -11,10 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils/utils';
 import { useTasks } from '@/contexts/feature/task-context';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 type CalendarViewProps = {
   tasks: Task[];
-  users: User[];
 };
 
 const priorityBorderColor: Record<Priority, string> = {
@@ -24,10 +24,11 @@ const priorityBorderColor: Record<Priority, string> = {
   'Laag': 'border-chart-4',
 };
 
-export default function CalendarView({ tasks, users }: CalendarViewProps) {
+export default function CalendarView({ tasks }: CalendarViewProps) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const { navigateToUserProfile } = useTasks();
+  const { users } = useOrganization();
   const isMobile = useIsMobile();
 
   // Set initial date on the client-side to avoid hydration mismatch
@@ -35,11 +36,11 @@ export default function CalendarView({ tasks, users }: CalendarViewProps) {
     setDate(new Date());
   }, []);
 
-  const dueDates = tasks.map((task) => task.dueDate).filter((d): d is Date => !!d);
+  const dueDates = tasks.map((task) => task.dueDate ? new Date(task.dueDate) : undefined).filter((d): d is Date => !!d);
 
   useEffect(() => {
     if (date) {
-      const tasksForDay = tasks.filter(task => task.dueDate && isSameDay(task.dueDate, date));
+      const tasksForDay = tasks.filter(task => task.dueDate && isSameDay(new Date(task.dueDate), date));
       setSelectedTasks(tasksForDay);
     } else {
       setSelectedTasks([]);

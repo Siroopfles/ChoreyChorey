@@ -1,4 +1,5 @@
-import type { Layout } from 'react-grid-layout';
+
+import type { Layouts } from 'react-grid-layout';
 import type { Timestamp } from 'firebase/firestore';
 import type { OrganizationMember } from './organizations';
 import type { WidgetInstance } from './ui';
@@ -32,7 +33,7 @@ export type GlobalUserProfile = {
   microsoftRefreshToken?: string | null;
   togglApiToken?: string;
   clockifyApiToken?: string;
-  dashboardLayout?: Record<string, Layout[]>;
+  dashboardLayout?: Layouts;
   dashboardConfig?: WidgetInstance[];
   bio?: string;
   timezone?: string;

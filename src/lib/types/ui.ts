@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import type { Priority } from './tasks';
 
@@ -26,13 +27,13 @@ export const statusStyles: Record<string, { dot: string; label: string }> = {
 
 // --- Dashboard Widget Types ---
 export const WIDGET_TYPES = {
+  welcome: 'Welkomstbericht',
+  myTasks: 'Mijn Openstaande Taken',
   tasksByStatus: 'Taken per Status',
   tasksByPriority: 'Taken per Prioriteit',
   leaderboard: 'Scorebord',
   activityFeed: 'Recente Activiteit (Organisatie)',
   recentActivity: 'Mijn Recente Activiteit',
-  myTasks: 'Mijn Openstaande Taken',
-  welcome: 'Welkomstbericht',
 } as const;
 
 export type WidgetType = keyof typeof WIDGET_TYPES;
@@ -53,6 +54,16 @@ export const MyTasksWidgetConfigSchema = z.object({
 export type MyTasksWidgetConfig = z.infer<typeof MyTasksWidgetConfigSchema>;
 
 export const NoConfigSchema = z.object({});
+
+export const widgetConfigSchemas = {
+  welcome: NoConfigSchema,
+  myTasks: MyTasksWidgetConfigSchema,
+  tasksByStatus: ChartWidgetConfigSchema,
+  tasksByPriority: ChartWidgetConfigSchema,
+  leaderboard: LeaderboardWidgetConfigSchema,
+  activityFeed: NoConfigSchema,
+  recentActivity: NoConfigSchema,
+} as const;
 
 export const widgetInstanceSchema = z.discriminatedUnion("type", [
   z.object({
