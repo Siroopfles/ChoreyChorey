@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -6,10 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowRight, Loader2, Users } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { reassignTasks } from '@/app/actions/member.actions';
-import { useOrganization } from '@/contexts/organization-context';
+import { reassignTasks } from '@/app/actions/user/member.actions';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 export function ReassignTasksCard() {
     const { user: currentUser } = useAuth();
@@ -38,7 +39,7 @@ export function ReassignTasksCard() {
         if (result.error) {
             toast({ title: 'Fout', description: result.error, variant: 'destructive' });
         } else {
-            toast({ title: 'Succes!', description: result.message });
+            toast({ title: 'Succes!', description: result.data?.message });
             setFromUserId(undefined);
             setToUserId(undefined);
         }
