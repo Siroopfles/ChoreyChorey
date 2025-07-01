@@ -19,9 +19,9 @@ export default function MobileBottomNav() {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     const navItems = [
-        { href: '/dashboard/general', icon: LayoutDashboard, label: 'Dashboard' },
-        { href: '/dashboard/productivity-workflow/my-week', icon: CalendarCheck, label: 'Mijn Week' },
-        { href: '/dashboard/productivity-workflow/inbox', icon: Inbox, label: 'Inbox', badge: unreadCount > 0 ? unreadCount : 0 },
+        { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' },
+        { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox', badge: unreadCount > 0 ? unreadCount : 0 },
     ];
 
     if (!isMobile) {

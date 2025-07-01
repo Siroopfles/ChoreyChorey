@@ -1,2 +1,7 @@
-// DEPRECATED: This file is no longer needed as routes have been flattened.
-export default function DeprecatedPage() { return null; }
+'use client';
+import { redirect } from 'next/navigation';
+
+export default function DeprecatedPage() {
+    redirect('/dashboard/organization');
+    return null;
+}

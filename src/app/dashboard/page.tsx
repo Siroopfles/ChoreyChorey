@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -78,7 +77,7 @@ export default function DashboardRootPage() {
       const teamMatch = filters.teamId ? task.teamId === filters.teamId : true;
       const projectMatch = filters.projectId ? task.projectId === filters.projectId : true;
 
-      const dateMatch = dateRange?.from && dateRange?.to
+      const dateMatch = dateRange?.from && dateRange?.to && task.createdAt
         ? isWithinInterval(task.createdAt, { start: dateRange.from, end: dateRange.to })
         : true;
 
