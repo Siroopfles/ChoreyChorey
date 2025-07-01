@@ -1,13 +1,12 @@
 
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { Search, Loader2, Mic } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { processCommand } from '@/ai/flows/process-command';
+import { processCommand } from '@/ai/flows/core-utility/process-command';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils/utils';
 
