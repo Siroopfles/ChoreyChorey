@@ -1,6 +1,6 @@
 
 'use server';
-import { getTogglWorkspaces as getWorkspaces, getTogglProjects as getProjects } from '@/lib/toggl-service';
+import { getTogglWorkspaces as getWorkspaces, getTogglProjects as getProjects } from '@/lib/integrations/toggl-service';
 import { getApiToken } from '@/lib/utils/user-helpers';
 
 export async function getTogglWorkspaces(userId: string): Promise<{ data: { workspaces: any[] } | null; error: string | null; }> {

@@ -4,7 +4,7 @@
 import { db } from '@/lib/core/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
-import type { User as GlobalUserProfile, OrganizationMember } from '@/lib/types';
+import type { GlobalUserProfile, OrganizationMember } from '@/lib/types';
 import { generateAvatar } from '@/ai/flows/generative-ai/generate-avatar-flow';
 
 export async function endorseSkill(organizationId: string, userId: string, skill: string, endorserId: string) {

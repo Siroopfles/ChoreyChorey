@@ -21,13 +21,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame, Mic, BarChart } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useNotifications } from '@/contexts/communication/notification-context';
-import { useTasks } from '@/contexts/feature/task-context';
+import { useNotifications } from '@/contexts/notification-context';
+import { useTasks } from '@/contexts/task-context';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/user/auth-context';
+import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';

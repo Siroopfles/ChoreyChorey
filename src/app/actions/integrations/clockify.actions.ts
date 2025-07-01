@@ -1,6 +1,6 @@
 
 'use server';
-import { getClockifyWorkspaces as getWorkspaces, getClockifyProjects as getProjects } from '@/lib/clockify-service';
+import { getClockifyWorkspaces as getWorkspaces, getClockifyProjects as getProjects } from '@/lib/integrations/clockify-service';
 import { getApiToken } from '@/lib/utils/user-helpers';
 
 export async function getClockifyWorkspaces(userId: string): Promise<{ data: { workspaces: any[] } | null; error: string | null; }> {

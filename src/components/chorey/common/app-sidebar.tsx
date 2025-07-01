@@ -21,7 +21,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import CommandBar from '@/components/chorey/command-bar';
+import CommandBar from '@/components/chorey/common/command-bar';
 import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart, BrainCircuit, BarChartHorizontal, CircleDollarSign, HeartPulse } from 'lucide-react';
 import { ROLE_GUEST, PERMISSIONS } from '@/lib/types';
 

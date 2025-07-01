@@ -114,22 +114,11 @@ const config: Config = {
       transitionTimingFunction: {
         'linear': 'linear',
       },
-      transitionDuration: {
-        'DEFAULT': 'calc(150ms * var(--animation-speed-modifier, 1))',
-        '75': 'calc(75ms * var(--animation-speed-modifier, 1))',
-        '100': 'calc(100ms * var(--animation-speed-modifier, 1))',
-        '150': 'calc(150ms * var(--animation-speed-modifier, 1))',
-        '200': 'calc(200ms * var(--animation-speed-modifier, 1))',
-        '300': 'calc(300ms * var(--animation-speed-modifier, 1))',
-        '500': 'calc(500ms * var(--animation-speed-modifier, 1))',
-        '700': 'calc(700ms * var(--animation-speed-modifier, 1))',
-        '1000': 'calc(1000ms * var(--animation-speed-modifier, 1))',
-      },
       animation: {
-        'accordion-down': 'accordion-down calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
-        'accordion-up': 'accordion-up calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
-        'in': 'in calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
-        'out': 'out calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'in': 'in 0.2s ease-out',
+        'out': 'out 0.2s ease-out',
       },
       typography: ({ theme }: { theme: (path: string) => string }) => ({
         DEFAULT: {
