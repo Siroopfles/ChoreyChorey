@@ -1,14 +1,14 @@
 'use client';
 
 import type { Poll as PollType, User } from '@/lib/types';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useOrganization } from '@/contexts/organization-context';
+import { cn } from '@/lib/utils/utils';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 interface PollProps {
     taskId: string;
@@ -38,7 +38,7 @@ export function Poll({ taskId, poll }: PollProps) {
 
                     const voterNames = option.voterIds
                         .map(id => users.find(u => u.id === id)?.name)
-                        .filter(Boolean);
+                        .filter(Boolean) as string[];
 
                     return (
                         <div key={option.id} className="space-y-1.5">
