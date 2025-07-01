@@ -1,9 +1,10 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { User, Building, ArrowRight, Plug, Shield, Settings2 } from 'lucide-react';
+import { User, Building, Plug, Shield } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { PERMISSIONS } from '@/lib/types';
 import { useOrganization } from '@/contexts/system/organization-context';
@@ -41,7 +42,7 @@ export default function SettingsPage() {
                     <div className="p-6 pt-0">
                          <Button asChild>
                             <Link href="/dashboard/settings/profile">
-                                Profielinstellingen <ArrowRight className="ml-2 h-4 w-4" />
+                                Profielinstellingen
                             </Link>
                         </Button>
                     </div>
@@ -60,7 +61,7 @@ export default function SettingsPage() {
                     <div className="p-6 pt-0">
                         <Button asChild>
                         <Link href="/dashboard/settings/my-permissions">
-                            Bekijk Mijn Permissies <ArrowRight className="ml-2 h-4 w-4" />
+                            Bekijk Mijn Permissies
                         </Link>
                     </Button>
                     </div>
@@ -80,8 +81,8 @@ export default function SettingsPage() {
                         </CardHeader>
                          <div className="p-6 pt-0">
                             <Button asChild>
-                                <Link href="/dashboard/settings/organization/general">
-                                    Organisatie-instellingen <ArrowRight className="ml-2 h-4 w-4" />
+                                <Link href="/dashboard/settings/organization">
+                                    Organisatie-instellingen
                                 </Link>
                             </Button>
                         </div>
@@ -103,7 +104,7 @@ export default function SettingsPage() {
                          <div className="p-6 pt-0">
                             <Button asChild>
                                 <Link href="/dashboard/settings/integrations">
-                                    Beheer Integraties <ArrowRight className="ml-2 h-4 w-4" />
+                                    Beheer Integraties
                                 </Link>
                             </Button>
                         </div>

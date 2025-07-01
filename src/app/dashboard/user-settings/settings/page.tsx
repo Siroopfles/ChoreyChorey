@@ -2,6 +2,6 @@
 import { redirect } from 'next/navigation';
 
 export default function DeprecatedPage() {
-    redirect('/dashboard/organization');
+    redirect('/dashboard/settings');
     return null;
 }

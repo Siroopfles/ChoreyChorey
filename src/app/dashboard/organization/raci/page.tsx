@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useTasks } from '@/contexts/feature/task-context';
@@ -21,8 +22,8 @@ const raciColors: Record<string, string> = {
 
 export default function RacimatrixPage() {
     const { tasks, loading: tasksLoading } = useTasks();
-    const { currentUserPermissions, loading: authLoading } = useAuth();
-    const { users, loading: orgLoading } = useOrganization();
+    const { loading: authLoading } = useAuth();
+    const { users, currentUserPermissions, loading: orgLoading } = useOrganization();
 
     if (tasksLoading || authLoading || orgLoading) {
         return (

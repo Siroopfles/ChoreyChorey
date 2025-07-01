@@ -3,8 +3,8 @@
 
 import { redirect } from 'next/navigation';
 
-// Redirect /dashboard/general to /dashboard/general/dashboard
+// Redirect /dashboard/general to /dashboard
 export default function GeneralRootPage() {
-    redirect('/dashboard/general/dashboard');
+    redirect('/dashboard');
     return null;
 }

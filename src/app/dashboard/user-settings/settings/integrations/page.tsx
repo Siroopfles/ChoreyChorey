@@ -20,9 +20,11 @@ import TogglOrgSettings from '@/components/chorey/settings/integrations/general/
 import ClockifyOrgSettings from '@/components/chorey/settings/integrations/general/clockify-org-settings';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 export default function IntegrationsPage() {
-  const { user, loading: authLoading, currentOrganization, currentUserPermissions } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { currentOrganization, currentUserPermissions } = useOrganization();
 
   if (authLoading || !user) {
     return (
@@ -47,7 +49,7 @@ export default function IntegrationsPage() {
     <div className="space-y-6">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon">
-                <Link href="/dashboard/user-settings/settings/general">
+                <Link href="/dashboard/settings">
                     <ArrowLeft className="h-4 w-4" />
                     <span className="sr-only">Terug naar Instellingen</span>
                 </Link>
@@ -75,7 +77,7 @@ export default function IntegrationsPage() {
                     <ol className="list-decimal list-inside text-sm space-y-1 pl-2">
                         <li>In Zapier/Make, kies "Webhooks" als de trigger en selecteer "Catch Hook".</li>
                         <li>Kopieer de unieke webhook URL die u krijgt.</li>
-                        <li>Ga naar <Button variant="link" asChild className="p-0 h-auto text-sm"><Link href="/dashboard/settings/organization">Webhook Instellingen</Link></Button> in Chorey.</li>
+                        <li>Ga naar <Button variant="link" asChild className="p-0 h-auto text-sm"><Link href="/dashboard/settings/organization/developer">Webhook Instellingen</Link></Button> in Chorey.</li>
                         <li>Maak een nieuwe webhook aan, plak de URL, en selecteer de gebeurtenissen (bv. "Taak Aangemaakt").</li>
                     </ol>
                 </div>
@@ -85,7 +87,7 @@ export default function IntegrationsPage() {
                      <ol className="list-decimal list-inside text-sm space-y-1 pl-2">
                         <li>In Zapier/Make, kies "Webhooks" als de actie en selecteer "Custom Request" of "POST".</li>
                         <li>Gebruik de Chorey API-documentatie om de juiste URL en data op te geven.</li>
-                        <li>Ga naar <Button variant="link" asChild className="p-0 h-auto text-sm"><Link href="/dashboard/settings/organization">API Sleutel Instellingen</Link></Button> in Chorey.</li>
+                        <li>Ga naar <Button variant="link" asChild className="p-0 h-auto text-sm"><Link href="/dashboard/settings/organization/developer">API Sleutel Instellingen</Link></Button> in Chorey.</li>
                         <li>Genereer een API-sleutel en voeg deze toe in Zapier/Make als een "Authorization" header in de vorm: `Bearer UW_API_SLEUTEL`.</li>
                     </ol>
                 </div>
@@ -165,7 +167,7 @@ export default function IntegrationsPage() {
             </CardHeader>
             <CardContent>
                 <Button asChild>
-                    <Link href="/dashboard/user-settings/settings/bookmarklet">Bekijk Instructies</Link>
+                    <Link href="/dashboard/settings/bookmarklet">Bekijk Instructies</Link>
                 </Button>
             </CardContent>
         </Card>

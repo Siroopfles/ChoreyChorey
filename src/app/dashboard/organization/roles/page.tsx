@@ -1,6 +1,8 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -10,8 +12,9 @@ import { Separator } from '@/components/ui/separator';
 
 export default function RolesAndPermissionsPage() {
     const { currentUserRole, loading: authLoading } = useAuth();
+    const { loading: orgLoading } = useOrganization();
 
-    if (authLoading) {
+    if (authLoading || orgLoading) {
         return (
             <div className="flex h-full w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin" />
