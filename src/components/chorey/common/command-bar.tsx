@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { processCommand } from '@/ai/flows/process-command';
 import { Button } from '../ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 
 // Declare the SpeechRecognition types for browsers that support it
 declare global {

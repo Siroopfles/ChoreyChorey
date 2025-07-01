@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import LandingFooter from "@/components/landing/footer"
 import LandingHeader from "@/components/landing/header"
 import { Check, Smartphone } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/utils"
 import { roadmapPhases } from "@/lib/roadmap"
 
 

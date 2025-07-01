@@ -9,10 +9,10 @@ import type { Task } from '@/lib/types';
 import { Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { TaskComments } from '@/components/chorey/task-comments';
-import { TaskHistory } from '@/components/chorey/task-history';
+import { TaskComments } from '@/components/chorey/common/task-comments';
+import { TaskHistory } from '@/components/chorey/common/task-history';
 import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 
 export default function FocusPage() {
     const { taskId } = useParams();

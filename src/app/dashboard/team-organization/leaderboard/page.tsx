@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import type { User, Team } from '@/lib/types';
-import { calculatePoints } from '@/lib/utils';
+import { calculatePoints } from '@/lib/utils/gamification-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

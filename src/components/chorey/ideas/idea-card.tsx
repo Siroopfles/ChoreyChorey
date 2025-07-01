@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThumbsUp, MessageSquare, MoreVertical, Edit, CheckCircle, Clock, TrendingUp, Lightbulb } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,

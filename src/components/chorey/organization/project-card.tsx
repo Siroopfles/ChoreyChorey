@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -25,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { InviteGuestDialog } from './invite-guest-dialog';
 import { PermissionProtectedButton } from '@/components/ui/permission-protected-button';
 import { ManageProjectAccessDialog } from './manage-project-access-dialog';

@@ -1,18 +1,18 @@
-import { phase1 } from './phase1';
-import { phase2 } from './phase2';
-import { phase3 } from './phase3';
-import { phase4 } from './phase4';
-import { phase5 } from './phase5';
-import { phase6 } from './phase6';
-import { phase7 } from './phase7';
-import { phase8 } from './phase8';
-import { phase9 } from './phase9';
-import { phase10 } from './phase10';
-import { phase11 } from './phase11';
-import { phase12 } from './phase12';
-import { phase13 } from './phase13';
-import { phase14 } from './phase14';
-import { phase15 } from './phase15';
+import { phase1 } from './early-phases/phase1';
+import { phase2 } from './early-phases/phase2';
+import { phase3 } from './early-phases/phase3';
+import { phase4 } from './early-phases/phase4';
+import { phase5 } from './early-phases/phase5';
+import { phase6 } from './mid-phases/phase6';
+import { phase7 } from './mid-phases/phase7';
+import { phase8 } from './mid-phases/phase8';
+import { phase9 } from './mid-phases/phase9';
+import { phase10 } from './mid-phases/phase10';
+import { phase11 } from './late-phases/phase11';
+import { phase12 } from './late-phases/phase12';
+import { phase13 } from './late-phases/phase13';
+import { phase14 } from './late-phases/phase14';
+import { phase15 } from './late-phases/phase15';
 
 export const roadmapPhases = [
   phase1,

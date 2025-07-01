@@ -510,8 +510,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                 isDueToday={isDueToday}
                 isDueSoon={isDueSoon}
                 liveTime={liveTime}
-                blockedByTasks={blockedByTasks}
-                blockingTasks={blockingTasks}
+                blockedByTasks={blockingTasks}
                 relatedTasks={relatedTasks}
             />
         </div>

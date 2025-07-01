@@ -15,7 +15,7 @@ import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTheme } from 'next-themes';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 
 export default function CostAnalysisPage() {
     const { projects, currentOrganization, loading } = useAuth();

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 export function GoogleDocEmbed({ url, className }: { url: string; className?: string }) {
     if (!url.includes('docs.google.com')) {

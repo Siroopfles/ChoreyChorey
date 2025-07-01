@@ -11,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -26,7 +25,7 @@ import { useTasks } from '@/contexts/task-context';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { useAuth } from '@/contexts/auth-context';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

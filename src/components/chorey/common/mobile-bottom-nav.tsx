@@ -4,7 +4,7 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePathname } from "next/navigation";
 import Link from 'next/link';
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { LayoutDashboard, CalendarCheck, Inbox, Plus } from "lucide-react";
 import { Button } from "../ui/button";
 import { useTasks } from "@/contexts/task-context";

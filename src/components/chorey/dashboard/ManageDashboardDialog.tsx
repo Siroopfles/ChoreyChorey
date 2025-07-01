@@ -16,7 +16,7 @@ import { Loader2, Save } from 'lucide-react';
 import type { WidgetInstance, WidgetType } from '@/lib/types';
 import { WIDGET_TYPES, widgetConfigSchemas } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 
 interface ManageDashboardDialogProps {
   open: boolean;

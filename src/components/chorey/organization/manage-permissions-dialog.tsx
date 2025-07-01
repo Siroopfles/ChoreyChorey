@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { updateMemberPermissions } from '@/app/actions/member.actions';
 import { PERMISSIONS, PERMISSIONS_DESCRIPTIONS, type Permission, type User } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { useOrganization } from '@/contexts/organization-context';
 
 // Using a custom SVG for inherit icon

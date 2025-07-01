@@ -27,7 +27,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import AppSidebar from '@/components/chorey/common/app-sidebar';
 import MobileBottomNav from '@/components/chorey/common/mobile-bottom-nav';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import BulkActionBar from '@/components/chorey/common/bulk-action-bar';
 import { FCMProvider } from '@/contexts/communication/fcm-context';
 import { LiveCursors } from '@/components/chorey/common/live-cursors';

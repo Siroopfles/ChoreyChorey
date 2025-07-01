@@ -6,7 +6,7 @@ import type { OrganizationSettings } from '@/lib/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Megaphone, X, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 
 type AnnouncementBannerProps = {
   announcement: NonNullable<OrganizationSettings['announcement']>;
