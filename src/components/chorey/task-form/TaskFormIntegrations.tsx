@@ -1,12 +1,12 @@
 
 'use client';
 
-import { GitHubLinker } from '../github-linker';
-import { GitLabLinker } from '../gitlab-linker';
-import { BitbucketLinker } from '../bitbucket-linker';
-import { JiraLinker } from '../jira-linker';
-import { TogglProjectSelector } from '../toggl-project-selector';
-import { ClockifyProjectSelector } from '../clockify-project-selector';
+import { GitHubLinker } from '@/components/chorey/integrations/github-linker';
+import { GitLabLinker } from '@/components/chorey/integrations/gitlab-linker';
+import { BitbucketLinker } from '@/components/chorey/integrations/bitbucket-linker';
+import { JiraLinker } from '@/components/chorey/integrations/jira-linker';
+import { TogglProjectSelector } from '@/components/chorey/integrations/toggl-project-selector';
+import { ClockifyProjectSelector } from '@/components/chorey/integrations/clockify-project-selector';
 
 export function TaskFormIntegrations() {
     return (

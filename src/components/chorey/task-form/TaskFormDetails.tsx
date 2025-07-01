@@ -14,16 +14,16 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils/utils';
 import { User as UserIcon, Bot, Loader2, Tags, X, Briefcase, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
-import { suggestPriority } from '@/ai/flows/suggest-priority';
+import { suggestStoryPoints } from '@/ai/flows/assistance-suggestion/suggest-story-points';
+import { suggestPriority } from '@/ai/flows/assistance-suggestion/suggest-priority';
 import { suggestLabels } from '@/ai/flows/assistance-suggestion/suggest-labels-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
-import { TaskAssignmentSuggestion } from '../common/task-assignment-suggestion';
+import { TaskAssignmentSuggestion } from '@/components/chorey/common/task-assignment-suggestion';
 import { useOrganization } from '@/contexts/system/organization-context';
 import type { SuggestLabelsOutput } from '@/ai/schemas';
-import { AIFeedback } from '../common/ai-feedback';
+import { AIFeedback } from '@/components/chorey/common/ai-feedback';
 
 type TaskFormDetailsProps = {
   users: User[];
