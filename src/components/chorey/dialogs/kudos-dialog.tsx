@@ -20,8 +20,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
-import { transferPoints } from '@/app/actions/gamification.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { transferPoints } from '@/app/actions/core/gamification.actions';
 import type { User } from '@/lib/types';
 
 export function KudosDialog({
