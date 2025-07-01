@@ -13,8 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
-import { updateOrganization } from '@/app/actions/organization.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { updateOrganization } from '@/app/actions/core/organization.actions';
 import { PERMISSIONS, PERMISSIONS_DESCRIPTIONS } from '@/lib/types';
 import type { Permission } from '@/lib/types';
 
