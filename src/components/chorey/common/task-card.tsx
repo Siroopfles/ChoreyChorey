@@ -1,3 +1,4 @@
+
 'use client';
 import { PERMISSIONS, type Task, type User, type Project, type Subtask, type Comment, type StatusDefinition } from '@/lib/types';
 import { useMemo, useState, useEffect } from 'react';
@@ -513,6 +514,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                 liveTime={liveTime}
                 blockedByTasks={blockingTasks}
                 relatedTasks={relatedTasks}
+                blockedByTasks={blockedByTasks}
             />
         </div>
       </Card>
