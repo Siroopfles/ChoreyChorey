@@ -31,14 +31,14 @@ import { addCommentAction } from '@/app/actions/core/comment.actions';
 import { useNotifications } from '@/contexts/communication/notification-context';
 import { useCall } from '@/contexts/communication/call-context';
 import { LiveDescriptionEditor } from '../common/live-description-editor';
-import { Separator } from '../ui/separator';
+import { Separator } from '@/components/ui/separator';
 import { Poll } from '../common/Poll';
 import { usePresence } from '@/contexts/communication/presence-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TaskQrCodeDialog } from './TaskQrCodeDialog';
 import Link from 'next/link';
-import { predictTaskCompletion } from '@/ai/flows/predict-task-completion-flow';
+import { predictTaskCompletion } from '@/ai/flows/risk-prediction/predict-task-completion-flow';
 import type { PredictTaskCompletionOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
@@ -350,3 +350,5 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
     </Dialog>
   );
 }
+
+    
