@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import type { PersonalGoal } from '@/lib/types';
-import { useGoals } from '@/contexts/goal-context';
+import { useGoals } from '@/contexts/feature/goal-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';

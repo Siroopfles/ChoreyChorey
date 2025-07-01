@@ -1,11 +1,12 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { PersonalGoal, PersonalGoalFormValues } from '@/lib/types';
 import { personalGoalFormSchema } from '@/lib/types';
-import { useGoals } from '@/contexts/goal-context';
+import { useGoals } from '@/contexts/feature/goal-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -15,7 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Save, PlusCircle, Trash2, Calendar as CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { format } from 'date-fns';
 
 interface GoalDialogProps {
