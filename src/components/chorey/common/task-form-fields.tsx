@@ -10,16 +10,16 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Bot, X } from 'lucide-react';
 import { findDuplicateTask } from '@/ai/flows/task-management/find-duplicate-task-flow';
 import { suggestProactiveHelp } from '@/ai/flows/assistance-suggestion/suggest-proactive-help-flow';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/user/auth-context';
 import type { FindDuplicateTaskOutput } from '@/ai/schemas';
 import { useDebounce } from '@/hooks/use-debounce';
-import { TaskFormDetails } from './task-form/TaskFormDetails';
-import { TaskFormSubtasks } from './task-form/TaskFormSubtasks';
-import { TaskFormAdvanced } from './task-form/TaskFormAdvanced';
-import { AIFeedback } from '../common/ai-feedback';
-import { CustomFieldDefinition } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { TaskFormDetails } from '@/components/chorey/task-form/TaskFormDetails';
+import { TaskFormSubtasks } from '@/components/chorey/task-form/TaskFormSubtasks';
+import { TaskFormAdvanced } from '@/components/chorey/task-form/TaskFormAdvanced';
+import { AIFeedback } from '@/components/chorey/common/ai-feedback';
+import type { CustomFieldDefinition } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type TaskFormFieldsProps = {
   users: User[];

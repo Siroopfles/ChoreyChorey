@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { User, TaskFormValues, Task, Label, Project } from '@/lib/types';
@@ -25,7 +24,7 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { TaskFormFields } from '../task-form/TaskFormFields';
+import { TaskFormFields } from '@/components/chorey/common/task-form-fields';
 import { TaskComments } from '../common/task-comments';
 import { TaskHistory } from '../common/task-history';
 import { addCommentAction } from '@/app/actions/core/comment.actions';

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { User, TaskFormValues, TaskTemplateFormValues } from '@/lib/types';
@@ -19,10 +18,10 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { useTasks } from '@/contexts/task-context';
-import { useOrganization } from '@/contexts/organization-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TaskFormFields } from './task-form-fields';
+import { TaskFormFields } from '@/components/chorey/common/task-form-fields';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
@@ -56,7 +55,7 @@ export default function AddTaskDialog({ template, open, onOpenChange }: AddTaskD
     assigneeIds: [],
     projectId: undefined,
     dueDate: undefined,
-    imageDataUri: undefined,
+    imageUrl: undefined,
   }), [defaultPriority]);
 
   const form = useForm<TaskFormValues>({
@@ -98,7 +97,7 @@ export default function AddTaskDialog({ template, open, onOpenChange }: AddTaskD
           description: template.description,
           priority: template.priority,
           labels: template.labels,
-          subtasks: template.subtasks,
+          subtasks: template.subtasks.map(s => ({text: s.text, isPrivate: false})),
           storyPoints: template.storyPoints,
           recurring: template.recurring,
           attachments: template.attachments,

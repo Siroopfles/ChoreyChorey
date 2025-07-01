@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { submitAiFeedback } from '@/app/actions/feedback.actions';
+import { submitAiFeedback } from '@/app/actions/core/feedback.actions';
 
 interface AIFeedbackProps {
   flowName: string;
