@@ -16,12 +16,12 @@ import { User as UserIcon, Bot, Loader2, Tags, X, Briefcase, Lightbulb } from 'l
 import { useToast } from '@/hooks/use-toast';
 import { suggestStoryPoints } from '@/ai/flows/suggest-story-points';
 import { suggestPriority } from '@/ai/flows/suggest-priority';
-import { suggestLabels } from '@/ai/flows/suggest-labels-flow';
+import { suggestLabels } from '@/ai/flows/assistance-suggestion/suggest-labels-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TaskAssignmentSuggestion } from '../common/task-assignment-suggestion';
-import { useOrganization } from '@/contexts/organization-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import type { SuggestLabelsOutput } from '@/ai/schemas';
 import { AIFeedback } from '../common/ai-feedback';
 

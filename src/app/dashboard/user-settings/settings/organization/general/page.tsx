@@ -1,13 +1,13 @@
 
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Settings, Workflow, Code2, BarChartBig, ArrowRight, Shield, ShieldQuestion } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { PERMISSIONS } from '@/lib/types';
-import { useOrganization } from '@/contexts/organization-context';
 
 export default function OrganizationSettingsHubPage() {
     const { currentUserPermissions } = useOrganization();

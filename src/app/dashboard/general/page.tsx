@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -73,15 +74,16 @@ export default function DashboardPage() {
         : true;
 
       const assigneeMatch = filters.assigneeId ? task.assigneeIds.includes(filters.assigneeId) : true;
-      const labelMatch = filters.labels.length > 0 ? task.labels.every(label => task.labels.includes(label as Label)) : true;
+      const labelMatch = filters.labels.length > 0 ? (task.labels || []).some(label => filters.labels.includes(label)) : true;
       const priorityMatch = filters.priority ? task.priority === filters.priority : true;
       const teamMatch = filters.teamId ? task.teamId === filters.teamId : true;
+      const projectMatch = filters.projectId ? task.projectId === filters.projectId : true;
 
       const dateMatch = dateRange?.from && dateRange?.to
         ? isWithinInterval(task.createdAt, { start: dateRange.from, end: dateRange.to })
         : true;
 
-      return searchTermMatch && assigneeMatch && labelMatch && priorityMatch && teamMatch && dateMatch;
+      return searchTermMatch && assigneeMatch && labelMatch && priorityMatch && teamMatch && projectMatch && dateMatch;
     });
   }, [tasks, searchTerm, filters, dateRange]);
 
@@ -150,7 +152,7 @@ export default function DashboardPage() {
             Omschrijving: task.description,
             Status: task.status,
             Prioriteit: task.priority,
-            Labels: task.labels.join(', '),
+            Labels: (task.labels || []).join(', '),
             ToegewezenAan: assignees.join(', ') || 'N/A',
             Einddatum: task.dueDate ? task.dueDate.toISOString().split('T')[0] : 'N/A',
             Aanmaakdatum: task.createdAt.toISOString().split('T')[0],
@@ -312,7 +314,7 @@ export default function DashboardPage() {
            </Suspense>
         </TabsContent>
         <TabsContent value="calendar" className="flex-1 mt-4 overflow-y-auto">
-          <CalendarView tasks={filteredTasks} users={users} />
+          <CalendarView tasks={filteredTasks} />
         </TabsContent>
         <TabsContent value="gantt" className="flex-1 mt-4 overflow-y-auto">
            <Suspense fallback={<GanttViewSkeleton />}>

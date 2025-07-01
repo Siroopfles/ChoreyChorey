@@ -1,8 +1,25 @@
 
 'use client';
 
-import type { User, Project, Task } from '@/lib/types';
+import type { User, Project, Task, SuggestProactiveHelpOutput } from '@/lib/types';
+import { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { Button } from '@/components/ui/button';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Loader2, Bot, X } from 'lucide-react';
+import { findDuplicateTask } from '@/ai/flows/find-duplicate-task-flow';
+import { suggestProactiveHelp } from '@/ai/flows/suggest-proactive-help-flow';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { useAuth } from '@/contexts/user/auth-context';
+import type { FindDuplicateTaskOutput } from '@/ai/schemas';
+import { useDebounce } from '@/hooks/use-debounce';
+import { TaskFormDetails } from './TaskFormDetails';
+import { TaskFormSubtasks } from './TaskFormSubtasks';
+import { TaskFormAdvanced } from './TaskFormAdvanced';
+import { AIFeedback } from '../common/ai-feedback';
+import { CustomFieldDefinition } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { TaskFormScheduling } from './TaskFormScheduling';
 import { TaskFormRelations } from './TaskFormRelations';
@@ -10,17 +27,13 @@ import { TaskFormAttachments } from './TaskFormAttachments';
 import { TaskFormIntegrations } from './TaskFormIntegrations';
 import { TaskFormSettings } from './TaskFormSettings';
 import { TaskFormRaci } from './TaskFormRaci';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useOrganization } from '@/contexts/organization-context';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TaskFormPoll } from './TaskFormPoll';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 
 type TaskFormAdvancedProps = {

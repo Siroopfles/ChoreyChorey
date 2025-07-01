@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -19,8 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTasks } from '@/contexts/task-context';
-import { useOrganization } from '@/contexts/organization-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import type { Task, User } from '@/lib/types';
 
 const handoffSchema = z.object({

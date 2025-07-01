@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -51,7 +52,7 @@ export default function OrganizationPage() {
                         <PermissionProtectedButton
                             requiredPermission={PERMISSIONS.VIEW_AUDIT_LOG}
                             variant="outline"
-                            href="/dashboard/organization/raci"
+                            href="/dashboard/team-organization/organization/raci"
                             manualDisableCondition={!showRaci}
                             manualDisableTooltip="De RACI Matrix feature is uitgeschakeld voor deze organisatie."
                         >
@@ -61,7 +62,7 @@ export default function OrganizationPage() {
                         <PermissionProtectedButton
                             requiredPermission={PERMISSIONS.MANAGE_ROLES}
                             variant="outline"
-                            href="/dashboard/organization/roles"
+                            href="/dashboard/team-organization/organization/roles"
                         >
                             <Shield className="mr-2 h-4 w-4" /> Rollen & Permissies
                         </PermissionProtectedButton>

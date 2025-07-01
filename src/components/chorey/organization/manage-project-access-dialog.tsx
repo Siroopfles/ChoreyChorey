@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useOrganization } from '@/contexts/organization-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -87,7 +88,7 @@ export function ManageProjectAccessDialog({ open, onOpenChange, project }: Manag
                                             {isLoading[member.id] && <Loader2 className="h-4 w-4 animate-spin" />}
                                             <Select
                                                 value={projectRole || 'inherit'}
-                                                onValueChange={(value) => handleRoleChange(member.id, value)}
+                                                onValueChange={(value) => handleRoleChange(member.id, value as RoleName)}
                                                 disabled={isLoading[member.id]}
                                             >
                                                 <SelectTrigger className="w-[200px]">

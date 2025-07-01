@@ -1,14 +1,13 @@
 
-
 'use client';
 
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useOrganization } from '@/contexts/organization-context';
-import { useTasks } from '@/contexts/task-context';
-import { useFilters } from '@/contexts/filter-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useFilters } from '@/contexts/system/filter-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import {
   Sidebar,
   SidebarHeader,

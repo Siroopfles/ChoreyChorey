@@ -19,22 +19,22 @@ import {
 import { Form } from '@/components/ui/form';
 import { MessageSquare, History, ClipboardCopy, Phone, PhoneOff, PenSquare, QrCode, BrainCircuit, Bot, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTasks } from '@/contexts/task-context';
-import { useOrganization } from '@/contexts/organization-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { TaskFormFields } from './task-form-fields';
-import { TaskComments } from './task-comments';
-import { TaskHistory } from './task-history';
-import { addCommentAction } from '@/app/actions/comment.actions';
-import { useNotifications } from '@/contexts/notification-context';
-import { useCall } from '@/contexts/call-context';
-import { LiveDescriptionEditor } from './live-description-editor';
+import { TaskFormFields } from '../task-form/TaskFormFields';
+import { TaskComments } from '../common/task-comments';
+import { TaskHistory } from '../common/task-history';
+import { addCommentAction } from '@/app/actions/core/comment.actions';
+import { useNotifications } from '@/contexts/communication/notification-context';
+import { useCall } from '@/contexts/communication/call-context';
+import { LiveDescriptionEditor } from '../common/live-description-editor';
 import { Separator } from '../ui/separator';
-import { Poll } from './Poll';
-import { usePresence } from '@/contexts/presence-context';
+import { Poll } from '../common/Poll';
+import { usePresence } from '@/contexts/communication/presence-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TaskQrCodeDialog } from './TaskQrCodeDialog';
@@ -91,7 +91,6 @@ const LiveViewers = ({ taskId }: { taskId: string }) => {
 
 
 type EditTaskDialogProps = {
-  users: User[];
   task: Task;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -126,8 +125,8 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
         dueDate: task.dueDate,
         priority: task.priority,
         labels: task.labels,
-        subtasks: task.subtasks.map(({id, ...rest}) => rest),
-        attachments: task.attachments.map(({id, type, ...rest}) => rest),
+        subtasks: (task.subtasks || []).map(({id, ...rest}) => rest),
+        attachments: (task.attachments || []).map(({id, type, ...rest}) => rest),
         isPrivate: task.isPrivate,
         isSensitive: task.isSensitive,
         helpNeeded: task.helpNeeded,
@@ -155,17 +154,17 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
 
 
   function onSubmit(data: Omit<TaskFormValues, 'description'>) {
-    const updatedSubtasks = data.subtasks?.map((sub, index) => ({
+    const updatedSubtasks = (data.subtasks || []).map((sub, index) => ({
         ...sub,
         id: task.subtasks[index]?.id || crypto.randomUUID(),
         completed: task.subtasks[index]?.completed || false,
-    })) || [];
+    }));
     
-    const updatedAttachments = data.attachments?.map((att, index) => ({
+    const updatedAttachments = (data.attachments || []).map((att, index) => ({
         ...att,
         id: task.attachments[index]?.id || crypto.randomUUID(),
         type: 'file' as const,
-    })) || [];
+    }));
 
     updateTask(task.id, {
         ...data,

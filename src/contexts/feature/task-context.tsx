@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -21,7 +22,7 @@ import {
   getDocs,
   orderBy
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
@@ -109,7 +110,9 @@ const processTaskDoc = (doc: any, projects: Project[], canViewSensitive: boolean
     }
     
     // Filter private subtasks
-    task.subtasks = task.subtasks.filter(st => !st.isPrivate || task.assigneeIds.includes(user.id) || task.creatorId === user.id);
+    if(task.subtasks) {
+      task.subtasks = task.subtasks.filter(st => !st.isPrivate || task.assigneeIds.includes(user.id) || task.creatorId === user.id);
+    }
     
     return task;
 }

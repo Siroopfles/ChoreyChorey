@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Loader2, GitGraph, CalendarIcon, Bot, BarChart } from 'lucide-react';
 import { levelWorkload } from '@/ai/flows/level-workload-flow';
-import { getWorkloadData, type GetWorkloadDataOutput } from '@/app/actions/workload.actions';
+import { getWorkloadData, type GetWorkloadDataOutput } from '@/app/actions/project/workload.actions';
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
 import { nl } from 'date-fns/locale';

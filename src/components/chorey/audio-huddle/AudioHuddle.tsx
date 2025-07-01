@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useEffect } from 'react';
-import { useCall } from '@/contexts/call-context';
+import { useCall } from '@/contexts/communication/call-context';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

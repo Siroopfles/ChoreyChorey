@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -14,7 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Loader2, BarChartHorizontal, TrendingUp } from 'lucide-react';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils/utils';
-import { getTeamVelocityData, type VelocityDataPoint } from '@/app/actions/analytics.actions';
+import { getTeamVelocityData, type VelocityDataPoint } from '@/app/actions/core/analytics.actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
