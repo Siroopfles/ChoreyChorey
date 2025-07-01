@@ -1,4 +1,30 @@
+import { PT_Sans, Roboto_Mono } from 'next/font/google';
+import { cn } from '@/lib/utils/utils';
+import { AuthProvider } from '@/contexts/user/auth-context';
+import { ThemeProvider } from '@/components/core/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
 import '@/app/globals.css';
+import { DebugProvider } from '@/contexts/system/debug-context';
+import { UIPreferencesProvider } from '@/contexts/user/ui-preferences-context';
+
+const ptSans = PT_Sans({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-pt-sans',
+  display: 'swap',
+});
+
+const robotoMono = Roboto_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-code',
+  display: 'swap',
+})
+
+export const metadata = {
+  title: 'Chorey',
+  description: 'The intelligent task management system to streamline your workflows.',
+}
 
 export default function RootLayout({
   children,
@@ -6,8 +32,28 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={cn(
+        'min-h-screen bg-background font-sans antialiased', 
+        ptSans.variable, 
+        robotoMono.variable
+      )}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <DebugProvider>
+            <UIPreferencesProvider>
+              <AuthProvider>
+                {children}
+                <Toaster />
+              </AuthProvider>
+            </UIPreferencesProvider>
+          </DebugProvider>
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
