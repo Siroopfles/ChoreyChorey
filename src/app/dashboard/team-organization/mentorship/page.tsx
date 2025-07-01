@@ -4,6 +4,7 @@
 import { useMemo } from 'react';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useTasks } from '@/contexts/feature/task-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import type { User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -31,7 +32,7 @@ function UserCard({ user, completedTasks, onSelect }: { user: User; completedTas
                 <div className="flex justify-around text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                         <Trophy className="h-4 w-4 text-amber-500" />
-                        <span>{user.points.toLocaleString()} punten</span>
+                        <span>{(user.points || 0).toLocaleString()} punten</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -54,28 +55,31 @@ function UserCard({ user, completedTasks, onSelect }: { user: User; completedTas
 
 
 export default function MentorshipPage() {
-    const { users, loading: authLoading } = useAuth();
+    const { loading: authLoading } = useAuth();
+    const { users, loading: orgLoading } = useOrganization();
     const { tasks, loading: tasksLoading, navigateToUserProfile } = useTasks();
 
     const { mentors, mentees } = useMemo(() => {
+        if (!users) return { mentors: [], mentees: [] };
+        
         const usersWithStats = users.map(user => ({
             ...user,
             completedTasks: tasks.filter(t => t.status === 'Voltooid' && t.assigneeIds.includes(user.id)).length
         }));
 
         const potentialMentors = usersWithStats.filter(u => 
-            u.points >= MENTOR_THRESHOLD_POINTS && u.completedTasks >= MENTOR_THRESHOLD_TASKS
-        ).sort((a,b) => b.points - a.points);
+            (u.points || 0) >= MENTOR_THRESHOLD_POINTS && u.completedTasks >= MENTOR_THRESHOLD_TASKS
+        ).sort((a,b) => (b.points || 0) - (a.points || 0));
         
         const potentialMentees = usersWithStats.filter(u => 
             !potentialMentors.some(m => m.id === u.id)
-        ).sort((a,b) => a.points - b.points);
+        ).sort((a,b) => (a.points || 0) - (b.points || 0));
 
         return { mentors: potentialMentors, mentees: potentialMentees };
 
     }, [users, tasks]);
 
-    if (authLoading || tasksLoading) {
+    if (authLoading || tasksLoading || orgLoading) {
         return (
             <div className="flex h-full w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin" />
