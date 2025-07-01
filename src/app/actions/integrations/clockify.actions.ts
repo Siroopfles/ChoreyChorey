@@ -1,16 +1,10 @@
 
 'use server';
 import { getClockifyWorkspaces as getWorkspaces, getClockifyProjects as getProjects } from '@/lib/clockify-service';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-
-async function getApiToken(userId: string): Promise<string | null> {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    return userDoc.exists() ? userDoc.data().clockifyApiToken || null : null;
-}
+import { getApiToken } from '@/lib/utils/user-helpers';
 
 export async function getClockifyWorkspaces(userId: string): Promise<{ data: { workspaces: any[] } | null; error: string | null; }> {
-    const apiToken = await getApiToken(userId);
+    const apiToken = await getApiToken(userId, 'clockifyApiToken');
     if (!apiToken) {
         return { data: null, error: 'Clockify API token not set.' };
     }
@@ -23,7 +17,7 @@ export async function getClockifyWorkspaces(userId: string): Promise<{ data: { w
 }
 
 export async function getClockifyProjects(userId: string, workspaceId: string): Promise<{ data: { projects: any[] } | null; error: string | null; }> {
-    const apiToken = await getApiToken(userId);
+    const apiToken = await getApiToken(userId, 'clockifyApiToken');
     if (!apiToken) {
         return { data: null, error: 'Clockify API token not set.' };
     }

@@ -8,9 +8,9 @@ import path from 'node:path';
 import { ai } from '@/ai/genkit';
 import { GenerateAvatarInputSchema, GenerateAvatarOutputSchema } from '@/ai/schemas';
 import type { GenerateAvatarInput, GenerateAvatarOutput } from '@/ai/schemas';
-import { storage } from '@/lib/firebase';
+import { storage } from '@/lib/core/firebase';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { compressImage } from '@/lib/utils';
+import { compressImage } from '@/lib/utils/image-utils';
 
 const promptTemplate = fs.readFileSync(path.resolve('./src/ai/prompts/generate-avatar.prompt'), 'utf-8');
 

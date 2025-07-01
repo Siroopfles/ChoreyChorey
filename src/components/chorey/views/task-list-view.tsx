@@ -12,12 +12,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { HandHeart, Loader2 } from 'lucide-react';
-import EditTaskDialog from '@/components/chorey/edit-task-dialog';
+import EditTaskDialog from '@/components/chorey/dialogs/edit-task-dialog';
 
 
 export default function TaskListView({ tasks, users }: { tasks: Task[], users: User[] }) {

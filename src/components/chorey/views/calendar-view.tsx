@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Task, User, Priority } from '@/lib/types';
@@ -8,7 +9,7 @@ import { isSameDay, format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { useTasks } from '@/contexts/task-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 

@@ -1,16 +1,10 @@
 
 'use server';
 import { getTogglWorkspaces as getWorkspaces, getTogglProjects as getProjects } from '@/lib/toggl-service';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-
-async function getApiToken(userId: string): Promise<string | null> {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    return userDoc.exists() ? userDoc.data().togglApiToken || null : null;
-}
+import { getApiToken } from '@/lib/utils/user-helpers';
 
 export async function getTogglWorkspaces(userId: string): Promise<{ data: { workspaces: any[] } | null; error: string | null; }> {
-    const apiToken = await getApiToken(userId);
+    const apiToken = await getApiToken(userId, 'togglApiToken');
     if (!apiToken) {
         return { data: null, error: 'Toggl API token not set.' };
     }
@@ -23,7 +17,7 @@ export async function getTogglWorkspaces(userId: string): Promise<{ data: { work
 }
 
 export async function getTogglProjects(userId: string, workspaceId: number): Promise<{ data: { projects: any[] } | null; error: string | null; }> {
-    const apiToken = await getApiToken(userId);
+    const apiToken = await getApiToken(userId, 'togglApiToken');
     if (!apiToken) {
         return { data: null, error: 'Toggl API token not set.' };
     }

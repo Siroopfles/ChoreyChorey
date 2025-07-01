@@ -9,10 +9,10 @@ import { ai } from '@/ai/genkit';
 import { GenerateTaskImageInputSchema, GenerateTaskImageOutputSchema } from '@/ai/schemas';
 import type { GenerateTaskImageInput, GenerateTaskImageOutput } from '@/ai/schemas';
 import { getDoc, doc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
+import { db, storage } from '@/lib/core/firebase';
 import type { Organization } from '@/lib/types';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { compressImage } from '@/lib/utils';
+import { compressImage } from '@/lib/utils/image-utils';
 
 const promptTemplate = fs.readFileSync(path.resolve('./src/ai/prompts/generate-task-image.prompt'), 'utf-8');
 

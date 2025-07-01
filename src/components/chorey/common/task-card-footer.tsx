@@ -4,7 +4,7 @@
 
 import type { Task, User, Project, Priority } from '@/lib/types';
 import { useMemo, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { useTasks } from '@/contexts/task-context';
 import { useAuth } from '@/contexts/auth-context';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -37,12 +37,12 @@ import {
     Loader2
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
-import { calculatePoints } from '@/lib/utils';
+import { calculatePoints } from '@/lib/utils/gamification-utils';
 import { GitLabIcon, JiraIcon, BitbucketIcon } from './provider-icons';
 import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/contexts/organization-context';
-import { formatTime } from '@/lib/utils';
+import { formatTime } from '@/lib/utils/time-utils';
 
 
 type TaskCardFooterProps = {

@@ -21,21 +21,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame, Mic, BarChart } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useNotifications } from '@/contexts/notification-context';
-import { useTasks } from '@/contexts/task-context';
+import { useNotifications } from '@/contexts/communication/notification-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { isAfter } from 'date-fns';
 import { statusStyles } from '@/lib/types';
-import { CreateOrganizationDialog } from './organization/create-organization-dialog';
-import { updateUserStatus as updateUserStatusAction } from '@/app/actions/member.actions';
-import { MobileCommandDialog } from './mobile-command-dialog';
+import { CreateOrganizationDialog } from '../organization/create-organization-dialog';
+import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user/member.actions';
+import { MobileCommandDialog } from '../dialogs/mobile-command-dialog';
+import CommandBar from './command-bar';
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();

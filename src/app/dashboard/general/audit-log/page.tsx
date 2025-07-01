@@ -19,7 +19,7 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import EditTaskDialog from '@/components/chorey/edit-task-dialog';
+import EditTaskDialog from '@/components/chorey/dialogs/edit-task-dialog';
 
 // A type that combines the history entry with its parent task info
 type AggregatedHistoryEntry = HistoryEntry & {

@@ -7,7 +7,7 @@
 import { ai, googleAI } from '@/ai/genkit';
 import { MultiSpeakerTextToSpeechInputSchema, MultiSpeakerTextToSpeechOutputSchema } from '@/ai/schemas';
 import type { MultiSpeakerTextToSpeechInput, MultiSpeakerTextToSpeechOutput } from '@/ai/schemas';
-import { toWav } from '@/lib/audio-utils';
+import { toWav } from '@/lib/utils/audio-utils';
 import { z } from 'genkit';
 
 export async function multiSpeakerTextToSpeech(input: MultiSpeakerTextToSpeechInput): Promise<MultiSpeakerTextToSpeechOutput> {

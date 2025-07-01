@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Check, Users, Tags, ArrowUpNarrowWide, X, User as UserIcon, Briefcase } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { SavedFiltersManager } from "./saved-filters-manager";
 
 
@@ -21,7 +21,7 @@ export default function FilterBar() {
   const { projects, users, currentOrganization } = useOrganization();
   
   const allLabels = currentOrganization?.settings?.customization?.labels || [];
-  const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
+  const allPriorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
 
 
   const handleLabelToggle = (label: string) => {

@@ -7,7 +7,7 @@
 import { ai, googleAI } from '@/ai/genkit';
 import { TextToSpeechInputSchema, TextToSpeechOutputSchema } from '@/ai/schemas';
 import type { TextToSpeechInput, TextToSpeechOutput } from '@/ai/schemas';
-import { toWav } from '@/lib/audio-utils';
+import { toWav } from '@/lib/utils/audio-utils';
 
 export async function textToSpeech(input: TextToSpeechInput): Promise<TextToSpeechOutput> {
   return textToSpeechFlow(input);

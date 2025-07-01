@@ -5,13 +5,13 @@ import { useAuth } from '@/contexts/auth-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, useDroppable, useDndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import { SortableTaskCard } from '@/components/chorey/sortable-task-card';
+import { SortableTaskCard } from './sortable-task-card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { FileUp, Loader2, XCircle } from 'lucide-react';
 import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
 import { useOrganization } from '@/contexts/organization-context';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { triggerHapticFeedback } from '@/lib/haptics';
 
 const TaskColumn = ({ 
