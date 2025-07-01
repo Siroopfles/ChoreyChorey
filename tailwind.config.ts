@@ -115,10 +115,10 @@ const config: Config = {
         'linear': 'linear',
       },
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        'in': 'in 0.2s ease-out',
-        'out': 'out 0.2s ease-out',
+        'accordion-down': 'accordion-down calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'accordion-up': 'accordion-up calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'in': 'in calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
+        'out': 'out calc(0.2s * var(--animation-speed-modifier, 1)) ease-out',
       },
       typography: ({ theme }: { theme: (path: string) => string }) => ({
         DEFAULT: {
