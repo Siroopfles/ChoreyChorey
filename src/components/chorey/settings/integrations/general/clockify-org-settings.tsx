@@ -14,7 +14,7 @@ import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateOrganization } from '@/app/actions/core/organization.actions';
 import type { Organization } from '@/lib/types';
-import { ClockifyIcon } from '../provider-icons';
+import { ClockifyIcon } from '@/components/chorey/common/provider-icons';
 
 const clockifySchema = z.object({
   enabled: z.boolean().default(false),

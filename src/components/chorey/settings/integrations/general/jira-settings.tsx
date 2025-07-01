@@ -5,17 +5,17 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateOrganization } from '@/app/actions/organization.actions';
+import { updateOrganization } from '@/app/actions/core/organization.actions';
 import type { Organization } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { JiraIcon } from '../provider-icons';
+import { JiraIcon } from '@/components/chorey/common/provider-icons';
 
 const jiraSchema = z.object({
   enabled: z.boolean().default(false),

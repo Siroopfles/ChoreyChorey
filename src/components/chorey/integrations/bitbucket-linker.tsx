@@ -9,15 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Trash2, Search, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getBitbucketItemFromUrl, searchBitbucketItems } from '@/app/actions/bitbucket.actions';
-import { useAuth } from '@/contexts/auth-context';
+import { getBitbucketItemFromUrl, searchBitbucketItems } from '@/app/actions/integrations/bitbucket.actions';
+import { useAuth } from '@/contexts/user/auth-context';
 import type { BitbucketLink } from '@/lib/types';
 import Link from 'next/link';
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BitbucketIcon as ProviderIcon } from './provider-icons';
+import { BitbucketIcon as ProviderIcon } from '@/components/chorey/common/provider-icons';
 
 
 const BitbucketIcon = () => (
