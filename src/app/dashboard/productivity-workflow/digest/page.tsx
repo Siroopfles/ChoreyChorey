@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, MailCheck, Calendar, Sun } from 'lucide-react';
-import { generateNotificationDigest } from '@/ai/flows/notification-digest-flow';
+import { generateNotificationDigest } from '@/ai/flows/reporting-insights/notification-digest-flow';
 import type { NotificationDigestInput } from '@/ai/schemas';
 
 export default function DigestPage() {
@@ -73,7 +73,7 @@ export default function DigestPage() {
                         {error ? (
                             <p className="text-destructive">{error}</p>
                         ) : (
-                            <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: digest.replace(/\n/g, '<br />') }} />
+                            <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: digest.replace(/\\n/g, '<br />') }} />
                         )}
                     </CardContent>
                 </Card>
