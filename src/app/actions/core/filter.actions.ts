@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { updateDoc, doc, getDoc } from 'firebase/firestore';
 import type { Organization, SavedFilter, Filters } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';

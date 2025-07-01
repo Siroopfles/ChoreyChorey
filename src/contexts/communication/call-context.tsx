@@ -2,10 +2,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import type { User, Task } from '@/lib/types';
+import type { User } from '@/lib/types/auth';
+import type { Task } from '@/lib/types/tasks';
 import { useAuth } from '@/contexts/user/auth-context';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc, onSnapshot, collection, addDoc, query, where, getDocs, writeBatch, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/core/firebase';
+import { doc, updateDoc, onSnapshot, collection, addDoc, query, where, getDocs, writeBatch, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import Peer from 'simple-peer';
 
 interface CallParticipant extends User {

@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, doc, addDoc, getDoc, Timestamp, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import type { User, Task, Priority, Organization, Notification } from '@/lib/types';
 import { isAfter, subMinutes } from 'date-fns';

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import type { Invite } from '@/lib/types';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { runTransaction, doc, getDoc, arrayUnion } from 'firebase/firestore';
 
 export default function InvitePage() {

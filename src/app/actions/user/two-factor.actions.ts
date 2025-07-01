@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { authenticator } from 'otplib';
 import { updateUserProfile } from './user.actions';

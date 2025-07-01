@@ -2,10 +2,10 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import type { User, Presence } from '@/lib/types';
+import type { User, Presence } from '@/lib/types/auth';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, onSnapshot, collection, query, where, serverTimestamp, setDoc, deleteDoc } from 'firebase/firestore';
 
 interface PresenceContextType {

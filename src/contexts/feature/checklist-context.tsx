@@ -4,8 +4,8 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
-import type { ChecklistTemplate, ChecklistTemplateFormValues } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import type { ChecklistTemplate, ChecklistTemplateFormValues } from '@/lib/types/templates';
+import { db } from '@/lib/core/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/user/auth-context';
 import { manageChecklistTemplate as manageAction } from '@/app/actions/project/checklist.actions';

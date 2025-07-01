@@ -1,8 +1,7 @@
 
-
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, getDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { hasPermission } from '@/lib/permissions';
 import { PERMISSIONS, type RoleName } from '@/lib/types/permissions';

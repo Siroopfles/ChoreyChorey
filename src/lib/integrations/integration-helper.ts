@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Organization } from '@/lib/types';
 

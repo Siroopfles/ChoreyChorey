@@ -2,6 +2,15 @@ import type { Layout } from 'react-grid-layout';
 import type { Timestamp } from 'firebase/firestore';
 import type { OrganizationMember } from './organizations';
 import type { WidgetInstance } from './ui';
+import type { Priority } from './tasks';
+
+export const USER_STATUSES: { value: 'Online' | 'Afwezig' | 'In vergadering' | 'Niet storen' | 'Offline'; label: string }[] = [
+  { value: 'Online', label: 'Online' },
+  { value: 'Afwezig', label: 'Afwezig' },
+  { value: 'In vergadering', label: 'In vergadering' },
+  { value: 'Niet storen', label: 'Niet storen' },
+  { value: 'Offline', label: 'Offline' },
+];
 
 export type UserStatus = {
   type: 'Online' | 'Afwezig' | 'In vergadering' | 'Niet storen' | 'Offline';
@@ -41,7 +50,7 @@ export type User = GlobalUserProfile & OrganizationMember & {
   mutedTaskIds?: string[];
   notificationSettings?: {
     dailyDigestEnabled?: boolean;
-    notificationPriorityThreshold?: 'Laag' | 'Midden' | 'Hoog' | 'Urgent';
+    notificationPriorityThreshold?: Priority;
   };
   lastDigestSentAt?: Date;
   streakData?: {

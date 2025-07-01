@@ -10,8 +10,8 @@ import {
   where,
   Timestamp,
 } from 'firebase/firestore';
-import type { PersonalGoal, PersonalGoalFormValues, TeamChallenge, TeamChallengeFormValues, Milestone } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import type { PersonalGoal, PersonalGoalFormValues, TeamChallenge, TeamChallengeFormValues, Milestone } from '@/lib/types/goals';
+import { db } from '@/lib/core/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
@@ -103,7 +103,7 @@ export function GoalProvider({ children }: { children: ReactNode }) {
     if (!goal) return;
     const result = await toggleMilestoneCompletionAction(goalId, milestoneId, goal.milestones);
     if (result.error) { handleError({ message: result.error }, 'bijwerken mijlpaal'); } 
-    else if (result.allCompleted) { toast({ title: 'Doel Behaald!', description: `Gefeliciteerd met het behalen van je doel: "${goal.title}"` }); }
+    else if (result.data?.allCompleted) { toast({ title: 'Doel Behaald!', description: `Gefeliciteerd met het behalen van je doel: "${goal.title}"` }); }
   };
 
   const addTeamChallenge = async (challengeData: TeamChallengeFormValues): Promise<boolean> => {

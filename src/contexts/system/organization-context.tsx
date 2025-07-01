@@ -4,8 +4,16 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
-import type { Organization, Project, Team, User, RoleName, Permission, Webhook } from '@/lib/types';
-import { DEFAULT_ROLES } from '@/lib/types';
+import { 
+    type Organization, 
+    type Team, 
+    type Project, 
+    type User, 
+    type Webhook, 
+    type RoleName, 
+    type Permission,
+    DEFAULT_ROLES
+} from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from "@/hooks/use-toast";
@@ -66,12 +74,21 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     setCurrentOrganization(currentOrgFromAuth);
 
     if (currentOrgFromAuth) {
-        const role = (currentOrgFromAuth.members || {})[user.id]?.role || null;
+        const memberData = (currentOrgFromAuth.members || {})[user.id];
+        const role = memberData?.role || null;
         setCurrentUserRole(role);
         
         const allRoles = { ...DEFAULT_ROLES, ...(currentOrgFromAuth.settings?.customization?.customRoles || {}) };
-        const permissions = role ? allRoles[role]?.permissions || [] : [];
-        setCurrentUserPermissions(permissions);
+        
+        const basePermissions = role ? allRoles[role]?.permissions || [] : [];
+        const grantedOverrides = memberData?.permissionOverrides?.granted || [];
+        const revokedOverrides = memberData?.permissionOverrides?.revoked || [];
+
+        const finalPermissions = [
+            ...new Set([...basePermissions, ...grantedOverrides])
+        ].filter(p => !revokedOverrides.includes(p));
+
+        setCurrentUserPermissions(finalPermissions);
     } else {
         setCurrentUserRole(null);
         setCurrentUserPermissions([]);

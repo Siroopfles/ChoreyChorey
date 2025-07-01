@@ -1,7 +1,7 @@
 
 'use server';
     
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { generateNotificationDigest } from '@/ai/flows/notification-digest-flow';
 import { createNotification } from './notification.actions';

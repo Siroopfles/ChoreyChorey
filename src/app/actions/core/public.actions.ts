@@ -1,8 +1,7 @@
 
-
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import type { Task, User, Project, Organization, StatusDefinition } from '@/lib/types';
 

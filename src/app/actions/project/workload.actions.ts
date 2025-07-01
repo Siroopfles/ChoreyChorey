@@ -2,7 +2,7 @@
 'use server';
 
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import type { Task, Priority, User } from '@/lib/types';
 import { eachDayOfInterval, formatISO, startOfDay, isAfter } from 'date-fns';
 

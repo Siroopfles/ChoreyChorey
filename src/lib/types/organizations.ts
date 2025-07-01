@@ -125,19 +125,7 @@ export type OrganizationMember = {
     font?: 'inter' | 'source-sans' | 'roboto-mono';
     radius?: string; // e.g., '0.5'
     accent?: string; // HSL value
-  };
-  streakData?: {
-    currentStreak: number;
-    lastCompletionDate: Date;
-  };
-  workingHours?: {
-    startTime: string; // "HH:mm" format
-    endTime: string; // "HH:mm" format
-  };
-  notificationSettings?: {
-    dailyDigestEnabled?: boolean;
-    notificationPriorityThreshold?: 'Laag' | 'Midden' | 'Hoog' | 'Urgent';
-  };
+  }
 };
 
 export type Team = {

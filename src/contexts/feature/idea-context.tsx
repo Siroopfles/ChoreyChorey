@@ -10,8 +10,8 @@ import {
   where,
   Timestamp,
 } from 'firebase/firestore';
-import type { Idea, IdeaFormValues, IdeaStatus } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import type { Idea, IdeaFormValues, IdeaStatus } from '@/lib/types/ideas';
+import { db } from '@/lib/core/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';

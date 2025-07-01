@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, addDoc, updateDoc, doc, deleteDoc, writeBatch, increment, getDoc } from 'firebase/firestore';
 import type { PersonalGoal, PersonalGoalFormValues, TeamChallengeFormValues, Milestone, Organization } from '@/lib/types';
 

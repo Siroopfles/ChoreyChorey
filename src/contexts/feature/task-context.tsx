@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -20,22 +21,30 @@ import {
   getDocs,
   orderBy
 } from 'firebase/firestore';
-import type { Task, TaskFormValues, User, Status, Label, Automation, AutomationFormValues, TaskTemplate, TaskTemplateFormValues, Subtask, Project, ScheduledReport, ScheduledReportFormValues } from '@/lib/types';
-import { PERMISSIONS, ROLE_GUEST } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from './auth-context';
-import { useOrganization } from './organization-context';
-import * as TaskActions from '@/app/actions/task.actions';
-import * as CommentActions from '@/app/actions/comment.actions';
-import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/template.actions';
-import { manageAutomation as manageAutomationAction } from '@/app/actions/automation.actions';
-import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/member.actions';
-import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/gamification.actions';
-import * as ReportActions from '@/app/actions/report.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import * as TaskActions from '@/app/actions/project/task.actions';
+import * as CommentActions from '@/app/actions/core/comment.actions';
+import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/core/template.actions';
+import { manageAutomation as manageAutomationAction } from '@/app/actions/core/automation.actions';
+import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user/member.actions';
+import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/core/gamification.actions';
+import * as ReportActions from '@/app/actions/core/report.actions';
 import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';
-import { triggerHapticFeedback } from '@/lib/haptics';
+import { triggerHapticFeedback } from '@/lib/core/haptics';
+
+// Import all required types from their new modular locations
+import type { User } from '@/lib/types/auth';
+import type { Task, TaskFormValues, Status, Label, Subtask, Priority } from '@/lib/types/tasks';
+import type { Project } from '@/lib/types/projects';
+import type { TaskTemplate, TaskTemplateFormValues } from '@/lib/types/templates';
+import type { Automation, AutomationFormValues } from '@/lib/types/automations';
+import type { ScheduledReport, ScheduledReportFormValues } from '@/lib/types/reports';
+import { PERMISSIONS, ROLE_GUEST } from '@/lib/types/permissions';
+
 
 type TaskContextType = {
   tasks: Task[];

@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import type { AiFeedbackInput } from '@/ai/schemas';
 

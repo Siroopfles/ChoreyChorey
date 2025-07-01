@@ -1,6 +1,7 @@
+
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import type { ChecklistTemplateFormValues } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';

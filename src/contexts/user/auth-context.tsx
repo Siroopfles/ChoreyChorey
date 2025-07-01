@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { 
@@ -22,14 +20,27 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db, googleProvider, microsoftProvider } from '@/lib/core/firebase';
-import type { User, Organization, RoleName, UserStatus, Permission, WidgetInstance } from '@/lib/types';
-import { WIDGET_TYPES, DEFAULT_ROLES, widgetConfigSchemas } from '@/lib/types';
+import { 
+  type User, 
+  type UserStatus, 
+} from '@/lib/types/auth';
+import {
+    type Organization,
+} from '@/lib/types/organizations';
+import {
+  type RoleName, 
+  type Permission, 
+  DEFAULT_ROLES,
+} from '@/lib/types/permissions';
+import {
+    type WidgetInstance,
+} from '@/lib/types/ui';
+import type { Layouts } from 'react-grid-layout';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user/member.actions';
 import { sendDailyDigest } from '@/app/actions/core/digest.actions';
 import { useDebug } from '../system/debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Layouts } from 'react-grid-layout';
 import { generateAvatar } from '@/ai/flows/generative-ai/generate-avatar-flow';
 
 
@@ -550,24 +561,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    // This is a bit of a hack to add back the derived state that was removed,
-    // without re-introducing it into the core provider state and causing re-renders.
-    const { user, currentOrganization } = context;
-    const currentUserRole = (currentOrganization?.members || {})[user?.id || '']?.role || null;
-    const allRoles = { ...DEFAULT_ROLES, ...(currentOrganization?.settings?.customization?.customRoles || {}) };
-    const memberData = user && currentOrganization?.members?.[user.id];
-    
-    const basePermissions = currentUserRole ? allRoles[currentUserRole]?.permissions || [] : [];
-    const grantedOverrides = memberData?.permissionOverrides?.granted || [];
-    const revokedOverrides = memberData?.permissionOverrides?.revoked || [];
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  // This is a bit of a hack to add back the derived state that was removed,
+  // without re-introducing it into the core provider state and causing re-renders.
+  const { user, currentOrganization } = context;
+  const currentUserRole = (currentOrganization?.members || {})[user?.id || '']?.role || null;
+  const allRoles = { ...DEFAULT_ROLES, ...(currentOrganization?.settings?.customization?.customRoles || {}) };
+  const memberData = user && currentOrganization?.members?.[user.id];
+  
+  const basePermissions = currentUserRole ? allRoles[currentUserRole]?.permissions || [] : [];
+  const grantedOverrides = memberData?.permissionOverrides?.granted || [];
+  const revokedOverrides = memberData?.permissionOverrides?.revoked || [];
 
-    const currentUserPermissions = [
-        ...new Set([...basePermissions, ...grantedOverrides])
-    ].filter(p => !revokedOverrides.includes(p));
-    
-    return { ...context, currentUserRole, currentUserPermissions };
+  const currentUserPermissions = [
+      ...new Set([...basePermissions, ...grantedOverrides])
+  ].filter(p => !revokedOverrides.includes(p));
+  
+  return { ...context, currentUserRole, currentUserPermissions };
 }

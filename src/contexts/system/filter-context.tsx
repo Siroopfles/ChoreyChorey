@@ -3,7 +3,8 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
-import type { Filters, Priority } from '@/lib/types';
+import type { Filters } from '@/lib/types/ui';
+import type { Priority } from '@/lib/types/tasks';
 import { useTasks as useTasksData } from '@/contexts/feature/task-context'; // Renamed to avoid hook name collision
 
 type FilterContextType = {
