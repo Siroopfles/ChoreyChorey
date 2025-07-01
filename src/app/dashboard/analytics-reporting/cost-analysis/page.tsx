@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CircleDollarSign, BarChart, TrendingUp, AlertTriangle, Users } from 'lucide-react';
-import { getCostAnalysisData, type CostAnalysisData } from '@/app/actions/analytics.actions';
+import { getCostAnalysisData, type CostAnalysisData } from '@/app/actions/core/analytics.actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Project } from '@/lib/types';
