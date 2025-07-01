@@ -21,9 +21,10 @@ const raciColors: Record<string, string> = {
 
 export default function RacimatrixPage() {
     const { tasks, loading: tasksLoading } = useTasks();
-    const { users, currentUserRole, loading: authLoading } = useAuth();
+    const { currentUserRole, loading: authLoading } = useAuth();
+    const { users, loading: orgLoading } = useOrganization();
 
-    if (tasksLoading || authLoading) {
+    if (tasksLoading || authLoading || orgLoading) {
         return (
             <div className="flex h-full w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin" />
