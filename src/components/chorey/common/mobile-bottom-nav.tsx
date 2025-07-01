@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import Link from 'next/link';
 import { cn } from "@/lib/utils/utils";
 import { LayoutDashboard, CalendarCheck, Inbox, Plus } from "lucide-react";
-import { Button } from "../ui/button";
-import { useTasks } from "@/contexts/task-context";
-import { useNotifications } from "@/contexts/notification-context";
-import { Badge } from "../ui/badge";
+import { Button } from "@/components/ui/button";
+import { useTasks } from "@/contexts/feature/task-context";
+import { useNotifications } from "@/contexts/communication/notification-context";
+import { Badge } from "@/components/ui/badge";
 
 export default function MobileBottomNav() {
     const isMobile = useIsMobile();
@@ -20,9 +20,9 @@ export default function MobileBottomNav() {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     const navItems = [
-        { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { href: '/dashboard/my-week', icon: CalendarCheck, label: 'Mijn Week' },
-        { href: '/dashboard/inbox', icon: Inbox, label: 'Inbox', badge: unreadCount > 0 ? unreadCount : 0 },
+        { href: '/dashboard/general', icon: LayoutDashboard, label: 'Dashboard' },
+        { href: '/dashboard/productivity-workflow/my-week', icon: CalendarCheck, label: 'Mijn Week' },
+        { href: '/dashboard/productivity-workflow/inbox', icon: Inbox, label: 'Inbox', badge: unreadCount > 0 ? unreadCount : 0 },
     ];
 
     if (!isMobile) {

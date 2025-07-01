@@ -2,15 +2,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useFilters } from '@/contexts/filter-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useFilters } from '@/contexts/system/filter-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { manageSavedFilter } from '@/app/actions/filter.actions';
+import { manageSavedFilter } from '@/app/actions/core/filter.actions';
 import { Save, Star, Trash2, Loader2 } from 'lucide-react';
 import type { SavedFilter } from '@/lib/types';
 import { PERMISSIONS } from '@/lib/types';
