@@ -1,5 +1,3 @@
-
-
 'use client';
 import { PERMISSIONS, type Task, type User, type Project, type Subtask, type Comment, type StatusDefinition } from '@/lib/types';
 import { useMemo, useState, useEffect } from 'react';
@@ -103,7 +101,7 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, isOverdue, isDueToday, isDueSoon, blockingTasks, relatedTasks, blockedByTasks }: TaskCardProps) => {
   const { updateTask, toggleSubtaskCompletion, cloneTask, splitTask, deleteTaskPermanently, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask, toggleTaskPin } = useTasks();
   const { searchTerm, selectedTaskIds, toggleTaskSelection } = useFilters();
-  const { currentOrganization, currentUserRole, currentUserPermissions } = useAuth();
+  const { currentOrganization, currentUserRole, currentUserPermissions } = useOrganization();
   const { toast } = useToast();
 
   const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
@@ -350,7 +348,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
             </CardHeader>
             <CardContent className="p-3 pt-1 pl-9">
             <div className="flex flex-wrap gap-1 mb-2">
-                {task.labels.map((label) => (
+                {(task.labels || []).map((label) => (
                 <Badge key={label} variant="secondary" className="font-normal text-xs">
                     {label}
                 </Badge>

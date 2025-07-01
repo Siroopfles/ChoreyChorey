@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useIsMobile } from "@/hooks/use-mobile";
