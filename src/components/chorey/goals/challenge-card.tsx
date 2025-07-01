@@ -3,9 +3,9 @@
 
 import { useState, useMemo } from 'react';
 import type { TeamChallenge } from '@/lib/types';
-import { useGoals } from '@/contexts/goal-context';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useGoals } from '@/contexts/feature/goal-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, CheckCircle, MoreVertical, Edit, Trash2, Users, Coins } from 'lucide-react';
