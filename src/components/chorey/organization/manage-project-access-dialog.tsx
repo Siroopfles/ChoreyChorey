@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -12,10 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateProjectRole } from '@/app/actions/project.actions';
+import { updateProjectRole } from '@/app/actions/project/project.actions';
 import type { Project, User, RoleName } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
-import { ROLE_OWNER } from '@/lib/constants';
+import { ROLE_OWNER } from '@/lib/core/constants';
 
 interface ManageProjectAccessDialogProps {
   open: boolean;

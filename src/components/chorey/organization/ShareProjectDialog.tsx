@@ -9,9 +9,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Loader2, Copy, Check } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { setProjectPublicStatus } from '@/app/actions/project.actions';
+import { setProjectPublicStatus } from '@/app/actions/project/project.actions';
 
 interface ShareProjectDialogProps {
   open: boolean;
