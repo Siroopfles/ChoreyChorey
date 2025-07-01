@@ -25,7 +25,10 @@ import { db } from '@/lib/core/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
-import * as TaskActions from '@/app/actions/project/task.actions';
+import * as TaskCrudActions from '@/app/actions/project/task-crud.actions';
+import * as TaskStateActions from '@/app/actions/project/task-state.actions';
+import * as TaskTimerActions from '@/app/actions/project/task-timer.actions';
+import * as TaskCollaborationActions from '@/app/actions/project/task-collaboration.actions';
 import * as CommentActions from '@/app/actions/core/comment.actions';
 import { addTemplate as addTemplateAction, updateTemplate as updateTemplateAction, deleteTemplate as deleteTemplateAction } from '@/app/actions/core/template.actions';
 import { manageAutomation as manageAutomationAction } from '@/app/actions/core/automation.actions';
@@ -214,7 +217,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const addTask = async (taskData: Partial<TaskFormValues> & { title: string }): Promise<boolean> => {
     if (!user || !currentOrganization) { handleError({ message: 'Selecteer een organisatie.' }, 'toevoegen taak'); return false; }
-    const { data, error } = await TaskActions.createTaskAction(currentOrganization.id, user.id, user.name, taskData);
+    const { data, error } = await TaskCrudActions.createTaskAction(currentOrganization.id, user.id, user.name, taskData);
     if (error) { handleError(error, 'opslaan taak', () => addTask(taskData)); return false; }
     
     // No need to manually add task, onSnapshot will do it.
@@ -240,7 +243,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     );
     setTasks(newTasks);
 
-    const { data, error } = await TaskActions.updateTaskAction(taskId, updates, user.id, currentOrganization.id);
+    const { data, error } = await TaskCrudActions.updateTaskAction(taskId, updates, user.id, currentOrganization.id);
     
     if (error) {
         handleError(error, 'bijwerken taak', () => updateTask(taskId, updates));
@@ -250,21 +253,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const cloneTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const { data, error } = await TaskActions.cloneTaskAction(taskId, user.id, currentOrganization.id);
+    const { data, error } = await TaskCrudActions.cloneTaskAction(taskId, user.id, currentOrganization.id);
     if (error) { handleError(error, 'klonen taak', () => cloneTask(taskId)); } 
     else { toast({ title: 'Taak Gekloond!', description: `Een kopie van "${data?.clonedTaskTitle}" is aangemaakt.` }); }
   };
 
   const splitTask = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const { data, error } = await TaskActions.splitTaskAction(taskId, user.id, currentOrganization.id);
+    const { data, error } = await TaskCrudActions.splitTaskAction(taskId, user.id, currentOrganization.id);
     if (error) { handleError(error, 'splitsen taak', () => splitTask(taskId)); } 
     else { toast({ title: 'Taak gesplitst!', description: `Een nieuwe taak is aangemaakt.` }); }
   };
 
   const deleteTaskPermanently = async (taskId: string) => {
     if (!currentOrganization) return;
-    const { data, error } = await TaskActions.deleteTaskPermanentlyAction(taskId, currentOrganization.id);
+    const { data, error } = await TaskCrudActions.deleteTaskPermanentlyAction(taskId, currentOrganization.id);
     if (error) { handleError(error, 'verwijderen taak', () => deleteTaskPermanently(taskId)); }
     else { 
         setTasks(prev => prev.filter(t => t.id !== taskId));
@@ -311,7 +314,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return Array.from(tasksMap.values());
     });
     
-    const { data, error } = await TaskActions.reorderTasksAction(tasksToUpdate);
+    const { data, error } = await TaskStateActions.reorderTasksAction(tasksToUpdate);
     if (error) {
       handleError(error, 'herordenen taken', () => reorderTasks(tasksToUpdate));
       setTasks(originalTasks);
@@ -333,7 +336,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         return t;
     }));
 
-    const { data, error } = await TaskActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id);
+    const { data, error } = await TaskStateActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id);
     if (error) {
       handleError(error, 'bijwerken subtaak', () => toggleSubtaskCompletion(taskId, subtaskId));
       setTasks(originalTasks);
@@ -342,50 +345,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   
   const toggleTaskTimer = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    
-    const originalTasks = [...tasks];
-    const taskToUpdate = originalTasks.find(t => t.id === taskId);
-    if (!taskToUpdate) return;
-    
-    const activeTimers = taskToUpdate.activeTimerStartedAt || {};
-    const myTimerIsRunning = !!activeTimers[user.id];
-    let optimisticUpdate: Partial<Task>;
-
-    if (myTimerIsRunning) {
-        // Stopping my timer
-        const startTime = (activeTimers[user.id] as Date).getTime();
-        const now = new Date().getTime();
-        const elapsed = Math.floor((now - startTime) / 1000);
-        const newTimeLogged = (taskToUpdate.timeLogged || 0) + elapsed;
-        
-        const newActiveTimers = { ...activeTimers };
-        delete newActiveTimers[user.id];
-        
-        optimisticUpdate = {
-            timeLogged: newTimeLogged,
-            activeTimerStartedAt: Object.keys(newActiveTimers).length > 0 ? newActiveTimers : null,
-        };
-    } else {
-        // Starting my timer
-        const newActiveTimers = { ...activeTimers, [user.id]: new Date() };
-        optimisticUpdate = {
-            activeTimerStartedAt: newActiveTimers,
-        };
-    }
-
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...optimisticUpdate } : t));
-
-    const { error } = await TaskActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);
-    
+    const { error } = await TaskTimerActions.toggleTaskTimerAction(taskId, user.id, currentOrganization.id);
     if (error) {
         handleError(error, 'tijdregistratie', () => toggleTaskTimer(taskId));
-        setTasks(originalTasks);
     }
   };
 
   const resetSubtasks = async (taskId: string) => {
     if (!user || !currentOrganization) return;
-    const { data, error } = await TaskActions.resetSubtasksAction(taskId, user.id, currentOrganization.id);
+    const { data, error } = await TaskStateActions.resetSubtasksAction(taskId, user.id, currentOrganization.id);
     if (error) { handleError(error, 'resetten subtaken', () => resetSubtasks(taskId)); }
     else if (data?.success) { 
         toast({ title: 'Subtaken gereset!', description: `Alle subtaken voor "${data.taskTitle}" zijn gereset.` }); 
@@ -394,14 +362,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const setChoreOfTheWeek = async (taskId: string) => {
     if (!currentOrganization) return;
-    const { data, error } = await TaskActions.setChoreOfTheWeekAction(taskId, currentOrganization.id);
+    const { data, error } = await updateTaskAction(taskId, { isChoreOfTheWeek: true }, user?.id || 'system', currentOrganization.id);
     if (error) { handleError(error, 'instellen klus v/d week', () => setChoreOfTheWeek(taskId)); }
     else { toast({ title: 'Klus van de Week ingesteld!' }); }
   };
 
   const promoteSubtaskToTask = async (parentTaskId: string, subtask: Subtask) => {
     if (!user) return;
-    const { data, error } = await TaskActions.promoteSubtaskToTask(parentTaskId, subtask, user.id);
+    const { data, error } = await TaskStateActions.promoteSubtaskToTask(parentTaskId, subtask, user.id);
     if (error) {
       handleError(error, 'promoveren subtaak', () => promoteSubtaskToTask(parentTaskId, subtask));
     } else if (data?.success) {
@@ -515,14 +483,14 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const voteOnPoll = async (taskId: string, optionId: string) => {
     if (!user || !currentOrganization) return;
-    const { error } = await TaskActions.voteOnPollAction(taskId, optionId, user.id, currentOrganization.id);
+    const { error } = await TaskCollaborationActions.voteOnPollAction(taskId, optionId, user.id, currentOrganization.id);
     if (error) {
         handleError({ message: error }, 'stemmen op poll');
     }
   };
 
   const handOffTask = async (taskId: string, fromUserId: string, toUserId: string, message: string = ''): Promise<boolean> => {
-    const { data, error } = await TaskActions.handOffTaskAction(taskId, fromUserId, toUserId, message);
+    const { data, error } = await TaskCollaborationActions.handOffTaskAction(taskId, fromUserId, toUserId, message);
     if (error) {
         handleError(error, 'overdragen taak', () => handOffTask(taskId, fromUserId, toUserId, message));
         return false;

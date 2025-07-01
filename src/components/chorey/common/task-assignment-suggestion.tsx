@@ -11,7 +11,7 @@ import type { User } from '@/lib/types';
 import type { SuggestTaskAssigneeOutput } from '@/ai/schemas';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useTasks } from '@/contexts/feature/task-context';
-import { AIFeedback } from './ai-feedback';
+import { AIFeedback } from '@/components/chorey/common/ai-feedback';
 
 export function TaskAssignmentSuggestion() {
   const [loading, setLoading] = useState(false);

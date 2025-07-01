@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User, Project, Task, SuggestProactiveHelpOutput } from '@/lib/types';
