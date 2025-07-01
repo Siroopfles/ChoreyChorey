@@ -43,19 +43,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function TemplateDialog({
   template,
-  children,
-  open: controlledOpen,
-  onOpenChange: controlledOnOpenChange,
+  open,
+  onOpenChange,
 }: {
   template?: TaskTemplate;
-  children?: ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = controlledOpen ?? internalOpen;
-  const setOpen = controlledOnOpenChange ?? setInternalOpen;
-  
   const { toast } = useToast();
   const { addTemplate, updateTemplate } = useTasks();
   const { currentOrganization } = useAuth();
@@ -124,7 +118,7 @@ export function TemplateDialog({
         await addTemplate(data);
         toast({ title: 'Gelukt!', description: `Template "${data.name}" is aangemaakt.` });
       }
-      setOpen(false);
+      onOpenChange(false);
       form.reset();
     } catch (error: any) {
       toast({ title: 'Fout', description: error.message, variant: 'destructive' });
@@ -132,8 +126,7 @@ export function TemplateDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{template ? 'Template Bewerken' : 'Nieuw Template Aanmaken'}</DialogTitle>
