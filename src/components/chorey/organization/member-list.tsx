@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useAuth } from '@/contexts/user/auth-context';
@@ -15,7 +14,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ManagePermissionsDialog } from './manage-permissions-dialog';
-import { ROLE_OWNER } from '@/lib/constants';
+import { ROLE_OWNER } from '@/lib/core/constants';
 import type { User } from '@/lib/types/auth';
 import type { RoleName } from '@/lib/types/permissions';
 import { statusStyles } from '@/lib/types/ui';
@@ -79,7 +78,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: User[] }) {
 
                             return (
                                 <div key={member.id} className="flex items-center justify-between">
-                                    <button className="flex items-center gap-3 text-left w-full" onClick={() => router.push(`/dashboard/profile/${member.id}`)}>
+                                    <button className="flex items-center gap-3 text-left w-full" onClick={() => router.push(`/dashboard/user-settings/profile/${member.id}`)}>
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -133,7 +132,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: User[] }) {
                                                 {canManageRoles && Object.entries(allRoles).map(([roleKey, roleDetails]) => {
                                                     if (roleKey === 'Owner') return null; // Can't assign Owner role
                                                     return (
-                                                        <DropdownMenuItem key={roleKey} onSelect={() => handleRoleChange(member.id, roleKey)}>
+                                                        <DropdownMenuItem key={roleKey} onSelect={() => handleRoleChange(member.id, roleKey as RoleName)}>
                                                             <Shield className="mr-2 h-4 w-4" />
                                                             <span>Wijs rol '{roleDetails.name}' toe</span>
                                                         </DropdownMenuItem>

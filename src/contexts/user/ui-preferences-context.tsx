@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useState, useContext, useEffect, type ReactNode, useMemo, useCallback } from 'react';
+import { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const UI_PREFERENCES_KEY = 'chorey_ui_preferences';

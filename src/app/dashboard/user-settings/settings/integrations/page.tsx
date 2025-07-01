@@ -47,7 +47,7 @@ export default function IntegrationsPage() {
     <div className="space-y-6">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon">
-                <Link href="/dashboard/settings">
+                <Link href="/dashboard/user-settings/settings/general">
                     <ArrowLeft className="h-4 w-4" />
                     <span className="sr-only">Terug naar Instellingen</span>
                 </Link>
@@ -165,7 +165,7 @@ export default function IntegrationsPage() {
             </CardHeader>
             <CardContent>
                 <Button asChild>
-                    <Link href="/dashboard/settings/bookmarklet">Bekijk Instructies</Link>
+                    <Link href="/dashboard/user-settings/settings/bookmarklet">Bekijk Instructies</Link>
                 </Button>
             </CardContent>
         </Card>

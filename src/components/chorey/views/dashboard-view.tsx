@@ -1,27 +1,26 @@
 
-
 'use client';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import type { Layouts } from 'react-grid-layout';
-import { useAuth } from '@/contexts/auth-context';
-import { useOrganization } from '@/contexts/organization-context';
-import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { useMemo, useCallback, useRef } from 'react';
 import type { Task, User, ActivityFeedItem, WidgetInstance } from '@/lib/types';
 import { WIDGET_TYPES } from '@/lib/types';
-import { WidgetWrapper } from './dashboard/WidgetWrapper';
+import { WidgetWrapper } from '../dashboard/WidgetWrapper';
 
 // Import Widgets
-import { TasksByStatusWidget } from './dashboard/widgets/TasksByStatusWidget';
-import { TasksByPriorityWidget } from './dashboard/widgets/TasksByPriorityWidget';
-import { LeaderboardWidget } from './dashboard/widgets/LeaderboardWidget';
-import { ActivityFeedWidget } from './dashboard/widgets/ActivityFeedWidget';
-import { RecentActivityWidget } from './dashboard/widgets/RecentActivityWidget';
-import { WelcomeWidget } from './dashboard/widgets/WelcomeWidget';
-import { MyTasksWidget } from './dashboard/widgets/MyTasksWidget';
+import { TasksByStatusWidget } from '../dashboard/widgets/TasksByStatusWidget';
+import { TasksByPriorityWidget } from '../dashboard/widgets/TasksByPriorityWidget';
+import { LeaderboardWidget } from '../dashboard/widgets/LeaderboardWidget';
+import { ActivityFeedWidget } from '../dashboard/widgets/ActivityFeedWidget';
+import { RecentActivityWidget } from '../dashboard/widgets/RecentActivityWidget';
+import { WelcomeWidget } from '../dashboard/widgets/WelcomeWidget';
+import { MyTasksWidget } from '../dashboard/widgets/MyTasksWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 

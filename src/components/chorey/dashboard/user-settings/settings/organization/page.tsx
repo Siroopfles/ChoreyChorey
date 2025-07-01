@@ -2,6 +2,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import OrganizationSettings from '@/components/chorey/settings/general/organization-settings';
 import DangerZone from '@/components/chorey/settings/security/danger-zone';
@@ -19,7 +20,8 @@ import CustomFieldsSettings from '@/components/chorey/settings/general/custom-fi
 import SessionPolicySettings from '@/components/chorey/settings/security/session-policy-settings';
 
 export default function OrganizationSettingsPage() {
-  const { user, loading: authLoading, currentOrganization, currentUserPermissions } = useAuth();
+  const { user, loading: authLoading, currentUserPermissions } = useAuth();
+  const { currentOrganization } = useOrganization();
 
   if (authLoading || !user) {
     return (
@@ -52,7 +54,7 @@ export default function OrganizationSettingsPage() {
     <div className="space-y-6">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon">
-                <Link href="/dashboard/user-settings/settings/general">
+                <Link href="/dashboard/settings">
                     <ArrowLeft className="h-4 w-4" />
                     <span className="sr-only">Terug naar Instellingen</span>
                 </Link>

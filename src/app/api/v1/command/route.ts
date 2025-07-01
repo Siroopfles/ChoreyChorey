@@ -1,7 +1,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { processCommand } from '@/ai/flows/process-command';
+import { processCommand } from '@/ai/flows/core-utility/process-command';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/core/firebase';
 import type { User } from '@/lib/types';

@@ -1,11 +1,11 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import type { Team } from '@/lib/types';
-import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
-import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
-import { serializeTeam } from '@/lib/api-serializers';
+import { withApiKeyAuth } from '@/lib/api/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api/api-auth-wrapper';
+import { serializeTeam } from '@/lib/api/api-serializers';
 
 const getTeamsHandler = async (
     request: NextRequest,

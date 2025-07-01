@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { GripVertical, Settings, Trash2 } from 'lucide-react';
 import type { WidgetInstance } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { ManageDashboardDialog } from './ManageDashboardDialog';
 import { useState } from 'react';

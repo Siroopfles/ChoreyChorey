@@ -2,8 +2,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createTask, findUserByEmail } from '@/ai/tools/task-tools';
-import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
-import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
+import { withApiKeyAuth } from '@/lib/api/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api/api-auth-wrapper';
 
 const ingressTaskSchema = z.object({
   title: z.string(),

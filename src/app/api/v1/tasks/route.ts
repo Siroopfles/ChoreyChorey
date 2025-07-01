@@ -1,12 +1,12 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, query, where, getDocs, Timestamp, addDoc } from 'firebase/firestore';
 import type { Status, Task } from '@/lib/types';
-import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
-import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
-import { serializeTask } from '@/lib/api-serializers';
-import { addHistoryEntry } from '@/lib/history-utils';
+import { withApiKeyAuth } from '@/lib/api/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api/api-auth-wrapper';
+import { serializeTask } from '@/lib/api/api-serializers';
+import { addHistoryEntry } from '@/lib/utils/history-utils';
 
 
 const getTasksHandler = async (

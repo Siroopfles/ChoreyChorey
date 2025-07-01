@@ -1,10 +1,10 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { withApiKeyAuth } from '@/lib/api-auth-wrapper';
-import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
-import { serializeUser } from '@/lib/api-serializers';
+import { withApiKeyAuth } from '@/lib/api/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api/api-auth-wrapper';
+import { serializeUser } from '@/lib/api/api-serializers';
 
 
 const getUsersHandler = async (

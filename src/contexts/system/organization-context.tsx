@@ -14,7 +14,7 @@ import {
     type Permission,
     DEFAULT_ROLES
 } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from "@/hooks/use-toast";
 import { toggleProjectPin as toggleProjectPinAction } from '@/app/actions/project/project.actions';

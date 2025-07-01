@@ -9,9 +9,9 @@ import type { Team, User, Project, Task } from '@/lib/types';
 import { ProjectDialog } from './project-dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { PERMISSIONS } from '@/lib/types';
-import { completeProject, toggleProjectPin } from '@/app/actions/project.actions';
+import { completeProject, toggleProjectPin } from '@/app/actions/project/project.actions';
 import {
   AlertDialog,
   AlertDialogAction,

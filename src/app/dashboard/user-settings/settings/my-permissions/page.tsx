@@ -24,13 +24,13 @@ export default function MyPermissionsPage() {
         ...DEFAULT_ROLES,
         ...(useAuth().currentOrganization?.settings?.customization?.customRoles || {})
     };
-    const roleName = currentUserRole ? (allRoles[currentUserRole]?.name || currentUserRole) : 'Geen rol';
+    const roleName = currentUserRole ? (allRoles[currentUserRole as keyof typeof allRoles]?.name || currentUserRole) : 'Geen rol';
 
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Button asChild variant="outline" size="icon">
-                    <Link href="/dashboard/settings">
+                    <Link href="/dashboard/user-settings/settings/general">
                         <ArrowLeft className="h-4 w-4" />
                         <span className="sr-only">Terug naar Instellingen</span>
                     </Link>

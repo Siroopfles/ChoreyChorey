@@ -3,12 +3,14 @@
 
 import { useTasks } from '@/contexts/feature/task-context';
 import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, ArrowLeft, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import type { Task, Status } from '@/lib/types';
 
 const raciColors: Record<string, string> = {
     'R': 'bg-blue-500/20 text-blue-700 border-blue-500/50',
@@ -19,7 +21,7 @@ const raciColors: Record<string, string> = {
 
 export default function RacimatrixPage() {
     const { tasks, loading: tasksLoading } = useTasks();
-    const { users, loading: authLoading, currentUserRole } = useAuth();
+    const { users, currentUserRole, loading: authLoading } = useAuth();
 
     if (tasksLoading || authLoading) {
         return (
@@ -38,7 +40,7 @@ export default function RacimatrixPage() {
         );
     }
 
-    const getRaciForUser = (task: typeof tasks[0], userId: string): string[] => {
+    const getRaciForUser = (task: Task, userId: string): string[] => {
         const roles = [];
         if (task.assigneeIds.includes(userId)) roles.push('R'); // Responsible
         if (task.creatorId === userId) roles.push('A'); // Accountable
@@ -52,7 +54,7 @@ export default function RacimatrixPage() {
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Button asChild variant="outline" size="icon">
-                    <Link href="/dashboard/organization">
+                    <Link href="/dashboard/team-organization/organization">
                         <ArrowLeft className="h-4 w-4" />
                         <span className="sr-only">Terug</span>
                     </Link>

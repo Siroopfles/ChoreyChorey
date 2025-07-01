@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
@@ -12,15 +11,15 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Loader2, Check, Users, X, Euro, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { addDoc, collection, updateDoc, doc } from 'firebase/firestore';
 import { Switch } from '@/components/ui/switch';
 import type { Project, Team } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';

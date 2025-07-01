@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Gantt, ViewMode, type Task as GanttTask } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 
 type GanttViewProps = {
   tasks: Task[];

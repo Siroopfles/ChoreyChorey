@@ -32,7 +32,7 @@ export default function ProfileSettingsPage() {
     <div className="space-y-6">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon">
-                <Link href="/dashboard/settings">
+                <Link href="/dashboard/user-settings/settings/general">
                     <ArrowLeft className="h-4 w-4" />
                     <span className="sr-only">Terug naar Instellingen</span>
                 </Link>

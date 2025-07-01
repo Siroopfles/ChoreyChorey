@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, type ReactNode } from 'react';
@@ -7,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
 import { Loader2, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Input } from '@/components/ui/input';
-import { createProjectGuestInvite } from '@/app/actions/invite.actions';
+import { createProjectGuestInvite } from '@/app/actions/user/invite.actions';
 
 export function InviteGuestDialog({ 
   projectId,

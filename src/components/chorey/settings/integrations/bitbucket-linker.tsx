@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/compon
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BitbucketIcon as ProviderIcon } from '../provider-icons';
+import { BitbucketIcon as ProviderIcon } from '@/components/chorey/common/provider-icons';
 
 
 const BitbucketIcon = () => (

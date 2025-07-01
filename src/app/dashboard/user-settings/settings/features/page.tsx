@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Loader2, ArrowLeft, Settings } from 'lucide-react';
-import FeatureToggleSettings from '@/components/chorey/settings/feature-toggle-settings';
+import FeatureToggleSettings from '@/components/chorey/settings/general/feature-toggle-settings';
 import { PERMISSIONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -33,7 +33,7 @@ export default function FeaturesSettingsPage() {
     <div className="space-y-6">
         <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="icon">
-                <Link href="/dashboard/settings">
+                <Link href="/dashboard/user-settings/settings/organization/general">
                     <ArrowLeft className="h-4 w-4" />
                     <span className="sr-only">Terug naar Instellingen</span>
                 </Link>

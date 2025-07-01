@@ -1,10 +1,10 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/core/firebase';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { withResourceAuth } from '@/lib/api-auth-wrapper';
-import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api-auth-wrapper';
-import { serializeTask } from '@/lib/api-serializers';
+import { withResourceAuth } from '@/lib/api/api-auth-wrapper';
+import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api/api-auth-wrapper';
+import { serializeTask } from '@/lib/api/api-serializers';
 
 
 const getTaskHandler = async (
