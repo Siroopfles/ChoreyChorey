@@ -1,0 +1,161 @@
+'use client';
+
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import AppHeader from '@/components/chorey/common/app-header';
+import AddTaskDialog from '@/components/chorey/dialogs/add-task-dialog';
+import EditTaskDialog from '@/components/chorey/dialogs/edit-task-dialog';
+import AnnouncementBanner from '@/components/chorey/common/announcement-banner';
+import { ShortcutHelpDialog } from '@/components/chorey/dialogs/shortcut-help-dialog';
+import { AudioHuddle } from '@/components/chorey/audio-huddle/AudioHuddle';
+import { SidebarInset } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
+import AppSidebar from '@/components/chorey/common/app-sidebar';
+import MobileBottomNav from '@/components/chorey/common/mobile-bottom-nav';
+import { cn } from '@/lib/utils/utils';
+import BulkActionBar from '@/components/chorey/common/bulk-action-bar';
+import { LiveCursors } from '@/components/chorey/common/live-cursors';
+import type { UserStatus } from '@/lib/types';
+
+const BrandingStyle = () => {
+  const { currentOrganization } = useOrganization();
+  const primaryColor = currentOrganization?.settings?.branding?.primaryColor;
+
+  if (!primaryColor) {
+    return null;
+  }
+
+  const css = `:root { --primary: ${primaryColor}; }`;
+
+  return <style dangerouslySetInnerHTML={{ __html: css }} />;
+};
+
+const UserCosmeticStyle = () => {
+  const { user } = useAuth();
+  const cosmetic = user?.cosmetic;
+
+  const fontMap = {
+    'inter': 'var(--font-pt-sans)',
+    'source-sans': 'var(--font-source-sans)',
+    'roboto-mono': 'var(--font-roboto-mono)',
+  }
+
+  if (!cosmetic) {
+    return null;
+  }
+  
+  const styles = [];
+  if (cosmetic.primaryColor) styles.push(`--primary: ${cosmetic.primaryColor};`);
+  if (cosmetic.accent) styles.push(`--accent: ${cosmetic.accent};`);
+  if (cosmetic.radius) styles.push(`--radius: ${cosmetic.radius}rem;`);
+  if (cosmetic.font && fontMap[cosmetic.font as keyof typeof fontMap]) {
+    const fontValue = fontMap[cosmetic.font as keyof typeof fontMap];
+    styles.push(`--font-sans: ${fontValue};`);
+  }
+
+  if (styles.length === 0) {
+    return null;
+  }
+
+  const css = `:root { ${styles.join(' ')} }`;
+
+  return <style dangerouslySetInnerHTML={{ __html: css }} />;
+};
+
+
+// The main app shell with sidebar and header
+export default function AppShell({ children }: { children: React.ReactNode }) {
+    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks } = useTasks();
+    const { updateUserPresence } = useAuth();
+    const { currentOrganization } = useOrganization();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const isMobile = useIsMobile();
+    
+    const [isShortcutHelpOpen, setIsShortcutHelpOpen] = useState(false);
+    const announcement = currentOrganization?.settings?.announcement;
+
+    useEffect(() => {
+        if (!updateUserPresence) return;
+
+        let currentPage = '';
+        if (viewedTask) {
+            currentPage = `Bewerkt taak: "${viewedTask.title}"`;
+        } else if (pathname.startsWith('/dashboard/focus/')) {
+            const taskId = pathname.split('/').pop();
+            const task = tasks.find(t => t.id === taskId);
+            currentPage = `Focust op: "${task?.title || 'een taak'}"`;
+        } else if (pathname.includes('/dashboard')) {
+            const pageName = pathname.split('/').pop() || 'dashboard';
+            currentPage = `Op pagina: ${pageName.charAt(0).toUpperCase() + pageName.slice(1)}`;
+        } else {
+             currentPage = `Op pagina: ${pathname.split('/').pop() || 'onbekend'}`;
+        }
+        
+        const presenceUpdate: Partial<UserStatus> = { currentPage };
+        updateUserPresence(presenceUpdate);
+
+    }, [pathname, viewedTask, updateUserPresence, tasks]);
+
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsAddTaskDialogOpen(true);
+            }
+            if (e.key === '?') {
+                const target = e.target as HTMLElement;
+                if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+                    return;
+                }
+                e.preventDefault();
+                setIsShortcutHelpOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [setIsAddTaskDialogOpen]);
+    
+    useEffect(() => {
+        const shouldAddTask = searchParams.get('addTask') === 'true';
+        if (shouldAddTask) {
+            setIsAddTaskDialogOpen(true);
+        }
+    }, [searchParams, setIsAddTaskDialogOpen]);
+
+
+    return (
+    <>
+      <BrandingStyle />
+      <UserCosmeticStyle />
+      <AppSidebar />
+      <SidebarInset className={cn(isMobile ? 'pb-16' : '')}>
+        <AppHeader />
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
+          {announcement && <AnnouncementBanner announcement={announcement} />}
+          {children}
+          <LiveCursors />
+        </div>
+        <BulkActionBar />
+      </SidebarInset>
+      <MobileBottomNav />
+
+      <AddTaskDialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen} />
+      {viewedTask && (
+        <EditTaskDialog
+          isOpen={!!viewedTask}
+          setIsOpen={(isOpen) => {
+            if (!isOpen) setViewedTask(null);
+          }}
+          task={viewedTask}
+        />
+      )}
+      <ShortcutHelpDialog open={isShortcutHelpOpen} onOpenChange={setIsShortcutHelpOpen} />
+      <AudioHuddle />
+    </>
+    );
+}
