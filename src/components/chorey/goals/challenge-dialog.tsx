@@ -1,13 +1,12 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TeamChallenge, TeamChallengeFormValues } from '@/lib/types';
 import { teamChallengeFormSchema } from '@/lib/types';
 import { useGoals } from '@/contexts/feature/goal-context';
-import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -25,7 +24,7 @@ interface ChallengeDialogProps {
 
 export function ChallengeDialog({ open, onOpenChange, challenge }: ChallengeDialogProps) {
   const { addTeamChallenge, updateTeamChallenge } = useGoals();
-  const { teams } = useAuth();
+  const { teams } = useOrganization();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TeamChallengeFormValues>({
@@ -92,7 +91,7 @@ export function ChallengeDialog({ open, onOpenChange, challenge }: ChallengeDial
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            {teams.map((team) => (
+                            {(teams || []).map((team) => (
                                 <SelectItem key={team.id} value={team.id}>
                                 {team.name}
                                 </SelectItem>
