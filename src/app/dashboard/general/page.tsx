@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useOrganization } from '@/contexts/organization-context';
-import { useTasks } from '@/contexts/task-context';
-import { useFilters } from '@/contexts/filter-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useFilters } from '@/contexts/system/filter-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -32,7 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, isWithinInterval } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { ManageDashboardDialog } from '@/components/chorey/dashboard/ManageDashboardDialog';
 
 export default function DashboardPage() {

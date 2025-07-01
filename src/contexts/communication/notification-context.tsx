@@ -17,7 +17,7 @@ import type { Notification } from '@/lib/types';
 import { NOTIFICATION_SOUNDS } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from './auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { addHours } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { ToastAction } from '@/components/ui/toast';

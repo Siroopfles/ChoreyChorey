@@ -1,17 +1,17 @@
 
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import DangerZone from '@/components/chorey/settings/danger-zone';
-import LimitSettings from '@/components/chorey/settings/limit-settings';
+import DangerZone from '@/components/chorey/settings/security/danger-zone';
+import LimitSettings from '@/components/chorey/settings/general/limit-settings';
 import { PERMISSIONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import SessionPolicySettings from '@/components/chorey/settings/session-policy-settings';
-import IpWhitelistSettings from '@/components/chorey/settings/ip-whitelist-settings';
-import { useOrganization } from '@/contexts/organization-context';
-import NotificationThresholdSettings from '@/components/chorey/settings/notification-threshold-settings';
+import SessionPolicySettings from '@/components/chorey/settings/security/session-policy-settings';
+import IpWhitelistSettings from '@/components/chorey/settings/security/ip-whitelist-settings';
+import { useOrganization } from '@/contexts/system/organization-context';
+import NotificationThresholdSettings from '@/components/chorey/settings/notifications/notification-threshold-settings';
 
 export default function LimitsOrgSettingsPage() {
     const { user } = useAuth();

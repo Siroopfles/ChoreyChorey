@@ -1,14 +1,13 @@
 
-
 'use client';
 
 import { useMemo } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import type { User, Status, Task } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -58,7 +57,7 @@ export default function TeamRoomPage() {
             const leftJitter = (Math.random() - 0.5) * 10;
 
             const presencePage = user.status?.currentPage;
-            const area = basePosition.area;
+            const area = presencePage || basePosition.area;
 
             return {
                 user,
@@ -66,7 +65,7 @@ export default function TeamRoomPage() {
                     top: `calc(${basePosition.top} + ${topJitter}%)`,
                     left: `calc(${basePosition.left} + ${leftJitter}%)`,
                 },
-                area: presencePage || area
+                area: area
             };
         });
     }, [users, tasks]);

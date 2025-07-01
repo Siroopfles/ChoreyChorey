@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useOrganization } from '@/contexts/organization-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +15,7 @@ import { getWorkloadData, type GetWorkloadDataOutput } from '@/app/actions/workl
 import { DateRange } from 'react-day-picker';
 import { addDays, format } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useTheme } from 'next-themes';

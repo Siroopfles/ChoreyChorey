@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState } from 'react';
 import type { Filters, Priority } from '@/lib/types';
-import { useTasks as useTasksData } from './task-context'; // Renamed to avoid hook name collision
+import { useTasks as useTasksData } from '@/contexts/feature/task-context'; // Renamed to avoid hook name collision
 
 type FilterContextType = {
   searchTerm: string;

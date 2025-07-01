@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -12,9 +13,9 @@ import {
 import type { Idea, IdeaFormValues, IdeaStatus } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from './auth-context';
-import { useOrganization } from './organization-context';
-import { createIdea as createIdeaAction, toggleIdeaUpvote as toggleIdeaUpvoteAction, updateIdeaStatus as updateIdeaStatusAction } from '@/app/actions/ideas.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { createIdea as createIdeaAction, toggleIdeaUpvote as toggleIdeaUpvoteAction, updateIdeaStatus as updateIdeaStatusAction } from '@/app/actions/core/ideas.actions';
 
 type IdeaContextType = {
   ideas: Idea[];

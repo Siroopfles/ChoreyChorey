@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ShieldAlert, User, Heart, AlertTriangle, CheckCircle, Activity, Lightbulb } from 'lucide-react';
@@ -9,7 +10,7 @@ import { predictBurnoutRisk } from '@/ai/flows/predict-burnout-risk-flow';
 import type { PredictBurnoutRiskOutput } from '@/ai/schemas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/utils';
 
 export default function TeamHealthPage() {
     const { users, currentOrganization } = useAuth();

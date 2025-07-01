@@ -4,10 +4,13 @@
 
 import { db } from '@/lib/firebase';
 import { doc, writeBatch, arrayUnion, getDoc, query, collection, getDocs, where, updateDoc, deleteField } from 'firebase/firestore';
-import type { Project, Team, RoleName } from '@/lib/types';
-import { ACHIEVEMENTS, PERMISSIONS } from '@/lib/types';
+import { ACHIEVEMENTS } from '@/lib/types/gamification';
+import { PERMISSIONS } from '@/lib/types/permissions';
 import { hasPermission } from '@/lib/permissions';
-import { checkAndGrantTeamAchievements } from './gamification.actions';
+import { checkAndGrantTeamAchievements } from '@/app/actions/core/gamification.actions';
+import type { Project } from '@/lib/types/projects';
+import type { Team } from '@/lib/types/organizations';
+import type { RoleName } from '@/lib/types/permissions';
 
 export async function completeProject(projectId: string, organizationId: string, currentUserId: string): Promise<{ data: { success: boolean, message: string } | null; error: string | null; }> {
     if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_PROJECTS, { projectId })) {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -5,8 +6,8 @@ import { createContext, useContext, useEffect } from 'react';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { useToast } from '@/hooks/use-toast';
 import { app } from '@/lib/firebase';
-import { useAuth } from './auth-context';
-import { manageFcmToken } from '@/app/actions/user.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { manageFcmToken } from '@/app/actions/user/user.actions';
 import { env } from '@/lib/env';
 
 type FCMContextType = {

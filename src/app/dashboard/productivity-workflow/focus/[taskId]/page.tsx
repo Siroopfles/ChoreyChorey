@@ -2,8 +2,8 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useEffect, useState } from 'react';
 import type { Task } from '@/lib/types';
 import { Loader2, X } from 'lucide-react';

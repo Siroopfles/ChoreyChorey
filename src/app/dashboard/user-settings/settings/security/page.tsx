@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Loader2, ArrowLeft, Shield } from 'lucide-react';
 import { PERMISSIONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import SessionPolicySettings from '@/components/chorey/settings/session-policy-settings';
-import IpWhitelistSettings from '@/components/chorey/settings/ip-whitelist-settings';
+import SessionPolicySettings from '@/components/chorey/settings/security/session-policy-settings';
+import IpWhitelistSettings from '@/components/chorey/settings/security/ip-whitelist-settings';
 
 export default function SecuritySettingsPage() {
   const { user, loading: authLoading, currentOrganization, currentUserPermissions } = useAuth();

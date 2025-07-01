@@ -1,10 +1,9 @@
 
+
 'use client';
 
-import type { User as UserType, RoleName } from '@/lib/types';
-import { DEFAULT_ROLES, statusStyles, PERMISSIONS } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
-import { updateUserRoleInOrganization } from '@/app/actions/member.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { updateUserRoleInOrganization } from '@/app/actions/user/member.actions';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,12 +15,18 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ManagePermissionsDialog } from './manage-permissions-dialog';
+import { ROLE_OWNER } from '@/lib/constants';
+import type { User } from '@/lib/types/auth';
+import type { RoleName } from '@/lib/types/permissions';
+import { statusStyles } from '@/lib/types/ui';
+import { PERMISSIONS, DEFAULT_ROLES } from '@/lib/types/permissions';
 
-export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
+
+export function MemberList({ usersInOrg }: { usersInOrg: User[] }) {
     const { currentOrganization, user: currentUser, currentUserPermissions } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
-    const [editingMember, setEditingMember] = useState<UserType | null>(null);
+    const [editingMember, setEditingMember] = useState<User | null>(null);
     const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
 
     if (!currentOrganization) return null;
@@ -46,7 +51,7 @@ export function MemberList({ usersInOrg }: { usersInOrg: UserType[] }) {
         }
     };
 
-    const handleEditPermissions = (member: UserType) => {
+    const handleEditPermissions = (member: User) => {
         setEditingMember(member);
         setPermissionsDialogOpen(true);
     };

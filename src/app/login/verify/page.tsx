@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { Loader2, ShieldCheck, Mountain } from 'lucide-react';
-import { verifyLoginCode } from '@/app/actions/two-factor.actions';
+import { verifyLoginCode } from '@/app/actions/user/two-factor.actions';
 
 const verifySchema = z.object({
   code: z.string().min(6, 'Code moet minimaal 6 tekens lang zijn.'),

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useUIPreferences } from '@/contexts/ui-preferences-context';
+import { useUIPreferences } from '@/contexts/user/ui-preferences-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Gauge } from 'lucide-react';

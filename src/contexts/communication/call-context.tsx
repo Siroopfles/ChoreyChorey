@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { User, Task } from '@/lib/types';
-import { useAuth } from './auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, onSnapshot, collection, addDoc, query, where, getDocs, writeBatch, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import Peer from 'simple-peer';

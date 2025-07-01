@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -6,9 +7,9 @@ import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firest
 import type { Organization, Project, Team, User, RoleName, Permission, Webhook } from '@/lib/types';
 import { DEFAULT_ROLES } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { useAuth } from './auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from "@/hooks/use-toast";
-import { toggleProjectPin as toggleProjectPinAction } from '@/app/actions/project.actions';
+import { toggleProjectPin as toggleProjectPinAction } from '@/app/actions/project/project.actions';
 
 type OrganizationContextType = {
   loading: boolean;

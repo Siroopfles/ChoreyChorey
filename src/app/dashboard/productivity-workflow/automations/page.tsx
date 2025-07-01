@@ -2,11 +2,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Plus, Zap } from 'lucide-react';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { AutomationCard } from '@/components/chorey/automations/automation-card';
 import { AutomationDialog } from '@/components/chorey/automations/automation-dialog';
 import { PERMISSIONS } from '@/lib/types';

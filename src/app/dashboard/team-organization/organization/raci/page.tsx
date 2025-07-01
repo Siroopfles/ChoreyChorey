@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, ArrowLeft, UserCheck } from 'lucide-react';

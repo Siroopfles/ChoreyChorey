@@ -1,13 +1,12 @@
 
-
 'use client';
 
 import { createContext, useState, useContext, useEffect, useCallback, type ReactNode, useMemo } from 'react';
-import { useAuth } from './auth-context';
-import { useOrganization } from './organization-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
 import { ownerSteps, memberSteps } from '@/lib/tour-steps';
-import { markOnboardingComplete } from '@/app/actions/member.actions';
+import { markOnboardingComplete } from '@/app/actions/user/member.actions';
 
 type TourContextType = {
   startTour: () => void;

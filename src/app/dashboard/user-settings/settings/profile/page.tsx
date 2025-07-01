@@ -1,21 +1,21 @@
 
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import ProfileSettings from '@/components/chorey/settings/profile-settings';
-import SessionManagement from '@/components/chorey/settings/session-management';
-import TwoFactorAuthSettings from '@/components/chorey/settings/two-factor-auth-settings';
-import GoogleCalendarSettings from '@/components/chorey/settings/google-calendar-settings';
-import MicrosoftCalendarSettings from '@/components/chorey/settings/microsoft-calendar-settings';
-import AnimationSettings from '@/components/chorey/settings/animation-settings';
+import ProfileSettings from '@/components/chorey/settings/general/profile-settings';
+import SessionManagement from '@/components/chorey/settings/security/session-management';
+import TwoFactorAuthSettings from '@/components/chorey/settings/security/two-factor-auth-settings';
+import GoogleCalendarSettings from '@/components/chorey/settings/integrations/google-calendar-settings';
+import MicrosoftCalendarSettings from '@/components/chorey/settings/integrations/microsoft-calendar-settings';
+import AnimationSettings from '@/components/chorey/settings/general/animation-settings';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import TogglSettings from '@/components/chorey/settings/toggl-settings';
-import ClockifySettings from '@/components/chorey/settings/clockify-settings';
-import NotificationSoundSettings from '@/components/chorey/settings/notification-sound-settings';
-import TourSettings from '@/components/chorey/settings/tour-settings';
-import NotificationSettings from '@/components/chorey/settings/notification-settings';
+import TogglSettings from '@/components/chorey/settings/integrations/toggl-settings';
+import ClockifySettings from '@/components/chorey/settings/integrations/clockify-settings';
+import NotificationSoundSettings from '@/components/chorey/settings/notifications/notification-sound-settings';
+import TourSettings from '@/components/chorey/settings/general/tour-settings';
+import NotificationSettings from '@/components/chorey/settings/notifications/notification-settings';
 
 export default function ProfileSettingsPage() {
   const { user, loading: authLoading } = useAuth();

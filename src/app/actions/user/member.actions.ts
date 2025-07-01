@@ -4,11 +4,14 @@
 
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, getDoc, writeBatch, deleteField } from 'firebase/firestore';
-import type { RoleName, UserStatus, OrganizationMember, Permission } from '@/lib/types';
 import { hasPermission } from '@/lib/permissions';
-import { PERMISSIONS } from '@/lib/types';
+import { PERMISSIONS, type RoleName } from '@/lib/types/permissions';
 import { ROLE_OWNER } from '@/lib/constants';
-import { addHistoryEntry } from '@/lib/history-utils';
+import { addHistoryEntry } from '@/lib/utils/history-utils';
+import type { UserStatus } from '@/lib/types/auth';
+import type { OrganizationMember } from '@/lib/types/organizations';
+import type { Permission } from '@/lib/types/permissions';
+
 
 export async function markOnboardingComplete(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
     try {
@@ -197,4 +200,3 @@ export async function updateMemberPermissions(
     return { data: null, error: error.message };
   }
 }
-

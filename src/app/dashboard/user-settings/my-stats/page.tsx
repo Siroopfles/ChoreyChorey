@@ -2,13 +2,13 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, CheckCircle, Clock, Trophy, BarChart, ArrowLeft } from 'lucide-react';
 import { getUserAnalytics } from '@/app/actions/user-analytics.actions';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useTheme } from 'next-themes';
-import { formatTime } from '@/lib/utils';
+import { formatTime } from '@/lib/utils/time-utils';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 

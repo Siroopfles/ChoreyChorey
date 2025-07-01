@@ -1,13 +1,13 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Loader2, Plus, ClipboardList } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { PERMISSIONS } from '@/lib/types';
 import { PermissionProtectedButton } from '@/components/ui/permission-protected-button';
-import { useChecklists } from '@/contexts/checklist-context';
+import { useChecklists } from '@/contexts/feature/checklist-context';
 import { ChecklistTemplateCard } from '@/components/chorey/checklists/checklist-template-card';
 import { ChecklistTemplateDialog } from '@/components/chorey/checklists/checklist-template-dialog';
 

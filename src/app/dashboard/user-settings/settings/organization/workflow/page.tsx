@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useOrganization } from '@/contexts/organization-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import WorkflowSettings from '@/components/chorey/settings/workflow-settings';
-import CustomFieldsSettings from '@/components/chorey/settings/custom-fields-settings';
+import WorkflowSettings from '@/components/chorey/settings/general/workflow-settings';
+import CustomFieldsSettings from '@/components/chorey/settings/general/custom-fields-settings';
 import { PERMISSIONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

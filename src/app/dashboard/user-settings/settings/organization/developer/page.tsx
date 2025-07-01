@@ -1,9 +1,10 @@
+
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import WebhookSettings from '@/components/chorey/settings/webhook-settings';
-import ApiKeySettings from '@/components/chorey/settings/api-key-settings';
+import WebhookSettings from '@/components/chorey/settings/integrations/webhook-settings';
+import ApiKeySettings from '@/components/chorey/settings/security/api-key-settings';
 import { PERMISSIONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

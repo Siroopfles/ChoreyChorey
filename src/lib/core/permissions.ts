@@ -4,8 +4,9 @@
 
 import { db } from '@/lib/core/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import type { Organization, Permission, Project } from '@/lib/types';
-import { DEFAULT_ROLES } from '@/lib/types';
+import { DEFAULT_ROLES, type Permission } from '@/lib/types/permissions';
+import type { Organization } from '@/lib/types/organizations';
+import type { Project } from '@/lib/types/projects';
 
 /**
  * Checks if a user has a specific permission.

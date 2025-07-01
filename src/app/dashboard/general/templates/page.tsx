@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo, type ReactNode } from 'react';
@@ -12,8 +11,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Loader2, Plus } from 'lucide-react';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Separator } from '@/components/ui/separator';
 import { TemplateCard } from '@/components/chorey/templates/template-card';
 import { TemplateDialog } from '@/components/chorey/templates/template-dialog';

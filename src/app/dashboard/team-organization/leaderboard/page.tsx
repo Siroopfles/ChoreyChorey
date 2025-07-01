@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import type { User, Team } from '@/lib/types';
 import { calculatePoints } from '@/lib/utils/gamification-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

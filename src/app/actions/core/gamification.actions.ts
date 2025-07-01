@@ -4,12 +4,15 @@
 
 import { db } from '@/lib/core/firebase';
 import { collection, doc, getDoc, updateDoc, writeBatch, query, where, getDocs, increment, arrayUnion, runTransaction, addDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
-import type { Task, User, Organization, ActivityFeedItem, Team, GlobalUserProfile, OrganizationMember } from '@/lib/types';
-import { ACHIEVEMENTS } from '@/lib/types';
+import { ACHIEVEMENTS } from '@/lib/types/gamification';
 import { createNotification } from './notification.actions';
 import { addHistoryEntry } from '@/lib/utils/history-utils';
 import { calculatePoints } from '@/lib/utils/gamification-utils';
 import { SYSTEM_USER_ID } from '@/lib/core/constants';
+import type { Task } from '@/lib/types/tasks';
+import type { User, GlobalUserProfile } from '@/lib/types/auth';
+import type { Organization, OrganizationMember } from '@/lib/types/organizations';
+import type { ActivityFeedItem, Team } from '@/lib/types/gamification';
 
 async function grantAchievements(userId: string, organizationId: string, type: 'completed' | 'thanked', task?: Task) {
     const memberRef = doc(db, 'organizations', organizationId, 'members', userId);

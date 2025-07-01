@@ -2,8 +2,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import type { User } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

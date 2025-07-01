@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Target, Plus, Trophy, Users } from 'lucide-react';
 import { GoalDialog } from '@/components/chorey/goals/goal-dialog';
@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChallengeDialog } from '@/components/chorey/goals/challenge-dialog';
 import { ChallengeCard } from '@/components/chorey/goals/challenge-card';
 import { PERMISSIONS } from '@/lib/types';
-import { useGoals } from '@/contexts/goal-context';
+import { useGoals } from '@/contexts/feature/goal-context';
 
 
 export default function GoalsPage() {

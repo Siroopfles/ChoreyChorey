@@ -1,11 +1,13 @@
 
+
 'use server';
 
 import { db } from '@/lib/core/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, runTransaction, setDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
-import type { GlobalUserProfile, OrganizationMember } from '@/lib/types';
 import { generateAvatar } from '@/ai/flows/generative-ai/generate-avatar-flow';
+import type { GlobalUserProfile } from '@/lib/types/auth';
+import type { OrganizationMember } from '@/lib/types/organizations';
 
 export async function endorseSkill(organizationId: string, userId: string, skill: string, endorserId: string) {
   try {

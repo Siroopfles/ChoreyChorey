@@ -1,8 +1,8 @@
 
+
 'use client';
-import type { User, Task, Project, Priority } from '@/lib/types';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, useDroppable, useDndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -11,9 +11,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { FileUp, Loader2, XCircle } from 'lucide-react';
 import { addDays, isBefore, isToday, isWithinInterval, startOfDay } from 'date-fns';
-import { useOrganization } from '@/contexts/organization-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { cn } from '@/lib/utils/utils';
 import { triggerHapticFeedback } from '@/lib/haptics';
+import type { Task, Priority } from '@/lib/types/tasks';
+import type { User } from '@/lib/types/auth';
+import type { Project } from '@/lib/types/projects';
+
 
 const TaskColumn = ({ 
   title, 

@@ -2,8 +2,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useTasks } from '@/contexts/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import type { Task } from '@/lib/types';
 import {
   Table,

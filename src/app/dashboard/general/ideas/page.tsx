@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useIdeas } from '@/contexts/idea-context';
+import { useIdeas } from '@/contexts/feature/idea-context';
 import { Button } from '@/components/ui/button';
 import { Lightbulb, Plus } from 'lucide-react';
 import { IdeaDialog } from '@/components/chorey/ideas/idea-dialog';
@@ -10,7 +10,7 @@ import { IdeaCard } from '@/components/chorey/ideas/idea-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Idea } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 
 export default function IdeasPage() {
   const { ideas, loading } = useIdeas();

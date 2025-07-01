@@ -1,23 +1,23 @@
 
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, ArrowLeft, KeyRound, Webhook, Zap, HelpCircle, Bookmark, Mail } from 'lucide-react';
 import { PERMISSIONS } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import SlackSettings from '@/components/chorey/settings/slack-settings';
-import GitHubSettings from '@/components/chorey/settings/github-settings';
-import TeamsSettings from '@/components/chorey/settings/teams-settings';
-import DiscordSettings from '@/components/chorey/settings/discord-settings';
+import SlackSettings from '@/components/chorey/settings/integrations/slack-settings';
+import GitHubSettings from '@/components/chorey/settings/integrations/github-settings';
+import TeamsSettings from '@/components/chorey/settings/integrations/teams-settings';
+import DiscordSettings from '@/components/chorey/settings/integrations/discord-settings';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import GitLabSettings from '@/components/chorey/settings/gitlab-settings';
-import BitbucketSettings from '@/components/chorey/settings/bitbucket-settings';
-import JiraSettings from '@/components/chorey/settings/jira-settings';
-import TogglOrgSettings from '@/components/chorey/settings/toggl-org-settings';
-import ClockifyOrgSettings from '@/components/chorey/settings/clockify-org-settings';
+import GitLabSettings from '@/components/chorey/settings/integrations/gitlab-settings';
+import BitbucketSettings from '@/components/chorey/settings/integrations/bitbucket-settings';
+import JiraSettings from '@/components/chorey/settings/integrations/jira-settings';
+import TogglOrgSettings from '@/components/chorey/settings/integrations/toggl-org-settings';
+import ClockifyOrgSettings from '@/components/chorey/settings/integrations/clockify-org-settings';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 

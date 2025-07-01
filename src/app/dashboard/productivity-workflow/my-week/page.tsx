@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { isWithinInterval, startOfToday, addDays, format, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useMemo } from 'react';
 import type { Task } from '@/lib/types';
-import TaskCard from '@/components/chorey/task-card';
-import TaskColumnsSkeleton from '@/components/chorey/task-columns-skeleton';
+import TaskCard from '@/components/chorey/common/task-card';
+import TaskColumnsSkeleton from '@/components/chorey/common/task-columns-skeleton';
 
 export default function MyWeekPage() {
     const { tasks, loading: tasksLoading } = useTasks();

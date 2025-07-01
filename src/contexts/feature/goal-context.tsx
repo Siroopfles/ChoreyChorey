@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -12,11 +13,11 @@ import {
 import type { PersonalGoal, PersonalGoalFormValues, TeamChallenge, TeamChallengeFormValues, Milestone } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from './auth-context';
-import { useOrganization } from './organization-context';
-import { useTasks } from './task-context';
-import { addPersonalGoal as addPersonalGoalAction, updatePersonalGoal as updatePersonalGoalAction, deletePersonalGoal as deletePersonalGoalAction, toggleMilestoneCompletion as toggleMilestoneCompletionAction } from '@/app/actions/goal.actions';
-import { addTeamChallenge as addTeamChallengeAction, updateTeamChallenge as updateTeamChallengeAction, deleteTeamChallenge as deleteTeamChallengeAction, completeTeamChallenge as completeTeamChallengeAction } from '@/app/actions/goal.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { addPersonalGoal as addPersonalGoalAction, updatePersonalGoal as updatePersonalGoalAction, deletePersonalGoal as deletePersonalGoalAction, toggleMilestoneCompletion as toggleMilestoneCompletionAction } from '@/app/actions/project/goal.actions';
+import { addTeamChallenge as addTeamChallengeAction, updateTeamChallenge as updateTeamChallengeAction, deleteTeamChallenge as deleteTeamChallengeAction, completeTeamChallenge as completeTeamChallengeAction } from '@/app/actions/project/goal.actions';
 
 type GoalContextType = {
   personalGoals: PersonalGoal[];

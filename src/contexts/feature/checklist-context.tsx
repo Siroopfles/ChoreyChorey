@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -6,8 +7,8 @@ import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firest
 import type { ChecklistTemplate, ChecklistTemplateFormValues } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from './auth-context';
-import { manageChecklistTemplate as manageAction } from '@/app/actions/checklist.actions';
+import { useAuth } from '@/contexts/user/auth-context';
+import { manageChecklistTemplate as manageAction } from '@/app/actions/project/checklist.actions';
 
 type ChecklistContextType = {
   checklists: ChecklistTemplate[];

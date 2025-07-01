@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -12,8 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { FilePieChart, BarChart, Settings2, Users as UsersIcon, ListChecks, ArrowUpNarrowWide, Hash, Database, Trophy, CalendarClock, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import type { Task, User, ReportConfig, ScheduledReport } from '@/lib/types';
-import { calculatePoints } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { calculatePoints } from '@/lib/utils/gamification-utils';
+import { cn } from '@/lib/utils/utils';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogTrigger, AlertDialogCancel, AlertDialogAction, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { ScheduleReportDialog } from '@/components/chorey/reports/ScheduleReportDialog';

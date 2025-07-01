@@ -2,12 +2,12 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useTasks } from '@/contexts/task-context';
+import { useTasks } from '@/contexts/feature/task-context';
 import { useEffect, useState } from 'react';
 import type { Task } from '@/lib/types';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TldrawWhiteboard } from '@/components/chorey/tldraw-whiteboard';
+import { TldrawWhiteboard } from '@/components/chorey/views/tldraw-whiteboard';
 
 export default function WhiteboardPage() {
     const { taskId } = useParams();
