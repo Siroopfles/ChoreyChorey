@@ -4,8 +4,8 @@
 import { PERMISSIONS, type Task, type User, type Project, type Subtask, type Comment, type StatusDefinition } from '@/lib/types';
 import { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils/utils';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -54,9 +54,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import Link from 'next/link';
 import { getAttachmentSource } from '@/lib/utils/attachment-utils';
 import { AttachmentIcon } from './attachment-icons';
+import { FigmaEmbed } from '../integrations/figma-embed';
+import { GoogleDocEmbed } from '../integrations/google-doc-embed';
+import { AdobeXdEmbed } from '../integrations/adobe-xd-embed';
 import { TaskCardFooter } from './task-card-footer';
-import { useFilters } from '@/contexts/filter-context';
-import { useOrganization } from '@/contexts/organization-context';
+import { useFilters } from '@/contexts/system/filter-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { HandoffTaskDialog } from '../dialogs/handoff-task-dialog';
 import EditTaskDialog from '../dialogs/edit-task-dialog';
 

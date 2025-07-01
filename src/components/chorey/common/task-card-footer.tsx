@@ -5,8 +5,8 @@
 import type { Task, User, Project, Priority } from '@/lib/types';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils/utils';
-import { useTasks } from '@/contexts/task-context';
-import { useAuth } from '@/contexts/auth-context';
+import { useTasks } from '@/contexts/feature/task-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -39,9 +39,9 @@ import {
 import * as Icons from 'lucide-react';
 import { calculatePoints } from '@/lib/utils/gamification-utils';
 import { GitLabIcon, JiraIcon, BitbucketIcon } from './provider-icons';
-import { textToSpeech } from '@/ai/flows/text-to-speech-flow';
+import { textToSpeech } from '@/ai/flows/generative-ai/text-to-speech-flow';
 import { useToast } from '@/hooks/use-toast';
-import { useOrganization } from '@/contexts/organization-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { formatTime } from '@/lib/utils/time-utils';
 
 
