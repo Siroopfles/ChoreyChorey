@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { env } from '@/lib/env';
+import { env } from '@/lib/core/env';
 
 export function getGoogleAuthClient() {
     const clientId = env.GOOGLE_CLIENT_ID;

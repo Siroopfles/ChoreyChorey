@@ -2,7 +2,7 @@
 'use server';
 
 import { Octokit } from '@octokit/rest';
-import { env } from '@/lib/env';
+import { env } from '@/lib/core/env';
 
 const octokit = new Octokit({
   auth: env.GITHUB_TOKEN,

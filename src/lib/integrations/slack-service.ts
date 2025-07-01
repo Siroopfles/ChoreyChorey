@@ -1,7 +1,8 @@
+
 'use server';
 
 import { WebClient } from '@slack/web-api';
-import { env } from '@/lib/env';
+import { env } from '@/lib/core/env';
 
 const token = env.SLACK_BOT_TOKEN;
 const web = token ? new WebClient(token) : null;

@@ -1,6 +1,6 @@
 
 import { ConfidentialClientApplication, Configuration, LogLevel } from '@azure/msal-node';
-import { env } from '@/lib/env';
+import { env } from '@/lib/core/env';
 
 export function getMicrosoftAuthClient() {
     const msalConfig: Configuration = {
