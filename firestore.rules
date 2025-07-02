@@ -1,68 +1,65 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Helper Functions ---
     
-    // Checks if the requesting user is a member of the given organization.
-    // It does this by reading the user's own document, which is always allowed.
+    // Helper function to check if the requesting user is a member of the given organization.
     function isOrgMember(orgId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return request.auth != null && orgId in userDoc.data.organizationIds;
+      return request.auth != null 
+             && exists(/databases/$(database)/documents/organizations/$(orgId))
+             && request.auth.uid in get(/databases/$(database)/documents/organizations/$(orgId)).data.members;
     }
     
-    // Checks if the requesting user is the owner of the given organization.
-    function isOrgOwner(orgId) {
-       return request.auth != null && get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
+    // Helper function to check if the requesting user is the owner of the organization.
+    function isOwner(orgId) {
+       return request.auth != null 
+              && get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
     }
 
-    // --- Collection Rules ---
-
+    // Rules for each collection
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId;
     }
 
     match /organizations/{orgId} {
-      // A user can read an organization's document if they are listed as a member in that document.
-      // This is a direct check and doesn't cause recursion.
+      // A user can read an organization document IF their UID is a key in its 'members' map.
+      // This is non-recursive and the key to fixing the permission denied error loop.
       allow read: if request.auth.uid in resource.data.members;
-      // Only the owner can modify the organization document itself.
-      allow update: if isOrgOwner(orgId);
-      // Create is handled by backend logic (invites, initial creation).
+      
+      // Only the owner can write to the top-level organization document.
+      allow update: if isOwner(orgId);
+
+      // Create is handled by the backend function which sets the owner correctly.
+      allow create: if request.auth.uid == request.resource.data.ownerId;
     }
 
     match /tasks/{taskId} {
-      // To create a task, the user must be a member of the organization specified in the *new* task data.
-      allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-      
-      // To read/update/delete, the user must be a member of the organization the *existing* task belongs to.
-      // Additional read logic: must not be private, unless creator or assignee.
-      allow read: if isOrgMember(resource.data.organizationId) && (resource.data.isPrivate == false || request.auth.uid == resource.data.creatorId || request.auth.uid in resource.data.assigneeIds);
-      allow update, delete: if isOrgMember(resource.data.organizationId); // Backend actions handle finer-grained permissions
+      // To create a task, you must be a member of the organization specified in the NEW task data.
+      allow create: if isOrgMember(request.resource.data.organizationId);
+
+      // To read/update/delete a task, you must be a member of the organization it belongs to.
+      allow read, update, delete: if isOrgMember(resource.data.organizationId);
     }
 
     match /projects/{projectId} {
-       allow create: if isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if isOrgMember(resource.data.organizationId);
+      allow create: if isOrgMember(request.resource.data.organizationId);
+      allow read, update, delete: if isOrgMember(resource.data.organizationId);
     }
     
     match /teams/{teamId} {
-       allow create: if isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if isOrgMember(resource.data.organizationId);
+      allow create: if isOrgMember(request.resource.data.organizationId);
+      allow read, update, delete: if isOrgMember(resource.data.organizationId);
     }
-    
+
     match /invites/{inviteId} {
-      allow read: if true; // Invites are read by ID, public by nature.
-      // Create/update can only be done via server actions which run with elevated privileges if needed,
-      // or checked via hasPermission helper. Basic check here.
+      allow read: if request.auth != null;
       allow create, update: if request.auth != null;
     }
     
     match /taskTemplates/{templateId} {
-       allow create: if isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if isOrgMember(resource.data.organizationId);
+      allow create: if isOrgMember(request.resource.data.organizationId);
+      allow read, update, delete: if isOrgMember(resource.data.organizationId);
     }
 
     match /checklistTemplates/{templateId} {
@@ -74,19 +71,19 @@ service cloud.firestore {
        allow create: if isOrgMember(request.resource.data.organizationId);
        allow read, update, delete: if isOrgMember(resource.data.organizationId);
     }
-
-     match /scheduledReports/{reportId} {
-       allow create: if isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if isOrgMember(resource.data.organizationId);
-    }
     
+    match /scheduledReports/{scheduleId} {
+      allow create: if isOrgMember(request.resource.data.organizationId);
+      allow read, update, delete: if isOrgMember(resource.data.organizationId);
+    }
+
     match /sessions/{sessionId} {
-      allow read, create, update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
     match /apiKeys/{keyId} {
-       allow create: if isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if isOrgMember(resource.data.organizationId);
+      allow create: if isOrgMember(request.resource.data.organizationId);
+      allow read, update, delete: if isOrgMember(resource.data.organizationId);
     }
 
     match /webhooks/{webhookId} {
@@ -99,8 +96,7 @@ service cloud.firestore {
     }
     
     match /personalGoals/{goalId} {
-       allow create: if request.auth.uid == request.resource.data.userId;
-       allow read, update, delete: if request.auth.uid == resource.data.userId;
+       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
     match /teamChallenges/{challengeId} {
@@ -110,12 +106,11 @@ service cloud.firestore {
 
     match /ideas/{ideaId} {
        allow create: if isOrgMember(request.resource.data.organizationId);
-       allow read, update: if isOrgMember(resource.data.organizationId); // Update is for voting, simple check is fine.
+       allow read, update: if isOrgMember(resource.data.organizationId);
     }
 
     match /notifications/{notificationId} {
-       allow create: if request.auth.uid == request.resource.data.userId;
-       allow read, update, delete: if request.auth.uid == resource.data.userId;
+       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
     match /activityFeed/{feedItemId} {
@@ -125,7 +120,7 @@ service cloud.firestore {
 
     match /presence/{userId} {
       allow read: if request.auth != null;
-      allow create, update, delete: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId;
     }
   }
 }

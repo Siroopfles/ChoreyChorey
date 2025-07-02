@@ -40,11 +40,24 @@ const processCommandFlow = ai.defineFlow(
       .replace('{{organizationId}}', input.organizationId)
       .replace('{{command}}', input.command);
 
-    const { text } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
-      tools: [createTask, searchTasks, updateTask, getUsers],
-      prompt: promptText,
-    });
-    return text;
+    try {
+        const { text } = await ai.generate({
+            model: 'googleai/gemini-1.5-flash-latest',
+            tools: [createTask, searchTasks, updateTask, getUsers],
+            prompt: promptText,
+        });
+        return text;
+    } catch (e: any) {
+        // Construct a more detailed error message for easier debugging.
+        let detailedError = `AI Fout: ${e.message}\n\n`;
+        if (e.cause?.toolCalls) {
+            detailedError += "De AI probeerde de volgende tool aan te roepen:\n";
+            detailedError += "```json\n"
+            detailedError += JSON.stringify(e.cause.toolCalls, null, 2);
+            detailedError += "\n```"
+        }
+        console.error("Error in processCommandFlow:", detailedError);
+        throw new Error(detailedError);
+    }
   }
 );
