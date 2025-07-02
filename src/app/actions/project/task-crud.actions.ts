@@ -5,14 +5,8 @@ import { db } from '@/lib/core/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc } from 'firebase/firestore';
 import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Project } from '@/lib/types';
 import { addHistoryEntry } from '@/lib/utils/history-utils';
-import { createNotification } from '@/app/actions/core/notification.actions';
-import { triggerWebhooks } from '@/lib/integrations/webhook-service';
-import Papa from 'papaparse';
-import { addDays, addMonths, isBefore, startOfMonth, getDay, setDate, isAfter, addWeeks } from 'date-fns';
-import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/integrations/google-calendar-service';
-import { createMicrosoftCalendarEvent, updateMicrosoftCalendarEvent, deleteMicrosoftCalendarEvent } from '@/lib/integrations/microsoft-graph-service';
+import { handleTaskCreated, handleTaskUpdated } from '@/lib/services/task-event-service';
 import { grantAchievements, checkAndGrantTeamAchievements } from '@/app/actions/core/gamification.actions';
-import { SYSTEM_USER_ID } from '@/lib/core/constants';
 
 function calculateNextDueDate(currentDueDate: Date | undefined, recurring: Recurring): Date {
     const startDate = currentDueDate || new Date();
@@ -113,75 +107,11 @@ export async function createTaskAction(organizationId: string, creatorId: string
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
-        // Trigger automations for the new task
-        try {
-            const { processTriggers } = await import('@/lib/integrations/automation-service');
-            // We need to pass the full task object including the new ID
-            await processTriggers('task.created', { task: { ...firestoreTask, id: docRef.id } });
-        } catch (e) {
-            console.error("Error processing automations for new task:", e);
-            // Do not block the main flow if automations fail
-        }
+        const newTask = { ...firestoreTask, id: docRef.id };
+        
+        // Fire-and-forget event handling
+        handleTaskCreated(newTask, creatorName).catch(console.error);
 
-        if (firestoreTask.assigneeIds.length > 0) {
-            firestoreTask.assigneeIds.forEach(assigneeId => {
-              createNotification(
-                  assigneeId,
-                  `${creatorName} heeft je toegewezen aan: "${firestoreTask.title}"`,
-                  docRef.id,
-                  organizationId,
-                  creatorId,
-                  { eventType: 'assignment' }
-              );
-            });
-        }
-        if (firestoreTask.consultedUserIds.length > 0) {
-            firestoreTask.consultedUserIds.forEach(userId => {
-              createNotification(
-                  userId,
-                  `${creatorName} wil je raadplegen over: "${firestoreTask.title}"`,
-                  docRef.id,
-                  organizationId,
-                  creatorId,
-                  { eventType: 'mention' }
-              );
-            });
-        }
-        if (firestoreTask.informedUserIds.length > 0) {
-            firestoreTask.informedUserIds.forEach(userId => {
-              createNotification(
-                  userId,
-                  `Je bent ter informatie toegevoegd aan: "${firestoreTask.title}"`,
-                  docRef.id,
-                  organizationId,
-                  creatorId,
-                  { eventType: 'mention' }
-              );
-            });
-        }
-
-        await triggerWebhooks(organizationId, 'task.created', { ...firestoreTask, id: docRef.id });
-
-        if (taskData.dueDate) {
-            // Google Calendar Sync
-            try {
-                const eventId = await createCalendarEvent(creatorId, { ...firestoreTask, id: docRef.id });
-                if (eventId) {
-                    await updateDoc(docRef, { googleEventId: eventId });
-                }
-            } catch (e) {
-                console.error("Google Calendar event creation failed:", e);
-            }
-             // Microsoft Calendar Sync
-            try {
-                const eventId = await createMicrosoftCalendarEvent(creatorId, { ...firestoreTask, id: docRef.id });
-                if (eventId) {
-                    await updateDoc(docRef, { microsoftEventId: eventId });
-                }
-            } catch (e) {
-                console.error("Microsoft Calendar event creation failed:", e);
-            }
-        }
         return { data: { success: true, taskId: docRef.id }, error: null };
     } catch (e: any) {
         return { data: null, error: e.message };
@@ -195,11 +125,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         const taskDoc = await getDoc(taskRef);
         if (!taskDoc.exists()) throw new Error("Taak niet gevonden.");
         
-        const taskToUpdate = { ...taskDoc.data(), id: taskDoc.id } as Task;
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-        const userName = userDoc.exists() ? userDoc.data().name : 'Onbekend';
-
+        const oldTask = { ...taskDoc.data(), id: taskDoc.id } as Task;
         const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
         if (!orgDoc.exists()) throw new Error("Organisatie niet gevonden.");
         
@@ -209,37 +135,29 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory = [];
         const batch = writeBatch(db);
-        
+
         if (updates.githubLinks) finalUpdates.githubLinkUrls = updates.githubLinks.map(link => link.url);
         if (updates.jiraLinks) finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);
-        if (updates.poll && !taskToUpdate.poll) {
+        if (updates.poll && !oldTask.poll) {
              finalUpdates.poll.options = updates.poll.options.map(o => ({...o, id: crypto.randomUUID()}));
         }
 
         if (updates.relations) {
-            const oldRelations = taskToUpdate.relations?.map(r => `${r.type}:${r.taskId}`).sort().join(',') || '';
+            const oldRelations = oldTask.relations?.map(r => `${r.type}:${r.taskId}`).sort().join(',') || '';
             const newRelations = updates.relations.map(r => `${r.type}:${r.taskId}`).sort().join(',') || '';
             if (oldRelations !== newRelations) {
                 newHistory.push(addHistoryEntry(userId, `Relaties gewijzigd`));
             }
         }
-
+        
         const fieldsToTrack: (keyof Task)[] = ['status', 'priority', 'dueDate', 'title', 'projectId', 'reviewerId', 'cost'];
         fieldsToTrack.forEach(field => {
-            if (updates[field] !== undefined && JSON.stringify(updates[field]) !== JSON.stringify(taskToUpdate[field])) {
-                let oldValue = field === 'dueDate' ? (taskToUpdate[field] ? (taskToUpdate[field] as Date).toLocaleDateString() : 'geen') : (taskToUpdate[field] || 'leeg');
+            if (updates[field] !== undefined && JSON.stringify(updates[field]) !== JSON.stringify(oldTask[field])) {
+                let oldValue = field === 'dueDate' ? (oldTask[field] ? (oldTask[field] as Date).toLocaleDateString() : 'geen') : (oldTask[field] || 'leeg');
                 let newValue = field === 'dueDate' ? (updates[field] ? (updates[field] as Date).toLocaleDateString() : 'geen') : (updates[field] || 'leeg');
                 newHistory.push(addHistoryEntry(userId, `Veld '${field}' gewijzigd`, `van "${oldValue}" naar "${newValue}"`));
             }
         });
-
-        if (updates.assigneeIds) {
-             const addedAssignees = updates.assigneeIds.filter(id => !taskToUpdate.assigneeIds.includes(id));
-             addedAssignees.forEach(assigneeId => {
-                 createNotification(assigneeId, `Je bent toegewezen aan taak: "${taskToUpdate.title}"`, taskId, organizationId, userId, { eventType: 'assignment' });
-             });
-             newHistory.push(addHistoryEntry(userId, `Toegewezenen gewijzigd`));
-        }
 
         // Handle isBlocked updates based on 'blockedBy' changes
         if (updates.blockedBy) {
@@ -249,15 +167,15 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
             finalUpdates.isBlocked = activeBlockers;
         }
 
-        if (updates.status === 'Voltooid' && taskToUpdate.status !== 'Voltooid') {
+        if (updates.status === 'Voltooid' && oldTask.status !== 'Voltooid') {
             finalUpdates.completedAt = new Date();
-            if(showGamification && taskToUpdate.assigneeIds.length > 0) {
-                 await Promise.all(taskToUpdate.assigneeIds.map(assigneeId => 
-                    grantAchievements(assigneeId, organizationId, 'completed', { ...taskToUpdate, status: 'Voltooid' })
+            if(showGamification && oldTask.assigneeIds.length > 0) {
+                 await Promise.all(oldTask.assigneeIds.map(assigneeId => 
+                    grantAchievements(assigneeId, organizationId, 'completed', { ...oldTask, status: 'Voltooid' })
                 ));
             }
-            if (taskToUpdate.teamId) {
-                checkAndGrantTeamAchievements(taskToUpdate.teamId, organizationId).catch(console.error);
+            if (oldTask.teamId) {
+                checkAndGrantTeamAchievements(oldTask.teamId, organizationId).catch(console.error);
             }
             // Deblock tasks that were blocked by this one
             const deblockedTasksQuery = query(collection(db, 'tasks'), where('blockedBy', 'array-contains', taskId));
@@ -272,63 +190,27 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
                 }
             });
 
-            if (taskToUpdate.recurring) {
-                const nextDueDate = calculateNextDueDate(taskToUpdate.dueDate, taskToUpdate.recurring);
-                const newTaskData: any = { ...taskToUpdate, recurring: taskToUpdate.recurring, status: 'Te Doen' as Status, dueDate: nextDueDate, createdAt: new Date(), subtasks: taskToUpdate.subtasks.map(s => ({...s, completed: false })), comments: [], history: [addHistoryEntry(userId, 'Automatisch aangemaakt', `Herhaling van taak ${taskToUpdate.id}`)], order: Date.now(), thanked: false, };
+            if (oldTask.recurring) {
+                const nextDueDate = calculateNextDueDate(oldTask.dueDate, oldTask.recurring);
+                const newTaskData: any = { ...oldTask, recurring: oldTask.recurring, status: 'Te Doen' as Status, dueDate: nextDueDate, createdAt: new Date(), subtasks: oldTask.subtasks.map(s => ({...s, completed: false })), comments: [], history: [addHistoryEntry(userId, 'Automatisch aangemaakt', `Herhaling van taak ${oldTask.id}`)], order: Date.now(), thanked: false, };
                 delete newTaskData.id;
                 delete newTaskData.completedAt;
                 const newDocRef = doc(collection(db, 'tasks'));
                 batch.set(newDocRef, newTaskData);
-                if (newTaskData.assigneeIds.length > 0) {
-                    newTaskData.assigneeIds.forEach((assigneeId: string) => createNotification(assigneeId, `Nieuwe herhalende taak: "${newTaskData.title}"`, newDocRef.id, organizationId, userId, { eventType: 'assignment' }));
-                }
-                await triggerWebhooks(organizationId, 'task.created', { ...newTaskData, id: newDocRef.id });
+                handleTaskCreated({ ...newTaskData, id: newDocRef.id }, 'Systeem').catch(console.error);
             }
         }
         
         if (newHistory.length > 0) finalUpdates.history = arrayUnion(...newHistory);
-        if (updates.status && updates.status !== taskToUpdate.status) finalUpdates.order = Date.now();
+        if (updates.status && updates.status !== oldTask.status) finalUpdates.order = Date.now();
         
         Object.keys(finalUpdates).forEach(key => { if ((finalUpdates as any)[key] === undefined) { (finalUpdates as any)[key] = null; }});
         
         batch.update(taskRef, finalUpdates);
         await batch.commit();
 
-        const updatedTask = { ...taskToUpdate, ...finalUpdates, id: taskId };
-        await triggerWebhooks(organizationId, 'task.updated', updatedTask);
-
-        // Check for project budget notification threshold
-        if (updatedTask.projectId && (updates.cost !== undefined || updates.status === 'Voltooid')) {
-            try {
-                const projectDoc = await getDoc(doc(db, 'projects', updatedTask.projectId));
-                if (projectDoc.exists()) {
-                    const projectData = projectDoc.data() as Project;
-                    const thresholdConfig = organization.settings?.notificationThresholds?.projectBudget;
-                    
-                    if (thresholdConfig?.enabled && projectData.budget && !projectData.budgetNotificationSent) {
-                        const tasksQuery = query(collection(db, 'tasks'), where('projectId', '==', updatedTask.projectId));
-                        const tasksSnapshot = await getDocs(tasksQuery);
-                        const totalCost = tasksSnapshot.docs.reduce((sum, taskDoc) => sum + (taskDoc.data().cost || 0), 0);
-
-                        const percentageUsed = (totalCost / projectData.budget) * 100;
-                        if (percentageUsed >= thresholdConfig.percentage) {
-                            const message = `Budgetwaarschuwing: Het budget voor project "${projectData.name}" is voor ${Math.round(percentageUsed)}% verbruikt.`;
-                            await createNotification(
-                                organization.ownerId, 
-                                message, 
-                                null, 
-                                organizationId, 
-                                SYSTEM_USER_ID, 
-                                { eventType: 'system' }
-                            );
-                            await updateDoc(projectDoc.ref, { budgetNotificationSent: true });
-                        }
-                    }
-                }
-            } catch (e: any) {
-                console.error("Failed to process budget threshold notification:", e.message);
-            }
-        }
+        const updatedTask = { ...oldTask, ...finalUpdates, id: taskId };
+        handleTaskUpdated(updatedTask, oldTask, organization, userId).catch(console.error);
         
         return { data: { success: true, updatedTask }, error: null };
 
@@ -371,7 +253,8 @@ export async function cloneTaskAction(taskId: string, userId: string, organizati
         
         delete (clonedTask as any).id; 
         const docRef = await addDoc(collection(db, 'tasks'), clonedTask);
-        await triggerWebhooks(organizationId, 'task.created', { ...clonedTask, id: docRef.id });
+        handleTaskCreated({ ...clonedTask, id: docRef.id }, 'Systeem').catch(console.error);
+
         return { data: { success: true, clonedTaskTitle: clonedTask.title }, error: null };
     } catch (e: any) {
         return { data: null, error: e.message };
@@ -414,8 +297,12 @@ export async function splitTaskAction(taskId: string, userId: string, organizati
         batch.set(newTaskRef, newTaskData);
         await batch.commit();
 
-        await triggerWebhooks(organizationId, 'task.created', { ...newTaskData, id: newTaskRef.id });
-        await triggerWebhooks(organizationId, 'task.updated', { ...originalTask, id: taskRef.id, subtasks: originalSubtasks });
+        const newTask = { ...newTaskData, id: newTaskRef.id };
+        const updatedOldTask = { ...originalTask, id: taskRef.id, subtasks: originalSubtasks };
+        
+        handleTaskCreated(newTask, 'Systeem').catch(console.error);
+        handleTaskUpdated(updatedOldTask, originalTask as Task, {} as Organization, userId).catch(console.error);
+
         return { data: { success: true }, error: null };
     } catch (e: any) {
         return { data: null, error: e.message };
@@ -430,25 +317,9 @@ export async function deleteTaskPermanentlyAction(taskId: string, organizationId
 
         const taskData = { ...taskDoc.data(), id: taskId } as Task;
         await deleteDoc(taskRef);
-        await triggerWebhooks(organizationId, 'task.deleted', taskData);
         
-        // Google Calendar Sync
-        if (taskData.googleEventId && taskData.creatorId) {
-            try {
-                await deleteCalendarEvent(taskData.creatorId, taskData.googleEventId);
-            } catch (e) {
-                console.error("Google Calendar event deletion failed:", e);
-            }
-        }
-
-        // Microsoft Calendar Sync
-        if (taskData.microsoftEventId && taskData.creatorId) {
-            try {
-                await deleteMicrosoftCalendarEvent(taskData.creatorId, taskData.microsoftEventId);
-            } catch (e) {
-                console.error("Microsoft Calendar event deletion failed:", e);
-            }
-        }
+        // Fire-and-forget event handling
+        handleTaskUpdated(taskData, taskData, {} as Organization, 'system', true).catch(console.error);
         
         return { data: { success: true }, error: null };
     } catch (e: any) {
