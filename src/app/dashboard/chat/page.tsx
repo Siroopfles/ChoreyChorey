@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -24,6 +22,7 @@ export default function ChatPage() {
   const { user, currentOrganization } = useAuth();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -60,6 +59,13 @@ export default function ChatPage() {
 
     setIsLoading(false);
   };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        formRef.current?.requestSubmit();
+    }
+  };
 
   return (
     <div className="flex flex-col h-full max-h-[calc(100vh-10rem)]">
@@ -90,10 +96,11 @@ export default function ChatPage() {
         </ScrollArea>
       </div>
       <div className="p-4 border-t bg-background">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+        <form onSubmit={handleSubmit} ref={formRef} className="flex items-center gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Stel een vraag of geef een commando..."
             disabled={isLoading}
             autoComplete="off"
