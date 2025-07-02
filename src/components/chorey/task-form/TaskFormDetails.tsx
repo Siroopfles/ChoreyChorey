@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User, Project, Task } from '@/lib/types';
@@ -6,7 +7,7 @@ import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Bot, X, Check, Tags, Briefcase, Lightbulb } from 'lucide-react';
+import { Loader2, Bot, X, Check, Tags, Briefcase, Lightbulb, User as UserIcon } from 'lucide-react';
 import { findDuplicateTask } from '@/ai/flows/task-management/find-duplicate-task-flow';
 import { suggestProactiveHelp } from '@/ai/flows/assistance-suggestion/suggest-proactive-help-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

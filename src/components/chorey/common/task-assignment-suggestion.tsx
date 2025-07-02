@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFormContext } from 'react-hook-form';
@@ -10,10 +11,11 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { useTasks } from '@/contexts/feature/task-context';
 import { AIFeedback } from '@/components/chorey/common/ai-feedback';
 import { useAiSuggestion } from '@/hooks/use-ai-suggestion';
+import { useOrganization } from '@/contexts/system/organization-context';
 
 export function TaskAssignmentSuggestion() {
   const form = useFormContext();
-  const { users: orgUsers, currentOrganization } = useAuth();
+  const { users: orgUsers } = useOrganization();
   const { tasks } = useTasks();
 
   const { trigger: triggerSuggestion, data: suggestion, isLoading, error } = useAiSuggestion(suggestTaskAssignee, {
@@ -26,7 +28,6 @@ export function TaskAssignmentSuggestion() {
   });
   
   const handleSuggest = async () => {
-    if (!currentOrganization) return;
     const taskDescription = form.watch('description');
     triggerSuggestion({ taskDescription, orgUsers, allTasks: tasks });
   };
@@ -39,7 +40,7 @@ export function TaskAssignmentSuggestion() {
         type="button"
         variant="outline"
         onClick={handleSuggest}
-        disabled={isLoading || !taskDescription || !currentOrganization}
+        disabled={isLoading || !taskDescription}
         className="w-full"
       >
         {isLoading ? (
