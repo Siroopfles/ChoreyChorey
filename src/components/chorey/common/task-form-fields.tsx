@@ -7,19 +7,19 @@ import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2, Bot, X } from 'lucide-react';
+import { Loader2, Bot } from 'lucide-react';
 import { findDuplicateTask } from '@/ai/flows/task-management/find-duplicate-task-flow';
 import { suggestProactiveHelp } from '@/ai/flows/assistance-suggestion/suggest-proactive-help-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/user/auth-context';
 import { useDebounce } from '@/hooks/use-debounce';
 import { TaskFormDetails } from '@/components/chorey/task-form/TaskFormDetails';
 import { TaskFormSubtasks } from '@/components/chorey/task-form/TaskFormSubtasks';
 import { TaskFormAdvanced } from '@/components/chorey/task-form/TaskFormAdvanced';
 import { AIFeedback } from '@/components/chorey/common/ai-feedback';
-import type { CustomFieldDefinition } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAiSuggestion } from '@/hooks/use-ai-suggestion';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+
 
 type TaskFormFieldsProps = {
   users: User[];
@@ -29,7 +29,7 @@ type TaskFormFieldsProps = {
 
 export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
   const form = useFormContext();
-  const { currentOrganization } = useAuth();
+  const { currentOrganization } = useOrganization();
   
   const { trigger: triggerDuplicateCheck, data: duplicateResult, isLoading: isCheckingForDuplicates } = useAiSuggestion(findDuplicateTask);
   const { trigger: triggerProactiveHelp, data: proactiveHelp, isLoading: isCheckingComplexity } = useAiSuggestion(suggestProactiveHelp);
@@ -71,6 +71,25 @@ export function TaskFormFields({ users, projects, task }: TaskFormFieldsProps) {
           </FormItem>
         )}
       />
+
+       <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Omschrijving</FormLabel>
+            <FormControl>
+              <RichTextEditor
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Voeg een meer gedetailleerde omschrijving toe..."
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
 
        <div className="space-y-2">
         <Button type="button" variant="outline" size="sm" onClick={onCheckForDuplicates} disabled={isCheckingForDuplicates || !title}>

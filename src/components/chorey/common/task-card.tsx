@@ -1,6 +1,6 @@
 
 'use client';
-import { PERMISSIONS, type Task, type User, type Project, type Subtask, type Comment, type StatusDefinition } from '@/lib/types';
+import { PERMISSIONS, type Task, type User, type Project, type Subtask, type Comment, type StatusDefinition, type Label } from '@/lib/types';
 import { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils/utils';
 import { useTasks } from '@/contexts/feature/task-context';
@@ -60,7 +60,14 @@ import { TaskCardFooter } from './task-card-footer';
 import { useFilters } from '@/contexts/system/filter-context';
 import { useOrganization } from '@/contexts/system/organization-context';
 import { HandoffTaskDialog } from '../dialogs/handoff-task-dialog';
-import EditTaskDialog from '../dialogs/edit-task-dialog';
+import { useView } from '@/contexts/system/view-context';
+import { handleServerAction } from '@/lib/utils/action-wrapper';
+import * as TaskCrudActions from '@/app/actions/project/task-crud.actions';
+import * as TaskStateActions from '@/app/actions/project/task-state.actions';
+import * as TaskTimerActions from '@/app/actions/project/task-timer.actions';
+import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user/member.actions';
+import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/core/gamification.actions';
+import { triggerHapticFeedback } from '@/lib/core/haptics';
 
 type TaskCardProps = {
   task: Task;
@@ -100,11 +107,11 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 
 
 const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, isOverdue, isDueToday, isDueSoon, blockingTasks, relatedTasks, blockedByTasks }: TaskCardProps) => {
-  const { updateTask, toggleSubtaskCompletion, cloneTask, splitTask, deleteTaskPermanently, thankForTask, toggleTaskTimer, rateTask, resetSubtasks, setChoreOfTheWeek, toggleMuteTask, setViewedTask, promoteSubtaskToTask, toggleTaskPin } = useTasks();
+  const { toast } = useToast();
   const { searchTerm, selectedTaskIds, toggleTaskSelection } = useFilters();
   const { currentOrganization, currentUserRole, currentUserPermissions } = useOrganization();
-  const { toast } = useToast();
-
+  const { setViewedTask } = useView();
+  
   const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
   
   const showGamification = currentOrganization?.settings?.features?.gamification !== false;
@@ -193,6 +200,41 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
     }
   }
 
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    if (!currentUser || !currentOrganization) return;
+    
+    if (updates.status === 'Voltooid') {
+        const taskToUpdate = tasks.find(t => t.id === taskId);
+        if (taskToUpdate?.status !== 'Voltooid') {
+             triggerHapticFeedback([100, 30, 100]);
+        }
+    }
+    
+    await handleServerAction(
+        () => TaskCrudActions.updateTaskAction(taskId, updates, currentUser.id, currentOrganization.id),
+        toast,
+        { errorContext: 'bijwerken taak' }
+    );
+  };
+  
+  const toggleSubtaskCompletion = (taskId: string, subtaskId: string) => {
+     if (!currentUser || !currentOrganization) return;
+    handleServerAction(
+        () => TaskStateActions.toggleSubtaskCompletionAction(taskId, subtaskId, currentUser.id, currentOrganization.id),
+        toast,
+        { errorContext: 'bijwerken subtaak' }
+    );
+  };
+  
+  const toggleTaskTimer = (taskId: string) => {
+    if (!currentUser || !currentOrganization) return;
+    handleServerAction(
+        () => TaskTimerActions.toggleTaskTimerAction(taskId, currentUser.id, currentOrganization.id),
+        toast,
+        { errorContext: 'tijdregistratie' }
+    );
+  };
+
   return (
     <div className="relative">
        <div className="absolute top-2 left-2 z-10">
@@ -222,7 +264,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                 <Image
                   src={task.imageUrl}
                   alt={task.title}
-                  layout="fill"
+                  fill
                   objectFit="cover"
                 />
             </div>
@@ -280,20 +322,20 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                         <span>{task.helpNeeded ? 'Hulp niet meer nodig' : 'Vraag om hulp'}</span>
                     </DropdownMenuItem>
                     {canManageChoreOfWeek && (
-                      <DropdownMenuItem onClick={() => setChoreOfTheWeek(task.id)}>
+                      <DropdownMenuItem onClick={() => handleServerAction(() => TaskCrudActions.updateTaskAction(task.id, { isChoreOfTheWeek: true }, currentUser!.id, currentOrganization!.id), toast, { successToast: { title: 'Klus van de Week ingesteld!', description: () => `De taak is nu de Klus van de Week.`}, errorContext: 'instellen klus v/d week'})}>
                           <Star className="mr-2 h-4 w-4" />
                           <span>{task.isChoreOfTheWeek ? 'Verwijder als Klus v/d Week' : 'Markeer als Klus v/d Week'}</span>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={() => cloneTask(task.id)}>
+                    <DropdownMenuItem onClick={() => handleServerAction(() => TaskCrudActions.cloneTaskAction(task.id, currentUser!.id, currentOrganization!.id), toast, { successToast: { title: 'Taak Gekloond!', description: (data) => `Een kopie van "${(data as any).clonedTaskTitle}" is aangemaakt.`}, errorContext: 'klonen taak'})}>
                     <Copy className="mr-2 h-4 w-4" />
                     Klonen
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => splitTask(task.id)} disabled={task.subtasks.length < 2}>
+                    <DropdownMenuItem onClick={() => handleServerAction(() => TaskCrudActions.splitTaskAction(task.id, currentUser!.id, currentOrganization!.id), toast, { successToast: { title: 'Taak gesplitst!', description: () => `Een nieuwe taak is aangemaakt.`}, errorContext: 'splitsen taak'})} disabled={task.subtasks.length < 2}>
                       <Divide className="mr-2 h-4 w-4" />
                       Splitsen
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => resetSubtasks(task.id)} disabled={task.subtasks.length === 0}>
+                    <DropdownMenuItem onClick={() => handleServerAction(() => TaskStateActions.resetSubtasksAction(task.id, currentUser!.id, currentOrganization!.id), toast, { successToast: { title: 'Subtaken gereset!', description: (data) => `Alle subtaken voor "${(data as any).taskTitle}" zijn gereset.`}, errorContext: 'resetten subtaken'})} disabled={task.subtasks.length === 0}>
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Reset Subtaken
                     </DropdownMenuItem>
@@ -317,11 +359,11 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     </DropdownMenuPortal>
                     </DropdownMenuSub>
                     <DropdownMenuSeparator />
-                     <DropdownMenuItem onClick={() => toggleTaskPin(task.id, !task.pinned)} disabled={!canPin}>
+                     <DropdownMenuItem onClick={() => handleServerAction(() => TaskStateActions.toggleTaskPinAction(task.id, !task.pinned, currentUser!.id, currentOrganization!.id), toast, { successToast: { title: `Project ${!task.pinned ? 'vastgepind' : 'losgemaakt'}.`}, errorContext: 'vastpinnen taak'})} disabled={!canPin}>
                         <Pin className={cn("mr-2 h-4 w-4", task.pinned && "fill-current")} />
                         <span>{task.pinned ? 'Taak losmaken' : 'Taak vastpinnen'}</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toggleMuteTask(task.id)}>
+                    <DropdownMenuItem onClick={() => handleServerAction(() => toggleMuteTaskAction(currentOrganization!.id, currentUser!.id, task.id), toast, { successToast: { title: 'Instelling opgeslagen', description: (data) => `Taak is ${(data as any).newState === 'muted' ? 'gedempt' : 'dempen opgeheven'}.`}, errorContext: 'dempen taak'})}>
                         {isMuted ? <Bell className="mr-2 h-4 w-4" /> : <BellOff className="mr-2 h-4 w-4" />}
                         <span>{isMuted ? 'Dempen opheffen' : 'Dempen'}</span>
                     </DropdownMenuItem>
@@ -332,7 +374,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                           <RefreshCw className="mr-2 h-4 w-4" />
                           Herstellen
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => deleteTaskPermanently(task.id)}>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => handleServerAction(() => TaskCrudActions.deleteTaskPermanentlyAction(task.id, currentOrganization!.id), toast, { successToast: { title: 'Taak Permanent Verwijderd', description: () => `De taak is permanent verwijderd.`}, errorContext: 'permanent verwijderen taak'})}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Permanent verwijderen
                         </DropdownMenuItem>
@@ -372,7 +414,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     size="sm"
                     variant="outline"
                     className="w-full mb-2"
-                    onClick={(e) => { e.stopPropagation(); thankForTask(task.id); }}
+                    onClick={(e) => { e.stopPropagation(); handleServerAction(() => thankForTaskAction(task.id, currentUser!.id, users.filter(u => task.assigneeIds.includes(u.id)), currentOrganization!.id), toast, { successToast: { title: 'Bedankt!', description: (data) => `Bonuspunten gegeven aan ${(data as any).assigneesNames}.`}, errorContext: 'bedanken voor taak'}) }}
                     disabled={task.thanked}
                     data-cy="thank-button"
                 >
@@ -386,7 +428,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     <p className="text-xs font-medium text-muted-foreground mb-1">Beoordeel deze taak:</p>
                     <div className="flex items-center" onMouseLeave={() => setHoverRating(0)}>
                         {[1, 2, 3, 4, 5].map(star => (
-                            <button key={star} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); rateTask(task.id, star); }} aria-label={`Geef ${star} sterren`} data-cy={`rate-star-${star}`}>
+                            <button key={star} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleServerAction(() => rateTaskAction(task.id, star, task, currentUser!.id, currentOrganization!.id), toast, { successToast: { title: 'Taak beoordeeld!', description: () => 'Bonuspunten gegeven.'}, errorContext: 'beoordelen taak'}) }} aria-label={`Geef ${star} sterren`} data-cy={`rate-star-${star}`}>
                                 <Star className={cn('h-5 w-5', (hoverRating || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
                             </button>
                         ))}
@@ -475,10 +517,11 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                             </div>
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button
+                                    type="button"
                                     variant="ghost"
                                     size="icon"
                                     className="h-6 w-6"
-                                    onClick={(e) => { e.stopPropagation(); promoteSubtaskToTask(task.id, subtask); }}
+                                    onClick={(e) => { e.stopPropagation(); handleServerAction(() => TaskStateActions.promoteSubtaskToTask(task.id, subtask, currentUser!.id), toast, { successToast: { title: 'Subtaak Gepromoveerd!', description: (data) => `"${(data as any).newTastTitle}" is nu een losstaande taak.`}, errorContext: 'promoveren subtaak'}) }}
                                     title="Promoveer naar taak"
                                     aria-label="Promoveer subtaak naar nieuwe taak"
                                 >

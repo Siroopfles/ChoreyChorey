@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/user/auth-context';
 import type { Task } from '@/lib/types';
 import { addCommentAction, toggleCommentReactionAction } from '@/app/actions/core/comment.actions';
 import { useToast } from '@/hooks/use-toast';
+import { handleServerAction } from '@/lib/utils/action-wrapper';
+
 
 export function EditTaskTabs({ task }: { task: Task }) {
   const { users, currentOrganization } = useOrganization();
@@ -20,15 +22,20 @@ export function EditTaskTabs({ task }: { task: Task }) {
 
   const handleAddComment = (text: string, parentId: string | null = null) => {
     if (!currentUser || !currentOrganization) return;
-    addCommentAction(task.id, text, currentUser.id, currentUser.name, currentOrganization.id, parentId);
+    handleServerAction(
+        () => addCommentAction(task.id, text, currentUser.id, currentUser.name, currentOrganization.id, parentId),
+        toast,
+        { errorContext: 'plaatsen reactie' }
+    );
   };
   
   const handleToggleReaction = async (taskId: string, commentId: string, emoji: string) => {
     if (!currentUser) return;
-    const { error } = await toggleCommentReactionAction(taskId, commentId, emoji, currentUser.id);
-    if (error) {
-        toast({ title: 'Fout bij reageren', description: error, variant: 'destructive' });
-    }
+    await handleServerAction(
+        () => toggleCommentReactionAction(taskId, commentId, emoji, currentUser.id),
+        toast,
+        { errorContext: 'reageren op commentaar' }
+    );
   };
 
   return (

@@ -1,20 +1,17 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { useTasks } from '@/contexts/feature/task-context';
 import { useOrganization } from '@/contexts/system/organization-context';
-import { useAuth } from '@/contexts/user/auth-context';
 import { usePresence } from '@/contexts/communication/presence-context';
-import type { Task, TaskFormValues, Label, User } from '@/lib/types';
+import type { Task, TaskFormValues, Label } from '@/lib/types';
 import { taskFormSchema } from '@/lib/types';
 import { EditTaskHeader } from './edit-task/EditTaskHeader';
 import { EditTaskTabs } from './edit-task/EditTaskTabs';
@@ -26,6 +23,10 @@ import { useToast } from '@/hooks/use-toast';
 import { LiveDescriptionEditor } from '../common/live-description-editor';
 import { Poll } from '../common/Poll';
 import { Separator } from '@/components/ui/separator';
+import { useView } from '@/contexts/system/view-context';
+import { updateTaskAction } from '@/app/actions/project/task-crud.actions';
+import { handleServerAction } from '@/lib/utils/action-wrapper';
+import { useAuth } from '@/contexts/user/auth-context';
 
 type EditTaskDialogProps = {
   task: Task;
@@ -35,9 +36,10 @@ type EditTaskDialogProps = {
 
 export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
-  const { updateTask } = useTasks();
-  const { users, projects } = useOrganization();
+  const { users, projects, currentOrganization } = useOrganization();
   const { setViewingTask } = usePresence();
+  const { user: currentUser } = useAuth();
+  const { setViewedTask } = useView();
 
   const form = useForm<Omit<TaskFormValues, 'description'>>({
     resolver: zodResolver(taskFormSchema.omit({ description: true })),
@@ -80,6 +82,8 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
   }, [task, isOpen, form, setViewingTask]);
 
   const onSubmit = (data: Omit<TaskFormValues, 'description'>) => {
+    if (!currentUser || !currentOrganization) return;
+    
     const updatedSubtasks = (data.subtasks || []).map((sub, index) => ({
         ...sub,
         id: task.subtasks[index]?.id || crypto.randomUUID(),
@@ -92,19 +96,25 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
         type: 'file' as const,
     }));
 
-    updateTask(task.id, {
+    handleServerAction(
+      () => updateTaskAction(task.id, {
         ...data,
         labels: data.labels as Label[],
         subtasks: updatedSubtasks,
         attachments: updatedAttachments,
         blockedBy: data.blockedBy || [],
-    });
-
-    toast({
-      title: 'Taak Bijgewerkt!',
-      description: `De taak "${data.title}" is succesvol bijgewerkt.`,
-    });
-    setIsOpen(false);
+      }, currentUser.id, currentOrganization.id),
+      toast,
+      {
+        successToast: {
+          title: 'Taak Bijgewerkt!',
+          description: () => `De taak "${data.title}" is succesvol bijgewerkt.`
+        },
+        errorContext: 'opslaan taak'
+      }
+    )
+    
+    setViewedTask(null);
   };
 
   return (
@@ -130,9 +140,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
               </FormProvider>
             </ScrollArea>
             <div className="pt-4 border-t md:border-none md:pt-0 flex justify-end gap-2">
-              <DialogClose asChild>
-                <Button type="button" variant="ghost">Annuleren</Button>
-              </DialogClose>
+              <Button type="button" variant="ghost" onClick={() => setViewedTask(null)}>Annuleren</Button>
               <Button type="submit" form="edit-task-form">
                 Wijzigingen Opslaan
               </Button>

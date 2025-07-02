@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { User, TaskFormValues, TaskTemplateFormValues } from '@/lib/types';
+import type { User, TaskFormValues, TaskTemplate } from '@/lib/types';
 import { taskFormSchema } from '@/lib/types';
 import { type ReactNode, useEffect, useState, useMemo } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -24,17 +24,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { TaskFormFields } from '@/components/chorey/common/task-form-fields';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { handleServerAction } from '@/lib/utils/action-wrapper';
+import { createTaskAction } from '@/app/actions/project/task-crud.actions';
+import { useAuth } from '@/contexts/user/auth-context';
 
 type AddTaskDialogProps = {
-  template?: TaskTemplateFormValues;
+  template?: TaskTemplate;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
 export default function AddTaskDialog({ template, open, onOpenChange }: AddTaskDialogProps) {
   const { toast } = useToast();
-  const { addTask } = useTasks();
   const { users, projects, currentOrganization } = useOrganization();
+  const { user: currentUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -111,9 +114,22 @@ export default function AddTaskDialog({ template, open, onOpenChange }: AddTaskD
   }, [open, template, form, defaultFormValues, searchParams, router]);
 
   async function onSubmit(data: TaskFormValues) {
+    if (!currentUser || !currentOrganization) return;
     setIsSubmitting(true);
-    const success = await addTask(data);
-    if (success) {
+    
+    const result = await handleServerAction(
+      () => createTaskAction(currentOrganization.id, currentUser.id, currentUser.name, data),
+      toast,
+      {
+        successToast: {
+          title: 'Taak Aangemaakt!',
+          description: () => `De taak "${data.title}" is aangemaakt.`,
+        },
+        errorContext: 'opslaan taak',
+      }
+    );
+
+    if (!result.error) {
       onOpenChange(false);
       form.reset(defaultFormValues);
     }
