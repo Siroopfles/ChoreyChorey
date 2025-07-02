@@ -88,14 +88,15 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const tasksQuery = query(
         collection(db, 'tasks'), 
         ...baseQueryConstraints,
-        orderBy('createdAt', 'desc'),
-        limit(500) // Increase limit for better local filtering
+        // orderBy('createdAt', 'desc'), // REMOVED to prevent composite index error for guest users. Sorting is now done client-side.
+        limit(500)
     );
     
     const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
       const tasksData = snapshot.docs
         .map(doc => processTaskDoc(doc, projects, canViewSensitive, user))
-        .filter(task => !task.isPrivate || task.assigneeIds.includes(user.id) || task.creatorId === user.id);
+        .filter(task => !task.isPrivate || task.assigneeIds.includes(user.id) || task.creatorId === user.id)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // ADDED client-side sort
       
       setTasks(tasksData);
       setLoading(false);
