@@ -1,4 +1,4 @@
-
+// DEPRECATED: This page has been moved.
 'use client';
 
 import { redirect } from 'next/navigation';

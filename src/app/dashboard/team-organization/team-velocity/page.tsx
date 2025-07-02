@@ -2,6 +2,6 @@
 import { redirect } from 'next/navigation';
 
 export default function DeprecatedPage() {
-    redirect('/dashboard/analytics/team-velocity');
+    redirect('/dashboard/team-velocity');
     return null;
 }

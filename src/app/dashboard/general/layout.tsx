@@ -1,6 +1,6 @@
-
+// DEPRECATED: The /general route group is obsolete and has been removed.
+// The main dashboard layout is now in /src/app/dashboard/layout.tsx.
+// This file can be removed in a future cleanup.
 export default function GeneralLayout({ children }: { children: React.ReactNode }) {
-  // This layout is now a pass-through since the main layout has been moved
-  // to /dashboard/layout.tsx to apply to all dashboard routes correctly.
   return <>{children}</>;
 }
