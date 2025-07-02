@@ -1,8 +1,8 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Send, MessageCircle } from 'lucide-react';
@@ -20,7 +20,8 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { user, currentOrganization } = useAuth();
+  const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -33,8 +34,8 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!input.trim() || !user || !currentOrganization) return;
 
     const userMessage: Message = { role: 'user', content: input };
@@ -48,12 +49,12 @@ export default function ChatPage() {
         const assistantMessageContent = await processCommand({ command: currentInput, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
         const assistantMessage: Message = { role: 'assistant', content: assistantMessageContent };
         
-        setMessages(prevMessages => [...prevMessages, assistantMessage]);
+        setMessages(prev => [...prev, assistantMessage]);
 
     } catch (e: any) {
         const errorMessage: Message = { role: 'assistant', content: `Er is een fout opgetreden: ${e.message}` };
         
-        setMessages(prevMessages => [...prevMessages, errorMessage]);
+        setMessages(prev => [...prev, errorMessage]);
         
         toast({
             title: 'AI Fout',
