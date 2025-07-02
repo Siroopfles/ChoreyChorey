@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/user/auth-context';
@@ -96,8 +97,8 @@ export default function DashboardLayout({
 }) {
   return (
     <OrganizationProvider>
-      <TaskProvider>
-        <FilterProvider>
+      <FilterProvider>
+        <TaskProvider>
           <NotificationsProvider>
             <IdeaProvider>
               <GoalProvider>
@@ -125,8 +126,8 @@ export default function DashboardLayout({
               </GoalProvider>
             </IdeaProvider>
           </NotificationsProvider>
-        </FilterProvider>
-      </TaskProvider>
+        </TaskProvider>
+      </FilterProvider>
     </OrganizationProvider>
   );
 }
