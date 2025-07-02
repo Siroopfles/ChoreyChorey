@@ -8,7 +8,6 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { useTasks } from '@/contexts/feature/task-context';
 import { useOrganization } from '@/contexts/system/organization-context';
 import { usePresence } from '@/contexts/communication/presence-context';
 import type { Task, TaskFormValues, Label } from '@/lib/types';
@@ -37,7 +36,7 @@ type EditTaskDialogProps = {
 export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDialogProps) {
   const { toast } = useToast();
   const { users, projects, currentOrganization } = useOrganization();
-  const { setViewingTask } = usePresence();
+  const { setViewingTask: setPresenceViewingTask } = usePresence();
   const { user: currentUser } = useAuth();
   const { setViewedTask } = useView();
 
@@ -47,7 +46,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
 
   useEffect(() => {
     if (task && isOpen) {
-      setViewingTask(task.id);
+      setPresenceViewingTask(task.id);
       form.reset({
         title: task.title,
         assigneeIds: task.assigneeIds || [],
@@ -76,12 +75,12 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
 
     return () => {
       if (isOpen) {
-        setViewingTask(null);
+        setPresenceViewingTask(null);
       }
     };
-  }, [task, isOpen, form, setViewingTask]);
+  }, [task, isOpen, form, setPresenceViewingTask]);
 
-  const onSubmit = (data: Omit<TaskFormValues, 'description'>) => {
+  const onSubmit = async (data: Omit<TaskFormValues, 'description'>) => {
     if (!currentUser || !currentOrganization) return;
     
     const updatedSubtasks = (data.subtasks || []).map((sub, index) => ({
@@ -96,7 +95,7 @@ export default function EditTaskDialog({ task, isOpen, setIsOpen }: EditTaskDial
         type: 'file' as const,
     }));
 
-    handleServerAction(
+    await handleServerAction(
       () => updateTaskAction(task.id, {
         ...data,
         labels: data.labels as Label[],

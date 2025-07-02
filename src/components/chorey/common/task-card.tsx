@@ -68,6 +68,7 @@ import * as TaskTimerActions from '@/app/actions/project/task-timer.actions';
 import { toggleMuteTask as toggleMuteTaskAction } from '@/app/actions/user/member.actions';
 import { thankForTask as thankForTaskAction, rateTask as rateTaskAction } from '@/app/actions/core/gamification.actions';
 import { triggerHapticFeedback } from '@/lib/core/haptics';
+import * as ProjectActions from '@/app/actions/project/project.actions';
 
 type TaskCardProps = {
   task: Task;
@@ -108,7 +109,7 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 
 const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, isOverdue, isDueToday, isDueSoon, blockingTasks, relatedTasks, blockedByTasks }: TaskCardProps) => {
   const { toast } = useToast();
-  const { searchTerm, selectedTaskIds, toggleTaskSelection } = useFilters();
+  const { selectedTaskIds, toggleTaskSelection } = useFilters();
   const { currentOrganization, currentUserRole, currentUserPermissions } = useOrganization();
   const { setViewedTask } = useView();
   
@@ -200,41 +201,20 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
     }
   }
 
-  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+  const updateTask = async (updates: Partial<Task>) => {
     if (!currentUser || !currentOrganization) return;
     
-    if (updates.status === 'Voltooid') {
-        const taskToUpdate = tasks.find(t => t.id === taskId);
-        if (taskToUpdate?.status !== 'Voltooid') {
-             triggerHapticFeedback([100, 30, 100]);
-        }
+    if (updates.status === 'Voltooid' && task.status !== 'Voltooid') {
+        triggerHapticFeedback([100, 30, 100]);
     }
     
     await handleServerAction(
-        () => TaskCrudActions.updateTaskAction(taskId, updates, currentUser.id, currentOrganization.id),
+        () => TaskCrudActions.updateTaskAction(task.id, updates, currentUser.id, currentOrganization.id),
         toast,
         { errorContext: 'bijwerken taak' }
     );
   };
   
-  const toggleSubtaskCompletion = (taskId: string, subtaskId: string) => {
-     if (!currentUser || !currentOrganization) return;
-    handleServerAction(
-        () => TaskStateActions.toggleSubtaskCompletionAction(taskId, subtaskId, currentUser.id, currentOrganization.id),
-        toast,
-        { errorContext: 'bijwerken subtaak' }
-    );
-  };
-  
-  const toggleTaskTimer = (taskId: string) => {
-    if (!currentUser || !currentOrganization) return;
-    handleServerAction(
-        () => TaskTimerActions.toggleTaskTimerAction(taskId, currentUser.id, currentOrganization.id),
-        toast,
-        { errorContext: 'tijdregistratie' }
-    );
-  };
-
   return (
     <div className="relative">
        <div className="absolute top-2 left-2 z-10">
@@ -265,7 +245,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                   src={task.imageUrl}
                   alt={task.title}
                   fill
-                  objectFit="cover"
+                  style={{ objectFit: 'cover' }}
                 />
             </div>
         )}
@@ -309,7 +289,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                         Focus
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toggleTaskTimer(task.id)} disabled={!showTimeTracking}>
+                    <DropdownMenuItem onClick={() => handleServerAction(() => TaskTimerActions.toggleTaskTimerAction(task.id, currentUser!.id, currentOrganization!.id), toast, { errorContext: 'tijdregistratie' })} disabled={!showTimeTracking}>
                         {currentUser && task.activeTimerStartedAt?.[currentUser.id] ? <TimerOff className="mr-2 h-4 w-4" /> : <Timer className="mr-2 h-4 w-4" />}
                         <span>{currentUser && task.activeTimerStartedAt?.[currentUser.id] ? 'Stop mijn timer' : 'Start mijn timer'}</span>
                     </DropdownMenuItem>
@@ -317,7 +297,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                         <ArrowRight className="mr-2 h-4 w-4" />
                         <span>Taak Overdragen</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateTask(task.id, { helpNeeded: !task.helpNeeded })}>
+                    <DropdownMenuItem onClick={() => updateTask({ helpNeeded: !task.helpNeeded })}>
                         <HandHeart className="mr-2 h-4 w-4" />
                         <span>{task.helpNeeded ? 'Hulp niet meer nodig' : 'Vraag om hulp'}</span>
                     </DropdownMenuItem>
@@ -351,7 +331,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     <DropdownMenuPortal>
                         <DropdownMenuSubContent>
                             {allStatuses.map(status => (
-                                <DropdownMenuItem key={status.name} onClick={() => updateTask(task.id, { status: status.name })}>
+                                <DropdownMenuItem key={status.name} onClick={() => updateTask({ status: status.name })}>
                                     {status.name}
                                 </DropdownMenuItem>
                             ))}
@@ -359,7 +339,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     </DropdownMenuPortal>
                     </DropdownMenuSub>
                     <DropdownMenuSeparator />
-                     <DropdownMenuItem onClick={() => handleServerAction(() => TaskStateActions.toggleTaskPinAction(task.id, !task.pinned, currentUser!.id, currentOrganization!.id), toast, { successToast: { title: `Project ${!task.pinned ? 'vastgepind' : 'losgemaakt'}.`}, errorContext: 'vastpinnen taak'})} disabled={!canPin}>
+                     <DropdownMenuItem onClick={() => handleServerAction(() => ProjectActions.toggleProjectPin(task.id, !task.pinned, currentUser!.id, currentOrganization!.id), toast, { successToast: { title: `Project ${!task.pinned ? 'vastgepind' : 'losgemaakt'}.`}, errorContext: 'vastpinnen taak'})} disabled={!canPin}>
                         <Pin className={cn("mr-2 h-4 w-4", task.pinned && "fill-current")} />
                         <span>{task.pinned ? 'Taak losmaken' : 'Taak vastpinnen'}</span>
                     </DropdownMenuItem>
@@ -370,7 +350,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     <DropdownMenuSeparator />
                     {task.status === 'Geannuleerd' ? (
                       <>
-                        <DropdownMenuItem onClick={() => updateTask(task.id, { status: 'Te Doen' })}>
+                        <DropdownMenuItem onClick={() => updateTask({ status: 'Te Doen' })}>
                           <RefreshCw className="mr-2 h-4 w-4" />
                           Herstellen
                         </DropdownMenuItem>
@@ -380,7 +360,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                         </DropdownMenuItem>
                       </>
                     ) : (
-                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => updateTask(task.id, { status: 'Geannuleerd' })}>
+                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => updateTask({ status: 'Geannuleerd' })}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Verplaats naar Prullenbak
                       </DropdownMenuItem>
@@ -402,7 +382,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                 <Button
                     size="sm"
                     className="w-full mb-2 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={(e) => { e.stopPropagation(); updateTask(task.id, { status: 'Voltooid' }); }}
+                    onClick={(e) => { e.stopPropagation(); updateTask({ status: 'Voltooid' }); }}
                 >
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                     Goedkeuren & Voltooien
@@ -505,7 +485,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                               <Checkbox
                                 id={`subtask-${subtask.id}`}
                                 checked={subtask.completed}
-                                onCheckedChange={() => toggleSubtaskCompletion(task.id, subtask.id)}
+                                onCheckedChange={() => handleServerAction(() => TaskStateActions.toggleSubtaskCompletionAction(task.id, subtask.id, currentUser!.id, currentOrganization!.id), toast, { errorContext: 'bijwerken subtaak' })}
                               />
                               <label
                                 htmlFor={`subtask-${subtask.id}`}
@@ -534,7 +514,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                                         className="h-6 w-6"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            toggleSubtaskCompletion(task.id, subtask.id);
+                                            handleServerAction(() => TaskStateActions.toggleSubtaskCompletionAction(task.id, subtask.id, currentUser!.id, currentOrganization!.id), toast, { errorContext: 'bijwerken subtaak' });
                                         }}
                                         title="Reset subtaak"
                                     >

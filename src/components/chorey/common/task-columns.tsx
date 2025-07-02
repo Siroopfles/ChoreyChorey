@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useView } from '@/contexts/system/view-context';

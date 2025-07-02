@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ToastAction } from '@/components/ui/toast';
@@ -15,19 +16,19 @@ type ToastFunction = (options: {
 interface ActionOptions<T> {
   successToast?: {
     title: string;
-    description: (data: T | boolean) => string;
+    description?: (data: T) => string;
   };
   errorContext: string;
 }
 
 // The server action can return different shapes, so we need to be flexible
-type ServerActionResult<T> = { data?: T; success?: boolean; error?: string | null };
+type ServerActionResult<T> = { data?: T | null; success?: boolean; error?: string | null };
 
 export async function handleServerAction<T>(
   actionFn: () => Promise<ServerActionResult<T>>,
   toast: ToastFunction,
   options: ActionOptions<T>
-): Promise<{ data: T | boolean | null; error: Error | null }> {
+): Promise<{ data: T | null; error: Error | null }> {
   try {
     const result = await actionFn();
     
@@ -35,16 +36,16 @@ export async function handleServerAction<T>(
       throw new Error(result.error);
     }
     
-    const data = ('data' in result && result.data !== undefined) ? result.data : ('success' in result) ? result.success : false;
+    const data = result.data !== undefined ? result.data : null;
     
     if (options.successToast) {
       toast({
         title: options.successToast.title,
-        description: options.successToast.description(data as T | boolean),
+        description: options.successToast.description ? options.successToast.description(data as T) : undefined,
       });
     }
     
-    return { data: data as T | boolean, error: null };
+    return { data, error: null };
     
   } catch (error: any) {
     console.error(`Error in ${options.errorContext}:`, error);
@@ -59,7 +60,7 @@ export async function handleServerAction<T>(
     };
 
     const retryAction = isNetworkError
-      ? React.createElement(ToastAction, { onClick: retry }, 'Probeer opnieuw')
+      ? React.createElement(ToastAction, { onClick: retry, altText: "Probeer opnieuw" }, 'Probeer opnieuw')
       : undefined;
     
     toast({
