@@ -1,27 +1,2 @@
-'use server';
-import '@/ai/flows/assistance-suggestion/suggest-task-assignee.ts';
-import '@/ai/flows/assistance-suggestion/suggest-subtasks.ts';
-import '@/ai/flows/core-utility/process-command.ts';
-import '@/ai/flows/reporting-insights/summarize-comments.ts';
-import '@/ai/flows/assistance-suggestion/suggest-story-points.ts';
-import '@/ai/flows/generative-ai/generate-avatar-flow.ts';
-import '@/ai/flows/generative-ai/generate-task-image-flow.ts';
-import '@/ai/flows/generative-ai/text-to-speech-flow.ts';
-import '@/ai/flows/generative-ai/multi-speaker-tts-flow.ts';
-import '@/ai/flows/assistance-suggestion/suggest-priority.ts';
-import '@/ai/flows/risk-prediction/identify-risk.ts';
-import '@/ai/flows/assistance-suggestion/suggest-labels-flow.ts';
-import '@/ai/flows/task-management/meeting-to-tasks-flow.ts';
-import '@/ai/flows/task-management/find-duplicate-task-flow.ts';
-import '@/ai/flows/reporting-insights/notification-digest-flow.ts';
-import '@/ai/flows/task-management/level-workload-flow.ts';
-import '@/ai/flows/assistance-suggestion/suggest-headcount-flow.ts';
-import '@/ai/flows/task-management/email-to-task-flow.ts';
-import '@/ai/flows/assistance-suggestion/suggest-proactive-help-flow.ts';
-import '@/ai/flows/assistance-suggestion/suggest-status-update-flow.ts';
-import '@/ai/flows/risk-prediction/predict-burnout-risk-flow.ts';
-import '@/ai/flows/reporting-insights/generate-project-report-flow.ts';
-import '@/ai/flows/risk-prediction/predict-project-outcome-flow.ts';
-import '@/ai/flows/risk-prediction/what-if-scenario-flow.ts';
-import '@/ai/flows/reporting-insights/generate-insights-flow.ts';
-import '@/ai/flows/risk-prediction/predict-task-completion-flow.ts';
+// This file is deprecated. The logic has been moved to /src/ai/dev.ts and other subdirectories.
+// This file can be removed in a future cleanup.
