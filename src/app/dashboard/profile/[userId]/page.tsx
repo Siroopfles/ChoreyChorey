@@ -63,9 +63,8 @@ export default function UserProfilePage() {
         const result = await endorseSkill(currentOrganization.id, user.id, skill, currentUser.id);
         if (result.error) {
             toast({ title: 'Fout', description: result.error, variant: 'destructive' });
-        } else {
-            // No toast needed, the visual feedback is enough.
         }
+        // No toast needed for success, the visual feedback is enough.
         setEndorsingSkill(null);
     };
     
