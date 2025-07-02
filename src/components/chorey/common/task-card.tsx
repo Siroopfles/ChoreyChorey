@@ -410,6 +410,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                     {task.attachments.map((attachment) => {
                         const source = getAttachmentSource(attachment.url);
                         const isEmbeddable = source.startsWith('google-') || source === 'figma' || source === 'adobe-xd';
+                        const urlValue = attachment.url;
                         return (
                             <div key={attachment.id} className="space-y-2">
                                 <TooltipProvider>
@@ -431,9 +432,9 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
-                                {isEmbeddable && attachment.url && source === 'figma' && <FigmaEmbed url={attachment.url} />}
-                                {isEmbeddable && attachment.url && source.startsWith('google-') && <GoogleDocEmbed url={attachment.url} />}
-                                {isEmbeddable && attachment.url && source === 'adobe-xd' && <AdobeXdEmbed url={attachment.url} />}
+                                {isEmbeddable && urlValue && source === 'figma' && <FigmaEmbed url={urlValue} />}
+                                {isEmbeddable && urlValue && source.startsWith('google-') && <GoogleDocEmbed url={urlValue} />}
+                                {isEmbeddable && urlValue && source === 'adobe-xd' && <AdobeXdEmbed url={urlValue} />}
                             </div>
                         )
                     })}
@@ -540,3 +541,5 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
 };
 
 export default TaskCard;
+
+    
