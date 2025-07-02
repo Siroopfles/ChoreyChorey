@@ -2,140 +2,136 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- HELPER FUNCTIONS ---
-    function isOrgMember(orgId) {
-      // Checks if the requesting user is a member of the given organization.
-      // This function can be called by other rules.
-      let orgDoc = get(/databases/$(database)/documents/organizations/$(orgId));
-      return request.auth.uid in orgDoc.data.members;
+    
+    // Helper function to check if the requesting user is a member of a given organization.
+    // It does this by reading the user's own document, which is always allowed.
+    function isMemberOf(orgId) {
+      return request.auth != null 
+             && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && orgId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationIds;
     }
     
-    function isOrgOwner(orgId) {
-      // Checks if the requesting user is the owner of the given organization.
-      let orgDoc = get(/databases/$(database)/documents/organizations/$(orgId));
-      return request.auth.uid == orgDoc.data.ownerId;
+    // Helper function to check if the user is the owner of an organization.
+    function isOwner(orgId) {
+       return request.auth != null && get(/databases/$(database)/documents/organizations/$(orgId)).data.ownerId == request.auth.uid;
     }
-    
-    // --- COLLECTION RULES ---
 
+    // --- Collection-specific Rules ---
+
+    // Users can read and write to their own document.
     match /users/{userId} {
-      // A user can read any other user's profile (for avatars, names).
-      // A user can only write to their own document.
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // You can read an organization's document IF you are a member of it.
+    // Writing is restricted to the owner for safety.
     match /organizations/{orgId} {
-      // A user can read an organization's document IF they are listed in its members map.
-      // This is the key rule to prevent recursive lookups in helper functions.
-      allow read: if request.auth.uid in resource.data.members;
-      // Only the owner of an organization can modify its top-level document.
-      allow write: if isOrgOwner(orgId);
+      allow read: if isMemberOf(orgId);
+      allow write: if isOwner(orgId);
     }
 
-    match /organizations/{orgId}/members/{memberId} {
-      // This path is not actually used as members are a map on the org doc.
-      // But if it were a subcollection, this would be the rule.
-      allow read: if isOrgMember(orgId);
-      allow write: if isOrgOwner(orgId);
-    }
-
+    // Tasks can be created/read/updated/deleted if the user is a member of the organization.
     match /tasks/{taskId} {
-      // CREATE: You can create a task if you are a member of the organization specified in the NEW task data.
-      allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-      // READ, UPDATE, DELETE: You can interact with an existing task if you are a member of its organization.
-      allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+      allow create: if isMemberOf(request.resource.data.organizationId);
+      allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
-
+    
+    // Projects follow the same pattern as tasks.
     match /projects/{projectId} {
-      allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-      allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+      allow create: if isMemberOf(request.resource.data.organizationId);
+      allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
     
+    // Teams follow the same pattern as tasks.
     match /teams/{teamId} {
-      allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-      allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+      allow create: if isMemberOf(request.resource.data.organizationId);
+      allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
 
+    // Invites can be read and created by any authenticated user.
     match /invites/{inviteId} {
-      // Anyone authenticated can read an invite to check its details.
-      allow read: if request.auth != null;
-      // Anyone authenticated can accept an invite (write), the logic is in the backend.
-      // An invite can be created by a member of the organization.
-      allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-      allow update: if request.auth != null;
+      allow read, create, update: if request.auth != null;
     }
     
+    // Templates follow the same pattern as tasks.
     match /taskTemplates/{templateId} {
-       allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+       allow create: if isMemberOf(request.resource.data.organizationId);
+       allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
 
     match /checklistTemplates/{templateId} {
-       allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+       allow create: if isMemberOf(request.resource.data.organizationId);
+       allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
     
+    // Automations follow the same pattern as tasks.
     match /automations/{automationId} {
-       allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+       allow create: if isMemberOf(request.resource.data.organizationId);
+       allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
     
+    // Sessions can only be accessed by the user who owns them.
     match /sessions/{sessionId} {
-      // A user can only access their own session documents.
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
+    // API Keys and Webhooks follow the same pattern as tasks.
     match /apiKeys/{keyId} {
-      allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-      allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+      allow create: if isMemberOf(request.resource.data.organizationId);
+      allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
 
     match /webhooks/{webhookId} {
-       allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+       allow create: if isMemberOf(request.resource.data.organizationId);
+       allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
 
+    // Anyone authenticated can submit feedback.
     match /aiFeedback/{feedbackId} {
-      // Any authenticated user can submit feedback.
       allow create: if request.auth != null;
     }
     
+    // Personal goals are private to the user.
     match /personalGoals/{goalId} {
-       // A user can only access their own goals.
+       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
+    // Team challenges are accessible to all members of the organization.
     match /teamChallenges/{challengeId} {
-       allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+       allow create: if isMemberOf(request.resource.data.organizationId);
+       allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
 
+    // Ideas are accessible to all members of the organization.
     match /ideas/{ideaId} {
-       allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-       allow read, update, delete: if request.auth != null && isOrgMember(resource.data.organizationId);
+       allow create: if isMemberOf(request.resource.data.organizationId);
+       allow read, update, delete: if isMemberOf(resource.data.organizationId);
     }
 
+    // Notifications are private to the user.
     match /notifications/{notificationId} {
-       // A user can only access their own notifications.
-       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-       allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
+    // Activity feed is readable by members, and creatable by any member.
     match /activityFeed/{feedItemId} {
-       allow create: if request.auth != null && isOrgMember(request.resource.data.organizationId);
-       allow read: if request.auth != null && isOrgMember(resource.data.organizationId);
+       allow read: if isMemberOf(resource.data.organizationId);
+       allow create: if isMemberOf(request.resource.data.organizationId);
     }
 
+    // User can write their own presence, others in the same org can read it.
     match /presence/{userId} {
-      // Users can see presence info of others in the same organization.
-      allow read: if request.auth != null && isOrgMember(resource.data.organizationId);
-      // A user can only write their own presence document.
+      allow read: if isMemberOf(resource.data.organizationId);
       allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+     // Members subcollection (not currently used, but good practice).
+    match /organizations/{orgId}/members/{memberId} {
+      allow read: if isMemberOf(orgId);
+      allow write: if isOwner(orgId);
     }
   }
 }
