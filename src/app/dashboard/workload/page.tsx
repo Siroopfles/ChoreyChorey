@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -269,22 +271,30 @@ export default function WorkloadPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {heatmapUsersData.map(({ user, workloads, unavailabilities }) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell className="font-medium sticky left-0 bg-card z-10">{user.name}</TableCell>
-                                        {workloads.map((load, index) => (
-                                            <TableCell key={`${user.id}-${index}`} className="text-center p-1">
-                                                {unavailabilities[index] ? (
-                                                    <div className="h-10 w-full bg-muted flex items-center justify-center text-xs text-muted-foreground rounded">Afwezig</div>
-                                                ) : (
-                                                    <div className={cn("h-10 w-full flex items-center justify-center rounded font-semibold", getHeatmapColor(load, CAPACITY_THRESHOLD))}>
-                                                        {load > 0 && <span>{load}</span>}
-                                                    </div>
-                                                )}
-                                            </TableCell>
-                                        ))}
+                                {heatmapUsersData.length > 0 ? (
+                                    heatmapUsersData.map(({ user, workloads, unavailabilities }) => (
+                                        <TableRow key={user.id}>
+                                            <TableCell className="font-medium sticky left-0 bg-card z-10">{user.name}</TableCell>
+                                            {workloads.map((load, index) => (
+                                                <TableCell key={`${user.id}-${index}`} className="text-center p-1">
+                                                    {unavailabilities[index] ? (
+                                                        <div className="h-10 w-full bg-muted flex items-center justify-center text-xs text-muted-foreground rounded">Afwezig</div>
+                                                    ) : (
+                                                        <div className={cn("h-10 w-full flex items-center justify-center rounded font-semibold", getHeatmapColor(load, CAPACITY_THRESHOLD))}>
+                                                            {load > 0 && <span>{load}</span>}
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={heatmapDays.length + 1} className="h-24 text-center text-muted-foreground">
+                                            Geen gebruikersdata beschikbaar om een heatmap te genereren.
+                                        </TableCell>
                                     </TableRow>
-                                ))}
+                                )}
                             </TableBody>
                         </Table>
                     </div>

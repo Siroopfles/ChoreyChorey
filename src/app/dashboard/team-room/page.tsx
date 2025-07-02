@@ -10,7 +10,7 @@ import type { User, Status, Task } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils/utils';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users as UsersIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const STATUS_PRIORITY: Record<Status, number> = {
@@ -80,6 +80,24 @@ export default function TeamRoomPage() {
                 <Loader2 className="h-8 w-8 animate-spin" />
             </div>
         );
+    }
+
+    if (userPositions.length === 0) {
+      return (
+        <div className="space-y-6 h-full">
+            <div>
+                <h1 className="text-3xl font-bold">Team Room</h1>
+                <p className="text-muted-foreground">Een visuele representatie van de teamactiviteit.</p>
+            </div>
+            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center h-[70vh]">
+                <UsersIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-2xl font-bold tracking-tight">De teamkamer is leeg</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    Er zijn nog geen teamleden om weer te geven. Nodig ze uit via de organisatiepagina.
+                </p>
+            </div>
+        </div>
+      );
     }
 
     return (
