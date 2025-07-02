@@ -16,8 +16,8 @@ const CreateTaskDataSchema = z.object({
   title: z.string().describe('The title of the task.'),
   description: z.string().optional().describe('The detailed description of the task.'),
   priority: z.string().nullable().optional().describe('The priority of the task.'),
-  assigneeIds: z.array(z.string()).optional().describe('The IDs of the users the task is assigned to.'),
-  labels: z.array(z.string()).optional().describe('A list of labels for the task.'),
+  assigneeIds: z.array(z.string()).nullable().optional().describe('The IDs of the users the task is assigned to.'),
+  labels: z.array(z.string()).nullable().optional().describe('A list of labels for the task.'),
   dueDate: z.string().optional().describe("The due date and time in 'YYYY-MM-DDTHH:mm:ss' ISO 8601 format. The AI should convert natural language dates like 'tomorrow at 10am' into this format."),
   isPrivate: z.boolean().optional().describe('Whether the task is private to the creator and assignee. Should be true for personal reminders.'),
   projectId: z.string().optional().describe('The ID of the project this task belongs to.'),
@@ -47,6 +47,7 @@ export const createTask = ai.defineTool(
       organizationId: organizationId,
       dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null,
       history: [addHistoryEntry(creatorId, 'Aangemaakt', `via AI commando.`)],
+      labels: taskData.labels ?? [],
       isPrivate: taskData.isPrivate ?? false,
       assigneeIds: taskData.assigneeIds ?? [],
       // Add defaults for fields not in schema to avoid Firestore errors

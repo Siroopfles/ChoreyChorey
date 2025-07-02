@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -52,13 +53,18 @@ export default function ChatPage() {
         setMessages(prev => [...prev, assistantMessage]);
 
     } catch (e: any) {
-        const errorMessage: Message = { role: 'assistant', content: `Er is een fout opgetreden: ${e.message}` };
+        let detailedError = `Er is een fout opgetreden: ${e.message}`;
+        // Check for Zod-like validation errors which often have detailed paths.
+        if (e.message && e.message.includes('Schema validation failed')) {
+            detailedError = `Er is een fout opgetreden bij het valideren van de data die de AI heeft teruggestuurd.\n\nDetails:\n${e.message}`;
+        }
+        const errorMessage: Message = { role: 'assistant', content: detailedError };
         
         setMessages(prev => [...prev, errorMessage]);
         
         toast({
             title: 'AI Fout',
-            description: e.message,
+            description: 'De AI kon het commando niet correct verwerken.',
             variant: 'destructive',
         });
     }

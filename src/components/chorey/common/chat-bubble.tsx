@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,7 +33,7 @@ export function ChatBubble({ message, userName, userAvatar }: ChatBubbleProps) {
             : 'bg-muted'
         )}
       >
-        <p className="text-sm">{message.content}</p>
+        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
       </div>
       {isUser && (
         <Avatar className="h-8 w-8 border">
