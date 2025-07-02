@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { HelpCircle } from 'lucide-react';
-import { updateUserProfile } from '@/app/actions/user.actions';
+import { updateUserProfile } from '@/app/actions/user/user.actions';
 import { useToast } from '@/hooks/use-toast';
-import { useTour } from '@/contexts/tour-context';
+import { useTour } from '@/contexts/feature/tour-context';
 import { Button } from '@/components/ui/button';
 
 export default function TourSettings() {

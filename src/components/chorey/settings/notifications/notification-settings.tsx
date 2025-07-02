@@ -1,6 +1,6 @@
 'use client';
 
-import { useFCM } from '@/contexts/fcm-context';
+import { useFCM } from '@/contexts/communication/fcm-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BellRing } from 'lucide-react';
