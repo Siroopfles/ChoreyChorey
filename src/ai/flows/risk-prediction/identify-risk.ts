@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { IdentifyRiskInputSchema, IdentifyRiskOutputSchema } from '@/ai/schemas';
 import type { IdentifyRiskInput, IdentifyRiskOutput } from '@/ai/schemas';
 
@@ -20,7 +20,7 @@ const prompt = ai.definePrompt({
   name: 'identifyRiskPrompt',
   input: { schema: IdentifyRiskInputSchema },
   output: { schema: IdentifyRiskOutputSchema },
-  model: 'gemini-pro',
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: promptText,
 });
 

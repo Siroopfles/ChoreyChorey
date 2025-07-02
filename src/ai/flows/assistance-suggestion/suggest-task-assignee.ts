@@ -10,7 +10,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import {ai} from '@/ai/genkit';
+import {ai, googleAI} from '@/ai/genkit';
 import { SuggestTaskAssigneeInputSchema, SuggestTaskAssigneeOutputSchema } from '@/ai/schemas';
 import type { SuggestTaskAssigneeInput, SuggestTaskAssigneeOutput } from '@/ai/schemas';
 import type { User, Task } from '@/lib/types';
@@ -58,7 +58,7 @@ const prompt = ai.definePrompt({
   name: 'suggestTaskAssigneePrompt',
   input: {schema: SuggestTaskAssigneeInputSchema},
   output: {schema: SuggestTaskAssigneeOutputSchema},
-  model: 'gemini-pro',
+  model: googleAI.model('gemini-1.5-flash-latest'), 
   prompt: promptText, 
 });
 

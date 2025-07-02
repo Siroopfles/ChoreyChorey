@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { SummarizeCommentsInputSchema, SummarizeCommentsOutputSchema } from '@/ai/schemas';
 import type { SummarizeCommentsInput, SummarizeCommentsOutput } from '@/ai/schemas';
 
@@ -20,7 +20,7 @@ const prompt = ai.definePrompt({
   name: 'summarizeCommentsPrompt',
   input: { schema: SummarizeCommentsInputSchema },
   output: { schema: SummarizeCommentsOutputSchema },
-  model: 'gemini-pro',
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: promptText,
 });
 

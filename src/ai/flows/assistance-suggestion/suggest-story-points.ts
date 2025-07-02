@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { SuggestStoryPointsInputSchema, SuggestStoryPointsOutputSchema } from '@/ai/schemas';
 import type { SuggestStoryPointsInput, SuggestStoryPointsOutput } from '@/ai/schemas';
 import { db } from '@/lib/core/firebase';
@@ -44,7 +44,7 @@ const prompt = ai.definePrompt({
   name: 'suggestStoryPointsPrompt',
   input: { schema: SuggestStoryPointsInputSchema },
   output: { schema: SuggestStoryPointsOutputSchema },
-  model: 'gemini-pro',
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: promptText,
 });
 

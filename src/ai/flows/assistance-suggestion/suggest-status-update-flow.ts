@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { SuggestStatusUpdateInputSchema, SuggestStatusUpdateOutputSchema } from '@/ai/schemas';
 import type { SuggestStatusUpdateInput, SuggestStatusUpdateOutput } from '@/ai/schemas';
 
@@ -19,7 +19,7 @@ const prompt = ai.definePrompt({
   name: 'suggestStatusUpdatePrompt',
   input: { schema: SuggestStatusUpdateInputSchema },
   output: { schema: SuggestStatusUpdateOutputSchema },
-  model: 'gemini-pro',
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: promptText,
 });
 

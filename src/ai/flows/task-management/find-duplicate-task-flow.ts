@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { FindDuplicateTaskInputSchema, FindDuplicateTaskOutputSchema } from '@/ai/schemas';
 import type { FindDuplicateTaskInput, FindDuplicateTaskOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
@@ -50,7 +50,7 @@ const findDuplicateTaskFlow = ai.defineFlow(
     
     // Use an LLM to determine if there's a semantic duplicate.
     const { output } = await ai.generate({
-      model: 'gemini-pro',
+      model: googleAI.model('gemini-1.5-flash-latest'),
       output: { schema: FindDuplicateTaskOutputSchema },
       prompt: promptText,
       context: {

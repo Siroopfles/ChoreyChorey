@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { PredictProjectOutcomeInputSchema, PredictProjectOutcomeOutputSchema } from '@/ai/schemas';
 import type { PredictProjectOutcomeInput, PredictProjectOutcomeOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
@@ -29,7 +29,7 @@ const prompt = ai.definePrompt({
         historicalTasks: z.any(),
     }) },
     output: { schema: PredictProjectOutcomeOutputSchema },
-    model: 'gemini-pro',
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: promptText,
 });
 

@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { PredictBurnoutRiskInputSchema, PredictBurnoutRiskOutputSchema } from '@/ai/schemas';
 import type { PredictBurnoutRiskInput, PredictBurnoutRiskOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
@@ -25,7 +25,7 @@ const prompt = ai.definePrompt({
     name: 'predictBurnoutRiskPrompt',
     input: { schema: z.object({ userName: z.string(), tasks: z.any(), workingHours: z.any().optional() }) },
     output: { schema: PredictBurnoutRiskOutputSchema },
-    model: 'gemini-pro',
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: promptText,
 });
 

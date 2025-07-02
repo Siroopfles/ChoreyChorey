@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { GenerateInsightsInputSchema, GenerateInsightsOutputSchema } from '@/ai/schemas';
 import type { GenerateInsightsInput, GenerateInsightsOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
@@ -26,7 +26,7 @@ const prompt = ai.definePrompt({
     name: 'generateInsightsPrompt',
     input: { schema: z.object({ allTasks: z.any(), allUsers: z.any(), allTeams: z.any() }) },
     output: { schema: GenerateInsightsOutputSchema },
-    model: 'gemini-pro',
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: promptText,
 });
 

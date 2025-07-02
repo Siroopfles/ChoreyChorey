@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import {ai} from '@/ai/genkit';
+import {ai, googleAI} from '@/ai/genkit';
 import {SuggestProactiveHelpInputSchema, SuggestProactiveHelpOutputSchema} from '@/ai/schemas';
 import type {SuggestProactiveHelpInput, SuggestProactiveHelpOutput} from '@/ai/schemas';
 
@@ -21,7 +21,7 @@ const prompt = ai.definePrompt({
   name: 'suggestProactiveHelpPrompt',
   input: {schema: SuggestProactiveHelpInputSchema},
   output: {schema: SuggestProactiveHelpOutputSchema},
-  model: 'gemini-pro',
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: promptText,
 });
 

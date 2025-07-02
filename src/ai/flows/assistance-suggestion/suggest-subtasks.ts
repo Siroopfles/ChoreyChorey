@@ -9,7 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import {ai} from '@/ai/genkit';
+import {ai, googleAI} from '@/ai/genkit';
 import { SuggestSubtasksInputSchema, SuggestSubtasksOutputSchema } from '@/ai/schemas';
 import type { SuggestSubtasksInput, SuggestSubtasksOutput } from '@/ai/schemas';
 
@@ -23,7 +23,7 @@ const prompt = ai.definePrompt({
   name: 'suggestSubtasksPrompt',
   input: {schema: SuggestSubtasksInputSchema},
   output: {schema: SuggestSubtasksOutputSchema},
-  model: 'gemini-pro',
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: promptText,
 });
 

@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai } from '@/ai/genkit';
+import { ai, googleAI } from '@/ai/genkit';
 import { PredictTaskCompletionInputSchema, PredictTaskCompletionOutputSchema } from '@/ai/schemas';
 import type { PredictTaskCompletionInput, PredictTaskCompletionOutput } from '@/ai/schemas';
 import { db } from '@/lib/core/firebase';
@@ -68,7 +68,7 @@ const prompt = ai.definePrompt({
     name: 'predictTaskCompletionPrompt',
     input: { schema: FlowInputSchema },
     output: { schema: PredictTaskCompletionOutputSchema },
-    model: 'gemini-pro',
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: promptText,
 });
 
