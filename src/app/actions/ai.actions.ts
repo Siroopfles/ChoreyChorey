@@ -1,4 +1,3 @@
-// This file is deprecated. All AI actions have been moved to their respective flows
-// within the /src/ai/flows/ directory.
-// This file can be removed in a future cleanup.
+// This file is deprecated and can be safely deleted.
+// All AI-related actions are now defined as Genkit flows in /src/ai/flows/
 export {};
