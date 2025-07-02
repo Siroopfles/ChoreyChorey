@@ -38,6 +38,7 @@ export default function ChatPage() {
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
+    
     const currentInput = input;
     setInput('');
     setIsLoading(true);
@@ -45,10 +46,15 @@ export default function ChatPage() {
     try {
         const assistantMessageContent = await processCommand({ command: currentInput, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
         const assistantMessage: Message = { role: 'assistant', content: assistantMessageContent };
-        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Use the functional update form to ensure we have the latest state
+        setMessages(prevMessages => [...prevMessages, assistantMessage]);
+
     } catch (e: any) {
-        const assistantMessage: Message = { role: 'assistant', content: `Er is een fout opgetreden: ${e.message}` };
-        setMessages(prev => [...prev, assistantMessage]);
+        const errorMessage: Message = { role: 'assistant', content: `Er is een fout opgetreden: ${e.message}` };
+        
+        setMessages(prevMessages => [...prevMessages, errorMessage]);
+        
         toast({
             title: 'AI Fout',
             description: e.message,
