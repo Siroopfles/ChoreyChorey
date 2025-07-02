@@ -18,6 +18,7 @@ import type { User } from '@/lib/types/auth';
 import type { Project } from '@/lib/types/projects';
 import { updateTaskAction, createTaskAction, reorderTasks as reorderTasksAction } from '@/app/actions/project/task-crud.actions';
 import { handleServerAction } from '@/lib/utils/action-wrapper';
+import { useTasks } from '@/contexts/feature/task-context';
 
 const TaskColumn = ({ 
   title, 
