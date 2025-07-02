@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -64,8 +65,7 @@ export default function UserProfilePage() {
         if (result.error) {
             toast({ title: 'Fout', description: result.error, variant: 'destructive' });
         } else {
-            toast({ title: 'Bedankt!', description: `Je hebt ${user.name} onderschreven voor ${skill}.` });
-            // Data will refresh automatically via context listeners
+            // No toast needed, the visual feedback is enough.
         }
         setEndorsingSkill(null);
     };
@@ -98,16 +98,9 @@ export default function UserProfilePage() {
 
     return (
         <div className="space-y-6">
-            <Button asChild variant="outline" size="sm" className="w-fit">
-                <Link href="/dashboard/organization">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Terug naar Organisatie
-                </Link>
-            </Button>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 {/* Left Column - Profile Info */}
-                <div className="md:col-span-1 space-y-6">
+                <div className="lg:col-span-1 space-y-6">
                     <Card>
                         <CardContent className="pt-6">
                             <div className="flex flex-col items-center text-center">
@@ -140,10 +133,60 @@ export default function UserProfilePage() {
                             )}
                         </CardContent>
                     </Card>
+                    {user.skills && user.skills.length > 0 && (
+                        <Card>
+                            <CardHeader><CardTitle>Vaardigheden</CardTitle></CardHeader>
+                            <CardContent className="flex flex-wrap gap-2 items-center">
+                                {user.skills.map(skill => {
+                                    const endorsementCount = user.endorsements?.[skill]?.length || 0;
+                                    const isEndorsedByMe = currentUser ? user.endorsements?.[skill]?.includes(currentUser.id) : false;
+                                    const isEndorsingThis = endorsingSkill === skill;
+
+                                    return (
+                                        <div key={skill} className="flex items-center gap-1 py-1 pl-3 pr-1 rounded-full border bg-secondary text-secondary-foreground">
+                                            <span className="text-sm font-medium">{skill}</span>
+                                            {currentUser?.id !== user.id && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6"
+                                                                onClick={() => handleEndorse(skill)}
+                                                                disabled={isEndorsingThis}
+                                                            >
+                                                                {isEndorsingThis ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <Star className={cn(
+                                                                        "h-4 w-4 transition-colors",
+                                                                        isEndorsedByMe 
+                                                                            ? "text-yellow-400 fill-yellow-400" 
+                                                                            : "text-muted-foreground hover:text-yellow-400"
+                                                                    )} />
+                                                                )}
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{isEndorsedByMe ? 'Onderschrijving ongedaan maken' : 'Onderschrijf deze vaardigheid'}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                            {endorsementCount > 0 && (
+                                                <span className="text-xs font-bold mr-1">{endorsementCount}</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 {/* Right Column - Activity */}
-                <div className="md:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-6">
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -166,57 +209,6 @@ export default function UserProfilePage() {
                             </CardContent>
                         </Card>
                      </div>
-
-                    {user.skills && user.skills.length > 0 && (
-                        <Card>
-                            <CardHeader><CardTitle>Vaardigheden</CardTitle></CardHeader>
-                            <CardContent className="flex flex-wrap gap-2 items-center">
-                                {user.skills.map(skill => {
-                                    const endorsementCount = user.endorsements?.[skill]?.length || 0;
-                                    const isEndorsedByMe = currentUser ? user.endorsements?.[skill]?.includes(currentUser.id) : false;
-                                    const isEndorsingThis = endorsingSkill === skill;
-
-                                    return (
-                                        <div key={skill} className="flex items-center gap-1 py-1 pl-3 pr-1 rounded-full border bg-secondary text-secondary-foreground">
-                                            <span className="text-sm font-medium">{skill}</span>
-                                            {currentUser?.id !== user.id && (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-6 w-6"
-                                                                onClick={() => handleEndorse(skill)}
-                                                                disabled={isEndorsingThis || isEndorsedByMe}
-                                                            >
-                                                                {isEndorsingThis ? (
-                                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                                ) : (
-                                                                    <Star className={cn(
-                                                                        "h-4 w-4 transition-colors",
-                                                                        isEndorsedByMe 
-                                                                            ? "text-yellow-400 fill-yellow-400" 
-                                                                            : "text-muted-foreground hover:text-yellow-400"
-                                                                    )} />
-                                                                )}
-                                                            </Button>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>{isEndorsedByMe ? 'Je hebt dit al onderschreven' : 'Onderschrijf deze vaardigheid'}</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            )}
-                                            {endorsementCount > 0 && (
-                                                <span className="text-xs font-bold mr-1">{endorsementCount}</span>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </CardContent>
-                        </Card>
-                    )}
 
                     {user.achievements && user.achievements.length > 0 && (
                         <Card>

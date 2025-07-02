@@ -12,25 +12,27 @@ import type { OrganizationMember } from '@/lib/types/organizations';
 export async function endorseSkill(organizationId: string, userId: string, skill: string, endorserId: string) {
   try {
     const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-    const memberDoc = await getDoc(memberRef);
+    
+    await runTransaction(db, async (transaction) => {
+        const memberDoc = await transaction.get(memberRef);
+        if (!memberDoc.exists()) {
+          throw new Error('Gebruiker niet gevonden in deze organisatie.');
+        }
+    
+        const memberData = memberDoc.data() as OrganizationMember;
+        const endorsements = memberData.endorsements || {};
+        const skillEndorsements = endorsements[skill] || [];
 
-    if (!memberDoc.exists()) {
-      return { error: 'Gebruiker niet gevonden in deze organisatie.' };
-    }
-
-    const memberData = memberDoc.data() as OrganizationMember;
-    const endorsements = memberData.endorsements || {};
-    const skillEndorsements = endorsements[skill] || [];
-
-    if (skillEndorsements.includes(endorserId)) {
-      return { error: 'Je hebt deze vaardigheid al onderschreven.' };
-    }
-
-    await updateDoc(memberRef, {
-      [`endorsements.${skill}`]: arrayUnion(endorserId),
+        if (skillEndorsements.includes(endorserId)) {
+            // User already endorsed, so we remove it (toggle off)
+            transaction.update(memberRef, { [`endorsements.${skill}`]: arrayRemove(endorserId) });
+        } else {
+            // User has not endorsed yet, so we add it (toggle on)
+            transaction.update(memberRef, { [`endorsements.${skill}`]: arrayUnion(endorserId) });
+        }
     });
 
-    revalidatePath(`/dashboard/profile/${userId}`);
+    revalidatePath(`/dashboard/profile/${userId}`); // Revalidate the user's profile page
     return { success: true, error: null };
   } catch (error: any) {
     console.error('Error endorsing skill:', error);
