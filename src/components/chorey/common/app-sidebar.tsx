@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -69,10 +68,10 @@ export default function AppSidebar() {
         ...(showGoals ? [{ href: '/dashboard/goals', icon: Trophy, label: 'Doelen' }] : []),
         ...(showIdeas ? [{ href: '/dashboard/ideas', icon: Lightbulb, label: 'Ideeënbus' }] : []),
         { href: '/dashboard/workload', icon: GitGraph, label: 'Workload' },
-        { href: '/dashboard/analytics/reports', icon: FilePieChart, label: 'Rapporten' },
-        { href: '/dashboard/analytics/cost-analysis', icon: CircleDollarSign, label: 'Kostenanalyse' },
-        { href: '/dashboard/analytics/analytics', icon: AreaChart, label: 'Analyse' },
-        { href: '/dashboard/analytics/team-velocity', icon: BarChartHorizontal, label: 'Team Velocity' },
+        { href: '/dashboard/reports', icon: FilePieChart, label: 'Rapporten' },
+        { href: '/dashboard/cost-analysis', icon: CircleDollarSign, label: 'Kostenanalyse' },
+        { href: '/dashboard/analytics', icon: AreaChart, label: 'Analyse' },
+        { href: '/dashboard/team-velocity', icon: BarChartHorizontal, label: 'Team Velocity' },
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_AUTOMATIONS) ? [{ href: '/dashboard/automations', icon: Zap, label: 'Automatiseringen' }] : []),
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_TEMPLATES) ? [{ href: '/dashboard/templates', icon: SquareStack, label: 'Templates' }] : []),
         ...(currentUserPermissions.includes(PERMISSIONS.MANAGE_CHECKLISTS) ? [{ href: '/dashboard/checklists', icon: ClipboardList, label: 'Checklists' }] : []),
@@ -92,7 +91,7 @@ export default function AppSidebar() {
     const aiToolsNavItems = isGuest ? [] : [
         { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
         { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
-        { href: '/dashboard/analytics/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
+        { href: '/dashboard/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
         { href: '/dashboard/predictive-analysis', icon: HeartPulse, label: 'Projectgezondheid (AI)' },
         { href: '/dashboard/scenario-planner', icon: BrainCircuit, label: 'AI Scenario Planner' },
         { href: '/dashboard/ai-insights', icon: BrainCircuit, label: 'AI Inzichten' },
