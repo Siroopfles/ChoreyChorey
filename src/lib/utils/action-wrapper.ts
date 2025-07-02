@@ -2,6 +2,7 @@
 
 import { ToastAction } from '@/components/ui/toast';
 import type { ReactElement } from 'react';
+import * as React from 'react';
 
 // Define a type for the toast function to avoid importing the whole hook
 type ToastFunction = (options: {
@@ -20,7 +21,7 @@ interface ActionOptions<T> {
 }
 
 // The server action can return different shapes, so we need to be flexible
-type ServerActionResult<T> = { data: T; error: string | null } | { success: boolean; error?: string | null };
+type ServerActionResult<T> = { data?: T; success?: boolean; error?: string | null };
 
 export async function handleServerAction<T>(
   actionFn: () => Promise<ServerActionResult<T>>,
@@ -34,16 +35,16 @@ export async function handleServerAction<T>(
       throw new Error(result.error);
     }
     
-    const data = (result as any).data ?? (result as any).success;
+    const data = ('data' in result && result.data !== undefined) ? result.data : ('success' in result) ? result.success : false;
     
     if (options.successToast) {
       toast({
         title: options.successToast.title,
-        description: options.successToast.description(data),
+        description: options.successToast.description(data as T | boolean),
       });
     }
     
-    return { data, error: null };
+    return { data: data as T | boolean, error: null };
     
   } catch (error: any) {
     console.error(`Error in ${options.errorContext}:`, error);
@@ -52,15 +53,14 @@ export async function handleServerAction<T>(
       error?.code === 'unavailable' ||
       String(error?.message).toLowerCase().includes('network') ||
       String(error?.message).toLowerCase().includes('offline');
-    
-    let retryAction: ReactElement | undefined = undefined;
-    if (isNetworkError) {
-      retryAction = (
-        <ToastAction onClick={() => handleServerAction(actionFn, toast, options)}>
-          Probeer opnieuw
-        </ToastAction>
-      );
-    }
+
+    const retry = () => {
+      handleServerAction(actionFn, toast, options);
+    };
+
+    const retryAction = isNetworkError
+      ? React.createElement(ToastAction, { onClick: retry }, 'Probeer opnieuw')
+      : undefined;
     
     toast({
       title: `Fout bij ${options.errorContext}`,
