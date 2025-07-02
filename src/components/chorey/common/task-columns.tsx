@@ -1,8 +1,8 @@
 
 
 'use client';
-import { useTasks } from '@/contexts/feature/task-context';
 import { useAuth } from '@/contexts/user/auth-context';
+import { useView } from '@/contexts/system/view-context';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, rectIntersection, useDroppable, useDndContext } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -17,7 +17,8 @@ import { triggerHapticFeedback } from '@/lib/core/haptics';
 import type { Task, Priority } from '@/lib/types/tasks';
 import type { User } from '@/lib/types/auth';
 import type { Project } from '@/lib/types/projects';
-
+import { updateTaskAction, createTaskAction, reorderTasks as reorderTasksAction } from '@/app/actions/project/task-crud.actions';
+import { handleServerAction } from '@/lib/utils/action-wrapper';
 
 const TaskColumn = ({ 
   title, 
@@ -97,11 +98,11 @@ const TaskColumn = ({
             role="group"
             aria-label={title}
             className={cn(
-                "flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px] transition-colors",
+                "flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px] transition-all duration-300",
                 showInvalidIndicator
-                    ? "bg-destructive/10 ring-2 ring-destructive cursor-not-allowed"
+                    ? "bg-destructive/10 ring-2 ring-destructive cursor-not-allowed scale-105"
                     : isOver
-                    ? "bg-primary/10"
+                    ? "bg-primary/10 scale-105"
                     : ""
             )}
         >
@@ -169,8 +170,8 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
-  const { tasks, updateTask, reorderTasks, addTask } = useTasks();
-  const { users, projects } = useOrganization();
+  const { tasks } = useTasks();
+  const { users, projects, currentOrganization } = useOrganization();
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
   const sensors = useSensors(
@@ -182,7 +183,8 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
   );
   const [isDragOver, setIsDragOver] = useState(false);
   
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
+    if (!currentUser || !currentOrganization) return;
     const { active, over } = event;
 
     if (!over) {
@@ -235,8 +237,7 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
             break;
       }
       triggerHapticFeedback(20);
-      updateTask(activeId, updates);
-
+      handleServerAction(() => updateTaskAction(activeId, updates, currentUser.id, currentOrganization.id), toast, { errorContext: 'bijwerken taak' });
     } else {
       const itemsInColumn = groupedTasks.find(g => g.title === activeContainer)?.tasks || [];
       const oldIndex = itemsInColumn.findIndex((t) => t.id === activeId);
@@ -248,7 +249,7 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
             id: task.id,
             order: index
         }));
-        reorderTasks(tasksToUpdate);
+        handleServerAction(() => reorderTasksAction(tasksToUpdate), toast, { errorContext: 'herordenen taken' });
       }
     }
   }
@@ -268,6 +269,8 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(false);
+    
+    if (!currentUser || !currentOrganization) return;
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) {
@@ -276,8 +279,12 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
 
     let successCount = 0;
     for (const file of files) {
-      const result = await addTask({ title: file.name });
-      if (result) {
+      const result = await handleServerAction(
+        () => createTaskAction(currentOrganization.id, currentUser.id, currentUser.name, { title: file.name }),
+        toast,
+        { errorContext: 'aanmaken taak' }
+      );
+      if (!result.error) {
         successCount++;
       }
     }

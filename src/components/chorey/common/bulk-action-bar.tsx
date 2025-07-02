@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useTasks } from "@/contexts/feature/task-context";
 import { useOrganization } from "@/contexts/system/organization-context";
+import { useAuth } from "@/contexts/user/auth-context";
 import { Button } from "@/components/ui/button";
 import { 
     DropdownMenu, 
@@ -18,11 +18,16 @@ import {
 import { Replace, Trash2, X, UserPlus, ArrowUpNarrowWide, Briefcase, Tags } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useFilters } from "@/contexts/system/filter-context";
+import { useToast } from "@/hooks/use-toast";
+import { bulkUpdateTasksAction } from "@/app/actions/project/task-bulk.actions";
+import { handleServerAction } from "@/lib/utils/action-wrapper";
+
 
 export default function BulkActionBar() {
-    const { bulkUpdateTasks } = useTasks();
+    const { user } = useAuth();
     const { selectedTaskIds, setSelectedTaskIds } = useFilters();
     const { currentOrganization, users, projects } = useOrganization();
+    const { toast } = useToast();
     
     const allStatuses = currentOrganization?.settings?.customization?.statuses || [];
     const allPriorities = currentOrganization?.settings?.customization?.priorities || [];
@@ -33,16 +38,28 @@ export default function BulkActionBar() {
         return null;
     }
 
-    const handleDelete = () => {
-        // This is a soft delete, moving tasks to 'Geannuleerd'
-        bulkUpdateTasks(selectedTaskIds, { status: 'Geannuleerd' });
+    const handleUpdate = async (updates: any) => {
+        if (!user) return;
+        
+        await handleServerAction(
+            () => bulkUpdateTasksAction(selectedTaskIds, updates, user.id),
+            toast,
+            {
+                successToast: {
+                    title: 'Taken bijgewerkt',
+                    description: () => `${selectedTaskIds.length} taken zijn succesvol bijgewerkt.`
+                },
+                errorContext: 'bulk update taken'
+            }
+        );
         setSelectedTaskIds([]);
     }
 
-    const handleUpdate = (updates: any) => {
-        bulkUpdateTasks(selectedTaskIds, updates);
-        setSelectedTaskIds([]);
+    const handleDelete = () => {
+        // This is a soft delete, moving tasks to 'Geannuleerd'
+        handleUpdate({ status: 'Geannuleerd' });
     }
+
 
     return (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">

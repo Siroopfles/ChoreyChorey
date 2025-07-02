@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -6,14 +7,14 @@ import Link from 'next/link';
 import { cn } from "@/lib/utils/utils";
 import { LayoutDashboard, CalendarCheck, Inbox, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTasks } from "@/contexts/feature/task-context";
 import { useNotifications } from "@/contexts/communication/notification-context";
 import { Badge } from "@/components/ui/badge";
+import { useView } from "@/contexts/system/view-context";
 
 export default function MobileBottomNav() {
     const isMobile = useIsMobile();
     const pathname = usePathname();
-    const { setIsAddTaskDialogOpen } = useTasks();
+    const { setIsAddTaskDialogOpen } = useView();
     const { notifications } = useNotifications();
 
     const unreadCount = notifications.filter(n => !n.read).length;

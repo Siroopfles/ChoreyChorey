@@ -13,7 +13,6 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -21,7 +20,6 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Bell, LogOut, Moon, Sun, User as UserIcon, ChevronsUpDown, Building, Check, PlusCircle, Timer, Flame, Mic, BarChart } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useNotifications } from '@/contexts/communication/notification-context';
-import { useTasks } from '@/contexts/feature/task-context';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -35,11 +33,12 @@ import { statusStyles } from '@/lib/types';
 import { CreateOrganizationDialog } from '../organization/create-organization-dialog';
 import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user/member.actions';
 import { MobileCommandDialog } from '../dialogs/mobile-command-dialog';
+import { useView } from '@/contexts/system/view-context';
 
 export default function AppHeader() {
   const { setTheme, theme } = useTheme();
   const { notifications, markAllNotificationsAsRead, snoozeNotification } = useNotifications();
-  const { setIsAddTaskDialogOpen } = useTasks();
+  const { setIsAddTaskDialogOpen } = useView();
   const { user, logout, organizations, currentOrganization, switchOrganization, refreshUser } = useAuth();
   const router = useRouter();
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);

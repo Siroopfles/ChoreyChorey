@@ -21,6 +21,7 @@ import { PresenceProvider } from '@/contexts/communication/presence-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { FCMProvider } from '@/contexts/communication/fcm-context';
 import AppShell from '@/components/chorey/common/app-shell';
+import { ViewProvider } from '@/contexts/system/view-context';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, mfaRequired, currentOrganizationId } = useAuth();
@@ -99,33 +100,35 @@ export default function DashboardLayout({
     <OrganizationProvider>
       <FilterProvider>
         <TaskProvider>
-          <NotificationsProvider>
-            <IdeaProvider>
-              <GoalProvider>
-                <TemplateProvider>
-                  <AutomationProvider>
-                    <ReportProvider>
-                      <ChecklistProvider>
-                        <FCMProvider>
-                          <CallProvider>
-                            <PresenceProvider>
-                              <SidebarProvider>
-                                <AuthGuard>
-                                <TourProvider>
-                                    {children}
-                                </TourProvider>
-                                </AuthGuard>
-                              </SidebarProvider>
-                            </PresenceProvider>
-                          </CallProvider>
-                        </FCMProvider>
-                      </ChecklistProvider>
-                    </ReportProvider>
-                  </AutomationProvider>
-                </TemplateProvider>
-              </GoalProvider>
-            </IdeaProvider>
-          </NotificationsProvider>
+          <ViewProvider>
+            <NotificationsProvider>
+              <IdeaProvider>
+                <GoalProvider>
+                  <TemplateProvider>
+                    <AutomationProvider>
+                      <ReportProvider>
+                        <ChecklistProvider>
+                          <FCMProvider>
+                            <CallProvider>
+                              <PresenceProvider>
+                                <SidebarProvider>
+                                  <AuthGuard>
+                                  <TourProvider>
+                                      {children}
+                                  </TourProvider>
+                                  </AuthGuard>
+                                </SidebarProvider>
+                              </PresenceProvider>
+                            </CallProvider>
+                          </FCMProvider>
+                        </ChecklistProvider>
+                      </ReportProvider>
+                    </AutomationProvider>
+                  </TemplateProvider>
+                </GoalProvider>
+              </IdeaProvider>
+            </NotificationsProvider>
+          </ViewProvider>
         </TaskProvider>
       </FilterProvider>
     </OrganizationProvider>

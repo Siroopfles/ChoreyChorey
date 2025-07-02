@@ -1,8 +1,7 @@
+
 'use client';
 
-import { useAuth } from '@/contexts/user/auth-context';
-import { useOrganization } from '@/contexts/system/organization-context';
-import { useTasks } from '@/contexts/feature/task-context';
+import { usePresence } from '@/contexts/communication/presence-context';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AppHeader from '@/components/chorey/common/app-header';
@@ -19,9 +18,12 @@ import { cn } from '@/lib/utils/utils';
 import BulkActionBar from '@/components/chorey/common/bulk-action-bar';
 import { LiveCursors } from '@/components/chorey/common/live-cursors';
 import type { UserStatus } from '@/lib/types';
-import { isToday, differenceInDays } from 'date-fns';
+import { isToday } from 'date-fns';
 import { sendDailyDigest } from '@/app/actions/core/digest.actions';
-import { usePresence } from '@/contexts/communication/presence-context';
+import { useView } from '@/contexts/system/view-context';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
+import { useTasks } from '@/contexts/feature/task-context';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useOrganization();
@@ -68,10 +70,12 @@ const UserCosmeticStyle = () => {
 
 // The main app shell with sidebar and header
 export default function AppShell({ children }: { children: React.ReactNode }) {
-    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks } = useTasks();
     const { user } = useAuth();
     const { updateUserPresence } = usePresence();
     const { currentOrganization } = useOrganization();
+    const { tasks } = useTasks();
+    const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask } = useView();
+
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const isMobile = useIsMobile();
