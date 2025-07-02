@@ -38,8 +38,8 @@ const UserCosmeticStyle = () => {
   const cosmetic = user?.cosmetic;
 
   const fontMap = {
-    'inter': 'var(--font-pt-sans)',
-    'source-sans': 'var(--font-source-sans)',
+    'pt-sans': 'var(--font-pt-sans)', // Default
+    'source-sans-pro': 'var(--font-source-sans-pro)',
     'roboto-mono': 'var(--font-roboto-mono)',
   }
 
@@ -53,7 +53,8 @@ const UserCosmeticStyle = () => {
   if (cosmetic.radius) styles.push(`--radius: ${cosmetic.radius}rem;`);
   if (cosmetic.font && fontMap[cosmetic.font as keyof typeof fontMap]) {
     const fontValue = fontMap[cosmetic.font as keyof typeof fontMap];
-    styles.push(`--font-sans: ${fontValue};`);
+    styles.push(`--font-body: ${fontValue};`);
+    styles.push(`--font-headline: ${fontValue};`);
   }
 
   if (styles.length === 0) {

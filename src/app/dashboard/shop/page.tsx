@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState } from 'react';
@@ -33,8 +31,8 @@ const THEMES = [
 ];
 
 const FONTS = [
-  { id: 'inter', name: 'Inter (Standaard)', cost: 0, family: 'sans-serif' },
-  { id: 'source-sans', name: 'Source Sans Pro', cost: 200, family: 'sans-serif' },
+  { id: 'pt-sans', name: 'PT Sans (Standaard)', cost: 0, family: 'sans-serif' },
+  { id: 'source-sans-pro', name: 'Source Sans Pro', cost: 200, family: 'sans-serif' },
   { id: 'roboto-mono', name: 'Roboto Mono', cost: 200, family: 'monospace' },
 ];
 

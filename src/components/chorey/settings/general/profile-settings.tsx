@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -56,12 +55,12 @@ export default function ProfileSettings({ user }: { user: UserType }) {
     resolver: zodResolver(profileSchema),
     values: {
       name: user.name,
-      skills: user.skills || [],
+      skills: fullUserData?.skills || [],
       bio: user.bio || '',
       timezone: user.timezone || '',
       website: user.website || '',
       location: user.location || '',
-      workingHours: user.workingHours || { startTime: '09:00', endTime: '17:00' },
+      workingHours: fullUserData?.workingHours || { startTime: '09:00', endTime: '17:00' },
     },
   });
 
@@ -120,7 +119,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
     if (!currentOrganization) return;
     const result = await updateMemberProfile(currentOrganization.id, user.id, {
         notificationSettings: {
-            ...user.notificationSettings,
+            ...fullUserData.notificationSettings,
             dailyDigestEnabled: enabled,
         }
     });
@@ -136,7 +135,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
     if (!currentOrganization) return;
     const result = await updateMemberProfile(currentOrganization.id, user.id, {
         notificationSettings: {
-            ...user.notificationSettings,
+            ...fullUserData.notificationSettings,
             notificationPriorityThreshold: threshold,
         }
     });
@@ -373,7 +372,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
                     </div>
                     <Switch
                         id="daily-digest"
-                        checked={user.notificationSettings?.dailyDigestEnabled ?? false}
+                        checked={fullUserData.notificationSettings?.dailyDigestEnabled ?? false}
                         onCheckedChange={handleDigestToggle}
                     />
                 </div>
@@ -385,7 +384,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
                     </p>
                     </div>
                     <Select
-                    value={user.notificationSettings?.notificationPriorityThreshold || 'Laag'}
+                    value={fullUserData.notificationSettings?.notificationPriorityThreshold || 'Laag'}
                     onValueChange={handlePriorityThresholdChange}
                     >
                     <SelectTrigger className="mt-2">

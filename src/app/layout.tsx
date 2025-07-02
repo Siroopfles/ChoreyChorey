@@ -1,4 +1,4 @@
-import { PT_Sans, Roboto_Mono } from 'next/font/google';
+import { PT_Sans, Roboto_Mono, Source_Sans_3 as Source_Sans_Pro } from 'next/font/google';
 import { cn } from '@/lib/utils/utils';
 import { AuthProvider } from '@/contexts/user/auth-context';
 import { ThemeProvider } from '@/components/core/theme-provider';
@@ -17,9 +17,17 @@ const ptSans = PT_Sans({
 const robotoMono = Roboto_Mono({
   subsets: ['latin'],
   weight: ['400', '700'],
-  variable: '--font-code',
+  variable: '--font-roboto-mono',
   display: 'swap',
 })
+
+const sourceSansPro = Source_Sans_Pro({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-source-sans-pro',
+  display: 'swap',
+});
+
 
 export const metadata = {
   title: 'Chorey',
@@ -36,7 +44,8 @@ export default function RootLayout({
       <body className={cn(
         'min-h-screen bg-background font-sans antialiased', 
         ptSans.variable, 
-        robotoMono.variable
+        robotoMono.variable,
+        sourceSansPro.variable
       )}>
         <ThemeProvider
           attribute="class"

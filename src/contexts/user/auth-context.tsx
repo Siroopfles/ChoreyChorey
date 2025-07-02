@@ -1,4 +1,3 @@
-
 'use client';
 
 import { 
@@ -53,6 +52,7 @@ type AuthContextType = {
     completeMfa: () => void;
     refreshUser: () => Promise<void>;
     organizations: Organization[];
+    // DEPRECATED: currentOrganization should be accessed from OrganizationProvider
     currentOrganization: Organization | null;
     switchOrganization: (orgId: string) => Promise<void>;
     updateUserDashboard: (updates: Partial<{ dashboardConfig: WidgetInstance[]; dashboardLayout: Layouts }>) => Promise<void>;
@@ -142,16 +142,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(userData);
 
           if (isDebugMode) console.log('[DEBUG] AuthContext: User data set:', userData);
-
-          const shouldSendDigest = userData.notificationSettings?.dailyDigestEnabled;
-          const now = new Date();
-          const lastSent = userData.lastDigestSentAt;
-          const oneDay = 24 * 60 * 60 * 1000;
-
-          if (shouldSendDigest && userData.currentOrganizationId && (!lastSent || (now.getTime() - lastSent.getTime()) > oneDay)) {
-              if (isDebugMode) console.log('[DEBUG] AuthContext: Triggering daily digest for user', firebaseUser.uid);
-              sendDailyDigest(firebaseUser.uid, userData.currentOrganizationId);
-          }
 
           if (userData.organizationIds && userData.organizationIds.length > 0) {
               if (isDebugMode) console.log('[DEBUG] AuthContext: Fetching organizations with IDs:', userData.organizationIds);
