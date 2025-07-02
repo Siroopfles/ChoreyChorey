@@ -18,7 +18,7 @@ const CreateTaskDataSchema = z.object({
   priority: z.string().nullable().optional().describe('The priority of the task.'),
   assigneeIds: z.array(z.string()).nullable().optional().describe('The IDs of the users the task is assigned to.'),
   labels: z.array(z.string()).nullable().optional().describe('A list of labels for the task.'),
-  dueDate: z.string().optional().describe("The due date and time in 'YYYY-MM-DDTHH:mm:ss' ISO 8601 format. The AI should convert natural language dates like 'tomorrow at 10am' into this format."),
+  dueDate: z.string().optional().nullable().describe("The due date and time in 'YYYY-MM-DDTHH:mm:ss' ISO 8601 format. The AI should convert natural language dates like 'tomorrow at 10am' into this format."),
   isPrivate: z.boolean().optional().describe('Whether the task is private to the creator and assignee. Should be true for personal reminders.'),
   projectId: z.string().optional().describe('The ID of the project this task belongs to.'),
 });
