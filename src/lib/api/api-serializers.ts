@@ -8,15 +8,15 @@ export const serializeTimestamps = (data: any) => {
     if (!data) return data;
     const serializedData: any = {};
     for (const key in data) {
-        const value = data[key];
-        if (value instanceof Timestamp) {
-            serializedData[key] = value.toDate().toISOString();
-        } else if (value instanceof Date) {
-            serializedData[key] = value.toISOString();
-        } else if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-            serializedData[key] = value;
-        } else {
-            serializedData[key] = value;
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+            const value = data[key];
+            if (value instanceof Timestamp) {
+                serializedData[key] = value.toDate().toISOString();
+            } else if (value instanceof Date) {
+                serializedData[key] = value.toISOString();
+            } else {
+                serializedData[key] = value;
+            }
         }
     }
     return serializedData;
@@ -32,30 +32,29 @@ export const serializeTask = (data: any) => {
         status: serialized.status,
         priority: serialized.priority,
         dueDate: serialized.dueDate,
-        assigneeIds: serialized.assigneeIds,
+        assigneeIds: serialized.assigneeIds || [],
         creatorId: serialized.creatorId,
         projectId: serialized.projectId,
         teamId: serialized.teamId,
-        labels: serialized.labels,
-        subtasks: serialized.subtasks,
-        attachments: serialized.attachments,
-        comments: serialized.comments,
+        labels: serialized.labels || [],
+        subtasks: serialized.subtasks || [],
+        attachments: serialized.attachments || [],
         isPrivate: serialized.isPrivate,
         createdAt: serialized.createdAt,
         completedAt: serialized.completedAt,
         order: serialized.order,
         storyPoints: serialized.storyPoints,
         cost: serialized.cost,
-        blockedBy: serialized.blockedBy,
-        relations: serialized.relations,
+        blockedBy: serialized.blockedBy || [],
+        relations: serialized.relations || [],
         recurring: serialized.recurring,
         organizationId: serialized.organizationId,
         imageUrl: serialized.imageUrl,
         timeLogged: serialized.timeLogged,
         rating: serialized.rating,
         reviewerId: serialized.reviewerId,
-        consultedUserIds: serialized.consultedUserIds,
-        informedUserIds: serialized.informedUserIds,
+        consultedUserIds: serialized.consultedUserIds || [],
+        informedUserIds: serialized.informedUserIds || [],
     };
 };
 
@@ -65,7 +64,7 @@ export const serializeProject = (data: any) => {
         id: serialized.id,
         name: serialized.name,
         organizationId: serialized.organizationId,
-        teamIds: serialized.teamIds,
+        teamIds: serialized.teamIds || [],
         program: serialized.program,
         isSensitive: serialized.isSensitive,
         isPublic: serialized.isPublic,
@@ -77,7 +76,13 @@ export const serializeProject = (data: any) => {
 };
 
 export const serializeTeam = (data: any) => {
-    return serializeTimestamps(data);
+    const serialized = serializeTimestamps(data);
+    return {
+        id: serialized.id,
+        name: serialized.name,
+        organizationId: serialized.organizationId,
+        memberIds: serialized.memberIds || [],
+    };
 };
 
 export const serializeUser = (data: any) => {
@@ -94,3 +99,4 @@ export const serializeUser = (data: any) => {
         status: serialized.status || { type: 'Offline', until: null },
     };
 };
+    
