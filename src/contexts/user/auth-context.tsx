@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -18,7 +19,7 @@ import {
     type User as FirebaseUser,
     getAdditionalUserInfo,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, onSnapshot, Timestamp, addDoc, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot, Timestamp, addDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, microsoftProvider } from '@/lib/core/firebase';
 import { 
   type User, 
@@ -28,7 +29,6 @@ import {
 import {
     type Organization,
 } from '@/lib/types/organizations';
-import type { Layouts } from 'react-grid-layout';
 import { useToast } from '@/hooks/use-toast';
 import { useDebug } from '@/contexts/system/debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -126,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               } : { type: 'Offline', until: null },
               lastDigestSentAt: (rawData.lastDigestSentAt as Timestamp | null)?.toDate() ?? undefined,
               dashboardConfig: rawData.dashboardConfig || defaultDashboardConfig,
+              cosmetic: rawData.cosmetic || {},
               streakData: rawData.streakData ? {
                   ...rawData.streakData,
                   lastCompletionDate: (rawData.streakData.lastCompletionDate as Timestamp).toDate(),

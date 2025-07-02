@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -115,7 +116,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       unsubUsers();
       unsubWebhooks();
     };
-  }, [user, organizations, authLoading]);
+  }, [user, organizations, authLoading, toast]);
 
   const toggleProjectPin = async (projectId: string, isPinned: boolean) => {
     if (!user || !currentOrganization) return;
