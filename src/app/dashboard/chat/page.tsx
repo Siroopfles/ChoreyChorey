@@ -53,11 +53,15 @@ export default function ChatPage() {
         setMessages(prev => [...prev, assistantMessage]);
 
     } catch (e: any) {
-        let detailedError = `Er is een fout opgetreden: ${e.message}`;
-        // Check for Zod-like validation errors which often have detailed paths.
-        if (e.message && e.message.includes('Schema validation failed')) {
-            detailedError = `Er is een fout opgetreden bij het valideren van de data die de AI heeft teruggestuurd.\n\nDetails:\n${e.message}`;
+        let detailedError = `Er is een onverwachte fout opgetreden bij het verwerken van uw commando.\n\nFoutmelding: ${e.message}`;
+
+        // Check for specific Firestore permission error
+        if (e.code === 'permission-denied' || (e.message && e.message.includes('PERMISSION_DENIED'))) {
+            detailedError = `Firestore permissie geweigerd.\n\nDit betekent meestal dat de beveiligingsregels de actie blokkeren.\n\nContext:\n- Actie: Poging om een taak aan te maken via AI.\n- Gebruiker: ${user?.email}\n- Organisatie: ${currentOrganization?.name} (${currentOrganization?.id})\n\nControleer of de Firestore-regels correct zijn geconfigureerd om schrijfacties voor de 'tasks' collectie toe te staan voor leden van de organisatie.`;
+        } else if (e.message && e.message.includes('Schema validation failed')) {
+            detailedError = `Validatiefout van AI-data.\n\nDe AI heeft data in een incorrect formaat teruggestuurd. Dit kan een tijdelijk probleem zijn.\n\nDetails:\n${e.message}`;
         }
+        
         const errorMessage: Message = { role: 'assistant', content: detailedError };
         
         setMessages(prev => [...prev, errorMessage]);
