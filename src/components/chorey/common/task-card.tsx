@@ -407,27 +407,36 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
 
             {task.attachments.length > 0 && (
                 <div className="space-y-1 mt-2 pt-2 border-t">
-                    {task.attachments.map((attachment) => (
-                        <TooltipProvider key={attachment.id}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <a
-                                        href={attachment.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={e => e.stopPropagation()}
-                                        className="flex items-center gap-2 text-sm text-foreground hover:bg-muted p-1 rounded-md"
-                                    >
-                                        <AttachmentIcon source={getAttachmentSource(attachment.url)} />
-                                        <span className="truncate">{attachment.name}</span>
-                                    </a>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{attachment.url}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    ))}
+                    {task.attachments.map((attachment) => {
+                        const source = getAttachmentSource(attachment.url);
+                        const isEmbeddable = source.startsWith('google-') || source === 'figma' || source === 'adobe-xd';
+                        return (
+                            <div key={attachment.id} className="space-y-2">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <a
+                                                href={attachment.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={e => e.stopPropagation()}
+                                                className="flex items-center gap-2 text-sm text-foreground hover:bg-muted p-1 rounded-md"
+                                            >
+                                                <AttachmentIcon source={source} />
+                                                <span className="truncate">{attachment.name}</span>
+                                            </a>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{attachment.url}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                {isEmbeddable && attachment.url && source === 'figma' && <FigmaEmbed url={attachment.url} />}
+                                {isEmbeddable && attachment.url && source.startsWith('google-') && <GoogleDocEmbed url={attachment.url} />}
+                                {isEmbeddable && attachment.url && source === 'adobe-xd' && <AdobeXdEmbed url={attachment.url} />}
+                            </div>
+                        )
+                    })}
                 </div>
             )}
 

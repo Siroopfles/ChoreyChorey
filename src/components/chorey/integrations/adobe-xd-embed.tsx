@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -13,7 +12,8 @@ export function AdobeXdEmbed({ url }: AdobeXdEmbedProps) {
       const urlObject = new URL(xdUrl);
       const pathParts = urlObject.pathname.split('/');
       // Assuming URL format like: https://xd.adobe.com/view/some-id-goes-here/
-      const viewId = pathParts.find(part => part.length > 10 && !part.includes('.'));
+      // The embed URL is usually https://xd.adobe.com/embed/some-id-goes-here
+      const viewId = pathParts.find(part => part.length > 10 && !part.includes('.')); // Heuristic to find the ID
 
       if (viewId) {
         return `https://xd.adobe.com/embed/${viewId}`;
