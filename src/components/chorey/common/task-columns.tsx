@@ -101,7 +101,7 @@ const TaskColumn = ({
                 showInvalidIndicator
                     ? "bg-destructive/10 ring-2 ring-destructive cursor-not-allowed"
                     : isOver
-                    ? "bg-primary/5"
+                    ? "bg-primary/10"
                     : ""
             )}
         >
@@ -130,25 +130,25 @@ const TaskColumn = ({
             ) : (
               <div
                 className={cn(
-                  'flex h-full flex-col items-center justify-center rounded-md border-2 border-dashed p-4 text-center transition-colors',
+                  'flex h-full flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center transition-all duration-300',
                   showInvalidIndicator
                     ? 'border-destructive/50 bg-destructive/5 text-destructive'
                     : isOver
-                    ? 'border-primary/50 bg-primary/5 text-primary'
+                    ? 'border-primary bg-primary/10 text-primary scale-105'
                     : 'border-muted-foreground/20 text-muted-foreground/80'
                 )}
               >
                 {showInvalidIndicator ? (
                   <>
-                    <XCircle className="h-8 w-8" />
-                    <p className="mt-2 font-semibold">Actie niet toegestaan</p>
+                    <XCircle className="h-10 w-10 transition-transform duration-300" />
+                    <p className="mt-4 font-semibold">Actie niet toegestaan</p>
                     <p className="mt-1 text-xs">Geblokkeerde taken kunnen hier niet worden geplaatst.</p>
                   </>
                 ) : (
-                  <>
-                    <FileUp className="h-8 w-8" />
-                    <p className="mt-2 font-semibold">Sleep een taak hierheen</p>
-                  </>
+                  <div className={cn("flex flex-col items-center justify-center transition-transform duration-300", isOver && "scale-110")}>
+                    <FileUp className="h-10 w-10" />
+                    <p className="mt-4 font-semibold">Sleep een taak hierheen</p>
+                  </div>
                 )}
               </div>
             )}
