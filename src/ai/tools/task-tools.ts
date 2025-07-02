@@ -59,7 +59,7 @@ export const createTask = ai.defineTool(
       storyPoints: null,
       blockedBy: [],
       recurring: null,
-      imageDataUri: null,
+      imageUrl: null,
       thanked: false,
       timeLogged: 0,
       activeTimerStartedAt: null,
