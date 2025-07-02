@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai, googleAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { WhatIfScenarioInputSchema, WhatIfScenarioOutputSchema } from '@/ai/schemas';
 import type { WhatIfScenarioInput, WhatIfScenarioOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
@@ -28,7 +28,7 @@ const prompt = ai.definePrompt({
         scenarioDescription: z.string(),
     })},
     output: { schema: WhatIfScenarioOutputSchema },
-    model: googleAI.model('gemini-1.5-flash-latest'),
+    model: 'googleai/gemini-1.5-flash-latest',
     prompt: promptText,
 });
 

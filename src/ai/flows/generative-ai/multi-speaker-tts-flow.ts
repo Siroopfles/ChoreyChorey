@@ -4,7 +4,7 @@
  * @fileOverview An AI agent for converting a thread of comments to multi-speaker speech.
  * - multiSpeakerTextToSpeech - A function that converts an array of comments into a single audible conversation.
  */
-import { ai, googleAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { MultiSpeakerTextToSpeechInputSchema, MultiSpeakerTextToSpeechOutputSchema } from '@/ai/schemas';
 import type { MultiSpeakerTextToSpeechInput, MultiSpeakerTextToSpeechOutput } from '@/ai/schemas';
 import { toWav } from '@/lib/utils/audio-utils';
@@ -53,7 +53,7 @@ const multiSpeakerTextToSpeechFlow = ai.defineFlow(
 
 
     const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
+      model: 'googleai/gemini-2.5-flash-preview-tts',
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {

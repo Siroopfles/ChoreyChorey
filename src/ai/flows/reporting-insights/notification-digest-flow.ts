@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai, googleAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { NotificationDigestInputSchema, NotificationDigestOutputSchema } from '@/ai/schemas';
 import type { NotificationDigestInput, NotificationDigestOutput } from '@/ai/schemas';
 import { db } from '@/lib/core/firebase';
@@ -48,7 +48,7 @@ const notificationDigestFlow = ai.defineFlow(
       .replace('{{notifications}}', notificationsText);
 
     const { text } = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
+        model: 'googleai/gemini-1.5-flash-latest',
         prompt: promptText,
     });
 

@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai, googleAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { LevelWorkloadInputSchema, LevelWorkloadOutputSchema } from '@/ai/schemas';
 import type { LevelWorkloadInput, LevelWorkloadOutput } from '@/ai/schemas';
 import { searchTasks, updateTask } from '@/ai/tools/task-tools';
@@ -48,7 +48,7 @@ const levelWorkloadFlow = ai.defineFlow(
 
     // 2. Use an LLM to analyze and reschedule tasks.
     const { text } = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: 'googleai/gemini-1.5-flash-latest',
       tools: [updateTask],
       prompt: promptText,
     });

@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import {ai, googleAI} from '@/ai/genkit';
+import {ai} from '@/ai/genkit';
 import { SuggestHeadcountInputSchema, SuggestHeadcountOutputSchema } from '@/ai/schemas';
 import type { SuggestHeadcountInput, SuggestHeadcountOutput } from '@/ai/schemas';
 import { getDocs, query, collection, where, getDoc, doc } from 'firebase/firestore';
@@ -45,7 +45,7 @@ const prompt = ai.definePrompt({
   name: 'suggestHeadcountPrompt',
   input: {schema: SuggestHeadcountInputSchema},
   output: {schema: SuggestHeadcountOutputSchema},
-  model: googleAI.model('gemini-1.5-flash-latest'),
+  model: 'googleai/gemini-1.5-flash-latest',
   prompt: promptText,
 });
 

@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai, googleAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { MeetingToTasksInputSchema, MeetingToTasksOutputSchema } from '@/ai/schemas';
 import type { MeetingToTasksInput, MeetingToTasksOutput } from '@/ai/schemas';
 import { createTask } from '@/ai/tools/task-tools';
@@ -36,7 +36,7 @@ const meetingToTasksFlow = ai.defineFlow(
       .replace('{{creatorId}}', input.creatorId);
 
     const { text } = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: 'googleai/gemini-1.5-flash-latest',
       tools: [createTask, getUsers],
       prompt: promptText,
     });

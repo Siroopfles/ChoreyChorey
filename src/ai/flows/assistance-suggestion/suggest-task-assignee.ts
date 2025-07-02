@@ -10,7 +10,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import {ai, googleAI} from '@/ai/genkit';
+import {ai} from '@/ai/genkit';
 import { SuggestTaskAssigneeInputSchema, SuggestTaskAssigneeOutputSchema } from '@/ai/schemas';
 import type { SuggestTaskAssigneeInput, SuggestTaskAssigneeOutput } from '@/ai/schemas';
 import type { User, Task } from '@/lib/types';
@@ -48,7 +48,7 @@ export async function suggestTaskAssignee(taskDescription: string, orgUsers: Use
       return acc;
   }, {} as Record<string, string[]>);
   
-  const taskHistory = getTaskHistory(allTasks, orgUsers);
+  const taskHistory = getTaskHistory(allTasks, allUsers);
   const input = { taskDescription, assigneeSkills, taskHistory };
   const output = await suggestTaskAssigneeFlow(input);
   return { output, input };
@@ -58,7 +58,7 @@ const prompt = ai.definePrompt({
   name: 'suggestTaskAssigneePrompt',
   input: {schema: SuggestTaskAssigneeInputSchema},
   output: {schema: SuggestTaskAssigneeOutputSchema},
-  model: googleAI.model('gemini-1.5-flash-latest'), 
+  model: 'googleai/gemini-1.5-flash-latest', 
   prompt: promptText, 
 });
 

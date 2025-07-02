@@ -10,7 +10,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai, googleAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { ProcessCommandInputSchema, ProcessCommandOutputSchema } from '@/ai/schemas';
 import type { ProcessCommandInput, ProcessCommandOutput } from '@/ai/schemas';
 import { createTask, searchTasks, updateTask } from '@/ai/tools/task-tools';
@@ -41,7 +41,7 @@ const processCommandFlow = ai.defineFlow(
       .replace('{{command}}', input.command);
 
     const { text } = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: 'googleai/gemini-1.5-flash-latest',
       tools: [createTask, searchTasks, updateTask, getUsers],
       prompt: promptText,
     });

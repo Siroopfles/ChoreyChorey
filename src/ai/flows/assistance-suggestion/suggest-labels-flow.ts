@@ -8,7 +8,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import {ai, googleAI} from '@/ai/genkit';
+import {ai} from '@/ai/genkit';
 import { SuggestLabelsInputSchema, SuggestLabelsOutputSchema } from '@/ai/schemas';
 import type { SuggestLabelsInput, SuggestLabelsOutput } from '@/ai/schemas';
 import { getDoc, doc } from 'firebase/firestore';
@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
   name: 'suggestLabelsPrompt',
   input: {schema: SuggestLabelsInputSchema},
   output: {schema: SuggestLabelsOutputSchema},
-  model: googleAI.model('gemini-1.5-flash-latest'),
+  model: 'googleai/gemini-1.5-flash-latest',
   prompt: promptText,
 });
 

@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ai, googleAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { GenerateProjectReportInputSchema, GenerateProjectReportOutputSchema } from '@/ai/schemas';
 import type { GenerateProjectReportInput, GenerateProjectReportOutput } from '@/ai/schemas';
 import { searchTasks } from '@/ai/tools/task-tools';
@@ -22,7 +22,7 @@ const prompt = ai.definePrompt({
     name: 'generateProjectReportPrompt',
     input: { schema: z.object({ projectName: z.string(), tasks: z.any() }) },
     output: { schema: GenerateProjectReportOutputSchema },
-    model: googleAI.model('gemini-1.5-flash-latest'),
+    model: 'googleai/gemini-1.5-flash-latest',
     prompt: promptText,
 });
 

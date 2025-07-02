@@ -4,7 +4,7 @@
  * @fileOverview An AI agent for converting text to speech.
  * - textToSpeech - A function that converts a string of text into audible speech.
  */
-import { ai, googleAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { TextToSpeechInputSchema, TextToSpeechOutputSchema } from '@/ai/schemas';
 import type { TextToSpeechInput, TextToSpeechOutput } from '@/ai/schemas';
 import { toWav } from '@/lib/utils/audio-utils';
@@ -21,7 +21,7 @@ const textToSpeechFlow = ai.defineFlow(
   },
   async (text) => {
     const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
+      model: 'googleai/gemini-2.5-flash-preview-tts',
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
