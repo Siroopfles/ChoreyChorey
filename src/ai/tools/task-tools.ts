@@ -15,7 +15,7 @@ import { addHistoryEntry } from '@/lib/utils/history-utils';
 const CreateTaskDataSchema = z.object({
   title: z.string().describe('The title of the task.'),
   description: z.string().optional().describe('The detailed description of the task.'),
-  priority: z.string().optional().describe('The priority of the task.'),
+  priority: z.string().nullable().optional().describe('The priority of the task.'),
   assigneeIds: z.array(z.string()).optional().describe('The IDs of the users the task is assigned to.'),
   labels: z.array(z.string()).optional().describe('A list of labels for the task.'),
   dueDate: z.string().optional().describe("The due date and time in 'YYYY-MM-DDTHH:mm:ss' ISO 8601 format. The AI should convert natural language dates like 'tomorrow at 10am' into this format."),
@@ -40,6 +40,7 @@ export const createTask = ai.defineTool(
     const firestoreTask: any = {
       ...taskData,
       status: 'Te Doen' as Status,
+      priority: taskData.priority || 'Midden',
       creatorId: creatorId,
       createdAt: new Date(),
       order: Date.now(),
