@@ -32,9 +32,9 @@ const THEMES = [
 ];
 
 const FONTS = [
-  { id: 'inter', name: 'Inter (Standaard)', cost: 0, family: 'sans-serif' },
-  { id: 'source-sans', name: 'Source Sans Pro', cost: 200, family: 'sans-serif' },
-  { id: 'roboto-mono', name: 'Roboto Mono', cost: 200, family: 'monospace' },
+  { id: 'pt-sans', name: 'PT Sans (Standaard)', cost: 0, family: 'var(--font-pt-sans)' },
+  { id: 'source-sans-3', name: 'Source Sans 3', cost: 200, family: 'var(--font-source-sans-3)' },
+  { id: 'roboto-mono', name: 'Roboto Mono', cost: 200, family: 'var(--font-roboto-mono)' },
 ];
 
 const RADII = [
@@ -99,7 +99,7 @@ export default function ShopPage() {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {THEMES.map((theme) => {
                 const isOwned = currentCosmetic.primaryColor === theme.primary;
-                const canAfford = user.points >= theme.cost;
+                const canAfford = (user.points || 0) >= theme.cost;
                 const purchaseKey = JSON.stringify({ primaryColor: theme.primary });
                 return (
                     <AlertDialog key={theme.name}>
@@ -148,13 +148,13 @@ export default function ShopPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                   {FONTS.map(font => {
-                      const isOwned = currentCosmetic.font === font.id;
-                      const canAfford = user.points >= font.cost;
+                      const isOwned = (currentCosmetic.font || 'pt-sans') === font.id;
+                      const canAfford = (user.points || 0) >= font.cost;
                       const purchaseKey = JSON.stringify({ font: font.id });
                       return (
                           <AlertDialog key={font.id}>
                               <div className="flex items-center justify-between rounded-lg border p-4">
-                                  <p className="font-semibold" style={{ fontFamily: `var(--font-${font.id})` }}>{font.name}</p>
+                                  <p className="font-semibold" style={{ fontFamily: font.family }}>{font.name}</p>
                                   {isOwned ? (
                                     <Button disabled size="sm"><Check className="mr-2 h-4 w-4" /> Actief</Button>
                                   ) : (
@@ -183,8 +183,8 @@ export default function ShopPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                    {RADII.map(radius => {
-                      const isOwned = currentCosmetic.radius === radius.id;
-                      const canAfford = user.points >= radius.cost;
+                      const isOwned = (currentCosmetic.radius || '0.75') === radius.id;
+                      const canAfford = (user.points || 0) >= radius.cost;
                       const purchaseKey = JSON.stringify({ radius: radius.id });
                       return (
                           <AlertDialog key={radius.id}>

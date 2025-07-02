@@ -54,6 +54,7 @@
     --font-body: var(--font-pt-sans);
     --font-headline: var(--font-pt-sans);
     --font-code: var(--font-roboto-mono);
+    --animation-speed-modifier: 1;
 
     /* Sidebar is always dark */
     --sidebar-background: 224 71% 4%;

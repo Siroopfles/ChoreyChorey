@@ -1,4 +1,4 @@
-import { PT_Sans, Roboto_Mono, Source_Sans_3 as Source_Sans_Pro } from 'next/font/google';
+import { PT_Sans, Roboto_Mono, Source_Sans_3 } from 'next/font/google';
 import { cn } from '@/lib/utils/utils';
 import { AuthProvider } from '@/contexts/user/auth-context';
 import { ThemeProvider } from '@/components/core/theme-provider';
@@ -21,10 +21,10 @@ const robotoMono = Roboto_Mono({
   display: 'swap',
 })
 
-const sourceSansPro = Source_Sans_Pro({
+const sourceSans3 = Source_Sans_3({
   subsets: ['latin'],
   weight: ['400', '700'],
-  variable: '--font-source-sans-pro',
+  variable: '--font-source-sans-3',
   display: 'swap',
 });
 
@@ -45,7 +45,7 @@ export default function RootLayout({
         'min-h-screen bg-background font-sans antialiased', 
         ptSans.variable, 
         robotoMono.variable,
-        sourceSansPro.variable
+        sourceSans3.variable
       )}>
         <ThemeProvider
           attribute="class"
