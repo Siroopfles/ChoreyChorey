@@ -15,33 +15,27 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils/utils';
 import { format } from 'date-fns';
 import { useOrganization } from '@/contexts/system/organization-context';
+import { useAiSuggestion } from '@/hooks/use-ai-suggestion';
+import { AIFeedback } from '@/components/chorey/common/ai-feedback';
 
 export default function ProjectHealthPage() {
     const { projects, loading: orgLoading } = useOrganization();
     const { currentOrganization, loading: authLoading } = useAuth();
-    const [isLoading, setIsLoading] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-    const [result, setResult] = useState<PredictProjectOutcomeOutput | null>(null);
-    const [error, setError] = useState('');
     
+    const {
+      trigger: triggerAnalysis,
+      data: result,
+      isLoading,
+      error
+    } = useAiSuggestion(predictProjectOutcome);
+
     const handleAnalysis = async () => {
         if (!currentOrganization || !selectedProject) return;
-        
-        setIsLoading(true);
-        setResult(null);
-        setError('');
-
-        try {
-            const outcome = await predictProjectOutcome({
-              projectId: selectedProject.id,
-              organizationId: currentOrganization.id
-            });
-            setResult(outcome);
-        } catch (e: any) {
-            setError(e.message);
-        }
-
-        setIsLoading(false);
+        triggerAnalysis({
+          projectId: selectedProject.id,
+          organizationId: currentOrganization.id
+        });
     };
 
     if (authLoading || orgLoading) {
@@ -128,11 +122,11 @@ export default function ProjectHealthPage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="text-center">
-                                <p className={cn("text-6xl font-bold tracking-tighter", getHealthScoreColor(result.confidenceScore))}>{result.confidenceScore}</p>
+                                <p className={cn("text-6xl font-bold tracking-tighter", getHealthScoreColor(result.output.confidenceScore))}>{result.output.confidenceScore}</p>
                                 <p className="text-muted-foreground">/ 100</p>
                             </CardContent>
                              <CardFooter>
-                                <Progress value={result.confidenceScore} className="h-2" />
+                                <Progress value={result.output.confidenceScore} className="h-2" />
                              </CardFooter>
                         </Card>
                         <Card>
@@ -144,20 +138,20 @@ export default function ProjectHealthPage() {
                              <CardContent className="space-y-4">
                                 <div className="flex items-start gap-3">
                                     {(() => {
-                                        const Icon = statusConfig[result.onTrackStatus]?.icon || TrendingUp;
-                                        const color = statusConfig[result.onTrackStatus]?.color || 'text-foreground';
+                                        const Icon = statusConfig[result.output.onTrackStatus]?.icon || TrendingUp;
+                                        const color = statusConfig[result.output.onTrackStatus]?.color || 'text-foreground';
                                         return <Icon className={cn("h-5 w-5 mt-1 shrink-0", color)} />;
                                     })()}
                                     <div>
                                         <p className="font-semibold">Status</p>
-                                        <p className="text-lg">{statusConfig[result.onTrackStatus]?.label}</p>
+                                        <p className="text-lg">{statusConfig[result.output.onTrackStatus]?.label}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
                                     <CheckCircle className="h-5 w-5 mt-1 text-green-500 shrink-0"/>
                                     <div>
                                         <p className="font-semibold">Verwachte voltooiing</p>
-                                        <p className="text-lg font-bold">{format(new Date(result.predictedCompletionDate), 'dd MMM yyyy')}</p>
+                                        <p className="text-lg font-bold">{format(new Date(result.output.predictedCompletionDate), 'dd MMM yyyy')}</p>
                                         {selectedProject?.deadline && <p className="text-xs text-muted-foreground">Oorspronkelijke deadline: {format(new Date(selectedProject.deadline), 'dd MMM yyyy')}</p>}
                                     </div>
                                 </div>
@@ -165,7 +159,7 @@ export default function ProjectHealthPage() {
                                     <CircleDollarSign className="h-5 w-5 mt-1 text-amber-500 shrink-0"/>
                                     <div>
                                         <p className="font-semibold">Budget</p>
-                                        <p className="text-lg">{result.budgetPrediction}</p>
+                                        <p className="text-lg">{result.output.budgetPrediction}</p>
                                     </div>
                                 </div>
                              </CardContent>
@@ -178,7 +172,7 @@ export default function ProjectHealthPage() {
                             </CardHeader>
                             <CardContent>
                                 <ul className="space-y-2 list-disc pl-5">
-                                    {result.recommendations.map((rec, i) => (
+                                    {result.output.recommendations.map((rec, i) => (
                                         <li key={i} className="text-sm">{rec}</li>
                                     ))}
                                 </ul>
@@ -190,7 +184,12 @@ export default function ProjectHealthPage() {
                             <CardTitle className="flex items-center gap-2"><Lightbulb /> AI Redenering</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground whitespace-pre-wrap">{result.reasoning}</p>
+                            <p className="text-muted-foreground whitespace-pre-wrap">{result.output.reasoning}</p>
+                             <AIFeedback
+                                flowName="predictProjectOutcomeFlow"
+                                input={result.input}
+                                output={result.output}
+                             />
                         </CardContent>
                     </Card>
                 </div>

@@ -47,18 +47,21 @@ export async function handleServerAction<T>(
     
   } catch (error: any) {
     console.error(`Error in ${options.errorContext}:`, error);
-    
+
     const isNetworkError =
       error?.code === 'unavailable' ||
       String(error?.message).toLowerCase().includes('network') ||
       String(error?.message).toLowerCase().includes('offline');
-      
-    const retryAction = isNetworkError ? (
-      <ToastAction onClick={() => handleServerAction(actionFn, toast, options)}>
-        Probeer opnieuw
-      </ToastAction>
-    ) : undefined;
-
+    
+    let retryAction: ReactElement | undefined = undefined;
+    if (isNetworkError) {
+      retryAction = (
+        <ToastAction onClick={() => handleServerAction(actionFn, toast, options)}>
+          Probeer opnieuw
+        </ToastAction>
+      );
+    }
+    
     toast({
       title: `Fout bij ${options.errorContext}`,
       description: error?.message || String(error),

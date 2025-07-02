@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 type AiFunction<TInput, TOutput> = (input: TInput) => Promise<TOutput>;
 
 export function useAiSuggestion<TInput, TOutput>(
-  aiFunction: AiFunction<TInput>,
+  aiFunction: AiFunction<TInput, { output: any, input: any }>, // Expect a specific return shape
   options?: {
     onSuccess?: (data: TOutput) => void;
     onError?: (error: Error) => void;
@@ -24,7 +24,7 @@ export function useAiSuggestion<TInput, TOutput>(
     setData(null);
 
     try {
-      const result = await aiFunction(input);
+      const result = await aiFunction(input as any); // Cast as any because TS can't infer the specific input of all AI functions
       setData(result);
       if (options?.onSuccess) {
         options.onSuccess(result);
@@ -36,7 +36,6 @@ export function useAiSuggestion<TInput, TOutput>(
       if (options?.onError) {
         options.onError(e);
       }
-      // Return null or throw to let the caller know it failed
       return null;
     } finally {
       setIsLoading(false);

@@ -1,12 +1,9 @@
-
 'use client';
 
-import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import type { Task, PredictTaskCompletionOutput } from '@/lib/types';
+import type { Task } from '@/lib/types';
 import { predictTaskCompletion } from '@/ai/flows/risk-prediction/predict-task-completion-flow';
 import { useOrganization } from '@/contexts/system/organization-context';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Bot } from 'lucide-react';

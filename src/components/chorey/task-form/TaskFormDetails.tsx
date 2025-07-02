@@ -1,27 +1,31 @@
-
 'use client';
 
-import type { User, Project } from '@/lib/types';
+import type { User, Project, Task } from '@/lib/types';
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils/utils';
-import { User as UserIcon, Bot, Loader2, Tags, X, Briefcase, Lightbulb } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { suggestStoryPoints } from '@/ai/flows/assistance-suggestion/suggest-story-points';
-import { suggestPriority } from '@/ai/flows/assistance-suggestion/suggest-priority';
-import { suggestLabels } from '@/ai/flows/assistance-suggestion/suggest-labels-flow';
+import { Input } from '@/components/ui/input';
+import { Loader2, Bot, X, Check, Tags, Briefcase, Lightbulb } from 'lucide-react';
+import { findDuplicateTask } from '@/ai/flows/task-management/find-duplicate-task-flow';
+import { suggestProactiveHelp } from '@/ai/flows/assistance-suggestion/suggest-proactive-help-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/contexts/user/auth-context';
+import { useDebounce } from '@/hooks/use-debounce';
 import { TaskAssignmentSuggestion } from '@/components/chorey/common/task-assignment-suggestion';
 import { useOrganization } from '@/contexts/system/organization-context';
 import { AIFeedback } from '@/components/chorey/common/ai-feedback';
-import { Input } from '@/components/ui/input';
 import { useAiSuggestion } from '@/hooks/use-ai-suggestion';
+import { suggestStoryPoints } from '@/ai/flows/assistance-suggestion/suggest-story-points';
+import { suggestPriority } from '@/ai/flows/assistance-suggestion/suggest-priority';
+import { suggestLabels } from '@/ai/flows/assistance-suggestion/suggest-labels-flow';
+import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils/utils';
 
 type TaskFormDetailsProps = {
   users: User[];
@@ -30,22 +34,18 @@ type TaskFormDetailsProps = {
 };
 
 export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: TaskFormDetailsProps) {
-  const { toast } = useToast();
   const form = useFormContext();
   const { currentOrganization } = useOrganization();
+  const { toast } = useToast();
 
-  const allLabels = currentOrganization?.settings?.customization?.labels || [];
-  const allPriorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
-  const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
-
+  const { trigger: triggerDuplicateCheck, data: duplicateResult, isLoading: isCheckingForDuplicates } = useAiSuggestion(findDuplicateTask);
+  const { trigger: triggerProactiveHelp, data: proactiveHelp, isLoading: isCheckingComplexity } = useAiSuggestion(suggestProactiveHelp);
   const { trigger: triggerPoints, data: pointsSuggestion, isLoading: isSuggestingPoints } = useAiSuggestion(suggestStoryPoints, {
     onSuccess: (result) => form.setValue('storyPoints', result.output.points)
   });
-
   const { trigger: triggerPriority, data: prioritySuggestion, isLoading: isSuggestingPriority } = useAiSuggestion(suggestPriority, {
     onSuccess: (result) => form.setValue('priority', result.output.priority)
   });
-
   const { trigger: triggerLabels, data: labelsSuggestion, isLoading: isSuggestingLabels } = useAiSuggestion(suggestLabels, {
     onSuccess: (result) => {
       if (result.output.labels.length > 0) {
@@ -58,30 +58,89 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
       }
     }
   });
+  
+  const title = form.watch('title');
+  const description = form.watch('description');
+  const debouncedTitle = useDebounce(title, 1500);
+  const debouncedDescription = useDebounce(description, 1500);
+
+  const allLabels = currentOrganization?.settings?.customization?.labels || [];
+  const allPriorities = currentOrganization?.settings?.customization?.priorities?.map(p => p.name) || [];
+  const showStoryPoints = currentOrganization?.settings?.features?.storyPoints !== false;
+
+  useEffect(() => {
+    if (!debouncedTitle || debouncedTitle.length < 10 || proactiveHelp || isCheckingComplexity) {
+      return;
+    }
+    triggerProactiveHelp({ title: debouncedTitle, description: debouncedDescription });
+  }, [debouncedTitle, debouncedDescription, triggerProactiveHelp, proactiveHelp, isCheckingComplexity]);
+
+  const onCheckForDuplicates = () => {
+    if (!title || !currentOrganization) return;
+    triggerDuplicateCheck({
+      organizationId: currentOrganization.id,
+      title,
+      description,
+    });
+  };
 
   const onSuggestStoryPoints = () => {
-    const title = form.getValues('title');
-    const description = form.getValues('description');
     if (!title || !currentOrganization) return toast({ title: 'Titel en organisatie zijn vereist.', variant: 'destructive' });
     triggerPoints({ title, description, organizationId: currentOrganization.id });
   };
   
   const onSuggestPriority = () => {
-    const title = form.getValues('title');
-    const description = form.getValues('description');
     if (!title) return toast({ title: 'Titel is vereist.', variant: 'destructive' });
     triggerPriority({ title, description, availablePriorities: allPriorities });
   };
   
   const onSuggestLabels = () => {
-    const title = form.getValues('title');
-    const description = form.getValues('description');
     if (!title || !currentOrganization) return toast({ title: 'Titel en organisatie zijn vereist.', variant: 'destructive' });
     triggerLabels({ title, description, organizationId: currentOrganization.id });
   };
-
+  
   return (
     <div className="space-y-4">
+       <div className="space-y-2">
+        <Button type="button" variant="outline" size="sm" onClick={onCheckForDuplicates} disabled={isCheckingForDuplicates || !title}>
+            {isCheckingForDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
+            Controleer op Duplicaten (AI)
+        </Button>
+         {duplicateResult && (
+            <Alert variant={duplicateResult.output.isDuplicate ? 'destructive' : 'default'}>
+              <Bot className="h-4 w-4" />
+              <AlertTitle>
+                {duplicateResult.output.isDuplicate 
+                  ? `Mogelijk Duplicaat Gevonden: "${duplicateResult.output.duplicateTaskTitle}"` 
+                  : "Geen Duplicaat Gevonden"}
+              </AlertTitle>
+              <AlertDescription>{duplicateResult.output.reasoning}</AlertDescription>
+               <AIFeedback
+                flowName="findDuplicateTaskFlow"
+                input={duplicateResult.input}
+                output={duplicateResult.output}
+               />
+            </Alert>
+          )}
+      </div>
+
+      {proactiveHelp && proactiveHelp.output.shouldOfferHelp && (
+        <Alert className="mt-4">
+          <Bot className="h-4 w-4" />
+          <AlertTitle className="flex items-center justify-between">
+            <span>AI Assistent</span>
+          </AlertTitle>
+          <AlertDescription>
+            {proactiveHelp.output.reason}
+          </AlertDescription>
+          <AIFeedback
+            flowName="suggestProactiveHelpFlow"
+            input={proactiveHelp.input}
+            output={proactiveHelp.output}
+          />
+        </Alert>
+      )}
+
       <FormField
         control={form.control}
         name="assigneeIds"
