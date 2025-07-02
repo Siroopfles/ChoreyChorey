@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Gitlab } from 'lucide-react';
+import { Gitlab, Github } from 'lucide-react';
 
 export const JiraIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -22,3 +22,4 @@ export const ClockifyIcon = ({ className }: { className?: string }) => (
 );
 
 export const GitLabIcon = ({ className }: { className?: string }) => <Gitlab className={className}/>;
+export const GitHubIcon = ({ className }: { className?: string }) => <Github className={className}/>;
