@@ -87,7 +87,7 @@ export const serializeTeam = (data: any) => {
 
 export const serializeUser = (data: any) => {
     const serialized = serializeTimestamps(data);
-    // Return a public-safe user object, excluding sensitive fields
+    // Return a public-safe user object, explicitly excluding sensitive fields
     // like twoFactorSecret, refreshToken, etc.
     return {
         id: serialized.id,

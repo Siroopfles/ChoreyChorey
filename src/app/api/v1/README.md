@@ -1,4 +1,3 @@
-
 # Chorey API v1
 
 Welkom bij de v1 API voor Chorey. Deze API stelt ontwikkelaars in staat om programmatisch te interacteren met de data van hun organisatie.
