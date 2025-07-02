@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/user/auth-context';
+import { useOrganization } from '@/contexts/system/organization-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, CheckCircle, Clock, Trophy, BarChart, ArrowLeft } from 'lucide-react';
 import { getUserAnalytics } from '@/app/actions/user/user-analytics.actions';
@@ -17,12 +18,17 @@ const dayLabels = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'];
 const hourLabels = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 
 export default function MyStatsPage() {
-  const { user, currentOrganization } = useAuth();
+  const { user } = useAuth();
+  const { currentOrganization, loading: orgLoading } = useOrganization();
   const { resolvedTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<Awaited<ReturnType<typeof getUserAnalytics>>['data']>(null);
 
   useEffect(() => {
+    if (orgLoading) {
+      return;
+    }
+
     if (user && currentOrganization) {
       setLoading(true);
       getUserAnalytics(user.id, currentOrganization.id).then(result => {
@@ -31,8 +37,10 @@ export default function MyStatsPage() {
         }
         setLoading(false);
       });
+    } else {
+      setLoading(false);
     }
-  }, [user, currentOrganization]);
+  }, [user, currentOrganization, orgLoading]);
 
   const productivityByDay = useMemo(() => {
     if (!analytics) return [];
@@ -52,7 +60,7 @@ export default function MyStatsPage() {
 
   const chartColor = resolvedTheme === 'dark' ? '#3b82f6' : '#2563eb'; // blue-500
 
-  if (loading) {
+  if (loading || orgLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
