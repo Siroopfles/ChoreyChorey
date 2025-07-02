@@ -144,7 +144,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       title: `Fout bij ${context}`,
       description: error?.message || String(error),
       variant: 'destructive',
-      action: retryAction ? (
+      action: retryAction && isNetworkError ? (
         <ToastAction altText="Probeer opnieuw" onClick={retryAction}>
           Probeer opnieuw
         </ToastAction>
