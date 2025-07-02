@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Loader2, GitPullRequest, AlertCircle, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { GenericLinker } from './GenericLinker';
 import { GitHubIcon } from '@/components/chorey/common/provider-icons';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CommandItem } from '@/components/ui/command';
 
 
@@ -48,11 +47,11 @@ function GitHubCommentPopover({ item }: { item: GitHubLink }) {
     }, [item.number, item.url]);
 
 
-    useEffect(() => {
+    useState(() => {
         if (isOpen) {
             fetchComments();
         }
-    }, [isOpen, fetchComments]);
+    });
 
 
     const handleCommentSubmit = async () => {
@@ -163,11 +162,14 @@ const renderSearchResult = (item: GitHubLink, onSelect: (item: GitHubLink) => vo
 
 export function GitHubLinker() {
     const { control } = useFormContext();
-    const { fields, append, remove } = useFieldArray({ control, name: 'githubLinks' });
     const { currentOrganization } = useAuth();
     
     const isConfigured = !!currentOrganization?.settings?.github?.owner;
     const configuredRepos = currentOrganization?.settings?.github?.repos || [];
+
+    const searchFn = (isConfigured && searchIssuesAndPRs)
+      ? (orgId: string, repo: string, term: string) => searchIssuesAndPRs(currentOrganization!.settings!.github!.owner, repo, term)
+      : undefined;
 
     return (
         <GenericLinker<GitHubLink>
@@ -175,7 +177,7 @@ export function GitHubLinker() {
             fieldArrayName="githubLinks"
             getUniqueKey={(item) => item.url}
             getDisplayId={(item) => `#${item.number}`}
-            searchFunction={(orgId, repo, term) => searchIssuesAndPRs(currentOrganization!.settings!.github!.owner, repo, term)}
+            searchFunction={searchFn}
             getItemFromUrlFunction={getGithubItemFromUrl}
             renderLinkItem={renderLinkItem}
             renderSearchResult={renderSearchResult}

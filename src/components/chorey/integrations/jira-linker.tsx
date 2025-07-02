@@ -1,21 +1,21 @@
 
 'use client';
 
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { useAuth } from '@/contexts/user/auth-context';
 import type { JiraLink } from '@/lib/types';
 import Link from 'next/link';
 import { getJiraItemFromUrl, searchJiraItems } from '@/app/actions/integrations/jira.actions';
 import { GenericLinker } from './GenericLinker';
-import { JiraIcon } from '@/components/chorey/common/provider-icons';
+import { JiraIcon as ProviderIcon } from '@/components/chorey/common/provider-icons';
 import { CommandItem } from '@/components/ui/command';
 
 
-const JiraIssueIcon = ({ src }: { src: string }) => <img src={src} alt="Jira issue type" className="h-4 w-4 shrink-0" />;
+const JiraIcon = ({ src }: { src: string }) => <img src={src} alt="Jira issue type" className="h-4 w-4 shrink-0" />;
 
 const renderLinkItem = (item: JiraLink) => (
     <div className="flex items-center gap-2 overflow-hidden">
-        <JiraIssueIcon src={item.iconUrl} />
+        <JiraIcon src={item.iconUrl} />
         <Link href={item.url} target="_blank" rel="noopener noreferrer" className="hover:underline truncate" onClick={e => e.stopPropagation()}>
             <span className="text-muted-foreground">{item.key}</span> <span className="truncate">{item.summary}</span>
         </Link>
@@ -29,7 +29,7 @@ const renderSearchResult = (item: JiraLink, onSelect: (item: JiraLink) => void) 
         onSelect={() => onSelect(item)}
         className="flex items-center gap-2"
     >
-        <JiraIssueIcon src={item.iconUrl} />
+        <JiraIcon src={item.iconUrl} />
         <span>{item.key}</span>
         <span className="truncate">{item.summary}</span>
     </CommandItem>
@@ -37,7 +37,6 @@ const renderSearchResult = (item: JiraLink, onSelect: (item: JiraLink) => void) 
 
 export function JiraLinker() {
     const { control } = useFormContext();
-    const { fields, append, remove } = useFieldArray({ control, name: 'jiraLinks' });
     const { currentOrganization } = useAuth();
 
     const isJiraConfigured = !!currentOrganization?.settings?.features?.jira;
@@ -49,6 +48,7 @@ export function JiraLinker() {
         <GenericLinker<JiraLink>
             linkerName="Jira"
             fieldArrayName="jiraLinks"
+            denormalizedIdArrayName="jiraLinkKeys"
             getUniqueKey={(item) => item.key}
             getDisplayId={(item) => item.key}
             searchFunction={searchFn}
@@ -56,8 +56,7 @@ export function JiraLinker() {
             renderLinkItem={renderLinkItem}
             renderSearchResult={renderSearchResult}
             isConfigured={isJiraConfigured}
-            LinkerIcon={JiraIcon}
+            LinkerIcon={ProviderIcon}
         />
     );
 }
-

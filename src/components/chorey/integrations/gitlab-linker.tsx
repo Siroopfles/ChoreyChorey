@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { useAuth } from '@/contexts/user/auth-context';
 import type { GitLabLink } from '@/lib/types';
 import Link from 'next/link';
@@ -40,7 +39,6 @@ const renderSearchResult = (item: GitLabLink, onSelect: (item: GitLabLink) => vo
 
 export function GitLabLinker() {
     const { control } = useFormContext();
-    const { fields, append, remove } = useFieldArray({ control, name: 'gitlabLinks' });
     const { currentOrganization } = useAuth();
 
     const isConfigured = !!currentOrganization?.settings?.gitlab?.projects?.length;

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { useAuth } from '@/contexts/user/auth-context';
 import type { BitbucketLink } from '@/lib/types';
 import Link from 'next/link';
@@ -36,7 +36,6 @@ const renderSearchResult = (item: BitbucketLink, onSelect: (item: BitbucketLink)
 
 export function BitbucketLinker() {
     const { control } = useFormContext();
-    const { fields, append, remove } = useFieldArray({ control, name: 'bitbucketLinks' });
     const { currentOrganization } = useAuth();
 
     const isConfigured = !!currentOrganization?.settings?.features?.bitbucket && !!currentOrganization?.settings?.bitbucket?.repos?.length;

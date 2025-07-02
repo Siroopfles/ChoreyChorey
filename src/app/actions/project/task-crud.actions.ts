@@ -51,6 +51,8 @@ export async function createTaskAction(organizationId: string, creatorId: string
           teamId: taskData.teamId || null,
           githubLinks: taskData.githubLinks || [],
           githubLinkUrls: (taskData.githubLinks || []).map(link => link.url),
+          gitlabLinks: taskData.gitlabLinks || [],
+          bitbucketLinks: taskData.bitbucketLinks || [],
           jiraLinks: taskData.jiraLinks || [],
           jiraLinkKeys: (taskData.jiraLinks || []).map(link => link.key),
           togglWorkspaceId: taskData.togglWorkspaceId ?? null,

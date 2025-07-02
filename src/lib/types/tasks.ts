@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import type { GitHubLink, GitLabLink, BitbucketLink, JiraLink } from './integrations';
 
@@ -212,7 +213,7 @@ export const taskFormSchema = z.object({
   consultedUserIds: z.array(z.string()).optional(),
   informedUserIds: z.array(z.string()).optional(),
   githubLinks: z.array(githubLinkSchema).optional(),
-  githubLinkUrls: z.array(z.string()).optional(),
+  githubLinkUrls: z.array(z.string().url()).optional(),
   gitlabLinks: z.array(gitlabLinkSchema).optional(),
   bitbucketLinks: z.array(bitbucketLinkSchema).optional(),
   jiraLinks: z.array(jiraLinkSchema).optional(),
