@@ -33,7 +33,8 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!input.trim() || !user || !currentOrganization) return;
 
     const userMessage: Message = { role: 'user', content: input };
@@ -47,7 +48,6 @@ export default function ChatPage() {
         const assistantMessageContent = await processCommand({ command: currentInput, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
         const assistantMessage: Message = { role: 'assistant', content: assistantMessageContent };
         
-        // Use the functional update form to ensure we have the latest state
         setMessages(prevMessages => [...prevMessages, assistantMessage]);
 
     } catch (e: any) {
@@ -62,15 +62,7 @@ export default function ChatPage() {
         });
     }
 
-
     setIsLoading(false);
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage();
-    }
   };
 
   return (
@@ -102,20 +94,19 @@ export default function ChatPage() {
         </ScrollArea>
       </div>
       <div className="p-4 border-t bg-background">
-        <div className="flex items-center gap-2">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
             placeholder="Stel een vraag of geef een commando..."
             disabled={isLoading}
             autoComplete="off"
           />
-          <Button onClick={handleSendMessage} disabled={isLoading || !input.trim()}>
+          <Button type="submit" disabled={isLoading || !input.trim()}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             <span className="sr-only">Verstuur</span>
           </Button>
-        </div>
+        </form>
       </div>
     </div>
   );
