@@ -7,50 +7,8 @@ import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organizati
 import { addHistoryEntry } from '@/lib/utils/history-utils';
 import { handleTaskCreated, handleTaskUpdated } from '@/lib/services/task-event-service';
 import { grantAchievements, checkAndGrantTeamAchievements } from '@/app/actions/core/gamification.actions';
+import { calculateNextDueDate } from '@/lib/utils/time-utils';
 
-function calculateNextDueDate(currentDueDate: Date | undefined, recurring: Recurring): Date {
-    const startDate = currentDueDate || new Date();
-    // If the due date is in the past, we calculate from today to avoid creating a bunch of overdue tasks.
-    const baseDate = isBefore(startDate, new Date()) ? new Date() : startDate;
-
-    switch (recurring.frequency) {
-        case 'daily':
-            return addDays(baseDate, 1);
-        case 'weekly':
-            return addWeeks(baseDate, 1);
-        case 'monthly':
-            const nextMonthDate = addMonths(baseDate, 1);
-            const startOfNextMonth = startOfMonth(nextMonthDate);
-            
-            if (recurring.monthly?.type === 'day_of_month' && recurring.monthly.day) {
-                return setDate(startOfNextMonth, recurring.monthly.day);
-            }
-            
-            if (recurring.monthly?.type === 'day_of_week' && recurring.monthly.weekday !== undefined && recurring.monthly.week) {
-                const { week, weekday } = recurring.monthly;
-
-                const allMatchingWeekdaysInMonth: Date[] = [];
-                let date = startOfNextMonth;
-                while(date.getMonth() === startOfNextMonth.getMonth()) {
-                    if (getDay(date) === weekday) {
-                        allMatchingWeekdaysInMonth.push(new Date(date.getTime()));
-                    }
-                    date = addDays(date, 1);
-                }
-                
-                if (week === 'last') {
-                    return allMatchingWeekdaysInMonth[allMatchingWeekdaysInMonth.length - 1] || addMonths(baseDate, 1);
-                }
-                
-                const weekIndex = { 'first': 0, 'second': 1, 'third': 2, 'fourth': 3 }[week];
-                return allMatchingWeekdaysInMonth[weekIndex] || addMonths(baseDate, 1); // Fallback
-            }
-            // Fallback for misconfigured monthly
-            return addMonths(baseDate, 1);
-        default:
-            return addDays(new Date(), 1);
-    }
-}
 
 export async function createTaskAction(organizationId: string, creatorId: string, creatorName: string, taskData: Partial<TaskFormValues> & { title: string }): Promise<{ data: { success: boolean; taskId: string; } | null; error: string | null; }> {
     try {
