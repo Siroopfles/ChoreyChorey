@@ -166,8 +166,6 @@ export function GitHubLinker() {
     const { fields, append, remove } = useFieldArray({ control, name: 'githubLinks' });
     const { currentOrganization } = useAuth();
     
-    const [selectedRepo, setSelectedRepo] = useState('');
-
     const isConfigured = !!currentOrganization?.settings?.github?.owner;
     const configuredRepos = currentOrganization?.settings?.github?.repos || [];
 
@@ -185,8 +183,6 @@ export function GitHubLinker() {
                 label: 'Repository',
                 placeholder: 'Selecteer repo',
                 options: configuredRepos,
-                selected: selectedRepo,
-                setSelected: setSelectedRepo
             }}
             isConfigured={isConfigured}
             LinkerIcon={GitHubIcon}

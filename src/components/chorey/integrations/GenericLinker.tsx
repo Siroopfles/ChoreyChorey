@@ -26,8 +26,8 @@ interface GenericLinkerProps<T extends LinkableItem> {
   getDisplayId: (item: T) => string;
   searchFunction?: (orgId: string, repoOrProject: string, searchTerm: string) => Promise<{ data: { items: T[] } | null; error: string | null; }>;
   getItemFromUrlFunction: (orgId: string, url: string) => Promise<{ data: { item: T } | null; error: string | null; }>;
-  renderLinkItem: (item: T) => React.ReactNode;
-  renderSearchResult: (item: T, onSelect: (item: T) => void) => React.ReactNode;
+  renderLinkItem: (item: T) => ReactNode;
+  renderSearchResult: (item: T, onSelect: (item: T) => void) => ReactNode;
   projectOrRepoConfig?: {
     label: string;
     placeholder: string;
@@ -69,13 +69,13 @@ export function GenericLinker<T extends LinkableItem>({
   const [isLoading, setIsLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRepo, setSelectedRepo] = useState<string>('');
+  const [selectedRepoOrProject, setSelectedRepoOrProject] = useState<string>('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [searchResults, setSearchResults] = useState<T[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    if (!searchFunction || !debouncedSearchTerm || (projectOrRepoConfig && !selectedRepo)) {
+    if (!searchFunction || !debouncedSearchTerm || (projectOrRepoConfig && !selectedRepoOrProject)) {
       setSearchResults([]);
       return;
     }
@@ -83,7 +83,7 @@ export function GenericLinker<T extends LinkableItem>({
     const search = async () => {
       if (!currentOrganization) return;
       setIsSearching(true);
-      const { data, error } = await searchFunction(currentOrganization.id, selectedRepo, debouncedSearchTerm);
+      const { data, error } = await searchFunction(currentOrganization.id, selectedRepoOrProject, debouncedSearchTerm);
       if (data?.items) {
         setSearchResults(data.items);
       }
@@ -94,7 +94,7 @@ export function GenericLinker<T extends LinkableItem>({
     };
 
     search();
-  }, [debouncedSearchTerm, selectedRepo, isConfigured, currentOrganization, toast, searchFunction, projectOrRepoConfig]);
+  }, [debouncedSearchTerm, selectedRepoOrProject, isConfigured, currentOrganization, toast, searchFunction, projectOrRepoConfig]);
 
   const appendLink = (item: T) => {
     const uniqueKey = getUniqueKey(item);
@@ -167,7 +167,7 @@ export function GenericLinker<T extends LinkableItem>({
           <Popover open={searchOpen} onOpenChange={setSearchOpen}>
             <div className="flex items-center gap-2">
               {projectOrRepoConfig && (
-                <Select value={selectedRepo} onValueChange={setSelectedRepo}>
+                <Select value={selectedRepoOrProject} onValueChange={setSelectedRepoOrProject}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder={projectOrRepoConfig.placeholder} />
                   </SelectTrigger>
@@ -182,7 +182,7 @@ export function GenericLinker<T extends LinkableItem>({
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onFocus={() => setSearchOpen(true)}
                   placeholder={`Zoek ${linkerName} issue...`}
-                  disabled={projectOrRepoConfig && !selectedRepo}
+                  disabled={projectOrRepoConfig && !selectedRepoOrProject}
                 />
               </PopoverAnchor>
             </div>

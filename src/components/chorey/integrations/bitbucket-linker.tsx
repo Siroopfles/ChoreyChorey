@@ -42,9 +42,6 @@ export function BitbucketLinker() {
     const isConfigured = !!currentOrganization?.settings?.features?.bitbucket && !!currentOrganization?.settings?.bitbucket?.repos?.length;
     const configuredRepos = currentOrganization?.settings?.bitbucket?.repos || [];
     
-    // This state is managed locally in the parent now, but the generic component needs to know about it.
-    const [selectedRepo, setSelectedRepo] = useState<string>('');
-
     return (
         <GenericLinker<BitbucketLink>
             linkerName="Bitbucket"
@@ -59,8 +56,6 @@ export function BitbucketLinker() {
                 label: 'Repository',
                 placeholder: 'Selecteer repo',
                 options: configuredRepos,
-                selected: selectedRepo,
-                setSelected: setSelectedRepo
             }}
             isConfigured={isConfigured}
             LinkerIcon={BitbucketIcon}

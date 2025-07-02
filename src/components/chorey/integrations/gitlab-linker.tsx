@@ -42,7 +42,6 @@ export function GitLabLinker() {
     const { control } = useFormContext();
     const { fields, append, remove } = useFieldArray({ control, name: 'gitlabLinks' });
     const { currentOrganization } = useAuth();
-    const [selectedProject, setSelectedProject] = useState('');
 
     const isConfigured = !!currentOrganization?.settings?.gitlab?.projects?.length;
     const configuredProjects = currentOrganization?.settings?.gitlab?.projects || [];
@@ -61,12 +60,9 @@ export function GitLabLinker() {
                 label: 'Project',
                 placeholder: 'Selecteer project',
                 options: configuredProjects,
-                selected: selectedProject,
-                setSelected: setSelectedProject,
             }}
             isConfigured={isConfigured}
             LinkerIcon={Gitlab}
         />
     );
 }
-
