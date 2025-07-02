@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ToastAction } from '@/components/ui/toast';
@@ -54,15 +53,17 @@ export async function handleServerAction<T>(
       String(error?.message).toLowerCase().includes('network') ||
       String(error?.message).toLowerCase().includes('offline');
       
+    const retryAction = isNetworkError ? (
+      <ToastAction onClick={() => handleServerAction(actionFn, toast, options)}>
+        Probeer opnieuw
+      </ToastAction>
+    ) : undefined;
+
     toast({
       title: `Fout bij ${options.errorContext}`,
       description: error?.message || String(error),
       variant: 'destructive',
-      action: isNetworkError ? (
-        <ToastAction altText="Probeer opnieuw" onClick={() => handleServerAction(actionFn, toast, options)}>
-          Probeer opnieuw
-        </ToastAction>
-      ) : undefined,
+      action: retryAction,
     });
     
     return { data: null, error };
