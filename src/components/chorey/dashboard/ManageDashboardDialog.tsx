@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,8 +14,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Save } from 'lucide-react';
 import type { WidgetInstance, WidgetType } from '@/lib/types';
 import { WIDGET_TYPES, widgetConfigSchemas } from '@/lib/types';
-import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils/utils';
+import { updateUserProfile } from '@/app/actions/user/user.actions';
 
 interface ManageDashboardDialogProps {
   open: boolean;
@@ -32,7 +31,7 @@ type FormValues = {
 };
 
 export function ManageDashboardDialog({ open, onOpenChange, highlightWidgetId }: ManageDashboardDialogProps) {
-  const { user, updateUserDashboard } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<FormValues>();
@@ -88,7 +87,8 @@ export function ManageDashboardDialog({ open, onOpenChange, highlightWidgetId }:
       }
     }
     
-    await updateUserDashboard({ dashboardConfig: newDashboardConfig });
+    await updateUserProfile(user.id, { dashboardConfig: newDashboardConfig });
+    await refreshUser();
     toast({ title: "Dashboard opgeslagen!", description: "Je wijzigingen zijn succesvol opgeslagen." });
     setIsSubmitting(false);
     onOpenChange(false);

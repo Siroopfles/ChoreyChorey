@@ -1,16 +1,17 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import type { User, Presence } from '@/lib/types/auth';
+import type { User, UserStatus, Presence } from '@/lib/types/auth';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
 import { db } from '@/lib/core/firebase';
-import { doc, onSnapshot, collection, query, where, serverTimestamp, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, serverTimestamp, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user/member.actions';
 
 interface PresenceContextType {
   others: Record<string, Presence>;
   setViewingTask: (taskId: string | null) => void;
+  updateUserPresence: (presenceUpdate: Partial<UserStatus>) => Promise<void>;
 }
 
 const PresenceContext = createContext<PresenceContextType | undefined>(undefined);
@@ -54,34 +55,30 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   const { currentOrganization } = useOrganization();
   const [others, setOthers] = useState<Record<string, Presence>>({});
   const presenceRef = useRef<Partial<Presence>>({});
+  const presenceUpdateTimeout = useRef<NodeJS.Timeout>();
 
-  const updateMyPresence = useCallback(
-    (presenceUpdate: Partial<Omit<Presence, 'id' | 'organizationId'>>) => {
-      if (!user || !currentOrganization) return;
-
-      const newPresenceData = {
-        id: user.id,
-        organizationId: currentOrganization.id,
-        name: user.name,
-        avatar: user.avatar,
-        ...presenceRef.current,
+  const updateUserPresence = useCallback(async (presenceUpdate: Partial<UserStatus>) => {
+    if (!user) return;
+    const currentStatus = user.status || { type: 'Offline', until: null };
+    const newStatus: UserStatus = {
+        type: currentStatus.type,
+        until: currentStatus.until,
         ...presenceUpdate,
-        lastSeen: serverTimestamp(),
-      };
-      
-      presenceRef.current = newPresenceData;
-      setDoc(doc(db, 'presence', user.id), newPresenceData, { merge: true });
-    },
-    [user, currentOrganization]
-  );
-  
+    };
+    await updateUserStatusAction(user.id, newStatus);
+  }, [user]);
+
   const throttledCursorUpdate = useRef(throttle((cursor: {x: number, y: number} | null) => {
-      updateMyPresence({ cursor });
+      if (!user || !currentOrganization) return;
+      const presenceDocRef = doc(db, 'presence', user.id);
+      updateDoc(presenceDocRef, { cursor, lastSeen: serverTimestamp() });
   }, 100)).current;
 
   const setViewingTask = useCallback((taskId: string | null) => {
-      updateMyPresence({ viewingTaskId: taskId });
-  }, [updateMyPresence]);
+      if (!user || !currentOrganization) return;
+      const presenceDocRef = doc(db, 'presence', user.id);
+      updateDoc(presenceDocRef, { viewingTaskId: taskId, lastSeen: serverTimestamp() });
+  }, [user, currentOrganization]);
   
   useEffect(() => {
     if (!user || !currentOrganization) {
@@ -99,7 +96,6 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
       cursor: null,
       viewingTaskId: null,
     };
-    presenceRef.current = initialPresence;
     setDoc(userPresenceDocRef, { ...initialPresence, lastSeen: serverTimestamp() });
     
     const handleBeforeUnload = () => {
@@ -144,7 +140,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   }, [user, currentOrganization, throttledCursorUpdate]);
   
   return (
-    <PresenceContext.Provider value={{ others, setViewingTask }}>
+    <PresenceContext.Provider value={{ others, setViewingTask, updateUserPresence }}>
       {children}
     </PresenceContext.Provider>
   );

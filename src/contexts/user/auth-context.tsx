@@ -30,8 +30,6 @@ import {
 } from '@/lib/types/organizations';
 import type { Layouts } from 'react-grid-layout';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserStatus as updateUserStatusAction } from '@/app/actions/user/member.actions';
-import { sendDailyDigest } from '@/app/actions/core/digest.actions';
 import { useDebug } from '@/contexts/system/debug-context';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateAvatar } from '@/ai/flows/generative-ai/generate-avatar-flow';
@@ -52,11 +50,8 @@ type AuthContextType = {
     completeMfa: () => void;
     refreshUser: () => Promise<void>;
     organizations: Organization[];
-    // DEPRECATED: currentOrganization should be accessed from OrganizationProvider
-    currentOrganization: Organization | null;
+    currentOrganizationId: string | null;
     switchOrganization: (orgId: string) => Promise<void>;
-    updateUserDashboard: (updates: Partial<{ dashboardConfig: WidgetInstance[]; dashboardLayout: Layouts }>) => Promise<void>;
-    updateUserPresence: (presenceUpdate: Partial<UserStatus>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [mfaRequired, setMfaRequired] = useState(false);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
-    const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+    const [currentOrganizationId, setCurrentOrganizationId] = useState<string | null>(null);
     const [currentSessionId, setCurrentSessionId] = useLocalStorage(SESSION_STORAGE_KEY, '');
     const router = useRouter();
     const { toast } = useToast();
@@ -93,9 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = useCallback(async (message?: { title: string, description: string }) => {
         try {
-            if (user?.id) {
-              await updateUserStatusAction(user.id, { type: 'Offline', until: null });
-            }
             if (currentSessionId) {
                 const sessionRef = doc(db, 'sessions', currentSessionId);
                 await updateDoc(sessionRef, { isActive: false }).catch(console.error);
@@ -110,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             handleError(error, 'uitloggen');
         }
-    }, [user?.id, currentSessionId, setCurrentSessionId, toast, router]);
+    }, [currentSessionId, setCurrentSessionId, toast, router]);
 
     const fetchUserAndOrgData = useCallback(async (firebaseUser: FirebaseUser) => {
         if (isDebugMode) console.log('[DEBUG] AuthContext: Running fetchUserAndOrgData for', firebaseUser.uid);
@@ -140,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               } : undefined,
           } as User;
           setUser(userData);
+          setCurrentOrganizationId(userData.currentOrganizationId || null);
 
           if (isDebugMode) console.log('[DEBUG] AuthContext: User data set:', userData);
 
@@ -153,25 +146,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   setOrganizations(userOrgs);
                   if (isDebugMode) console.log('[DEBUG] AuthContext: Organizations updated:', userOrgs);
 
-                  let currentOrg = null;
                   const currentOrgStillExists = userOrgs.some(o => o.id === userData.currentOrganizationId);
 
-                  if (userData.currentOrganizationId && currentOrgStillExists) {
-                      currentOrg = userOrgs.find(o => o.id === userData.currentOrganizationId) || null;
-                  } else if (userOrgs.length > 0) {
-                      currentOrg = userOrgs[0];
-                      if (isDebugMode) console.log(`[DEBUG] AuthContext: No/invalid current org set, defaulting to first one (${currentOrg.id}) and updating user doc.`);
-                      updateDoc(userDocRef, { currentOrganizationId: currentOrg.id });
+                  if (!userData.currentOrganizationId || !currentOrgStillExists) {
+                       if (userOrgs.length > 0) {
+                           const newCurrentOrgId = userOrgs[0].id;
+                           if (isDebugMode) console.log(`[DEBUG] AuthContext: No/invalid current org set, defaulting to first one (${newCurrentOrgId}) and updating user doc.`);
+                           updateDoc(userDocRef, { currentOrganizationId: newCurrentOrgId });
+                           setCurrentOrganizationId(newCurrentOrgId);
+                       } else {
+                           setCurrentOrganizationId(null);
+                       }
                   }
-                  
-                  setCurrentOrganization(currentOrg);
-                  if (isDebugMode) console.log('[DEBUG] AuthContext: Current organization updated:', currentOrg);
 
               }, (error) => handleError(error, 'laden van organisaties'));
           } else {
               if (isDebugMode) console.log('[DEBUG] AuthContext: User has no organizations.');
               setOrganizations([]);
-              setCurrentOrganization(null);
+              setCurrentOrganizationId(null);
           }
         } catch (error) {
            handleError(error, 'laden gebruikers- en org data');
@@ -197,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(null);
                 setMfaRequired(false);
                 setOrganizations([]);
-                setCurrentOrganization(null);
+                setCurrentOrganizationId(null);
             }
             setLoading(false);
         });
@@ -272,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await createSession(firebaseUser.uid);
             setUser({ id: firebaseUser.uid, ...newUser });
             setOrganizations([]);
-            setCurrentOrganization(null);
+            setCurrentOrganizationId(null);
 
         } catch (error) {
             handleError(error, 'registreren');
@@ -389,69 +381,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, [currentSessionId, authUser, logout]);
 
-    useEffect(() => {
-        if (!user || !currentOrganization || !currentSessionId) return;
-
-        const policy = currentOrganization.settings?.sessionPolicy;
-        const ipWhitelist = currentOrganization.settings?.ipWhitelist;
-
-        const checkPolicies = async () => {
-            if (ipWhitelist && ipWhitelist.length > 0) {
-                try {
-                    const response = await fetch('/api/ip');
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.ip && !ipWhitelist.includes(data.ip)) {
-                            logout({ title: 'Toegang Geweigerd', description: 'Uw IP-adres heeft geen toegang tot deze organisatie.', variant: 'destructive' });
-                            return; 
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error fetching IP for whitelist check:", e);
-                }
-            }
-            
-            if (!policy || (!policy.absoluteTimeoutSeconds && !policy.idleTimeoutSeconds)) {
-                return;
-            }
-            try {
-                const sessionRef = doc(db, 'sessions', currentSessionId);
-                const sessionDoc = await getDoc(sessionRef);
-                if (!sessionDoc.exists()) {
-                    logout({ title: 'Sessie verlopen', description: 'Uw sessie is niet langer geldig.', variant: 'destructive' });
-                    return;
-                }
-                const sessionData = sessionDoc.data() as Session;
-                const now = Date.now();
-
-                if (policy.absoluteTimeoutSeconds) {
-                    const createdAt = (sessionData.createdAt as Timestamp).toMillis();
-                    if (now > createdAt + policy.absoluteTimeoutSeconds * 1000) {
-                        logout({ title: 'Sessie Verlopen', description: 'Uw sessie is verlopen vanwege het organisatiebeleid.', variant: 'destructive' });
-                        return;
-                    }
-                }
-                if (policy.idleTimeoutSeconds) {
-                    const lastAccessed = (sessionData.lastAccessed as Timestamp).toMillis();
-                    if (now > lastAccessed + policy.idleTimeoutSeconds * 1000) {
-                       logout({ title: 'Sessie Verlopen door Inactiviteit', description: 'U bent uitgelogd vanwege inactiviteit.', variant: 'destructive' });
-                       return;
-                    }
-                }
-
-            } catch(e) {
-                console.error("Error checking session policy:", e);
-            }
-        };
-
-        checkPolicies();
-        const interval = setInterval(checkPolicies, 30000);
-
-        return () => clearInterval(interval);
-
-    }, [user, currentOrganization, currentSessionId, logout]);
-
-
     const refreshUser = useCallback(async () => {
         if (auth.currentUser) {
             setLoading(true);
@@ -462,11 +391,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
     const switchOrganization = async (orgId: string) => {
-        if (!user || orgId === currentOrganization?.id) return;
+        if (!user || orgId === currentOrganizationId) return;
         try {
             setLoading(true);
             const userRef = doc(db, 'users', user.id);
             await updateDoc(userRef, { currentOrganizationId: orgId });
+            // The onSnapshot listener will handle the state update.
             toast({ title: "Organisatie gewisseld" });
         } catch(e) {
             handleError(e, 'wisselen van organisatie');
@@ -483,28 +413,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const updateUserDashboard = async (updates: Partial<{ dashboardConfig: WidgetInstance[]; dashboardLayout: Layouts }>) => {
-        if (!user) return;
-        const userRef = doc(db, "users", user.id);
-        try {
-            await updateDoc(userRef, updates);
-            await refreshUser();
-        } catch (e) {
-             handleError(e, 'bijwerken dashboard');
-        }
-    };
-
-    const updateUserPresence = useCallback(async (presenceUpdate: Partial<UserStatus>) => {
-        if (!user) return;
-        const currentStatus = user.status || { type: 'Offline', until: null };
-        const newStatus: UserStatus = {
-            type: currentStatus.type,
-            until: currentStatus.until,
-            ...presenceUpdate,
-        };
-        await updateUserStatusAction(user.id, newStatus);
-    }, [user]);
-
     const value = {
         authUser,
         user,
@@ -518,10 +426,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         completeMfa,
         refreshUser,
         organizations,
-        currentOrganization,
+        currentOrganizationId,
         switchOrganization,
-        updateUserDashboard,
-        updateUserPresence,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,3 @@
-
 'use client';
 
 import 'react-grid-layout/css/styles.css';
@@ -11,6 +10,7 @@ import { useTasks } from '@/contexts/feature/task-context';
 import { useCallback, useRef } from 'react';
 import type { Task, ActivityFeedItem, WidgetInstance } from '@/lib/types';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
+import { updateUserProfile } from '@/app/actions/user/user.actions';
 
 // Import Widgets
 import { TasksByStatusWidget } from '../dashboard/widgets/TasksByStatusWidget';
@@ -31,7 +31,7 @@ interface DashboardViewProps {
 
 
 export default function DashboardView({ tasks, activityFeedItems, isFeedLoading }: DashboardViewProps) {
-  const { user, loading: authLoading, updateUserDashboard } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const { users, loading: orgLoading } = useOrganization();
   const layoutChangeTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -47,12 +47,13 @@ export default function DashboardView({ tasks, activityFeedItems, isFeedLoading 
         if (user) {
           const hasLayoutChanged = JSON.stringify(allLayouts) !== JSON.stringify(layouts);
           if (hasLayoutChanged) {
-            await updateUserDashboard({ dashboardLayout: allLayouts });
+            await updateUserProfile(user.id, { dashboardLayout: allLayouts });
+            await refreshUser();
           }
         }
       }, 500);
     },
-    [user, layouts, updateUserDashboard]
+    [user, layouts, refreshUser]
   );
   
   const renderWidget = (widget: WidgetInstance) => {

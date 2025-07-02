@@ -19,6 +19,9 @@ import { cn } from '@/lib/utils/utils';
 import BulkActionBar from '@/components/chorey/common/bulk-action-bar';
 import { LiveCursors } from '@/components/chorey/common/live-cursors';
 import type { UserStatus } from '@/lib/types';
+import { isToday, differenceInDays } from 'date-fns';
+import { sendDailyDigest } from '@/app/actions/core/digest.actions';
+import { usePresence } from '@/contexts/communication/presence-context';
 
 const BrandingStyle = () => {
   const { currentOrganization } = useOrganization();
@@ -35,7 +38,7 @@ const BrandingStyle = () => {
 
 const UserCosmeticStyle = () => {
   const { user } = useAuth();
-  const cosmetic = user?.cosmetic;
+  const cosmetic = user?.cosmetic || {};
 
   const fontMap = {
     'pt-sans': 'var(--font-pt-sans)', // Default
@@ -43,10 +46,6 @@ const UserCosmeticStyle = () => {
     'roboto-mono': 'var(--font-roboto-mono)',
   }
 
-  if (!cosmetic) {
-    return null;
-  }
-  
   const styles = [];
   if (cosmetic.primaryColor) styles.push(`--primary: ${cosmetic.primaryColor};`);
   if (cosmetic.accent) styles.push(`--accent: ${cosmetic.accent};`);
@@ -70,7 +69,8 @@ const UserCosmeticStyle = () => {
 // The main app shell with sidebar and header
 export default function AppShell({ children }: { children: React.ReactNode }) {
     const { isAddTaskDialogOpen, setIsAddTaskDialogOpen, viewedTask, setViewedTask, tasks } = useTasks();
-    const { updateUserPresence } = useAuth();
+    const { user } = useAuth();
+    const { updateUserPresence } = usePresence();
     const { currentOrganization } = useOrganization();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -100,6 +100,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         updateUserPresence(presenceUpdate);
 
     }, [pathname, viewedTask, updateUserPresence, tasks]);
+
+     // Effect to trigger daily digest
+    useEffect(() => {
+        if (!user || !currentOrganization) return;
+        const digestSettings = currentOrganization.members[user.id]?.notificationSettings;
+        if (!digestSettings?.dailyDigestEnabled) return;
+
+        const lastSent = user.lastDigestSentAt;
+        const now = new Date();
+        // Check if digest hasn't been sent today and it's after 9 AM.
+        if ((!lastSent || !isToday(lastSent)) && now.getHours() >= 9) {
+            sendDailyDigest(user.id, currentOrganization.id);
+        }
+    }, [user, currentOrganization]);
 
 
     useEffect(() => {

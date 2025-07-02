@@ -1,15 +1,14 @@
-
 'use client';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { GripVertical, Settings, Trash2 } from 'lucide-react';
 import type { WidgetInstance } from '@/lib/types';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { ManageDashboardDialog } from './ManageDashboardDialog';
 import { useState } from 'react';
+import { updateUserProfile } from '@/app/actions/user/user.actions';
 
 interface WidgetWrapperProps {
   children: React.ReactNode;
@@ -17,7 +16,7 @@ interface WidgetWrapperProps {
 }
 
 export function WidgetWrapper({ children, widget }: WidgetWrapperProps) {
-  const { user, updateUserDashboard } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const [isManagerOpen, setIsManagerOpen] = useState(false);
 
@@ -26,9 +25,14 @@ export function WidgetWrapper({ children, widget }: WidgetWrapperProps) {
     if (!user?.dashboardConfig) return;
 
     const newConfig = user.dashboardConfig.filter(w => w.id !== widget.id);
-    await updateUserDashboard({ dashboardConfig: newConfig });
+    const result = await updateUserProfile(user.id, { dashboardConfig: newConfig });
     
-    toast({ title: "Widget verwijderd" });
+    if(result.error) {
+        toast({ title: "Fout", description: result.error, variant: 'destructive'});
+    } else {
+        await refreshUser();
+        toast({ title: "Widget verwijderd" });
+    }
   };
   
   return (
