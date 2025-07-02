@@ -98,7 +98,11 @@ const TaskColumn = ({
             aria-label={title}
             className={cn(
                 "flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px] transition-colors",
-                showInvalidIndicator && "bg-destructive/10 ring-2 ring-destructive cursor-not-allowed"
+                showInvalidIndicator
+                    ? "bg-destructive/10 ring-2 ring-destructive cursor-not-allowed"
+                    : isOver
+                    ? "bg-primary/5"
+                    : ""
             )}
         >
             {tasks.length > 0 ? (
