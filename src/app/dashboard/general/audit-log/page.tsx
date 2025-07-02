@@ -1,8 +1,1 @@
-'use client';
-import { redirect } from 'next/navigation';
-
-// DEPRECATED: This page has been moved.
-export default function DeprecatedPage() {
-    redirect('/dashboard/audit-log');
-    return null;
-}
+// This file is deprecated and can be safely deleted.

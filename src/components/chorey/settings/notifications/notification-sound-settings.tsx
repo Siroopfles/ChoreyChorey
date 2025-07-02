@@ -1,18 +1,17 @@
-
 'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Save, Volume2, Music } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserProfile } from '@/app/actions/user.actions';
+import { updateUserProfile } from '@/app/actions/user/user.actions';
 import type { User } from '@/lib/types';
 import { NOTIFICATION_EVENT_TYPES_FOR_SOUNDS, NOTIFICATION_SOUNDS } from '@/lib/types';
 
