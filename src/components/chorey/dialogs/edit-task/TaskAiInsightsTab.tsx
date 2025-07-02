@@ -12,31 +12,27 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Bot } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
+import { useAiSuggestion } from '@/hooks/use-ai-suggestion';
+import { AIFeedback } from '@/components/chorey/common/ai-feedback';
 
 export function TaskAiInsightsTab({ task }: { task: Task }) {
   const { currentOrganization } = useOrganization();
-  const { toast } = useToast();
   const form = useFormContext();
-  const [isPredicting, setIsPredicting] = useState(false);
-  const [prediction, setPrediction] = useState<PredictTaskCompletionOutput | null>(null);
+  const { 
+    trigger: triggerPrediction, 
+    data: prediction, 
+    isLoading: isPredicting 
+  } = useAiSuggestion(predictTaskCompletion);
 
   const handlePredictCompletion = async () => {
     if (!currentOrganization) return;
-    setIsPredicting(true);
-    setPrediction(null);
-    try {
-      const result = await predictTaskCompletion({
-        organizationId: currentOrganization.id,
-        title: task.title,
-        description: task.description,
-        priority: task.priority,
-        storyPoints: task.storyPoints,
-      });
-      setPrediction(result);
-    } catch (e: any) {
-      toast({ title: 'Fout bij voorspelling', description: e.message, variant: 'destructive' });
-    }
-    setIsPredicting(false);
+    triggerPrediction({
+      organizationId: currentOrganization.id,
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      storyPoints: task.storyPoints,
+    });
   };
 
   return (
@@ -54,14 +50,19 @@ export function TaskAiInsightsTab({ task }: { task: Task }) {
       {prediction && (
         <CardFooter className="flex-col items-start gap-2">
           <Alert>
-            <AlertTitle>Voorspelling: {format(new Date(prediction.predictedCompletionDate), 'd MMMM yyyy')}</AlertTitle>
-            <AlertDescription>{prediction.reasoning}</AlertDescription>
+            <AlertTitle>Voorspelling: {format(new Date(prediction.output.predictedCompletionDate), 'd MMMM yyyy')}</AlertTitle>
+            <AlertDescription>{prediction.output.reasoning}</AlertDescription>
             <div className="flex items-center gap-4 mt-2">
-              <span className="text-sm font-medium">Zekerheid: {prediction.confidenceScore}%</span>
-              <Button size="sm" variant="outline" onClick={() => form.setValue('dueDate', new Date(prediction.predictedCompletionDate))}>
+              <span className="text-sm font-medium">Zekerheid: {prediction.output.confidenceScore}%</span>
+              <Button size="sm" variant="outline" onClick={() => form.setValue('dueDate', new Date(prediction.output.predictedCompletionDate))}>
                 Stel in als einddatum
               </Button>
             </div>
+             <AIFeedback
+                flowName="predictTaskCompletionFlow"
+                input={prediction.input}
+                output={prediction.output}
+              />
           </Alert>
         </CardFooter>
       )}

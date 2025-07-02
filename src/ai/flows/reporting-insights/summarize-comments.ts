@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview AI agent that summarizes task comments.
@@ -10,8 +11,9 @@ import type { SummarizeCommentsInput, SummarizeCommentsOutput } from '@/ai/schem
 
 const promptText = fs.readFileSync(path.resolve('./src/ai/prompts/summarize-comments.prompt'), 'utf-8');
 
-export async function summarizeComments(input: SummarizeCommentsInput): Promise<SummarizeCommentsOutput> {
-  return summarizeCommentsFlow(input);
+export async function summarizeComments(input: SummarizeCommentsInput): Promise<{ output: SummarizeCommentsOutput, input: SummarizeCommentsInput }> {
+  const output = await summarizeCommentsFlow(input);
+  return { output, input };
 }
 
 const prompt = ai.definePrompt({

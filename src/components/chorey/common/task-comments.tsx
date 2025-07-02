@@ -22,6 +22,8 @@ import { updateTypingStatusAction } from '@/app/actions/project/task.actions';
 import { useTasks } from '@/contexts/feature/task-context';
 import { cn } from '@/lib/utils/utils';
 import { Badge } from '@/components/ui/badge';
+import { useAiSuggestion } from '@/hooks/use-ai-suggestion';
+import { AIFeedback } from './ai-feedback';
 
 const EMOJI_LIST = ['👍', '❤️', '😂', '🎉', '🤔', '🙏'];
 
@@ -271,14 +273,18 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const { updateTask } = useTasks();
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [summary, setSummary] = useState('');
   const [newComment, setNewComment] = useState('');
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const typingTimeout = useRef<NodeJS.Timeout>();
+
+  const { 
+    trigger: triggerSummary, 
+    data: summaryResult, 
+    isLoading: isSummarizing 
+  } = useAiSuggestion(summarizeComments);
   
   const threadedComments = useMemo(() => {
     const sortedComments = [...(task.comments || [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -291,18 +297,10 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
       toast({ title: 'Niet genoeg reacties om samen te vatten.', variant: 'destructive' });
       return;
     }
-    setIsSummarizing(true);
-    setSummary('');
     setAudioError(null);
     setAudioSrc(null);
     
-    try {
-        const result = await summarizeComments({ comments: commentsToSummarize });
-        setSummary(result.summary);
-    } catch(e: any) {
-        toast({ title: 'Fout bij samenvatten', description: e.message, variant: 'destructive' });
-    }
-    setIsSummarizing(false);
+    triggerSummary({ comments: commentsToSummarize });
   };
 
   const onReadAloud = async () => {
@@ -313,8 +311,7 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
     setIsReadingAloud(true);
     setAudioSrc(null);
     setAudioError(null);
-    setSummary('');
-
+    
     try {
       const commentsWithNames = task.comments.map(comment => {
         const user = users.find(u => u.id === comment.userId);
@@ -425,11 +422,16 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
             </Button>
             </div>
         )}
-        {summary && (
+        {summaryResult && (
             <Alert>
                 <Bot className="h-4 w-4" />
                 <AlertTitle>AI Samenvatting</AlertTitle>
-                <AlertDescription>{summary}</AlertDescription>
+                <AlertDescription>{summaryResult.output.summary}</AlertDescription>
+                <AIFeedback
+                    flowName="summarizeCommentsFlow"
+                    input={summaryResult.input}
+                    output={summaryResult.output}
+                />
             </Alert>
         )}
         {audioSrc && (
