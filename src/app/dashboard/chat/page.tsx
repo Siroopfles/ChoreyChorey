@@ -22,7 +22,6 @@ export default function ChatPage() {
   const { user, currentOrganization } = useAuth();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -33,17 +32,17 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSendMessage = async () => {
     if (!input.trim() || !user || !currentOrganization) return;
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-        const assistantMessageContent = await processCommand({ command: input, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
+        const assistantMessageContent = await processCommand({ command: currentInput, userId: user.id, organizationId: currentOrganization.id, userName: user.name });
         const assistantMessage: Message = { role: 'assistant', content: assistantMessageContent };
         setMessages(prev => [...prev, assistantMessage]);
     } catch (e: any) {
@@ -63,7 +62,7 @@ export default function ChatPage() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        formRef.current?.requestSubmit();
+        handleSendMessage();
     }
   };
 
@@ -96,7 +95,7 @@ export default function ChatPage() {
         </ScrollArea>
       </div>
       <div className="p-4 border-t bg-background">
-        <form onSubmit={handleSubmit} ref={formRef} className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -105,11 +104,11 @@ export default function ChatPage() {
             disabled={isLoading}
             autoComplete="off"
           />
-          <Button type="submit" disabled={isLoading || !input.trim()}>
+          <Button onClick={handleSendMessage} disabled={isLoading || !input.trim()}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             <span className="sr-only">Verstuur</span>
           </Button>
-        </form>
+        </div>
       </div>
     </div>
   );
