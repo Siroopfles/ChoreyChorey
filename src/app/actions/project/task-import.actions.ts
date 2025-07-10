@@ -3,7 +3,7 @@
 
 import Papa from 'papaparse';
 import { db } from '@/lib/core/firebase';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import type { Task, Status } from '@/lib/types';
 import { addHistoryEntry } from '@/lib/utils/history-utils';
 
