@@ -11,6 +11,7 @@ import { checkAndGrantTeamAchievements } from '@/app/actions/core/gamification.a
 import type { Project } from '@/lib/types/projects';
 import type { Team } from '@/lib/types/organizations';
 import type { RoleName } from '@/lib/types/permissions';
+import { SYSTEM_USER_ID } from '@/lib/core/constants';
 
 export async function completeProject(projectId: string, organizationId: string, currentUserId: string): Promise<{ data: { success: boolean, message: string } | null; error: string | null; }> {
     if (!await hasPermission(currentUserId, organizationId, PERMISSIONS.MANAGE_PROJECTS, { projectId })) {
@@ -57,7 +58,8 @@ export async function completeProject(projectId: string, organizationId: string,
                 read: false,
                 createdAt: new Date(),
                 organizationId: organizationId,
-                eventType: 'gamification'
+                eventType: 'gamification',
+                fromUserId: SYSTEM_USER_ID,
             });
         });
         

@@ -4,11 +4,12 @@
 
 import { db } from '@/lib/core/firebase';
 import { collection, writeBatch, doc, getDocs, query, where, addDoc, getDoc, updateDoc, arrayUnion, deleteDoc } from 'firebase/firestore';
-import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Project } from '@/lib/types';
+import type { User, Task, TaskFormValues, Status, Recurring, Subtask, Organization, Project, Label } from '@/lib/types';
 import { addHistoryEntry } from '@/lib/utils/history-utils';
 import { handleTaskCreated, handleTaskUpdated } from '@/lib/services/task-event-service';
 import { grantAchievements, checkAndGrantTeamAchievements } from '@/app/actions/core/gamification.actions';
 import { calculateNextDueDate } from '@/lib/utils/time-utils';
+import { STATUS_COMPLETED, STATUS_TODO } from '@/lib/core/constants';
 
 async function getDenormalizedData(projectId?: string | null, assigneeIds?: string[]): Promise<{ projectName: string | null; assigneeNames: string[] }> {
     let projectName: string | null = null;
@@ -44,7 +45,7 @@ export async function createTaskAction(organizationId: string, creatorId: string
           isPrivate: taskData.isPrivate || false,
           isSensitive: taskData.isSensitive || false,
           labels: taskData.labels || [],
-          status: 'Te Doen' as Status,
+          status: STATUS_TODO as Status,
           createdAt: new Date(),
           subtasks: taskData.subtasks?.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) || [],
           attachments: taskData.attachments?.map(at => ({ id: crypto.randomUUID(), url: at.url, name: at.name || at.url, type: 'file' as const })) || [],
@@ -152,15 +153,15 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         if (updates.blockedBy) {
             const blockingTasksQuery = query(collection(db, 'tasks'), where('__name__', 'in', updates.blockedBy));
             const blockingTasksSnapshot = await getDocs(blockingTasksQuery);
-            const activeBlockers = blockingTasksSnapshot.docs.some(doc => doc.data().status !== 'Voltooid');
+            const activeBlockers = blockingTasksSnapshot.docs.some(doc => doc.data().status !== STATUS_COMPLETED);
             finalUpdates.isBlocked = activeBlockers;
         }
 
-        if (updates.status === 'Voltooid' && oldTask.status !== 'Voltooid') {
+        if (updates.status === STATUS_COMPLETED && oldTask.status !== STATUS_COMPLETED) {
             finalUpdates.completedAt = new Date();
             if(showGamification && oldTask.assigneeIds.length > 0) {
                  await Promise.all(oldTask.assigneeIds.map(assigneeId => 
-                    grantAchievements(assigneeId, organizationId, 'completed', { ...oldTask, status: 'Voltooid' })
+                    grantAchievements(assigneeId, organizationId, 'completed', { ...oldTask, status: STATUS_COMPLETED })
                 ));
             }
             if (oldTask.teamId) {
@@ -181,7 +182,7 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
 
             if (oldTask.recurring) {
                 const nextDueDate = calculateNextDueDate(oldTask.dueDate, oldTask.recurring);
-                const newTaskData: any = { ...oldTask, recurring: oldTask.recurring, status: 'Te Doen' as Status, dueDate: nextDueDate, createdAt: new Date(), subtasks: oldTask.subtasks.map(s => ({...s, completed: false })), comments: [], history: [addHistoryEntry(userId, 'Automatisch aangemaakt', `Herhaling van taak ${oldTask.id}`)], order: Date.now(), thanked: false, };
+                const newTaskData: any = { ...oldTask, recurring: oldTask.recurring, status: STATUS_TODO as Status, dueDate: nextDueDate, createdAt: new Date(), subtasks: oldTask.subtasks.map(s => ({...s, completed: false })), comments: [], history: [addHistoryEntry(userId, 'Automatisch aangemaakt', `Herhaling van taak ${oldTask.id}`)], order: Date.now(), thanked: false, };
                 delete newTaskData.id;
                 delete newTaskData.completedAt;
                 const newDocRef = doc(collection(db, 'tasks'));
@@ -218,7 +219,7 @@ export async function cloneTaskAction(taskId: string, userId: string, organizati
         const clonedTask = {
           ...taskToClone,
           title: `[KLONE] ${taskToClone.title}`,
-          status: 'Te Doen' as Status,
+          status: STATUS_TODO as Status,
           createdAt: new Date(),
           creatorId: userId,
           completedAt: null,

@@ -12,3 +12,7 @@ export const ROLE_GUEST = 'Guest';
 export const SYSTEM_USER_ID = 'system';
 export const JIRA_BOT_USER_ID = 'jira-bot';
 export const JIRA_BOT_USER_NAME = 'Jira Bot';
+
+// Task Statuses
+export const STATUS_TODO = 'Te Doen';
+export const STATUS_COMPLETED = 'Voltooid';

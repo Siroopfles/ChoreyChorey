@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/core/firebase';
@@ -101,9 +102,14 @@ export async function reassignTasks(organizationId: string, fromUserId: string, 
             
             const currentAssignees = taskDoc.data().assigneeIds || [];
             const newAssignees = [...new Set([...currentAssignees.filter((id: string) => id !== fromUserId), toUserId])];
+            const newAssigneeNames = newAssignees.map(id => {
+                if (id === toUserId) return toUserName;
+                return usersInOrg.find(u => u.id === id)?.name || 'Onbekende Gebruiker';
+            }).filter(Boolean);
             
             batch.update(taskRef, {
                 assigneeIds: newAssignees,
+                assigneeNames: newAssigneeNames,
                 history: arrayUnion(historyEntry)
             });
         });

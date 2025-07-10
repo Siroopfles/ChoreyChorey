@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -125,7 +126,17 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     const unsubTeams = onSnapshot(teamsQuery, snapshot => setTeams(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Team))), e => handleError(e, 'laden teams'));
     const unsubWebhooks = onSnapshot(webhooksQuery, snapshot => setWebhooks(snapshot.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp)?.toDate() } as Webhook))), e => handleError(e, 'laden webhooks'));
     const unsubUsers = onSnapshot(usersQuery, snapshot => {
-      setUsers(snapshot.docs.map(d => ({ ...d.data(), id: d.id, status: { ...d.data().status, until: (d.data().status?.until as Timestamp)?.toDate() }, cosmetic: d.data().cosmetic || {}, ...currentOrganization.members[d.id] } as User)));
+      setUsers(snapshot.docs.map(d => {
+          const userData = d.data();
+          const orgMemberData = currentOrganization.members[d.id] || {};
+          return {
+            ...userData,
+            id: d.id,
+            status: { ...userData.status, until: (userData.status?.until as Timestamp)?.toDate() },
+            cosmetic: userData.cosmetic || {},
+            ...orgMemberData,
+          } as User;
+      }));
       setLoading(false);
     }, e => {
       handleError(e, 'laden gebruikers');

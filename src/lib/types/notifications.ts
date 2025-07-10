@@ -27,6 +27,7 @@ export type Notification = {
   snoozedUntil?: Date;
   archived?: boolean;
   organizationId: string;
+  fromUserId: string;
   eventType?: 'comment' | 'assignment' | 'mention' | 'status_change' | 'review_request' | 'gamification' | 'integration' | 'system' | 'automation' | 'ai_suggestion' | string;
   bundleCount?: number;
 };

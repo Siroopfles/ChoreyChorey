@@ -19,13 +19,19 @@ import { useOrganization } from '@/contexts/system/organization-context';
 import { useFilters } from '@/contexts/system/filter-context';
 import { useRouter } from 'next/navigation';
 import { isWithinInterval } from 'date-fns';
+import { handleServerAction } from '@/lib/utils/action-wrapper';
 
 // Import all required types from their new modular locations
 import type { User } from '@/lib/types/auth';
-import type { Task, Status, Label, Priority } from '@/lib/types/tasks';
+import type { Task, Status, Label, Priority, Subtask } from '@/lib/types/tasks';
 import type { Project } from '@/lib/types/projects';
 import { PERMISSIONS, ROLE_GUEST } from '@/lib/types/permissions';
 import { processTaskDoc } from '@/lib/utils/task-processor';
+import * as TaskCrudActions from '@/app/actions/project/task-crud.actions';
+import * as TaskStateActions from '@/app/actions/project/task-state.actions';
+import { STATUS_COMPLETED, STATUS_TODO } from '@/lib/core/constants';
+import { useView } from '../system/view-context';
+
 
 type GroupedTasks = {
   title: string;
@@ -40,6 +46,11 @@ type TaskContextType = {
   navigateToUserProfile: (userId: string) => void;
   groupBy: 'status' | 'assignee' | 'priority' | 'project';
   setGroupBy: (groupBy: 'status' | 'assignee' | 'priority' | 'project') => void;
+  updateTask: (taskId: string, updates: Partial<Task>) => Promise<boolean>;
+  deleteTaskPermanently: (taskId: string) => Promise<void>;
+  promoteSubtaskToTask: (taskId: string, subtask: Subtask) => Promise<void>;
+  toggleSubtaskCompletion: (taskId: string, subtaskId: string) => Promise<void>;
+  handOffTask: (taskId: string, fromUserId: string, toUserId: string, message?: string) => Promise<boolean>;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -51,6 +62,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [groupBy, setGroupBy] = useState<'status' | 'assignee' | 'priority' | 'project'>('status');
+  const { triggerConfetti } = useView();
   
   const { toast } = useToast();
   const router = useRouter();
@@ -89,7 +101,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const tasksQuery = query(
         collection(db, 'tasks'), 
         ...baseQueryConstraints,
-        // orderBy('createdAt', 'desc'), // REMOVED to prevent composite index error for guest users. Sorting is now done client-side.
         limit(500)
     );
     
@@ -97,7 +108,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       const tasksData = snapshot.docs
         .map(doc => processTaskDoc(doc, projects, canViewSensitive, user))
         .filter(task => !task.isPrivate || task.assigneeIds.includes(user.id) || task.creatorId === user.id)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // ADDED client-side sort
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Client-side sort
       
       setTasks(tasksData);
       setLoading(false);
@@ -182,11 +193,74 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return [];
   }, [filteredTasks, groupBy, currentOrganization, users, projects]);
 
+  const updateTask = async (taskId: string, updates: Partial<Task>): Promise<boolean> => {
+    if (!user || !currentOrganization) return false;
+    const oldTask = tasks.find(t => t.id === taskId);
+    if (updates.status === STATUS_COMPLETED && oldTask?.status !== STATUS_COMPLETED) {
+      triggerConfetti();
+    }
+    const result = await handleServerAction(
+      () => TaskCrudActions.updateTaskAction(taskId, updates, user.id, currentOrganization.id),
+      toast,
+      { successToast: { title: 'Taak bijgewerkt!' }, errorContext: 'taak bijwerken' }
+    );
+    return !result.error;
+  };
+  
+  const deleteTaskPermanently = async (taskId: string) => {
+    if (!user || !currentOrganization) return;
+    await handleServerAction(
+      () => TaskCrudActions.deleteTaskPermanentlyAction(taskId, currentOrganization.id),
+      toast,
+      { successToast: { title: 'Taak permanent verwijderd' }, errorContext: 'permanent verwijderen taak' }
+    );
+  };
+  
+  const promoteSubtaskToTask = async (taskId: string, subtask: Subtask) => {
+    if (!user || !currentOrganization) return;
+    await handleServerAction(
+      () => TaskStateActions.promoteSubtaskToTask(taskId, subtask, user.id),
+      toast,
+      {
+        successToast: {
+          title: 'Subtaak gepromoveerd!',
+          description: (data) => `"${(data as any).newTastTitle}" is nu een losstaande taak.`
+        },
+        errorContext: 'promoveren subtaak'
+      }
+    );
+  };
+
+  const toggleSubtaskCompletion = async (taskId: string, subtaskId: string) => {
+    if (!user || !currentOrganization) return;
+    await handleServerAction(
+      () => TaskStateActions.toggleSubtaskCompletionAction(taskId, subtaskId, user.id, currentOrganization.id),
+      toast,
+      { errorContext: 'subtaak bijwerken' }
+    );
+  };
+
+  const handOffTask = async (taskId: string, fromUserId: string, toUserId: string, message?: string) => {
+     if (!user || !currentOrganization) return false;
+     const result = await handleServerAction(
+        () => TaskStateActions.handOffTaskAction(taskId, fromUserId, toUserId, message),
+        toast,
+        {
+          successToast: { title: 'Taak Overgedragen!', description: () => `De taak is succesvol overgedragen.` },
+          errorContext: 'taak overdragen'
+        }
+     );
+     return !result.error;
+  };
+  
+  const value = { 
+    tasks, filteredTasks, groupedTasks, loading, navigateToUserProfile,
+    groupBy, setGroupBy, updateTask, deleteTaskPermanently,
+    promoteSubtaskToTask, toggleSubtaskCompletion, handOffTask
+  };
+  
   return (
-    <TaskContext.Provider value={{ 
-      tasks, filteredTasks, groupedTasks, loading, navigateToUserProfile,
-      groupBy, setGroupBy
-    }}>
+    <TaskContext.Provider value={value}>
       {children}
     </TaskContext.Provider>
   );

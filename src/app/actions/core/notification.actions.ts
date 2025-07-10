@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/core/firebase';
@@ -8,6 +9,7 @@ import { isAfter, subMinutes } from 'date-fns';
 import { sendSlackMessage } from '@/lib/integrations/slack-service';
 import { sendTeamsMessage } from '@/lib/integrations/teams-service';
 import { sendDiscordMessage } from '@/lib/integrations/discord-service';
+import { SYSTEM_USER_ID } from '@/lib/core/constants';
 
 // --- SERVER-SIDE PUSH NOTIFICATION LOGIC (Example for Cloud Function) ---
 /*
@@ -82,7 +84,7 @@ You would need to set up Firebase Functions in your project and deploy this code
 // --- END OF EXAMPLE ---
 
 
-const priorityOrder: Record<Priority, number> = {
+const priorityOrder: Record<string, number> = {
     'Laag': 0,
     'Midden': 1,
     'Hoog': 2,
@@ -182,6 +184,7 @@ export async function createNotification(
       organizationId,
       read: false,
       createdAt: new Date(),
+      fromUserId,
       eventType: options.eventType,
     };
     if(options.eventType === 'comment') {

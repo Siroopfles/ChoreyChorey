@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react';
@@ -8,11 +9,13 @@ const UI_PREFERENCES_KEY = 'chorey_ui_preferences';
 
 type UIPreferences = {
     animationSpeed: number; // e.g., 1 for normal, 0.5 for faster, 2 for slower
+    showConfetti: boolean;
 };
 
 type UIPreferencesContextType = {
     preferences: UIPreferences;
     setAnimationSpeed: (speed: number) => void;
+    toggleConfetti: (show: boolean) => void;
 };
 
 const UIPreferencesContext = createContext<UIPreferencesContextType | undefined>(undefined);
@@ -21,6 +24,7 @@ const UIPreferencesContext = createContext<UIPreferencesContextType | undefined>
 export function UIPreferencesProvider({ children }: { children: React.ReactNode }) {
     const [preferences, setPreferences] = useLocalStorage<UIPreferences>(UI_PREFERENCES_KEY, {
         animationSpeed: 1, // Default speed
+        showConfetti: true,
     });
 
     useEffect(() => {
@@ -34,11 +38,16 @@ export function UIPreferencesProvider({ children }: { children: React.ReactNode 
         setPreferences(prev => ({ ...prev, animationSpeed: speed }));
     }, [setPreferences]);
 
+    const toggleConfetti = useCallback((show: boolean) => {
+        setPreferences(prev => ({ ...prev, showConfetti: show }));
+    }, [setPreferences]);
+
     
     const value = useMemo(() => ({
         preferences,
         setAnimationSpeed,
-    }), [preferences, setAnimationSpeed]);
+        toggleConfetti,
+    }), [preferences, setAnimationSpeed, toggleConfetti]);
 
     return <UIPreferencesContext.Provider value={value}>{children}</UIPreferencesContext.Provider>;
 }
