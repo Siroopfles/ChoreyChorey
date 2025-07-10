@@ -266,7 +266,6 @@ export async function deleteOrganization(organizationId: string, userId: string)
         const usersSnapshot = await getDocs(usersQuery);
         
         usersSnapshot.forEach(userDoc => {
-            const userData = userDoc.data() as User;
             batch.update(userDoc.ref, {
                 organizationIds: arrayRemove(organizationId),
                 currentOrganizationId: null // Reset current org
@@ -297,14 +296,21 @@ export async function endorseSkill(organizationId: string, userId: string, skill
     const memberData = memberDoc.data() as OrganizationMember;
     const endorsements = memberData.endorsements || {};
     const skillEndorsements = endorsements[skill] || [];
+    
     let updatedEndorsements;
 
     if (skillEndorsements.includes(endorserId)) {
         // User already endorsed, so we remove it (toggle off)
-        updatedEndorsements = { ...endorsements, [skill]: arrayRemove(endorserId) };
+        updatedEndorsements = {
+            ...endorsements,
+            [skill]: skillEndorsements.filter(id => id !== endorserId)
+        };
     } else {
         // User has not endorsed yet, so we add it (toggle on)
-        updatedEndorsements = { ...endorsements, [skill]: arrayUnion(endorserId) };
+        updatedEndorsements = {
+            ...endorsements,
+            [skill]: [...skillEndorsements, endorserId]
+        };
     }
     
     await updateDoc(doc(db, 'organizations', organizationId), { [`members.${userId}.endorsements`]: updatedEndorsements });
@@ -371,6 +377,7 @@ export async function purchaseCosmeticItem(
 
     return { success: true, error: null };
   } catch (e: any) {
-    return { success: false, error: e.message };
+    console.error('Error purchasing item:', e);
+    return { success: false, error: 'Aankoop mislukt' };
   }
 }

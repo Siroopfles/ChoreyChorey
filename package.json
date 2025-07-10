@@ -11,7 +11,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "seed": "tsx src/lib/scripts/seed.ts"
   },
   "dependencies": {
     "@azure/msal-node": "^2.10.0",
@@ -84,6 +85,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
     "@tailwindcss/typography": "^0.5.13",
     "@testing-library/cypress": "^10.0.2",
     "@types/isomorphic-fetch": "^0.0.39",
@@ -102,6 +104,7 @@
     "genkit-cli": "1.1.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.4",
+    "tsx": "^4.16.2",
     "typescript": "^5.5.3"
   }
 }
