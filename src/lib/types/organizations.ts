@@ -119,7 +119,7 @@ export type OrganizationMember = {
   };
   hasCompletedOnboarding?: boolean;
   points?: number;
-  endorsements?: Record<string, string[]>;
+  endorsements?: Record<string, string[]>; // skillName: [userId, userId, ...]
   cosmetic?: {
     primaryColor?: string;
     font?: 'inter' | 'source-sans' | 'roboto-mono';
