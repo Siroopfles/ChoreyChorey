@@ -74,7 +74,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }
   
   if (pathname.startsWith('/dashboard/focus') || pathname.startsWith('/dashboard/whiteboard')) {
-      return <>{children}</>;
+      return (
+        <OrganizationProvider>
+          <TaskProvider>
+              {children}
+          </TaskProvider>
+        </OrganizationProvider>
+      );
   }
 
   if (!currentOrganizationId && pathname !== '/dashboard/organization') {
@@ -88,14 +94,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <AppShell>{children}</AppShell>;
-}
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
   return (
     <OrganizationProvider>
       <FilterProvider>
@@ -112,11 +110,9 @@ export default function DashboardLayout({
                             <CallProvider>
                               <PresenceProvider>
                                 <SidebarProvider>
-                                  <AuthGuard>
                                   <TourProvider>
-                                      {children}
+                                    <AppShell>{children}</AppShell>
                                   </TourProvider>
-                                  </AuthGuard>
                                 </SidebarProvider>
                               </PresenceProvider>
                             </CallProvider>
@@ -132,5 +128,17 @@ export default function DashboardLayout({
         </TaskProvider>
       </FilterProvider>
     </OrganizationProvider>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+      <AuthGuard>
+          {children}
+      </AuthGuard>
   );
 }
