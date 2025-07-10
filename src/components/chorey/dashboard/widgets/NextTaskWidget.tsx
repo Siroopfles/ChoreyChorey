@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Lightbulb, Target, RefreshCw, Loader2, Zap } from 'lucide-react';
@@ -26,9 +26,15 @@ export function NextTaskWidget() {
   });
 
   const handleSuggest = () => {
-    if (!user) return;
-    triggerSuggestion({ userId: user.id, userName: user.name, organizationId: user.currentOrganizationId! });
+    if (!user || !user.currentOrganizationId) return;
+    triggerSuggestion({ userId: user.id, userName: user.name, organizationId: user.currentOrganizationId });
   };
+
+  // Make the suggestion proactive by calling it on mount
+  useEffect(() => {
+    handleSuggest();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const suggestedTask = useMemo(() => {
     if (!data?.output?.taskId) return null;
@@ -41,9 +47,9 @@ export function NextTaskWidget() {
         <div>
             <CardTitle className="flex items-center gap-2">
                 <Target />
-                Volgende Actie (AI)
+                Beste Volgende Actie (AI)
             </CardTitle>
-            <CardDescription>Laat AI je volgende taak bepalen.</CardDescription>
+            <CardDescription>Je AI-assistent stelt je volgende focus voor.</CardDescription>
         </div>
         <Button variant="ghost" size="icon" onClick={handleSuggest} disabled={isLoading}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -68,15 +74,8 @@ export function NextTaskWidget() {
                     </Button>
                 </div>
             ) : (
-                 <p className="text-sm text-muted-foreground">{data.output.reasoning}</p>
+                 <p className="text-sm text-muted-foreground">{data.output.reasoning || "Geen suggesties op dit moment."}</p>
             )
-        )}
-        
-        {!isLoading && !data && (
-             <Button onClick={handleSuggest} variant="outline">
-                <Lightbulb className="mr-2 h-4 w-4" />
-                Wat moet ik nu doen?
-            </Button>
         )}
       </CardContent>
     </>
