@@ -318,7 +318,7 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
         return {
           userId: comment.userId,
           userName: user?.name || 'Onbekend',
-          text: comment.text
+          text: comment.text.replace(/<[^>]*>?/gm, '')
         };
       });
 
@@ -411,40 +411,35 @@ export function TaskComments({ task, users, addComment, toggleCommentReaction }:
       <ScrollArea className="flex-1 pr-2">
         <div className="space-y-4">
         {task.comments?.length > 1 && (
-            <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing || isReadingAloud} className="flex-1">
+            <Button variant="outline" size="sm" onClick={onSummarizeComments} disabled={isSummarizing || isReadingAloud} className="w-full">
                 {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                Samenvatten
+                Vat reacties samen
             </Button>
-            <Button variant="outline" size="sm" onClick={onReadAloud} disabled={isReadingAloud || isSummarizing} className="flex-1">
-                {isReadingAloud ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Speaker className="mr-2 h-4 w-4" />}
-                Voorlezen
-            </Button>
-            </div>
         )}
         {summaryResult && (
             <Alert>
                 <Bot className="h-4 w-4" />
                 <AlertTitle>AI Samenvatting</AlertTitle>
                 <AlertDescription>{summaryResult.output.summary}</AlertDescription>
-                <AIFeedback
-                    flowName="summarizeCommentsFlow"
-                    input={summaryResult.input}
-                    output={summaryResult.output}
-                />
-            </Alert>
-        )}
-        {audioSrc && (
-            <div className="mt-2">
-                <audio controls autoPlay src={audioSrc} className="w-full h-10">
-                    Your browser does not support the audio element.
-                </audio>
-            </div>
-        )}
-        {audioError && (
-            <Alert variant="destructive" className="mt-2">
-                <AlertTitle>Fout bij voorlezen</AlertTitle>
-                <AlertDescription>{audioError}</AlertDescription>
+                 <div className="flex items-center justify-between mt-2 pt-2 border-t">
+                    <AIFeedback
+                        flowName="summarizeCommentsFlow"
+                        input={summaryResult.input}
+                        output={summaryResult.output}
+                    />
+                     <Button variant="ghost" size="sm" onClick={onReadAloud} disabled={isReadingAloud || isSummarizing}>
+                        {isReadingAloud ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Speaker className="mr-2 h-4 w-4" />}
+                        Lees discussie voor
+                    </Button>
+                 </div>
+                 {audioSrc && (
+                    <div className="mt-2">
+                        <audio controls autoPlay src={audioSrc} className="w-full h-8">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                )}
+                {audioError && <p className="text-destructive text-xs mt-2">{audioError}</p>}
             </Alert>
         )}
         {threadedComments.length > 0 ? (

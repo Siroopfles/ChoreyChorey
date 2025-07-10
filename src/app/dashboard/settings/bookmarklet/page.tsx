@@ -8,6 +8,7 @@ import { Copy, Check, Bookmark, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import Image from 'next/image';
 
 export default function BookmarkletPage() {
     const { toast } = useToast();
@@ -88,7 +89,7 @@ export default function BookmarkletPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <img src="https://placehold.co/600x400.png" data-ai-hint="screenshot browser bookmark" alt="Voorbeeld van het bewerken van een favoriet" className="rounded-md border"/>
+                    <Image src="https://firebasestorage.googleapis.com/v0/b/nextn-app.appspot.com/o/app-images%2Fbookmarklet-example.png?alt=media&token=3b5b62b1-5b7e-4b67-8e6f-4a4a582e04e6" width={600} height={400} alt="Voorbeeld van het bewerken van een favoriet" className="rounded-md border"/>
                 </CardContent>
             </Card>
 
