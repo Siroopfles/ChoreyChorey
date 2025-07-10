@@ -1,3 +1,4 @@
+
 import { PT_Sans, Roboto_Mono, Source_Sans_3 } from 'next/font/google';
 import { cn } from '@/lib/utils/utils';
 import { AuthProvider } from '@/contexts/user/auth-context';
@@ -32,7 +33,13 @@ const sourceSans3 = Source_Sans_3({
 export const metadata = {
   title: 'Chorey',
   description: 'The intelligent task management system to streamline your workflows.',
-}
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Chorey',
+  },
+};
 
 export default function RootLayout({
   children,
@@ -41,6 +48,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+       <head>
+        <meta name="theme-color" content="#3b82f6" />
+      </head>
       <body className={cn(
         'min-h-screen bg-background font-sans antialiased', 
         ptSans.variable, 
