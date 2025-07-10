@@ -55,6 +55,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const defaultDashboardConfig: WidgetInstance[] = [
   { id: 'widget-welcome', type: 'welcome', config: {} },
+  { id: 'widget-next-task', type: 'nextTask', config: {} },
   { id: 'widget-mytasks', type: 'myTasks', config: { limit: 5 } },
   { id: 'widget-activity', type: 'activityFeed', config: {} },
 ];

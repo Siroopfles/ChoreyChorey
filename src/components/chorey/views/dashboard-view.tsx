@@ -1,3 +1,4 @@
+
 'use client';
 
 import 'react-grid-layout/css/styles.css';
@@ -10,7 +11,7 @@ import { useTasks } from '@/contexts/feature/task-context';
 import { useCallback, useRef } from 'react';
 import type { Task, ActivityFeedItem, WidgetInstance } from '@/lib/types';
 import { WidgetWrapper } from '../dashboard/WidgetWrapper';
-import { updateUserProfile } from '@/app/actions/user/user.actions';
+import { updateUserProfile } from '@/app/actions/user/member.actions';
 
 // Import Widgets
 import { TasksByStatusWidget } from '../dashboard/widgets/TasksByStatusWidget';
@@ -20,6 +21,7 @@ import { ActivityFeedWidget } from '../dashboard/widgets/ActivityFeedWidget';
 import { RecentActivityWidget } from '../dashboard/widgets/RecentActivityWidget';
 import { WelcomeWidget } from '../dashboard/widgets/WelcomeWidget';
 import { MyTasksWidget } from '../dashboard/widgets/MyTasksWidget';
+import { NextTaskWidget } from '../dashboard/widgets/NextTaskWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -72,6 +74,8 @@ export default function DashboardView({ tasks, activityFeedItems, isFeedLoading 
             return <WelcomeWidget name={user?.name || 'gebruiker'} />;
         case 'myTasks':
             return <MyTasksWidget config={widget.config} />;
+        case 'nextTask':
+            return <NextTaskWidget />;
         default:
             return <div>Onbekend widget type: {widget.type}</div>;
     }

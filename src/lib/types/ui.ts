@@ -29,6 +29,7 @@ export const statusStyles: Record<string, { dot: string; label: string }> = {
 export const WIDGET_TYPES = {
   welcome: 'Welkomstbericht',
   myTasks: 'Mijn Openstaande Taken',
+  nextTask: 'Beste Volgende Actie (AI)',
   tasksByStatus: 'Taken per Status',
   tasksByPriority: 'Taken per Prioriteit',
   leaderboard: 'Scorebord',
@@ -63,6 +64,7 @@ export const widgetConfigSchemas = {
   leaderboard: LeaderboardWidgetConfigSchema,
   activityFeed: NoConfigSchema,
   recentActivity: NoConfigSchema,
+  nextTask: NoConfigSchema,
 } as const;
 
 export const widgetInstanceSchema = z.discriminatedUnion("type", [
@@ -99,6 +101,11 @@ export const widgetInstanceSchema = z.discriminatedUnion("type", [
   z.object({
     id: z.string(),
     type: z.literal("welcome"),
+    config: NoConfigSchema,
+  }),
+   z.object({
+    id: z.string(),
+    type: z.literal("nextTask"),
     config: NoConfigSchema,
   }),
 ]);

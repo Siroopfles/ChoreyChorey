@@ -404,3 +404,18 @@ export const PredictTaskCompletionOutputSchema = z.object({
   reasoning: z.string().describe("A brief explanation for the predicted date and confidence score."),
 });
 export type PredictTaskCompletionOutput = z.infer<typeof PredictTaskCompletionOutputSchema>;
+
+// From suggest-next-task-flow.ts
+export const SuggestNextTaskInputSchema = z.object({
+  userId: z.string(),
+  userName: z.string(),
+  organizationId: z.string(),
+});
+export type SuggestNextTaskInput = z.infer<typeof SuggestNextTaskInputSchema>;
+
+export const SuggestNextTaskOutputSchema = z.object({
+  taskId: z.string().nullable().describe('The ID of the suggested task, or null if no tasks are available.'),
+  taskTitle: z.string().nullable().describe('The title of the suggested task, or null.'),
+  reasoning: z.string().describe('A short, encouraging reason why this task is the best one to work on next.'),
+});
+export type SuggestNextTaskOutput = z.infer<typeof SuggestNextTaskOutputSchema>;
