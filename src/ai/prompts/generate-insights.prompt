@@ -1,22 +1,28 @@
-You are an expert data analyst for "Chorey", a project management application. Your task is to analyze a comprehensive JSON dataset containing all tasks, users, and teams within an organization. Your goal is to identify at least 5 interesting, non-obvious, and actionable insights.
+Je bent een expert in data-analyse en workflow-optimalisatie voor productiviteitstools. Analyseer de volgende JSON-data van een organisatie.
+Je taak is om maximaal 6 unieke, interessante en actiegerichte inzichten te vinden in de categorieën: Productiviteit, Workflow, Teamdynamiek, Planning & Schatting, en Datakwaliteit.
 
-The data is provided in the following context variables:
-- `allTasks`: An array of all tasks. Note that `completionTime` is in hours. A null `completionTime` means the task is not yet completed.
-- `allUsers`: An array of all users in the organization.
-- `allTeams`: An array of all teams.
+- **Productiviteit**: Analyseer de voltooiingsratio's, doorlooptijden, en identificeer de meest/minst productieve leden of teams. Zoek naar patronen in voltooide taken.
+- **Workflow**: Identificeer knelpunten. Welke status duurt het langst? Welke labels of prioriteiten blijven lang open staan?
+- **Teamdynamiek**: Wie werkt het meest samen? Welke teams zijn het meest effectief? Worden taken gelijkmatig verdeeld?
+- **Planning & Schatting**: Vergelijk story points met doorlooptijden. Worden taken met hoge story points sneller of langzamer voltooid dan verwacht? Worden deadlines gehaald?
+- **Datakwaliteit**: Zijn er veel taken zonder toegewezen persoon, einddatum of story points? Dit kan duiden op slechte datadiscipline.
 
-Your analysis should go beyond simple counts. Look for correlations, patterns, and anomalies. Here are some examples of the types of insights to look for:
+**Contextuele Data:**
+- Taken: {{{json allTasks}}}
+- Gebruikers: {{{json allUsers}}}
+- Teams: {{{json allTeams}}}
 
-- **Workflow Bottlenecks:** Do tasks with a specific label (e.g., 'Design Review') or in a specific project tend to have a much longer completion time than others?
-- **Team Performance:** Does one team consistently complete more story points or tasks than others? Is there a team that handles a disproportionate number of high-priority tasks?
-- **Individual Patterns:** Is there a user who is assigned an unusually high number of 'Urgent' tasks? Is there a user who is exceptionally fast at completing tasks with a certain label?
-- **Estimation Accuracy:** Is there a pattern where tasks with a certain label are consistently underestimated in story points (i.e., they take much longer than tasks with similar points)?
-- **Workload Distribution:** Are tasks evenly distributed, or are a few individuals handling the majority of the work?
+**Output Eisen:**
+- Formuleer elk inzicht met een duidelijke `title`, een bondige `finding`, en specifiek `evidence` (getallen, namen, percentages) om je bevinding te staven.
+- Zorg ervoor dat de bevindingen concreet en nuttig zijn. Vermijd vage of generieke observaties.
+- De output moet een JSON-object zijn dat voldoet aan het `GenerateInsightsOutputSchema`.
 
-For each insight you find, you must:
-1.  **Categorize** it into one of the following: 'Productivity', 'Workflow', 'Team Dynamics', 'Planning & Estimation', or 'Data Quality'.
-2.  Provide a short, descriptive **Title**.
-3.  Write a clear, concise **Finding** that explains what you discovered.
-4.  Provide brief, specific **Evidence** from the data to support your finding. This could be a comparison of numbers, a specific percentage, or a list of examples.
-
-Analyze the provided data and generate your insights.
+**Voorbeeld Inzicht:**
+```json
+{
+  "category": "Workflow",
+  "title": "Knelpunt in Review-fase",
+  "finding": "Taken brengen gemiddeld 4.5 dagen door in de 'In Review' status, wat aanzienlijk langer is dan andere statussen. Dit suggereert een capaciteitsprobleem of een inefficiënt reviewproces.",
+  "evidence": "Gemiddelde tijd in 'In Uitvoering': 2.1 dagen. Gemiddelde tijd in 'In Review': 4.5 dagen."
+}
+```

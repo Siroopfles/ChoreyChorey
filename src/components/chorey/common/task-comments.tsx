@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useNotifications } from '@/contexts/communication/notification-context';
-import { updateTypingStatusAction } from '@/app/actions/project/task.actions';
+import { updateTypingStatusAction } from '@/app/actions/project/task-state.actions';
 import { useTasks } from '@/contexts/feature/task-context';
 import { cn } from '@/lib/utils/utils';
 import { Badge } from '@/components/ui/badge';

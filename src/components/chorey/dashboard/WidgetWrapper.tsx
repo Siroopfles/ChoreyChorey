@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/user/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { ManageDashboardDialog } from './ManageDashboardDialog';
 import { useState } from 'react';
-import { updateUserProfile } from '@/app/actions/user/user.actions';
+import { updateUserProfile } from '@/app/actions/user/member.actions';
 
 interface WidgetWrapperProps {
   children: React.ReactNode;

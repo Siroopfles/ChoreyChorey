@@ -15,7 +15,7 @@ import { Loader2, Save } from 'lucide-react';
 import type { WidgetInstance, WidgetType } from '@/lib/types';
 import { WIDGET_TYPES, widgetConfigSchemas } from '@/lib/types';
 import { cn } from '@/lib/utils/utils';
-import { updateUserProfile } from '@/app/actions/user/user.actions';
+import { updateUserProfile } from '@/app/actions/user/member.actions';
 
 interface ManageDashboardDialogProps {
   open: boolean;
