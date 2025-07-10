@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Calendar, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateGoogleAuthUrl, disconnectGoogleCalendar } from '@/app/actions/integrations/calendar.actions';
-import { updateUserProfile } from '@/app/actions/user/user.actions';
+import { updateUserProfile } from '@/app/actions/user/member.actions';
 
 export default function GoogleCalendarSettings() {
     const { user, refreshUser } = useAuth();

@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, User, Bot, Tags, Check, X, Star, Bell, Globe, MapPin, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserProfile, generateAvatarAction } from '@/app/actions/user/user.actions';
+import { updateUserProfile, generateAvatarAction, endorseSkill } from '@/app/actions/user/member.actions';
 import { updateMemberProfile } from '@/app/actions/user/member.actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -83,7 +83,7 @@ export default function ProfileSettings({ user }: { user: UserType }) {
     };
     
     const globalResult = await updateUserProfile(user.id, globalUpdates);
-    let orgResult = { success: true, error: null as string | null };
+    let orgResult = { data: { success: true }, error: null as string | null };
 
     if (currentOrganization) {
       orgResult = await updateMemberProfile(currentOrganization.id, user.id, orgSpecificUpdates);
@@ -102,7 +102,8 @@ export default function ProfileSettings({ user }: { user: UserType }) {
   const onGenerateAvatar = async () => {
     setIsGeneratingAvatar(true);
     try {
-        const { avatarUrl } = await generateAvatarAction(user.id, user.name);
+        const { avatarUrl, error } = await generateAvatarAction(user.id, user.name);
+        if (error) throw new Error(error);
         const updateResult = await updateUserProfile(user.id, { avatar: avatarUrl });
         if (updateResult.error) {
             toast({ title: 'Fout bij opslaan avatar', description: updateResult.error, variant: 'destructive' });

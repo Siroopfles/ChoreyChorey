@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateMicrosoftAuthUrl, disconnectMicrosoftCalendar } from '@/app/actions/integrations/calendar.actions';
-import { updateUserProfile } from '@/app/actions/user/user.actions';
+import { updateUserProfile } from '@/app/actions/user/member.actions';
 
 const MicrosoftIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 23" fill="currentColor" className="h-5 w-5">

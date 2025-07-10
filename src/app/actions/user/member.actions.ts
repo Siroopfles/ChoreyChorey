@@ -2,14 +2,15 @@
 'use server';
 
 import { db } from '@/lib/core/firebase';
-import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, getDoc, writeBatch, deleteField } from 'firebase/firestore';
+import { collection, getDocs, query, where, updateDoc, doc, arrayUnion, arrayRemove, getDoc, writeBatch, deleteField, deleteDoc } from 'firebase/firestore';
 import { hasPermission } from '@/lib/core/permissions';
 import { PERMISSIONS, type RoleName } from '@/lib/types/permissions';
 import { ROLE_OWNER } from '@/lib/core/constants';
 import { addHistoryEntry } from '@/lib/utils/history-utils';
-import type { UserStatus } from '@/lib/types/auth';
-import type { OrganizationMember } from '@/lib/types/organizations';
+import type { UserStatus, User } from '@/lib/types/auth';
+import type { OrganizationMember, Organization } from '@/lib/types/organizations';
 import type { Permission } from '@/lib/types/permissions';
+import { generateAvatar } from '@/ai/flows/generative-ai/generate-avatar-flow';
 
 
 export async function markOnboardingComplete(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
@@ -197,5 +198,179 @@ export async function updateMemberPermissions(
   } catch (error: any) {
     console.error("Error updating member permissions:", error);
     return { data: null, error: error.message };
+  }
+}
+
+export async function leaveOrganization(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+        if (!orgDoc.exists()) {
+            throw new Error("Organisatie niet gevonden.");
+        }
+        if (orgDoc.data().ownerId === userId) {
+            throw new Error("De eigenaar kan de organisatie niet verlaten. Verwijder de organisatie of draag het eigendom over.");
+        }
+
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        if (!userDoc.exists()) {
+             throw new Error("Gebruiker niet gevonden.");
+        }
+
+        const batch = writeBatch(db);
+        
+        batch.update(orgRef, {
+            [`members.${userId}`]: deleteField()
+        });
+
+        batch.update(userRef, {
+            organizationIds: arrayRemove(organizationId)
+        });
+
+        await batch.commit();
+
+        return { data: { success: true }, error: null };
+    } catch (error: any) {
+        console.error("Error leaving organization:", error);
+        return { data: null, error: error.message };
+    }
+}
+
+export async function deleteOrganization(organizationId: string, userId: string): Promise<{ data: { success: boolean } | null; error: string | null }> {
+    try {
+        const orgRef = doc(db, 'organizations', organizationId);
+        const orgDoc = await getDoc(orgRef);
+
+        if (!orgDoc.exists() || orgDoc.data().ownerId !== userId) {
+            throw new Error("Alleen de eigenaar kan deze organisatie verwijderen.");
+        }
+
+        const batch = writeBatch(db);
+
+        // Delete associated collections
+        const collectionsToDelete = ['projects', 'teams', 'tasks', 'taskTemplates', 'invites', 'personalGoals', 'teamChallenges', 'ideas', 'activityFeed', 'webhooks', 'apiKeys', 'members'];
+        for (const coll of collectionsToDelete) {
+            let collectionPath = coll;
+            if (['members'].includes(coll)) {
+                collectionPath = `organizations/${organizationId}/${coll}`;
+            }
+
+            const q = query(collection(db, collectionPath), where('organizationId', '==', organizationId));
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => batch.delete(doc.ref));
+        }
+
+        // Update users who are members
+        const usersQuery = query(collection(db, 'users'), where('organizationIds', 'array-contains', organizationId));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        usersSnapshot.forEach(userDoc => {
+            const userData = userDoc.data() as User;
+            batch.update(userDoc.ref, {
+                organizationIds: arrayRemove(organizationId),
+                currentOrganizationId: null // Reset current org
+            });
+        });
+
+        // Delete the organization itself
+        batch.delete(orgRef);
+        
+        await batch.commit();
+
+        return { data: { success: true }, error: null };
+    } catch (error: any) {
+        console.error("Error deleting organization:", error);
+        return { data: null, error: error.message };
+    }
+}
+
+export async function endorseSkill(organizationId: string, userId: string, skill: string, endorserId: string) {
+  try {
+    const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+    
+    const memberDoc = await getDoc(memberRef);
+    if (!memberDoc.exists()) {
+      throw new Error('Gebruiker niet gevonden in deze organisatie.');
+    }
+
+    const memberData = memberDoc.data() as OrganizationMember;
+    const endorsements = memberData.endorsements || {};
+    const skillEndorsements = endorsements[skill] || [];
+    let updatedEndorsements;
+
+    if (skillEndorsements.includes(endorserId)) {
+        // User already endorsed, so we remove it (toggle off)
+        updatedEndorsements = { ...endorsements, [skill]: arrayRemove(endorserId) };
+    } else {
+        // User has not endorsed yet, so we add it (toggle on)
+        updatedEndorsements = { ...endorsements, [skill]: arrayUnion(endorserId) };
+    }
+    
+    await updateDoc(doc(db, 'organizations', organizationId), { [`members.${userId}.endorsements`]: updatedEndorsements });
+
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error('Error endorsing skill:', error);
+    return { success: false, error: 'Er is een fout opgetreden bij het onderschrijven van de vaardigheid.' };
+  }
+}
+
+export async function updateUserProfile(userId: string, data: Partial<User>): Promise<{ success: boolean, error: string | null }> {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, data);
+        return { success: true, error: null };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function generateAvatarAction(userId: string, name: string): Promise<{ avatarUrl?: string, error?: string }> {
+    try {
+        const { avatarUrl } = await generateAvatar({ userId, name });
+        return { avatarUrl };
+    } catch (e: any) {
+        return { error: e.message };
+    }
+}
+
+export async function purchaseCosmeticItem(
+  organizationId: string,
+  userId: string,
+  cost: number,
+  updates: { [key: string]: string }
+): Promise<{ success: boolean; error: string | null }> {
+  const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
+  const userRef = doc(db, 'users', userId); // Also need to update the global user profile for cosmetics
+  
+  const batch = writeBatch(db);
+
+  try {
+    const memberDoc = await getDoc(memberRef);
+    if (!memberDoc.exists()) {
+        throw new Error("Gebruiker niet gevonden in organisatie.");
+    }
+    const currentPoints = memberDoc.data().points || 0;
+    if (currentPoints < cost) {
+        throw new Error("Niet genoeg punten.");
+    }
+    const newPoints = currentPoints - cost;
+    
+    const cosmeticUpdates: { [key: string]: any } = {};
+    for (const key in updates) {
+      cosmeticUpdates[`cosmetic.${key}`] = updates[key];
+    }
+    
+    // Update points in the organization member subcollection
+    batch.update(memberRef, { points: newPoints });
+    // Update cosmetic settings on the root user document
+    batch.update(userRef, cosmeticUpdates);
+
+    await batch.commit();
+
+    return { success: true, error: null };
+  } catch (e: any) {
+    return { success: false, error: e.message };
   }
 }

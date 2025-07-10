@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Loader2, Save, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserProfile } from '@/app/actions/user/user.actions';
+import { updateUserProfile } from '@/app/actions/user/member.actions';
 import type { User } from '@/lib/types';
 
 const togglSchema = z.object({
