@@ -26,3 +26,4 @@ import '@/ai/flows/risk-prediction/what-if-scenario-flow.ts';
 import '@/ai/flows/reporting-insights/generate-insights-flow.ts';
 import '@/ai/flows/risk-prediction/predict-task-completion-flow.ts';
 import '@/ai/flows/assistance-suggestion/suggest-next-task-flow.ts';
+import '@/ai/flows/reporting-insights/analyze-sentiment-flow.ts';

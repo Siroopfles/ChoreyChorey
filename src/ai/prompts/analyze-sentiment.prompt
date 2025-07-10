@@ -1,0 +1,4 @@
+Analyseer de volgende tekst op sentiment. Classificeer het als 'Positief', 'Neutraal' of 'Negatief'. Geef een korte, duidelijke reden voor je classificatie. Wees vooral alert op tekenen van frustratie, verwarring of sarcasme, die als 'Negatief' moeten worden geclassificeerd.
+
+Tekst:
+{{{text}}}

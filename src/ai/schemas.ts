@@ -419,3 +419,15 @@ export const SuggestNextTaskOutputSchema = z.object({
   reasoning: z.string().describe('A short, encouraging reason why this task is the best one to work on next.'),
 });
 export type SuggestNextTaskOutput = z.infer<typeof SuggestNextTaskOutputSchema>;
+
+// From analyze-sentiment-flow.ts
+export const AnalyzeSentimentInputSchema = z.object({
+    text: z.string().describe('The text to be analyzed for sentiment.'),
+});
+export type AnalyzeSentimentInput = z.infer<typeof AnalyzeSentimentInputSchema>;
+
+export const AnalyzeSentimentOutputSchema = z.object({
+    sentiment: z.enum(['Positief', 'Neutraal', 'Negatief']).describe('The overall sentiment of the text.'),
+    reasoning: z.string().describe('A brief explanation for the sentiment classification.'),
+});
+export type AnalyzeSentimentOutput = z.infer<typeof AnalyzeSentimentOutputSchema>;
