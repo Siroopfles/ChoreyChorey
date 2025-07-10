@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useView } from '@/contexts/system/view-context';
@@ -16,7 +17,8 @@ import { triggerHapticFeedback } from '@/lib/core/haptics';
 import type { Task, Priority } from '@/lib/types/tasks';
 import type { User } from '@/lib/types/auth';
 import type { Project } from '@/lib/types/projects';
-import { updateTaskAction as updateSingleTask, reorderTasksAction } from '@/app/actions/project/task-crud.actions';
+import { updateTaskAction as updateSingleTask } from '@/app/actions/project/task-crud.actions';
+import { reorderTasksAction } from '@/app/actions/project/task-state.actions';
 import { handleServerAction } from '@/lib/utils/action-wrapper';
 import { useTasks } from '@/contexts/feature/task-context';
 import { createTaskAction as createTaskFromFile } from '@/app/actions/project/task-crud.actions';
@@ -172,7 +174,7 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
-  const { tasks: allTasks, reorderTasks } = useTasks();
+  const { tasks: allTasks } = useTasks();
   const { users, projects, currentOrganization } = useOrganization();
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
@@ -240,7 +242,7 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
       }
       triggerHapticFeedback(20);
       handleServerAction(
-        () => updateSingleTask(activeId, updates),
+        () => updateSingleTask(activeId, updates, currentUser.id, currentOrganization.id),
         toast,
         { errorContext: 'verplaatsen taak' }
       );

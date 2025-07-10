@@ -31,7 +31,7 @@ export async function bulkUpdateTasksAction(
       }
       
       // Add a generic history entry for bulk updates
-      updatePayload.history = arrayUnion(addHistoryEntry(userId, 'Taak in bulk bijgewerkt'));
+      updatePayload.history = arrayUnion(addHistoryEntry(userId, 'Taak in bulk bijgewerkt', `'));
 
       batch.update(taskRef, updatePayload);
     }
