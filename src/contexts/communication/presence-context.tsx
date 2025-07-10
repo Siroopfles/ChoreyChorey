@@ -54,8 +54,6 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [others, setOthers] = useState<Record<string, Presence>>({});
-  const presenceRef = useRef<Partial<Presence>>({});
-  const presenceUpdateTimeout = useRef<NodeJS.Timeout>();
 
   const updateUserPresence = useCallback(async (presenceUpdate: Partial<UserStatus>) => {
     if (!user) return;

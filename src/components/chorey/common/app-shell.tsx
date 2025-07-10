@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePresence } from '@/contexts/communication/presence-context';

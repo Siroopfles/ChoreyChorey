@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/contexts/user/auth-context';
