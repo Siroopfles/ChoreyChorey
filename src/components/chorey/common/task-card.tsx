@@ -109,7 +109,7 @@ const Highlight = ({ text, highlight }: { text: string, highlight: string }) => 
 
 const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, isOverdue, isDueToday, isDueSoon, blockingTasks, relatedTasks, blockedByTasks }: TaskCardProps) => {
   const { toast } = useToast();
-  const { selectedTaskIds, toggleTaskSelection } = useFilters();
+  const { selectedTaskIds, toggleTaskSelection, searchTerm } = useFilters();
   const { currentOrganization, currentUserRole, currentUserPermissions } = useOrganization();
   const { setViewedTask } = useView();
   
@@ -501,7 +501,7 @@ const TaskCard = ({ task, users, isDragging, currentUser, projects, isBlocked, i
                                     variant="ghost"
                                     size="icon"
                                     className="h-6 w-6"
-                                    onClick={(e) => { e.stopPropagation(); handleServerAction(() => TaskStateActions.promoteSubtaskToTask(task.id, subtask, currentUser!.id), toast, { successToast: { title: 'Subtaak Gepromoveerd!', description: (data) => `"${(data as any).newTastTitle}" is nu een losstaande taak.`}, errorContext: 'promoveren subtaak'}) }}
+                                    onClick={(e) => { e.stopPropagation(); handleServerAction(() => TaskCrudActions.promoteSubtaskToTask(task.id, subtask, currentUser!.id), toast, { successToast: { title: 'Subtaak Gepromoveerd!', description: (data) => `"${(data as any).newTastTitle}" is nu een losstaande taak.`}, errorContext: 'promoveren subtaak'}) }}
                                     title="Promoveer naar taak"
                                     aria-label="Promoveer subtaak naar nieuwe taak"
                                 >

@@ -16,7 +16,7 @@ import { triggerHapticFeedback } from '@/lib/core/haptics';
 import type { Task, Priority } from '@/lib/types/tasks';
 import type { User } from '@/lib/types/auth';
 import type { Project } from '@/lib/types/projects';
-import { updateTaskAction, reorderTasks as reorderTasksAction } from '@/app/actions/project/task-crud.actions';
+import { updateTaskAction as updateSingleTask, reorderTasksAction } from '@/app/actions/project/task-crud.actions';
 import { handleServerAction } from '@/lib/utils/action-wrapper';
 import { useTasks } from '@/contexts/feature/task-context';
 import { createTaskAction as createTaskFromFile } from '@/app/actions/project/task-crud.actions';
@@ -172,7 +172,7 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
-  const { tasks: allTasks, updateTask: updateSingleTask, reorderTasks: reorderMultipleTasks } = useTasks();
+  const { tasks: allTasks, reorderTasks } = useTasks();
   const { users, projects, currentOrganization } = useOrganization();
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
@@ -239,14 +239,24 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
             break;
       }
       triggerHapticFeedback(20);
-      updateSingleTask(activeId, updates);
+      handleServerAction(
+        () => updateSingleTask(activeId, updates),
+        toast,
+        { errorContext: 'verplaatsen taak' }
+      );
     } else {
       const itemsInColumn = groupedTasks.find(g => g.title === activeContainer)?.tasks || [];
       const oldIndex = itemsInColumn.findIndex((t) => t.id === activeId);
       const newIndex = itemsInColumn.findIndex((t) => t.id === overId);
 
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-        reorderMultipleTasks(itemsInColumn, oldIndex, newIndex);
+        const newOrder = arrayMove(itemsInColumn, oldIndex, newIndex);
+        const tasksToUpdate = newOrder.map((task, index) => ({ id: task.id, order: index }));
+        handleServerAction(
+          () => reorderTasksAction(tasksToUpdate),
+          toast,
+          { errorContext: 'sorteren taken' }
+        );
       }
     }
   }
@@ -335,4 +345,3 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
 };
 
 export default TaskColumns;
-
