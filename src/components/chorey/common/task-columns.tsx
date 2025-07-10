@@ -16,9 +16,10 @@ import { triggerHapticFeedback } from '@/lib/core/haptics';
 import type { Task, Priority } from '@/lib/types/tasks';
 import type { User } from '@/lib/types/auth';
 import type { Project } from '@/lib/types/projects';
-import { updateTaskAction, createTaskAction, reorderTasks as reorderTasksAction } from '@/app/actions/project/task-crud.actions';
+import { updateTaskAction, reorderTasks as reorderTasksAction } from '@/app/actions/project/task-crud.actions';
 import { handleServerAction } from '@/lib/utils/action-wrapper';
 import { useTasks } from '@/contexts/feature/task-context';
+import { createTaskAction as createTaskFromFile } from '@/app/actions/project/task-crud.actions';
 
 const TaskColumn = ({ 
   title, 
@@ -38,7 +39,8 @@ const TaskColumn = ({
   const { setNodeRef, isOver } = useDroppable({
     id: title,
   });
-  const { active } = useDndContext();
+  const { active, over } = useDndContext();
+  const isDragging = !!active;
 
   // Calculate dependencies based on currently loaded tasks
   const { blockingTasksMap, relatedTasksMap, blockedByTasksMap } = useMemo(() => {
@@ -98,11 +100,11 @@ const TaskColumn = ({
             role="group"
             aria-label={title}
             className={cn(
-                "flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px] transition-all duration-300",
+                "flex-grow space-y-3 p-2 overflow-y-auto rounded-md bg-muted min-h-[200px] transition-colors duration-200",
                 showInvalidIndicator
-                    ? "bg-destructive/10 ring-2 ring-destructive cursor-not-allowed scale-105"
+                    ? "bg-destructive/10 ring-2 ring-destructive"
                     : isOver
-                    ? "bg-primary/10 scale-105"
+                    ? "bg-primary/10"
                     : ""
             )}
         >
@@ -134,7 +136,7 @@ const TaskColumn = ({
                   'flex h-full flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 text-center transition-all duration-300',
                   showInvalidIndicator
                     ? 'border-destructive/50 bg-destructive/5 text-destructive'
-                    : isOver
+                    : isDragging
                     ? 'border-primary bg-primary/10 text-primary scale-105'
                     : 'border-muted-foreground/20 text-muted-foreground/80'
                 )}
@@ -146,7 +148,7 @@ const TaskColumn = ({
                     <p className="mt-1 text-xs">Geblokkeerde taken kunnen hier niet worden geplaatst.</p>
                   </>
                 ) : (
-                  <div className={cn("flex flex-col items-center justify-center transition-transform duration-300", isOver && "scale-110")}>
+                  <div className={cn("flex flex-col items-center justify-center transition-transform duration-300", isDragging && "scale-110")}>
                     <FileUp className="h-10 w-10" />
                     <p className="mt-4 font-semibold">Sleep een taak hierheen</p>
                   </div>
@@ -170,7 +172,7 @@ type TaskColumnsProps = {
 };
 
 const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
-  const { tasks } = useTasks();
+  const { tasks: allTasks, updateTask: updateSingleTask, reorderTasks: reorderMultipleTasks } = useTasks();
   const { users, projects, currentOrganization } = useOrganization();
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
@@ -205,7 +207,7 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
         return;
     }
 
-    const activeTask = tasks.find(t => t.id === activeId);
+    const activeTask = allTasks.find(t => t.id === activeId);
     if (!activeTask) return;
 
     if (activeContainer !== overContainer) {
@@ -237,19 +239,14 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
             break;
       }
       triggerHapticFeedback(20);
-      handleServerAction(() => updateTaskAction(activeId, updates, currentUser.id, currentOrganization.id), toast, { errorContext: 'bijwerken taak' });
+      updateSingleTask(activeId, updates);
     } else {
       const itemsInColumn = groupedTasks.find(g => g.title === activeContainer)?.tasks || [];
       const oldIndex = itemsInColumn.findIndex((t) => t.id === activeId);
       const newIndex = itemsInColumn.findIndex((t) => t.id === overId);
 
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-        const reorderedTasks = arrayMove(itemsInColumn, oldIndex, newIndex);
-        const tasksToUpdate = reorderedTasks.map((task, index) => ({
-            id: task.id,
-            order: index
-        }));
-        handleServerAction(() => reorderTasksAction(tasksToUpdate), toast, { errorContext: 'herordenen taken' });
+        reorderMultipleTasks(itemsInColumn, oldIndex, newIndex);
       }
     }
   }
@@ -280,7 +277,7 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
     let successCount = 0;
     for (const file of files) {
       const result = await handleServerAction(
-        () => createTaskAction(currentOrganization.id, currentUser.id, currentUser.name, { title: file.name }),
+        () => createTaskFromFile(currentOrganization.id, currentUser.id, currentUser.name, { title: file.name }),
         toast,
         { errorContext: 'aanmaken taak' }
       );
@@ -320,7 +317,7 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
                     users={users} 
                     currentUser={currentUser} 
                     projects={projects}
-                    allTasks={tasks}
+                    allTasks={allTasks}
                   />
               ))}
           </div>
@@ -338,3 +335,4 @@ const TaskColumns = ({ groupedTasks, groupBy }: TaskColumnsProps) => {
 };
 
 export default TaskColumns;
+
