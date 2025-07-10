@@ -11,7 +11,6 @@ import { Loader2, Bot, X, Check, Tags, Briefcase, Lightbulb, User as UserIcon } 
 import { findDuplicateTask } from '@/ai/flows/task-management/find-duplicate-task-flow';
 import { suggestProactiveHelp } from '@/ai/flows/assistance-suggestion/suggest-proactive-help-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/user/auth-context';
 import { useDebounce } from '@/hooks/use-debounce';
 import { TaskAssignmentSuggestion } from '@/components/chorey/common/task-assignment-suggestion';
 import { useOrganization } from '@/contexts/system/organization-context';
@@ -102,46 +101,6 @@ export function TaskFormDetails({ users, projects, proactiveHelpSuggestion }: Ta
   
   return (
     <div className="space-y-4">
-       <div className="space-y-2">
-        <Button type="button" variant="outline" size="sm" onClick={onCheckForDuplicates} disabled={isCheckingForDuplicates || !title}>
-            {isCheckingForDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
-            Controleer op Duplicaten (AI)
-        </Button>
-         {duplicateResult && (
-            <Alert variant={duplicateResult.output.isDuplicate ? 'destructive' : 'default'}>
-              <Bot className="h-4 w-4" />
-              <AlertTitle>
-                {duplicateResult.output.isDuplicate 
-                  ? `Mogelijk Duplicaat Gevonden: "${duplicateResult.output.duplicateTaskTitle}"` 
-                  : "Geen Duplicaat Gevonden"}
-              </AlertTitle>
-              <AlertDescription>{duplicateResult.output.reasoning}</AlertDescription>
-               <AIFeedback
-                flowName="findDuplicateTaskFlow"
-                input={duplicateResult.input}
-                output={duplicateResult.output}
-               />
-            </Alert>
-          )}
-      </div>
-
-      {proactiveHelp && proactiveHelp.output.shouldOfferHelp && (
-        <Alert className="mt-4">
-          <Bot className="h-4 w-4" />
-          <AlertTitle className="flex items-center justify-between">
-            <span>AI Assistent</span>
-          </AlertTitle>
-          <AlertDescription>
-            {proactiveHelp.output.reason}
-          </AlertDescription>
-          <AIFeedback
-            flowName="suggestProactiveHelpFlow"
-            input={proactiveHelp.input}
-            output={proactiveHelp.output}
-          />
-        </Alert>
-      )}
-
       <FormField
         control={form.control}
         name="assigneeIds"
