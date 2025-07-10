@@ -91,7 +91,7 @@ const TaskSearchFiltersSchema = z.object({
 export const searchTasks = ai.defineTool(
   {
     name: 'searchTasks',
-    description: 'Search for existing tasks based on filters.',
+    description: 'Search for existing tasks based on filters. Can be used to find tasks to update, or to answer questions about projects.',
     inputSchema: z.object({
       organizationId: z.string().describe('The ID of the organization to search within.'),
       filters: TaskSearchFiltersSchema,
@@ -250,3 +250,5 @@ export const updateTask = ai.defineTool(
         return { success: true };
     }
 );
+
+    

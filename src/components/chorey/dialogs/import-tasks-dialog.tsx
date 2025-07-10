@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, TableProperties } from 'lucide-react';
 import { useAuth } from '@/contexts/user/auth-context';
-import { handleImportTasks } from '@/app/actions/project/task.actions';
+import { handleImportTasks } from '@/app/actions/project/task-import.actions';
 
 type ImportTasksDialogProps = {
     open: boolean;
