@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/core/firebase';
@@ -9,10 +10,29 @@ import { handleTaskCreated, handleTaskUpdated } from '@/lib/services/task-event-
 import { grantAchievements, checkAndGrantTeamAchievements } from '@/app/actions/core/gamification.actions';
 import { calculateNextDueDate } from '@/lib/utils/time-utils';
 
+async function getDenormalizedData(projectId?: string | null, assigneeIds?: string[]): Promise<{ projectName: string | null; assigneeNames: string[] }> {
+    let projectName: string | null = null;
+    if (projectId) {
+        const projectDoc = await getDoc(doc(db, 'projects', projectId));
+        projectName = projectDoc.exists() ? (projectDoc.data() as Project).name : null;
+    }
+
+    let assigneeNames: string[] = [];
+    if (assigneeIds && assigneeIds.length > 0) {
+        const usersQuery = query(collection(db, 'users'), where('__name__', 'in', assigneeIds));
+        const usersSnapshot = await getDocs(usersQuery);
+        assigneeNames = usersSnapshot.docs.map(d => (d.data() as User).name);
+    }
+    
+    return { projectName, assigneeNames };
+}
+
 
 export async function createTaskAction(organizationId: string, creatorId: string, creatorName: string, taskData: Partial<TaskFormValues> & { title: string }): Promise<{ data: { success: boolean; taskId: string; } | null; error: string | null; }> {
     try {
         const history = [addHistoryEntry(creatorId, 'Aangemaakt')];
+        const { projectName, assigneeNames } = await getDenormalizedData(taskData.projectId, taskData.assigneeIds);
+
         const firestoreTask: Omit<Task, 'id'> = {
           title: taskData.title,
           description: taskData.description || '',
@@ -60,6 +80,8 @@ export async function createTaskAction(organizationId: string, creatorId: string
           customFieldValues: taskData.customFieldValues || {},
           poll: taskData.poll ? { ...taskData.poll, options: taskData.poll.options.map(o => ({...o, id: crypto.randomUUID()}))} : null,
           whiteboard: null,
+          projectName,
+          assigneeNames,
         };
         const docRef = await addDoc(collection(db, 'tasks'), firestoreTask);
 
@@ -91,6 +113,17 @@ export async function updateTaskAction(taskId: string, updates: Partial<Task>, u
         const finalUpdates: { [key: string]: any } = { ...updates };
         const newHistory = [];
         const batch = writeBatch(db);
+
+        // Denormalization logic for project/assignee name changes
+        if (updates.projectId !== undefined || updates.assigneeIds !== undefined) {
+            const { projectName, assigneeNames } = await getDenormalizedData(
+                updates.projectId !== undefined ? updates.projectId : oldTask.projectId,
+                updates.assigneeIds !== undefined ? updates.assigneeIds : oldTask.assigneeIds
+            );
+            if (updates.projectId !== undefined) finalUpdates.projectName = projectName;
+            if (updates.assigneeIds !== undefined) finalUpdates.assigneeNames = assigneeNames;
+        }
+
 
         if (updates.githubLinks) finalUpdates.githubLinkUrls = updates.githubLinks.map(link => link.url);
         if (updates.jiraLinks) finalUpdates.jiraLinkKeys = updates.jiraLinks.map(link => link.key);

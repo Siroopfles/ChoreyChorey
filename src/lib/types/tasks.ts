@@ -146,6 +146,9 @@ export type Task = {
   };
   poll?: Poll | null;
   whiteboard?: string;
+  // Denormalized fields for performance
+  projectName?: string | null;
+  assigneeNames?: string[] | null;
 };
 
 export const githubLinkSchema = z.object({
