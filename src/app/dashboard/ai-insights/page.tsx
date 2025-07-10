@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/user/auth-context';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Loader2, BrainCircuit, Bot, LineChart, Users, FileCheck, Brain } from 'lucide-react';
 import { generateInsights } from '@/ai/flows/reporting-insights/generate-insights-flow';
 import type { GenerateInsightsOutput } from '@/ai/schemas';

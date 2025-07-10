@@ -1,28 +1,31 @@
-Je bent een expert in data-analyse en workflow-optimalisatie voor productiviteitstools. Analyseer de volgende JSON-data van een organisatie.
-Je taak is om maximaal 6 unieke, interessante en actiegerichte inzichten te vinden in de categorieën: Productiviteit, Workflow, Teamdynamiek, Planning & Schatting, en Datakwaliteit.
+Je bent een expert in data-analyse voor productiviteitstools. Analyseer de volgende JSON-data van een organisatie (taken, gebruikers, teams) en identificeer 3 tot 5 significante, bruikbare inzichten.
 
-- **Productiviteit**: Analyseer de voltooiingsratio's, doorlooptijden, en identificeer de meest/minst productieve leden of teams. Zoek naar patronen in voltooide taken.
-- **Workflow**: Identificeer knelpunten. Welke status duurt het langst? Welke labels of prioriteiten blijven lang open staan?
-- **Teamdynamiek**: Wie werkt het meest samen? Welke teams zijn het meest effectief? Worden taken gelijkmatig verdeeld?
-- **Planning & Schatting**: Vergelijk story points met doorlooptijden. Worden taken met hoge story points sneller of langzamer voltooid dan verwacht? Worden deadlines gehaald?
-- **Datakwaliteit**: Zijn er veel taken zonder toegewezen persoon, einddatum of story points? Dit kan duiden op slechte datadiscipline.
+Focus op de volgende categorieën:
+- **Productivity**: Zijn er opvallende trends in voltooide taken? Werkt men efficiënt?
+- **Workflow**: Zijn er knelpunten? Blijven taken lang in een bepaalde status hangen?
+- **Team Dynamics**: Presteren bepaalde teams beter? Is de werkdruk eerlijk verdeeld?
+- **Planning & Estimation**: Worden story points (complexiteit) correct ingeschat? Zijn deadlines realistisch?
+- **Data Quality**: Zijn er veel taken zonder omschrijving, toegewezen persoon of project?
 
-**Contextuele Data:**
-- Taken: {{{json allTasks}}}
-- Gebruikers: {{{json allUsers}}}
-- Teams: {{{json allTeams}}}
+Voor elk inzicht:
+1.  **title**: Geef een korte, krachtige titel.
+2.  **finding**: Leg duidelijk uit wat je hebt ontdekt.
+3.  **evidence**: Onderbouw je bevinding met specifieke data of voorbeelden uit de input.
 
-**Output Eisen:**
-- Formuleer elk inzicht met een duidelijke `title`, een bondige `finding`, en specifiek `evidence` (getallen, namen, percentages) om je bevinding te staven.
-- Zorg ervoor dat de bevindingen concreet en nuttig zijn. Vermijd vage of generieke observaties.
-- De output moet een JSON-object zijn dat voldoet aan het `GenerateInsightsOutputSchema`.
+Presenteer de output in het Nederlands.
 
-**Voorbeeld Inzicht:**
+**JSON DATA:**
+**Taken:**
 ```json
-{
-  "category": "Workflow",
-  "title": "Knelpunt in Review-fase",
-  "finding": "Taken brengen gemiddeld 4.5 dagen door in de 'In Review' status, wat aanzienlijk langer is dan andere statussen. Dit suggereert een capaciteitsprobleem of een inefficiënt reviewproces.",
-  "evidence": "Gemiddelde tijd in 'In Uitvoering': 2.1 dagen. Gemiddelde tijd in 'In Review': 4.5 dagen."
-}
+{{{json allTasks}}}
+```
+
+**Gebruikers:**
+```json
+{{{json allUsers}}}
+```
+
+**Teams:**
+```json
+{{{json allTeams}}}
 ```
