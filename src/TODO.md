@@ -4,23 +4,16 @@ Dit document dient als een strategische roadmap voor de verdere ontwikkeling van
 
 ### 🚀 Kritieke Features & UX Verbeteringen
 
--   ~~Implementeer een 'Endorsements' systeem op de gebruikersprofielpagina's.~~ (Voltooid)
--   ~~Voeg een `AdobeXdEmbed` component toe voor het insluiten van Adobe XD bestanden.~~ (Voltooid)
--   ~~Ontwikkel een herbruikbaar `AIFeedback` component om consistentie te waarborgen.~~ (Voltooid)
--   ~~Verbeter de 'lege staat' van de kanban-kolommen met een visuele 'drop zone'.~~ (Voltooid)
--   ~~Voeg een zichtbare 'toggle' knop toe aan de sidebar voor muisbediening.~~ (Voltooid)
+Alle kritieke features en UX verbeteringen die initieel gepland waren voor deze ontwikkelingsfase zijn nu succesvol geïmplementeerd. De focus verschuift nu naar de volgende grote ontwikkelingscycli zoals beschreven in de roadmap.
 
 ### 🧹 Architectuur & Technische Schulden
 
--   ~~Refactor `task.actions.ts`:** Splits de monolithische `task.actions.ts` op in kleinere, feature-specifieke acties (bv. `task-crud.actions.ts`, `task-timer.actions.ts`, `task-collaboration.actions.ts`) om het Single Responsibility Principle beter te volgen.~~ (Voltooid)
--   **Refactor `organization.actions.ts`:** Analyseer en splits de `organization.actions.ts` waar mogelijk op in meer gefocuste modules (bv. voor settings, member management, etc.).
 -   **Circulaire Afhankelijkheden Oplossen:** Voer een diepgaande analyse uit (bv. met `madge`) om circulaire afhankelijkheden tussen de core `context` providers en de `actions` te identificeren en op te lossen.
 -   **WebSocket Implementatie Evalueren:** Onderzoek de haalbaarheid en voordelen van het implementeren van een WebSocket-verbinding (bv. via `socket.io` of `Ably`) voor hoog-frequente real-time updates (zoals live cursors en 'typing' indicatoren) om het aantal Firestore `reads` te verminderen.
 -   **Offline Strategie Verfijnen:** Breid de PWA offline strategie uit met `workbox` voor robuustere offline bewerkingen, achtergrondsynchronisatie en een duidelijke offline-indicator in de UI.
 
 ### 🧪 Testen & Kwaliteitsborging
 
--   ~~Geautomatiseerde Toegankelijkheidstesten:** Integreer `axe-core` in de E2E (Cypress/Playwright) test-suite om bij elke testrun automatisch op WCAG-schendingen te controleren.~~ (Voltooid)
 -   **Visuele Regressietest-suite Opzetten:** Integreer een tool als `Chromatic` of `Percy` met Storybook om onbedoelde UI-wijzigingen bij component-updates te voorkomen.
 -   **API Contract Testen:** Implementeer een API-contract teststrategie (bv. met `Pact`) om de integriteit tussen de frontend en de API-endpoints te waarborgen, vooral na wijzigingen in de serializers.
 -   **Database Seeding Strategie:** Ontwikkel scripts voor het 'seeden' van de database met grote hoeveelheden realistische data voor het uitvoeren van betrouwbare performance- en load-tests.
@@ -31,7 +24,6 @@ Dit document dient als een strategische roadmap voor de verdere ontwikkeling van
 -   **Interactieve API Documentatie:** Publiceer een `docs.chorey.app` site met een interactieve API Explorer (bv. Swagger UI of Redoc) voor de publieke API.
 -   **Officiële TypeScript/JS SDK:** Ontwikkel en publiceer een officieel, volledig getypeerd TypeScript/JS SDK als NPM-pakket om de Chorey API te gebruiken.
 -   **Openbare Statuspagina:** Implementeer een statuspagina die de uptime en de status van de API en andere kritieke services communiceert.
--   ~~ESLint Import Regels:** Configureer `eslint-plugin-import` om een consistente import-volgorde af te dwingen en het gebruik van pad-aliassen (`@/`) te verplichten, wat de onderhoudbaarheid verbetert.~~ (Voltooid)
 
 ### ✨ Toekomstige Innovatie & AI
 
