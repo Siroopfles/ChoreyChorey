@@ -1,7 +1,8 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { createTask, findUserByEmail } from '@/ai/tools/task-tools';
+import { createTask } from '@/ai/tools/task-tools';
+import { findUserByEmail } from '@/ai/tools/user-tools';
 import { withApiKeyAuth } from '@/lib/api/api-auth-wrapper';
 import type { AuthenticatedApiHandlerContext, AuthenticatedApiHandlerAuthResult } from '@/lib/api/api-auth-wrapper';
 
