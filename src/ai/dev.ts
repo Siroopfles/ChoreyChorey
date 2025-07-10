@@ -28,3 +28,4 @@ import '@/ai/flows/reporting-insights/generate-insights-flow.ts';
 import '@/ai/flows/risk-prediction/predict-task-completion-flow.ts';
 import '@/ai/flows/assistance-suggestion/suggest-next-task-flow.ts';
 import '@/ai/flows/reporting-insights/analyze-sentiment-flow.ts';
+import '@/ai/flows/task-management/goal-to-project-flow.ts';

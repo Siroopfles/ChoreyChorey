@@ -431,3 +431,24 @@ export const AnalyzeSentimentOutputSchema = z.object({
     reasoning: z.string().describe('A brief explanation for the sentiment classification.'),
 });
 export type AnalyzeSentimentOutput = z.infer<typeof AnalyzeSentimentOutputSchema>;
+
+// From goal-to-project-flow.ts
+export const GoalToProjectInputSchema = z.object({
+  organizationId: z.string(),
+  goalDescription: z.string().describe('The high-level goal provided by the user.'),
+  availablePriorities: z.array(z.string()).describe('A list of available priority names for the organization.'),
+});
+export type GoalToProjectInput = z.infer<typeof GoalToProjectInputSchema>;
+
+const GeneratedTaskSchema = z.object({
+  title: z.string().describe('A clear, actionable title for the task.'),
+  description: z.string().describe('A detailed description of what needs to be done for this task.'),
+  priority: z.string().describe('The suggested priority for this task from the available list.'),
+  storyPoints: z.number().describe('The estimated complexity of the task (1, 2, 3, 5, 8, 13).'),
+});
+
+export const GoalToProjectOutputSchema = z.object({
+  projectName: z.string().describe('A short, descriptive name for the new project.'),
+  tasks: z.array(GeneratedTaskSchema).describe('A list of tasks to be created for this project.'),
+});
+export type GoalToProjectOutput = z.infer<typeof GoalToProjectOutputSchema>;

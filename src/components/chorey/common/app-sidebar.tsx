@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -20,7 +21,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import CommandBar from '@/components/chorey/common/command-bar';
-import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart, BrainCircuit, BarChartHorizontal, CircleDollarSign, HeartPulse } from 'lucide-react';
+import { ChevronsLeft, LayoutDashboard, MessageSquare, CalendarCheck, Inbox, Pin, Briefcase, ClipboardList, Trophy, Lightbulb, GitGraph, FilePieChart, Zap, SquareStack, Users, Home, ShieldAlert, Award, HeartHandshake, Store, UserCog, Settings, Plug, ShieldCheck, Trash2, Camera, AreaChart, BrainCircuit, BarChartHorizontal, CircleDollarSign, HeartPulse, Sparkles } from 'lucide-react';
 import { ROLE_GUEST, PERMISSIONS } from '@/lib/types';
 
 
@@ -89,6 +90,7 @@ export default function AppSidebar() {
     ];
 
     const aiToolsNavItems = isGuest ? [] : [
+        { href: '/dashboard/goal-to-project', icon: Sparkles, label: 'AI Project Planner' },
         { href: '/dashboard/digest', icon: UserCog, label: 'AI Digest' },
         { href: '/dashboard/headcount', icon: UserCog, label: 'AI Headcount' },
         { href: '/dashboard/project-report', icon: ClipboardList, label: 'AI Project Rapport' },
