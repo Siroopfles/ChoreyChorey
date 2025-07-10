@@ -3,8 +3,8 @@
 
 **Chorey is een geavanceerd, AI-aangedreven taakbeheerplatform, ontworpen om de manier waarop teams en individuen samenwerken en productief zijn te transformeren.** Het combineert traditionele projectmanagement-tools met een krachtige, proactieve AI-assistent om workflows te stroomlijnen, beslissingen te ondersteunen en werk leuker te maken.
 
-![Chorey Dashboard Screenshot](https://placehold.co/1200x600.png?text=Chorey+Dashboard)
-*Een mockup van het Chorey dashboard.*
+![Chorey Dashboard Screenshot](https://storage.googleapis.com/project-screenshots-dev/chorey-dashboard.png)
+*Het Chorey dashboard in actie.*
 
 ---
 
