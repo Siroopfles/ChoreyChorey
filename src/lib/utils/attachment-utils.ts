@@ -1,5 +1,4 @@
 
-
 export type AttachmentSource = 'google-doc' | 'google-sheet' | 'google-slide' | 'google-drive' | 'onedrive' | 'dropbox' | 'figma' | 'gitlab' | 'bitbucket' | 'adobe-xd' | 'generic-link';
 
 export function getAttachmentSource(url: string | undefined): AttachmentSource {

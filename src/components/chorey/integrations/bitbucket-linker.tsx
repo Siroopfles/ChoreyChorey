@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useFormContext } from 'react-hook-form';
@@ -28,7 +29,7 @@ const renderSearchResult = (item: BitbucketLink, onSelect: (item: BitbucketLink)
         onSelect={() => onSelect(item)}
         className="flex items-center gap-2"
     >
-        <AlertCircle className="h-4 w-4" />
+        <BitbucketIcon className="h-4 w-4" />
         <span>#{item.id}</span>
         <span className="truncate">{item.title}</span>
     </CommandItem>
