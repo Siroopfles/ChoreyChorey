@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -47,5 +46,3 @@ export function AdobeXdEmbed({ url }: AdobeXdEmbedProps) {
     </div>
   );
 }
-
-    

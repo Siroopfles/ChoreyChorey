@@ -4,15 +4,15 @@ Dit document dient als een strategische roadmap voor de verdere ontwikkeling van
 
 ### 🚀 Kritieke Features & UX Verbeteringen
 
--   Implementeer een 'Endorsements' systeem op de gebruikersprofielpagina's.
--   Voeg een `AdobeXdEmbed` component toe voor het insluiten van Adobe XD bestanden.
--   Ontwikkel een herbruikbaar `AIFeedback` component om consistentie te waarborgen.
--   Verbeter de 'lege staat' van de kanban-kolommen met een visuele 'drop zone'.
+-   ~~Implementeer een 'Endorsements' systeem op de gebruikersprofielpagina's.~~ (Voltooid)
+-   ~~Voeg een `AdobeXdEmbed` component toe voor het insluiten van Adobe XD bestanden.~~ (Voltooid)
+-   ~~Ontwikkel een herbruikbaar `AIFeedback` component om consistentie te waarborgen.~~ (Voltooid)
+-   ~~Verbeter de 'lege staat' van de kanban-kolommen met een visuele 'drop zone'.~~ (Voltooid)
 -   Voeg een zichtbare 'toggle' knop toe aan de sidebar voor muisbediening.
 
 ### 🧹 Architectuur & Technische Schulden
 
--   **Refactor `task.actions.ts`:** Splits de monolithische `task.actions.ts` op in kleinere, feature-specifieke acties (bv. `task-crud.actions.ts`, `task-timer.actions.ts`, `task-collaboration.actions.ts`) om het Single Responsibility Principle beter te volgen.
+-   ~~Refactor `task.actions.ts`:** Splits de monolithische `task.actions.ts` op in kleinere, feature-specifieke acties (bv. `task-crud.actions.ts`, `task-timer.actions.ts`, `task-collaboration.actions.ts`) om het Single Responsibility Principle beter te volgen.~~ (Voltooid)
 -   **Refactor `organization.actions.ts`:** Analyseer en splits de `organization.actions.ts` waar mogelijk op in meer gefocuste modules (bv. voor settings, member management, etc.).
 -   **Circulaire Afhankelijkheden Oplossen:** Voer een diepgaande analyse uit (bv. met `madge`) om circulaire afhankelijkheden tussen de core `context` providers en de `actions` te identificeren en op te lossen.
 -   **WebSocket Implementatie Evalueren:** Onderzoek de haalbaarheid en voordelen van het implementeren van een WebSocket-verbinding (bv. via `socket.io` of `Ably`) voor hoog-frequente real-time updates (zoals live cursors en 'typing' indicatoren) om het aantal Firestore `reads` te verminderen.

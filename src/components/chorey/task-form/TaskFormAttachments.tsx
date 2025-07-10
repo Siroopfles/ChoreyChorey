@@ -118,7 +118,7 @@ export function TaskFormAttachments() {
             </div>
 
             <div>
-                <UiLabel>Links &amp; Bijlagen</UiLabel>
+                <UiLabel>Links & Bijlagen</UiLabel>
                 <div className="space-y-2 mt-2">
                 {fields.map((field, index) => {
                     const urlValue = getValues(`attachments.${index}.url`);
