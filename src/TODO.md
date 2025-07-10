@@ -8,7 +8,7 @@ Dit document dient als een strategische roadmap voor de verdere ontwikkeling van
 -   ~~Voeg een `AdobeXdEmbed` component toe voor het insluiten van Adobe XD bestanden.~~ (Voltooid)
 -   ~~Ontwikkel een herbruikbaar `AIFeedback` component om consistentie te waarborgen.~~ (Voltooid)
 -   ~~Verbeter de 'lege staat' van de kanban-kolommen met een visuele 'drop zone'.~~ (Voltooid)
--   Voeg een zichtbare 'toggle' knop toe aan de sidebar voor muisbediening.
+-   ~~Voeg een zichtbare 'toggle' knop toe aan de sidebar voor muisbediening.~~ (Voltooid)
 
 ### 🧹 Architectuur & Technische Schulden
 
@@ -20,7 +20,7 @@ Dit document dient als een strategische roadmap voor de verdere ontwikkeling van
 
 ### 🧪 Testen & Kwaliteitsborging
 
--   **Geautomatiseerde Toegankelijkheidstesten:** Integreer `axe-core` in de E2E (Cypress/Playwright) test-suite om bij elke testrun automatisch op WCAG-schendingen te controleren.
+-   ~~Geautomatiseerde Toegankelijkheidstesten:** Integreer `axe-core` in de E2E (Cypress/Playwright) test-suite om bij elke testrun automatisch op WCAG-schendingen te controleren.~~ (Voltooid)
 -   **Visuele Regressietest-suite Opzetten:** Integreer een tool als `Chromatic` of `Percy` met Storybook om onbedoelde UI-wijzigingen bij component-updates te voorkomen.
 -   **API Contract Testen:** Implementeer een API-contract teststrategie (bv. met `Pact`) om de integriteit tussen de frontend en de API-endpoints te waarborgen, vooral na wijzigingen in de serializers.
 -   **Database Seeding Strategie:** Ontwikkel scripts voor het 'seeden' van de database met grote hoeveelheden realistische data voor het uitvoeren van betrouwbare performance- en load-tests.
