@@ -13,6 +13,11 @@
             "position": "before"
           },
           {
+            "pattern": "react-joyride",
+            "group": "external",
+            "position": "after"
+          },
+          {
             "pattern": "@/**",
             "group": "internal"
           }

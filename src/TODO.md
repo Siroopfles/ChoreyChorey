@@ -31,7 +31,7 @@ Dit document dient als een strategische roadmap voor de verdere ontwikkeling van
 -   **Interactieve API Documentatie:** Publiceer een `docs.chorey.app` site met een interactieve API Explorer (bv. Swagger UI of Redoc) voor de publieke API.
 -   **Officiële TypeScript/JS SDK:** Ontwikkel en publiceer een officieel, volledig getypeerd TypeScript/JS SDK als NPM-pakket om de Chorey API te gebruiken.
 -   **Openbare Statuspagina:** Implementeer een statuspagina die de uptime en de status van de API en andere kritieke services communiceert.
--   **ESLint Import Regels:** Configureer `eslint-plugin-import` om een consistente import-volgorde af te dwingen en het gebruik van pad-aliassen (`@/`) te verplichten, wat de onderhoudbaarheid verbetert.
+-   ~~ESLint Import Regels:** Configureer `eslint-plugin-import` om een consistente import-volgorde af te dwingen en het gebruik van pad-aliassen (`@/`) te verplichten, wat de onderhoudbaarheid verbetert.~~ (Voltooid)
 
 ### ✨ Toekomstige Innovatie & AI
 
