@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Palette, Sparkles, Store, Check, Coins, Type, Droplets, Milestone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils/utils';
-import { purchaseCosmeticItem } from '@/app/actions/user/user.actions';
+import { purchaseCosmeticItem } from '@/app/actions/user/member.actions';
 import {
   AlertDialog,
   AlertDialogAction,

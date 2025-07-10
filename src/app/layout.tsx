@@ -64,12 +64,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <DebugProvider>
-            <UIPreferencesProvider>
-              <AuthProvider>
-                {children}
-                <Toaster />
-              </AuthProvider>
-            </UIPreferencesProvider>
+            <AuthProvider>
+              <UIPreferencesProvider>
+                  {children}
+                  <Toaster />
+              </UIPreferencesProvider>
+            </AuthProvider>
           </DebugProvider>
         </ThemeProvider>
       </body>

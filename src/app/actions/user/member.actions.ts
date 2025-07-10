@@ -348,7 +348,7 @@ export async function purchaseCosmeticItem(
   updates: { [key: string]: string }
 ): Promise<{ success: boolean; error: string | null }> {
   const memberRef = doc(db, 'organizations', organizationId, 'members', userId);
-  const userRef = doc(db, 'users', userId); // Also need to update the global user profile for cosmetics
+  const userRef = doc(db, 'users', userId);
   
   const batch = writeBatch(db);
 

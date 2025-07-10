@@ -24,7 +24,7 @@ import AppShell from '@/components/chorey/common/app-shell';
 import { ViewProvider } from '@/contexts/system/view-context';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading, mfaRequired, currentOrganizationId } = useAuth();
+  const { user, loading, mfaRequired } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -47,11 +47,11 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    if (user && !currentOrganizationId && !pathname.startsWith('/dashboard/team-organization/organization') && !pathname.startsWith('/invite/') && !pathname.startsWith('/dashboard/focus')) {
+    if (user && !user.currentOrganizationId && !pathname.startsWith('/dashboard/organization') && !pathname.startsWith('/invite/') && !pathname.startsWith('/dashboard/focus')) {
       router.push('/dashboard/organization');
     }
 
-  }, [user, loading, currentOrganizationId, mfaRequired, router, pathname]);
+  }, [user, loading, mfaRequired, router, pathname]);
 
   if (loading || (!user && !['/login', '/signup', '/invite', '/public/project'].some(p => pathname.startsWith(p)) && pathname !== '/login/verify')) {
     return (
@@ -83,7 +83,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       );
   }
 
-  if (!currentOrganizationId && pathname !== '/dashboard/organization') {
+  if (!user?.currentOrganizationId && pathname !== '/dashboard/organization') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2">

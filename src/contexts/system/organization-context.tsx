@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { 
     type Organization, 
     type Team, 
@@ -21,6 +21,7 @@ import { toggleProjectPin as toggleProjectPinAction } from '@/app/actions/projec
 
 type OrganizationContextType = {
   loading: boolean;
+  organizations: Organization[];
   currentOrganization: Organization | null;
   projects: Project[];
   teams: Team[];
@@ -29,12 +30,14 @@ type OrganizationContextType = {
   currentUserRole: RoleName | null;
   currentUserPermissions: Permission[];
   toggleProjectPin: (projectId: string, isPinned: boolean) => Promise<void>;
+  switchOrganization: (orgId: string) => Promise<void>;
 };
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
-  const { user, organizations, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -56,10 +59,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const currentOrgFromAuth = organizations.find(o => o.id === user?.currentOrganizationId);
-
-    if (!currentOrgFromAuth || !user) {
+    if (!user || !user.organizationIds || user.organizationIds.length === 0) {
       setLoading(false);
+      setOrganizations([]);
       setCurrentOrganization(null);
       setProjects([]);
       setTeams([]);
@@ -71,40 +73,61 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
 
     setLoading(true);
-    setCurrentOrganization(currentOrgFromAuth);
 
-    if (currentOrgFromAuth) {
-        const memberData = (currentOrgFromAuth.members || {})[user.id];
-        const role = memberData?.role || null;
-        setCurrentUserRole(role);
-        
-        const allRoles = { ...DEFAULT_ROLES, ...(currentOrgFromAuth.settings?.customization?.customRoles || {}) };
-        
-        const basePermissions = role ? allRoles[role]?.permissions || [] : [];
-        const grantedOverrides = memberData?.permissionOverrides?.granted || [];
-        const revokedOverrides = memberData?.permissionOverrides?.revoked || [];
+    const orgsQuery = query(collection(db, 'organizations'), where('__name__', 'in', user.organizationIds));
+    const unsubscribeOrgs = onSnapshot(orgsQuery, (orgsSnapshot) => {
+        const userOrgs = orgsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
+        setOrganizations(userOrgs);
 
-        const finalPermissions = [
-            ...new Set([...basePermissions, ...grantedOverrides])
-        ].filter(p => !revokedOverrides.includes(p));
+        const currentOrg = userOrgs.find(o => o.id === user.currentOrganizationId) || userOrgs[0];
+        if (currentOrg) {
+            setCurrentOrganization(currentOrg);
+        } else {
+            setCurrentOrganization(null);
+        }
+    }, (e) => {
+        handleError(e, 'laden van organisaties');
+        setLoading(false);
+    });
 
-        setCurrentUserPermissions(finalPermissions);
-    } else {
-        setCurrentUserRole(null);
-        setCurrentUserPermissions([]);
+    return () => unsubscribeOrgs();
+  }, [user, authLoading, toast]);
+
+
+  useEffect(() => {
+    if (!currentOrganization || !user) {
+        setLoading(false);
+        return;
     }
 
-    const projectsQuery = query(collection(db, 'projects'), where('organizationId', '==', currentOrgFromAuth.id));
-    const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrgFromAuth.id));
-    const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrgFromAuth.id));
-    const webhooksQuery = query(collection(db, 'webhooks'), where('organizationId', '==', currentOrgFromAuth.id));
+    setLoading(true);
+
+    const memberData = (currentOrganization.members || {})[user.id];
+    const role = memberData?.role || null;
+    setCurrentUserRole(role);
+    
+    const allRoles = { ...DEFAULT_ROLES, ...(currentOrganization.settings?.customization?.customRoles || {}) };
+    
+    const basePermissions = role ? allRoles[role]?.permissions || [] : [];
+    const grantedOverrides = memberData?.permissionOverrides?.granted || [];
+    const revokedOverrides = memberData?.permissionOverrides?.revoked || [];
+
+    const finalPermissions = [
+        ...new Set([...basePermissions, ...grantedOverrides])
+    ].filter(p => !revokedOverrides.includes(p));
+    setCurrentUserPermissions(finalPermissions);
+    
+    const projectsQuery = query(collection(db, 'projects'), where('organizationId', '==', currentOrganization.id));
+    const teamsQuery = query(collection(db, 'teams'), where('organizationId', '==', currentOrganization.id));
+    const usersQuery = query(collection(db, 'users'), where("organizationIds", "array-contains", currentOrganization.id));
+    const webhooksQuery = query(collection(db, 'webhooks'), where('organizationId', '==', currentOrganization.id));
 
     const unsubProjects = onSnapshot(projectsQuery, snapshot => setProjects(snapshot.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp)?.toDate(), deadline: (d.data().deadline as Timestamp)?.toDate() } as Project))), e => handleError(e, 'laden projecten'));
     const unsubTeams = onSnapshot(teamsQuery, snapshot => setTeams(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Team))), e => handleError(e, 'laden teams'));
     const unsubWebhooks = onSnapshot(webhooksQuery, snapshot => setWebhooks(snapshot.docs.map(d => ({ ...d.data(), id: d.id, createdAt: (d.data().createdAt as Timestamp)?.toDate() } as Webhook))), e => handleError(e, 'laden webhooks'));
     const unsubUsers = onSnapshot(usersQuery, snapshot => {
-      setUsers(snapshot.docs.map(d => ({ ...d.data(), id: d.id, status: { ...d.data().status, until: (d.data().status?.until as Timestamp)?.toDate() }} as User)));
-      setLoading(false); // Consider users the last essential data point for loading
+      setUsers(snapshot.docs.map(d => ({ ...d.data(), id: d.id, status: { ...d.data().status, until: (d.data().status?.until as Timestamp)?.toDate() }, cosmetic: d.data().cosmetic || {}, ...currentOrganization.members[d.id] } as User)));
+      setLoading(false);
     }, e => {
       handleError(e, 'laden gebruikers');
       setLoading(false);
@@ -116,7 +139,21 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       unsubUsers();
       unsubWebhooks();
     };
-  }, [user, organizations, authLoading, toast]);
+  }, [currentOrganization, user, toast]);
+
+  const switchOrganization = async (orgId: string) => {
+    if (!user || orgId === user.currentOrganizationId) return;
+    try {
+        setLoading(true);
+        const userRef = doc(db, 'users', user.id);
+        await updateDoc(userRef, { currentOrganizationId: orgId });
+        await refreshUser();
+    } catch(e) {
+        handleError(e, 'wisselen van organisatie');
+    } finally {
+        setLoading(false);
+    }
+  };
 
   const toggleProjectPin = async (projectId: string, isPinned: boolean) => {
     if (!user || !currentOrganization) return;
@@ -128,6 +165,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   const value = {
     loading,
+    organizations,
     currentOrganization,
     projects,
     teams,
@@ -136,6 +174,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     currentUserRole,
     currentUserPermissions,
     toggleProjectPin,
+    switchOrganization
   };
 
   return <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>;

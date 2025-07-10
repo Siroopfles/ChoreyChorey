@@ -19,6 +19,13 @@ export type UserStatus = {
   currentPage?: string;
 };
 
+export type CosmeticSettings = {
+  primaryColor?: string;
+  font?: 'pt-sans' | 'source-sans-3' | 'roboto-mono';
+  radius?: string; // e.g., '0.5'
+  accent?: string; // HSL value
+}
+
 export type GlobalUserProfile = {
   id: string;
   name: string;
@@ -42,11 +49,10 @@ export type GlobalUserProfile = {
   notificationSounds?: Record<string, string>;
   showTour?: boolean;
   fcmTokens?: string[];
+  cosmetic?: CosmeticSettings;
 }
 
 export type User = GlobalUserProfile & OrganizationMember & {
-  points: number; // For simplicity in leaderboard/gamification
-  skills?: string[];
   status: UserStatus;
   mutedTaskIds?: string[];
   notificationSettings?: {

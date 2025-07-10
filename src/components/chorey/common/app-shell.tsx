@@ -24,27 +24,15 @@ import { useView } from '@/contexts/system/view-context';
 import { useAuth } from '@/contexts/user/auth-context';
 import { useOrganization } from '@/contexts/system/organization-context';
 import { useTasks } from '@/contexts/feature/task-context';
+import { useUIPreferences } from '@/contexts/user/ui-preferences-context';
 
-const BrandingStyle = () => {
-  const { currentOrganization } = useOrganization();
-  const primaryColor = currentOrganization?.settings?.branding?.primaryColor;
-
-  if (!primaryColor) {
-    return null;
-  }
-
-  const css = `:root { --primary: ${primaryColor}; }`;
-
-  return <style dangerouslySetInnerHTML={{ __html: css }} />;
-};
-
-const UserCosmeticStyle = () => {
+const CosmeticStyle = () => {
   const { user } = useAuth();
   const cosmetic = user?.cosmetic || {};
 
   const fontMap = {
     'pt-sans': 'var(--font-pt-sans)', // Default
-    'source-sans-pro': 'var(--font-source-sans-pro)',
+    'source-sans-3': 'var(--font-source-sans-3)',
     'roboto-mono': 'var(--font-roboto-mono)',
   }
 
@@ -52,12 +40,7 @@ const UserCosmeticStyle = () => {
   if (cosmetic.primaryColor) styles.push(`--primary: ${cosmetic.primaryColor};`);
   if (cosmetic.accent) styles.push(`--accent: ${cosmetic.accent};`);
   if (cosmetic.radius) styles.push(`--radius: ${cosmetic.radius}rem;`);
-  if (cosmetic.font && fontMap[cosmetic.font as keyof typeof fontMap]) {
-    const fontValue = fontMap[cosmetic.font as keyof typeof fontMap];
-    styles.push(`--font-body: ${fontValue};`);
-    styles.push(`--font-headline: ${fontValue};`);
-  }
-
+  
   if (styles.length === 0) {
     return null;
   }
@@ -149,8 +132,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
     return (
     <>
-      <BrandingStyle />
-      <UserCosmeticStyle />
+      <CosmeticStyle />
       <AppSidebar />
       <SidebarInset className={cn(isMobile ? 'pb-16' : '')}>
         <AppHeader />

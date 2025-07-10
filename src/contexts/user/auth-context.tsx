@@ -49,9 +49,6 @@ type AuthContextType = {
     logout: (message?: { title: string, description: string }) => void;
     completeMfa: () => void;
     refreshUser: () => Promise<void>;
-    organizations: Organization[];
-    currentOrganizationId: string | null;
-    switchOrganization: (orgId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,8 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [mfaRequired, setMfaRequired] = useState(false);
-    const [organizations, setOrganizations] = useState<Organization[]>([]);
-    const [currentOrganizationId, setCurrentOrganizationId] = useState<string | null>(null);
     const [currentSessionId, setCurrentSessionId] = useLocalStorage(SESSION_STORAGE_KEY, '');
     const router = useRouter();
     const { toast } = useToast();
@@ -133,71 +128,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               } : undefined,
           } as User;
           setUser(userData);
-          setCurrentOrganizationId(userData.currentOrganizationId || null);
 
-          if (isDebugMode) console.log('[DEBUG] AuthContext: User data set:', userData);
-
-          if (userData.organizationIds && userData.organizationIds.length > 0) {
-              if (isDebugMode) console.log('[DEBUG] AuthContext: Fetching organizations with IDs:', userData.organizationIds);
-              
-              const orgsQuery = query(collection(db, 'organizations'), where('__name__', 'in', userData.organizationIds));
-              
-              return onSnapshot(orgsQuery, (orgsSnapshot) => {
-                  const userOrgs = orgsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Organization));
-                  setOrganizations(userOrgs);
-                  if (isDebugMode) console.log('[DEBUG] AuthContext: Organizations updated:', userOrgs);
-
-                  const currentOrgStillExists = userOrgs.some(o => o.id === userData.currentOrganizationId);
-
-                  if (!userData.currentOrganizationId || !currentOrgStillExists) {
-                       if (userOrgs.length > 0) {
-                           const newCurrentOrgId = userOrgs[0].id;
-                           if (isDebugMode) console.log(`[DEBUG] AuthContext: No/invalid current org set, defaulting to first one (${newCurrentOrgId}) and updating user doc.`);
-                           updateDoc(userDocRef, { currentOrganizationId: newCurrentOrgId });
-                           setCurrentOrganizationId(newCurrentOrgId);
-                       } else {
-                           setCurrentOrganizationId(null);
-                       }
-                  }
-
-              }, (error) => handleError(error, 'laden van organisaties'));
-          } else {
-              if (isDebugMode) console.log('[DEBUG] AuthContext: User has no organizations.');
-              setOrganizations([]);
-              setCurrentOrganizationId(null);
-          }
         } catch (error) {
            handleError(error, 'laden gebruikers- en org data');
         }
     }, [isDebugMode]);
     
     useEffect(() => {
-        let unsubscribeFromOrgs: (() => void) | undefined;
-
         const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
             if (isDebugMode) console.log('[DEBUG] AuthContext: Auth state changed. User:', firebaseUser?.uid || 'null');
             
-            unsubscribeFromOrgs?.();
-
             setLoading(true);
             if (firebaseUser) {
                 setAuthUser(firebaseUser);
                 if (!mfaRequired) {
-                    unsubscribeFromOrgs = await fetchUserAndOrgData(firebaseUser);
+                    await fetchUserAndOrgData(firebaseUser);
                 }
             } else {
                 setAuthUser(null);
                 setUser(null);
                 setMfaRequired(false);
-                setOrganizations([]);
-                setCurrentOrganizationId(null);
             }
             setLoading(false);
         });
 
         return () => {
             unsubscribeAuth();
-            unsubscribeFromOrgs?.();
         };
     }, [fetchUserAndOrgData, isDebugMode, mfaRequired]);
 
@@ -254,9 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const newUser: Omit<User, 'id'> = {
                 name,
                 email,
-                points: 0,
                 avatar: avatarUrl,
-                achievements: [],
                 organizationIds: [],
                 currentOrganizationId: null,
                 status: { type: 'Online', until: null }
@@ -264,8 +218,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
             await createSession(firebaseUser.uid);
             setUser({ id: firebaseUser.uid, ...newUser });
-            setOrganizations([]);
-            setCurrentOrganizationId(null);
 
         } catch (error) {
             handleError(error, 'registreren');
@@ -294,9 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const newUser: Omit<User, 'id'> = {
                     name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
                     email: firebaseUser.email!,
-                    points: 0,
                     avatar: avatarUrl,
-                    achievements: [],
                     organizationIds: [],
                     currentOrganizationId: null,
                     status: { type: 'Online', until: null },
@@ -335,9 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const newUser: Omit<User, 'id'> = {
                     name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
                     email: firebaseUser.email!,
-                    points: 0,
                     avatar: avatarUrl,
-                    achievements: [],
                     organizationIds: [],
                     currentOrganizationId: null,
                     status: { type: 'Online', until: null },
@@ -389,22 +337,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
         }
     }, [fetchUserAndOrgData]);
-
-
-    const switchOrganization = async (orgId: string) => {
-        if (!user || orgId === currentOrganizationId) return;
-        try {
-            setLoading(true);
-            const userRef = doc(db, 'users', user.id);
-            await updateDoc(userRef, { currentOrganizationId: orgId });
-            // The onSnapshot listener will handle the state update.
-            toast({ title: "Organisatie gewisseld" });
-        } catch(e) {
-            handleError(e, 'wisselen van organisatie');
-        } finally {
-            setLoading(false);
-        }
-    };
     
     const completeMfa = async () => {
         if (authUser) {
@@ -426,9 +358,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         completeMfa,
         refreshUser,
-        organizations,
-        currentOrganizationId,
-        switchOrganization,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
